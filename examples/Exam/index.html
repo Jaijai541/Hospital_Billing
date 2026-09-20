@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOKPI STORE</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="style.css"></link>
+</head>
+<body>
+
+    <h1>TOKPI STORE</h1>
+
+    <div class="form-group">
+        <label for="customer-select">CUSTOMER: </label>
+        <select id="customer-select">
+            <option value="">SELECT CUSTOMER</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="qty-input">Qty :</label>
+        <input type="number" id="qty-input" placeholder="Enter quantity" min="1">
+    </div>
+
+    <div class="form-group">
+        <label for="product-select">PRODUCT NAME: </label>
+        <select id="product-select">
+            <option value="">SELECT PRODUCT</option>
+        </select>
+    </div>
+
+    <div class="result-row bold-text">
+        Price : P <span id="price-display">0.00</span>
+    </div>
+
+    <div class="result-row">
+        Senior Discount : P <span id="discount-display">0.00</span>
+    </div>
+
+    <div class="result-row bold-text">
+        Net Amount : P <span id="net-display">0.00</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

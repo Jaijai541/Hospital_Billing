@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Billing System - Login</title>
+</head>
+<body>
+
+    <h2>Hospital Billing System</h2>
+    <h3>Login</h3>
+
+    <div id="error-message" style="color: red; margin-bottom: 10px;"></div>
+
+    <form id="loginForm">
+        <div>
+            <label for="username">Username: </label>
+            <input type="text" id="username" placeholder="Username" required autofocus>
+        </div>
+        <br>
+        <div>
+            <label for="password">Password: </label>
+            <input type="password" id="password" placeholder="Password" required>
+        </div>
+        <br>
+        <button type="submit" id="btn-login">Login</button>
+    </form>
+
+    <hr>
+    <p><small>Default testing account: admin / admin123</small></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./js/login.js"></script>
+</body>
+</html>

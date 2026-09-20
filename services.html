@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Services Catalog — Hospital Billing System</title>
+</head>
+<body>
+
+    <p><a href="index.html">&laquo; Back to Dashboard</a></p>
+
+    <h2>Hospital Services & Procedures Catalog (Master File)</h2>
+    <div>
+        User: <strong id="user-display">Loading...</strong> | 
+        <button id="btn-logout">Logout</button>
+    </div>
+
+    <hr>
+
+    <!-- Add / Edit Form -->
+    <div>
+        <h3 id="form-title">Add New Hospital Service / Procedure</h3>
+        <input type="hidden" id="service_id" value="">
+
+        <div>
+            <label for="service_name">Service / Procedure Name: </label>
+            <input type="text" id="service_name" placeholder="e.g. IV Cannulation, Wound Dressing" size="35" required>
+
+            &nbsp;&nbsp;
+            <label for="station_id">Department: </label>
+            <select id="station_id" required>
+                <option value="">Select Department...</option>
+            </select>
+        </div>
+        <br>
+        <div>
+            <label for="performer_role">Performer Staff Role: </label>
+            <input type="text" id="performer_role" placeholder="e.g. Staff Nurse, MedTech, Physical Therapist" size="35" required>
+
+            &nbsp;&nbsp;
+            <label for="service_fee">Service Fee (₱): </label>
+            <input type="number" step="0.01" min="0" id="service_fee" placeholder="0.00" required>
+        </div>
+        <br>
+        <div>
+            <button id="btnSubmit">Submit</button>
+            <button id="btnCancel" style="display:none;">Cancel</button>
+        </div>
+    </div>
+
+    <hr>
+
+    <h3>Services List</h3>
+
+    <!-- Search, Filter, and Sort Controls (Pure HTML) -->
+    <div style="margin-bottom: 12px;">
+        <label for="search_input">Search: </label>
+        <input type="text" id="search_input" placeholder="Search by name, role, or code...">
+
+        &nbsp;&nbsp;
+        <label for="filter_status">Status: </label>
+        <select id="filter_status">
+            <option value="all">All Records</option>
+            <option value="1">Active Only</option>
+            <option value="0">Soft-Deleted Only</option>
+        </select>
+
+        &nbsp;&nbsp;
+        <label for="filter_station">Department: </label>
+        <select id="filter_station">
+            <option value="all">All Departments</option>
+        </select>
+
+        &nbsp;&nbsp;
+        <label for="sort_by">Sort By: </label>
+        <select id="sort_by">
+            <option value="code_asc">Code (A to Z)</option>
+            <option value="code_desc">Code (Z to A)</option>
+            <option value="name_asc">Name (A to Z)</option>
+            <option value="name_desc">Name (Z to A)</option>
+            <option value="fee_asc">Fee (Lowest First)</option>
+            <option value="fee_desc">Fee (Highest First)</option>
+            <option value="id_desc">Newest First</option>
+        </select>
+    </div>
+
+    <div id="table-div">
+        <!-- Dynamic Table created by JavaScript -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./js/services.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Discounts — Hospital Billing System</title>
+</head>
+<body>
+
+    <p><a href="index.html">&laquo; Back to Dashboard</a></p>
+
+    <h2>Billing Discounts (Master File)</h2>
+    <div>
+        User: <strong id="user-display">Loading...</strong> | 
+        <button id="btn-logout">Logout</button>
+    </div>
+
+    <hr>
+
+    <!-- Add / Edit Form -->
+    <div>
+        <h3 id="form-title">Add New Discount</h3>
+        <input type="hidden" id="discount_id" value="">
+
+        <label for="discount_name">Discount Name: </label>
+        <input type="text" id="discount_name" placeholder="e.g. Senior Citizen, PWD" required>
+
+        <label for="discount_percentage">Discount Percentage (%): </label>
+        <input type="number" step="0.01" min="0" max="100" id="discount_percentage" placeholder="e.g. 20.00" required>
+
+        <button id="btnSubmit">Submit</button>
+        <button id="btnCancel" style="display:none;">Cancel</button>
+    </div>
+
+    <hr>
+
+    <h3>Discounts List</h3>
+
+    <!-- Search, Filter, and Sort Controls (Pure HTML) -->
+    <div style="margin-bottom: 12px;">
+        <label for="search_input">Search Name/Code: </label>
+        <input type="text" id="search_input" placeholder="Search discount...">
+
+        &nbsp;&nbsp;
+        <label for="filter_status">Filter Status: </label>
+        <select id="filter_status">
+            <option value="all">All Records</option>
+            <option value="1">Active Only</option>
+            <option value="0">Soft-Deleted Only</option>
+        </select>
+
+        &nbsp;&nbsp;
+        <label for="sort_by">Sort By: </label>
+        <select id="sort_by">
+            <option value="code_asc">Code (A to Z)</option>
+            <option value="code_desc">Code (Z to A)</option>
+            <option value="name_asc">Name (A to Z)</option>
+            <option value="name_desc">Name (Z to A)</option>
+            <option value="percent_asc">Percentage (Lowest First)</option>
+            <option value="percent_desc">Percentage (Highest First)</option>
+            <option value="id_desc">Newest First (ID)</option>
+        </select>
+    </div>
+
+    <div id="table-div">
+        <!-- Dynamic Table created by JavaScript -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./js/discounts.js"></script>
+</body>
+</html>

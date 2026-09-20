@@ -372,3 +372,4 @@ const hardDeleteDiscount = async (discountId, name) => {
         alert("Server error during hard delete.");
     }
 };
+

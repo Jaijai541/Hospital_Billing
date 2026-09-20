@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicines Catalog — Hospital Billing System</title>
+    <title>Billing Discounts — Hospital Billing System</title>
 </head>
 <body>
 
     <p><a href="index.html">&laquo; Back to Dashboard</a></p>
 
-    <h2>Medicines Catalog (Master File)</h2>
+    <h2>Billing Discounts (Master File)</h2>
     <div>
         User: <strong id="user-display">Loading...</strong> | 
         <button id="btn-logout">Logout</button>
@@ -19,19 +19,14 @@
 
     <!-- Add / Edit Form -->
     <div>
-        <h3 id="form-title">Add New Medicine</h3>
-        <input type="hidden" id="medicine_id" value="">
+        <h3 id="form-title">Add New Discount</h3>
+        <input type="hidden" id="discount_id" value="">
 
-        <label for="generic_name">Generic Name: </label>
-        <input type="text" id="generic_name" placeholder="e.g. Paracetamol 500mg" required>
+        <label for="discount_name">Discount Name: </label>
+        <input type="text" id="discount_name" placeholder="e.g. Senior Citizen, PWD" required>
 
-        <label for="station_id">Department: </label>
-        <select id="station_id" required>
-            <option value="">Select Department...</option>
-        </select>
-
-        <label for="unit_price">Unit Price (₱): </label>
-        <input type="number" step="0.01" min="0" id="unit_price" placeholder="Unit Price" required>
+        <label for="discount_percentage">Discount Percentage (%): </label>
+        <input type="number" step="0.01" min="0" max="100" id="discount_percentage" placeholder="e.g. 20.00" required>
 
         <button id="btnSubmit">Submit</button>
         <button id="btnCancel" style="display:none;">Cancel</button>
@@ -39,12 +34,12 @@
 
     <hr>
 
-    <h3>Medicines List</h3>
+    <h3>Discounts List</h3>
 
     <!-- Search, Filter, and Sort Controls (Pure HTML) -->
     <div style="margin-bottom: 12px;">
-        <label for="search_input">Search Name: </label>
-        <input type="text" id="search_input" placeholder="Search medicine...">
+        <label for="search_input">Search Name/Code: </label>
+        <input type="text" id="search_input" placeholder="Search discount...">
 
         &nbsp;&nbsp;
         <label for="filter_status">Filter Status: </label>
@@ -61,8 +56,8 @@
             <option value="code_desc">Code (Z to A)</option>
             <option value="name_asc">Name (A to Z)</option>
             <option value="name_desc">Name (Z to A)</option>
-            <option value="price_asc">Price (Lowest First)</option>
-            <option value="price_desc">Price (Highest First)</option>
+            <option value="percent_asc">Percentage (Lowest First)</option>
+            <option value="percent_desc">Percentage (Highest First)</option>
             <option value="id_desc">Newest First (ID)</option>
         </select>
     </div>
@@ -72,6 +67,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="./js/medicines.js"></script>
+    <script src="../js/discounts.js"></script>
 </body>
 </html>

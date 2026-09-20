@@ -2,32 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital Billing System - Dashboard</title>
+    <meta http-equiv="refresh" content="0; url=views/login.html">
+    <title>Redirecting to Hospital Billing System...</title>
+    <script>
+        // Check if user session already exists
+        const user = sessionStorage.getItem("hospital_user");
+        if (user) {
+            window.location.href = "views/index.html";
+        } else {
+            window.location.href = "views/login.html";
+        }
+    </script>
 </head>
 <body>
-
-    <h2>Hospital Billing System</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
-
-    <hr>
-
-    <h3>Milestone 1: Master File Module</h3>
-    <p>Select a master file or lookup table to manage:</p>
-
-    <ul>
-        <li><a href="medicines.html">Medicines Catalog (Catalog_Medicine)</a></li>
-        <li><a href="scans.html">Equipment & Diagnostic Scans (Catalog_Equipment_Scan)</a></li>
-        <li><a href="services.html">Hospital Services (Catalog_Service)</a></li>
-        <li><a href="rooms.html">Rooms & Daily Rates (Room & Enum_Room_Type)</a></li>
-        <li><a href="doctors.html">Doctors & Fees (Doctor & Enum_Doctor_Type)</a></li>
-        <li><a href="discounts.html">Billing Discounts (Enum_Discount)</a></li>
-    </ul>
-
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="./js/dashboard.js"></script>
+    <p>Redirecting to <a href="views/login.html">Hospital Billing System</a>...</p>
 </body>
 </html>

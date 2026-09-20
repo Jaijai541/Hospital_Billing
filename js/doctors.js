@@ -474,3 +474,4 @@ const hardDeleteDoctor = async (doctorId, name) => {
         alert("Server error during hard delete.");
     }
 };
+

@@ -9,7 +9,7 @@
 
     <p><a href="index.html">Back to Dashboard</a></p>
 
-    <h2>Rooms, Wards & Beds Directory (Master File)</h2>
+    <h2>Rooms & Beds Directory (Master File)</h2>
     <div>
         User: <strong id="user-display">Loading...</strong> | 
         <button id="btn-logout">Logout</button>
@@ -17,25 +17,25 @@
 
     <hr>
 
-    <!-- Add / Edit Room & Ward Form -->
+    <!-- Add / Edit Room Form -->
     <div>
-        <h3 id="form-title">Add New Ward / Room</h3>
+        <h3 id="form-title">Add New Room</h3>
         <input type="hidden" id="room_id" value="">
 
         <div>
-            <label for="room_number">Ward / Room Number: </label>
-            <input type="text" id="room_number" placeholder="e.g. WRD-03, PVT-202" size="20" required>
+            <label for="room_name">Room Name: </label>
+            <input type="text" id="room_name" placeholder="e.g. Ward A, Private 301" size="25" required>
 
             <label for="room_type_id">Room Classification: </label>
             <select id="room_type_id" required>
                 <option value="">Select Classification...</option>
             </select>
 
-            <label for="daily_rate">Daily Board & Lodging Rate (₱): </label>
-            <input type="number" step="0.01" min="0" id="daily_rate" placeholder="0.00" required>
+            <label for="daily_rate">Daily Rate (₱): </label>
+            <input type="number" step="0.01" id="daily_rate" placeholder="0.00" readonly>
 
-            <label for="capacity_beds">Bed Capacity (beds fitted): </label>
-            <input type="number" id="capacity_beds" min="1" max="20" value="1" required>
+            <label for="capacity">Bed Capacity: </label>
+            <input type="number" id="capacity" min="1" max="20" value="1" required>
         </div>
         <br>
         <div>
@@ -46,12 +46,12 @@
 
     <hr>
 
-    <h3>1. Wards & Rooms Overview</h3>
+    <h3>1. Rooms Overview</h3>
 
     <!-- Search, Filter, and Sort Controls (Pure HTML) -->
     <div style="margin-bottom: 12px;">
         <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search room/ward number...">
+        <input type="text" id="search_input" placeholder="Search room name...">
 
         <label for="filter_status">Status: </label>
         <select id="filter_status">
@@ -67,23 +67,23 @@
 
         <label for="sort_by">Sort By: </label>
         <select id="sort_by">
-            <option value="number_asc">Room Number (A to Z)</option>
-            <option value="number_desc">Room Number (Z to A)</option>
+            <option value="name_asc">Room Name (A to Z)</option>
+            <option value="name_desc">Room Name (Z to A)</option>
             <option value="rate_asc">Daily Rate (Lowest First)</option>
             <option value="rate_desc">Daily Rate (Highest First)</option>
-            <option value="beds_desc">Most Beds First</option>
+            <option value="capacity_desc">Highest Capacity First</option>
         </select>
     </div>
 
     <div id="table-div">
-        <!-- Room/Ward Table generated dynamically by JavaScript -->
+        <!-- Room Table generated dynamically by JavaScript -->
     </div>
 
     <hr>
 
-    <h3>2. Individual Beds List</h3>
+    <h3>2. Individual Beds List (Room_Bed)</h3>
     <div id="beds-table-div">
-        <!-- Individual Beds Table generated dynamically by JavaScript -->
+        <!-- Beds Table generated dynamically by JavaScript -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

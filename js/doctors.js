@@ -1,7 +1,7 @@
 /**
  * Medical Doctors & Professional Fees Controller (Axios / Frontend)
  * Follows classroom pure HTML standard: dynamic table creation with border="1"
- * Supports Multi-Specialty selection (Doctor_Specialty) and Code display (DR-xxx)
+ * Handles Doctor, Doctor_Specialty, Enum_Doctor_Type, and Enum_Department_Station
  */
 
 const baseApiUrl = "http://localhost/Hospital_Billing/api";
@@ -44,27 +44,33 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("search_input").addEventListener("input", filterAndSortDoctors);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDoctors);
     document.getElementById("filter_type").addEventListener("change", filterAndSortDoctors);
+    document.getElementById("filter_station").addEventListener("change", filterAndSortDoctors);
     document.getElementById("filter_specialty").addEventListener("change", filterAndSortDoctors);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDoctors);
 });
 
 /**
- * Load Doctor Types and Specialties
+ * Load Doctor Types, Stations, and Specialties
  */
 const loadDoctorLookups = async () => {
     try {
-        console.log("[API] Loading doctor types and specialties...");
-        const [typesRes, specRes] = await Promise.all([
-            axios.get(`${baseApiUrl}/doctors.php`, { params: { operation: "getAllDoctorTypes" } }),
-            axios.get(`${baseApiUrl}/doctors.php`, { params: { operation: "getAllSpecialties" } })
-        ]);
+        console.log("[API] Loading doctor lookups...");
+        const response = await axios.get(`${baseApiUrl}/doctors.php`, {
+            params: { operation: "getDoctorLookups" }
+        });
 
-        if (typesRes.status === 200 && typesRes.data) {
+        if (response.status === 200 && response.data) {
+            const data = response.data;
             const typeSelect = document.getElementById("doctor_type_id");
             const filterType = document.getElementById("filter_type");
-            typeSelect.innerHTML = `<option value="">Select Classification...</option>`;
+            const stationSelect = document.getElementById("station_id");
+            const filterStation = document.getElementById("filter_station");
+            const specContainer = document.getElementById("specialties-checkboxes");
+            const filterSpec = document.getElementById("filter_specialty");
 
-            typesRes.data.forEach(t => {
+            // 1. Types
+            typeSelect.innerHTML = `<option value="">Select Classification...</option>`;
+            data.types.forEach(t => {
                 const opt = document.createElement("option");
                 opt.value = t.Doctor_Type_ID;
                 opt.textContent = t.Type_Name;
@@ -75,16 +81,25 @@ const loadDoctorLookups = async () => {
                 filterOpt.textContent = t.Type_Name;
                 filterType.appendChild(filterOpt);
             });
-        }
 
-        if (specRes.status === 200 && specRes.data) {
-            allSpecialties = specRes.data;
-            const container = document.getElementById("specialties-checkboxes");
-            const filterSpec = document.getElementById("filter_specialty");
-            container.innerHTML = "";
+            // 2. Stations
+            stationSelect.innerHTML = `<option value="">Select Department Station...</option>`;
+            data.stations.forEach(st => {
+                const opt = document.createElement("option");
+                opt.value = st.Station_ID;
+                opt.textContent = st.Station_Name;
+                stationSelect.appendChild(opt);
 
+                const filterOpt = document.createElement("option");
+                filterOpt.value = st.Station_ID;
+                filterOpt.textContent = st.Station_Name;
+                filterStation.appendChild(filterOpt);
+            });
+
+            // 3. Specialties
+            allSpecialties = data.specialties;
+            specContainer.innerHTML = "";
             allSpecialties.forEach(s => {
-                // Checkbox for form
                 const label = document.createElement("label");
                 label.style.marginRight = "15px";
                 label.style.display = "inline-block";
@@ -92,9 +107,8 @@ const loadDoctorLookups = async () => {
                     <input type="checkbox" name="specialty_checkbox" value="${s.Specialty_ID}">
                     ${s.Specialty_Name}
                 `;
-                container.appendChild(label);
+                specContainer.appendChild(label);
 
-                // Filter option
                 const filterOpt = document.createElement("option");
                 filterOpt.value = s.Specialty_ID;
                 filterOpt.textContent = s.Specialty_Name;
@@ -138,12 +152,13 @@ const filterAndSortDoctors = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
     const filterType = document.getElementById("filter_type").value;
+    const filterStation = document.getElementById("filter_station").value;
     const filterSpec = document.getElementById("filter_specialty").value;
     const sortBy = document.getElementById("sort_by").value;
 
     let filtered = allDoctors.filter(doc => {
         const name = `${doc.First_Name} ${doc.Last_Name}`.toLowerCase();
-        const code = (doc.Doctor_Code || "").toLowerCase();
+        const code = (doc.Formatted_Code || "").toLowerCase();
 
         const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
 
@@ -154,22 +169,25 @@ const filterAndSortDoctors = () => {
         let matchesType = true;
         if (filterType !== "all") matchesType = (doc.Doctor_Type_ID == filterType);
 
+        let matchesStation = true;
+        if (filterStation !== "all") matchesStation = (doc.Station_ID == filterStation);
+
         let matchesSpec = true;
         if (filterSpec !== "all") {
             const specIds = (doc.Specialty_IDs || "").split(",");
             matchesSpec = specIds.includes(filterSpec);
         }
 
-        return matchesSearch && matchesStatus && matchesType && matchesSpec;
+        return matchesSearch && matchesStatus && matchesType && matchesStation && matchesSpec;
     });
 
     // Sort
     filtered.sort((a, b) => {
         switch (sortBy) {
             case "code_asc":
-                return a.Doctor_Code.localeCompare(b.Doctor_Code, undefined, { numeric: true });
+                return a.Formatted_Code.localeCompare(b.Formatted_Code, undefined, { numeric: true });
             case "code_desc":
-                return b.Doctor_Code.localeCompare(a.Doctor_Code, undefined, { numeric: true });
+                return b.Formatted_Code.localeCompare(a.Formatted_Code, undefined, { numeric: true });
             case "name_asc":
                 return a.Last_Name.localeCompare(b.Last_Name);
             case "name_desc":
@@ -185,7 +203,6 @@ const filterAndSortDoctors = () => {
         }
     });
 
-    console.log(`[UI] Displaying ${filtered.length} of ${allDoctors.length} doctors.`);
     displayDoctorsTable(filtered);
 };
 
@@ -211,6 +228,7 @@ const displayDoctorsTable = (doctors) => {
             <th>Code</th>
             <th>Doctor Full Name</th>
             <th>Classification</th>
+            <th>Station</th>
             <th>Medical Specialties</th>
             <th>Base Round Fee</th>
             <th>Status</th>
@@ -228,9 +246,10 @@ const displayDoctorsTable = (doctors) => {
 
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td><strong>${doc.Doctor_Code}</strong></td>
+            <td><strong>${doc.Formatted_Code}</strong></td>
             <td>${fullName}</td>
-            <td>${doc.Type_Name}</td>
+            <td>${doc.Doctor_Type_Name}</td>
+            <td>${doc.Station_Name}</td>
             <td>${doc.Specialties || 'General Practice'}</td>
             <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
             <td>${statusText}</td>
@@ -283,6 +302,7 @@ const loadDoctorForEdit = async (doctorId) => {
             document.getElementById("first_name").value = doc.First_Name;
             document.getElementById("last_name").value = doc.Last_Name;
             document.getElementById("doctor_type_id").value = doc.Doctor_Type_ID;
+            document.getElementById("station_id").value = doc.Station_ID;
             document.getElementById("base_round_fee").value = doc.Base_Round_Fee;
 
             // Check checkboxes for specialties
@@ -291,7 +311,7 @@ const loadDoctorForEdit = async (doctorId) => {
                 cb.checked = assignedSpecs.includes(cb.value);
             });
 
-            document.getElementById("form-title").textContent = `Edit Doctor (${doc.Doctor_Code})`;
+            document.getElementById("form-title").textContent = `Edit Doctor (DOC-${String(doc.Doctor_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Doctor";
             document.getElementById("btnCancel").style.display = "inline";
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -310,10 +330,11 @@ const saveDoctor = async () => {
     const firstName = document.getElementById("first_name").value.trim();
     const lastName = document.getElementById("last_name").value.trim();
     const typeId = document.getElementById("doctor_type_id").value;
+    const stationId = document.getElementById("station_id").value;
     const fee = document.getElementById("base_round_fee").value;
 
-    if (!firstName || !lastName || !typeId || fee === "") {
-        alert("Please fill in First Name, Last Name, Classification, and Base Round Fee.");
+    if (!firstName || !lastName || !typeId || !stationId || fee === "") {
+        alert("Please fill in First Name, Last Name, Classification, Station, and Base Round Fee.");
         return;
     }
 
@@ -327,6 +348,7 @@ const saveDoctor = async () => {
         first_name: firstName,
         last_name: lastName,
         doctor_type_id: typeId,
+        station_id: stationId,
         base_round_fee: parseFloat(fee),
         specialty_ids: selectedSpecialties
     };
@@ -372,6 +394,7 @@ const resetForm = () => {
     document.getElementById("first_name").value = "";
     document.getElementById("last_name").value = "";
     document.getElementById("doctor_type_id").value = "";
+    document.getElementById("station_id").value = "";
     document.getElementById("base_round_fee").value = "";
 
     document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
@@ -391,8 +414,6 @@ const toggleDoctorStatus = async (doctorId, currentStatus, name) => {
     if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Soft Delete preserves historical rounds and billing records)`)) {
         return;
     }
-
-    console.log(`[Action] Toggling status for Doctor ID: ${doctorId}`);
 
     const formData = new FormData();
     formData.append("operation", "toggleStatus");
@@ -423,8 +444,6 @@ const hardDeleteDoctor = async (doctorId, name) => {
     if (!confirm(`WARNING: Are you sure you want to HARD DELETE "${name}" from MySQL?\n\nThis permanently removes the doctor and cannot be undone!`)) {
         return;
     }
-
-    console.log(`[Action] Hard deleting Doctor ID: ${doctorId}`);
 
     const formData = new FormData();
     formData.append("operation", "hardDeleteDoctor");

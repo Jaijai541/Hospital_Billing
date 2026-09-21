@@ -1,8 +1,8 @@
 <?php
 /**
- * Unified Charge Catalogs API
+ * Unified Charge Catalogs API (Instructor Approved Schema)
  * Milestone 1 Master File Module
- * Handles Merged Catalogs: Medicines (MED), Diagnostic Scans (RAD), and Procedures (SRV)
+ * Handles Charge_Catalogs: Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price, Is_Active
  */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
@@ -10,17 +10,16 @@ header("Access-Control-Allow-Origin: *");
 class Catalog
 {
     /**
-     * Read: Retrieve all catalog items joined with type and department station
+     * Read: Retrieve all catalog items
      */
     function getAllCatalogs()
     {
         include "../connection.php";
 
-        $sql = "SELECT c.*, t.Type_Name AS Catalog_Type_Name, t.Code_Prefix AS Type_Prefix, s.Station_Name 
-                FROM Charge_Catalog c 
-                INNER JOIN Enum_Catalog_Type t ON c.Catalog_Type_ID = t.Catalog_Type_ID 
-                INNER JOIN Enum_Department_Station s ON c.Station_ID = s.Station_ID 
-                ORDER BY c.Is_Active DESC, c.Catalog_Type_ID ASC, c.Item_Name ASC";
+        $sql = "SELECT Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price, Is_Active,
+                       CONCAT(Code_Prefix, '-', LPAD(Catalog_ID, 3, '0')) AS Formatted_Code
+                FROM Charge_Catalogs 
+                ORDER BY Is_Active DESC, Category_Type ASC, Item_Name ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -29,34 +28,16 @@ class Catalog
     }
 
     /**
-     * Read: Retrieve catalog types for dropdowns
-     */
-    function getCatalogTypes()
-    {
-        include "../connection.php";
-
-        $sql = "SELECT * FROM Enum_Catalog_Type WHERE Is_Active = 1 ORDER BY Catalog_Type_ID ASC";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return json_encode($rs);
-    }
-
-    /**
-     * Read: Retrieve single catalog item by ID for editing
+     * Read: Retrieve single catalog item by ID
      */
     function getCatalogById($json)
     {
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT c.*, t.Code_Prefix AS Type_Prefix 
-                FROM Charge_Catalog c 
-                INNER JOIN Enum_Catalog_Type t ON c.Catalog_Type_ID = t.Catalog_Type_ID 
-                WHERE c.Item_ID = :id";
+        $sql = "SELECT * FROM Charge_Catalogs WHERE Catalog_ID = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['item_id']);
+        $stmt->bindParam(":id", $json['catalog_id']);
         $stmt->execute();
         $rs = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -64,7 +45,7 @@ class Catalog
     }
 
     /**
-     * Create: Insert a new catalog item with automated code generation
+     * Create: Insert a new item into Charge_Catalogs
      */
     function insertCatalog($json)
     {
@@ -72,44 +53,29 @@ class Catalog
 
         $json = json_decode($json, true);
 
-        // Fetch prefix for selected catalog type
-        $stmtType = $conn->prepare("SELECT Code_Prefix FROM Enum_Catalog_Type WHERE Catalog_Type_ID = :type_id");
-        $stmtType->bindParam(":type_id", $json['catalog_type_id']);
-        $stmtType->execute();
-        $typeRow = $stmtType->fetch(PDO::FETCH_ASSOC);
-        $prefix = $typeRow['Code_Prefix'] ?? 'ITM';
+        // Derive code prefix if not explicitly provided
+        $category = trim($json['category_type']);
+        $prefix = trim($json['code_prefix'] ?? '');
+        if (empty($prefix)) {
+            if ($category === 'Medicine') $prefix = 'MED';
+            else if ($category === 'Equipment Scan') $prefix = 'RAD';
+            else $prefix = 'SRV';
+        }
 
-        // Generate Item_Code (e.g. MED-009, RAD-007, SRV-008)
-        $stmtCount = $conn->prepare("SELECT COUNT(*) AS total FROM Charge_Catalog WHERE Catalog_Type_ID = :type_id");
-        $stmtCount->bindParam(":type_id", $json['catalog_type_id']);
-        $stmtCount->execute();
-        $nextNum = ($stmtCount->fetch(PDO::FETCH_ASSOC)['total'] ?? 0) + 1;
-        $itemCode = sprintf("%s-%03d", $prefix, $nextNum);
-
-        // Calculate total fee
-        $hospitalFee = floatval($json['hospital_fee'] ?? 0);
-        $readerFee = floatval($json['reader_fee'] ?? 0);
-        $totalFee = $hospitalFee + $readerFee;
-        $performerRole = !empty($json['performer_role']) ? $json['performer_role'] : null;
-
-        $sql = "INSERT INTO Charge_Catalog (Catalog_Type_ID, Station_ID, Item_Code, Item_Name, Hospital_Fee, Reader_Fee, Total_Fee, Performer_Role, Is_Active) 
-                VALUES (:catalog_type_id, :station_id, :item_code, :item_name, :hospital_fee, :reader_fee, :total_fee, :performer_role, 1)";
+        $sql = "INSERT INTO Charge_Catalogs (Item_Name, Category_Type, Code_Prefix, Unit_Price, Is_Active) 
+                VALUES (:name, :category, :prefix, :price, 1)";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":catalog_type_id", $json['catalog_type_id']);
-        $stmt->bindParam(":station_id", $json['station_id']);
-        $stmt->bindParam(":item_code", $itemCode);
-        $stmt->bindParam(":item_name", $json['item_name']);
-        $stmt->bindParam(":hospital_fee", $hospitalFee);
-        $stmt->bindParam(":reader_fee", $readerFee);
-        $stmt->bindParam(":total_fee", $totalFee);
-        $stmt->bindParam(":performer_role", $performerRole);
+        $stmt->bindParam(":name", $json['item_name']);
+        $stmt->bindParam(":category", $category);
+        $stmt->bindParam(":prefix", $prefix);
+        $stmt->bindParam(":price", $json['unit_price']);
         $stmt->execute();
 
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
     /**
-     * Update: Modify catalog item details and recalculated fees
+     * Update: Modify existing catalog item
      */
     function updateCatalog($json)
     {
@@ -117,29 +83,26 @@ class Catalog
 
         $json = json_decode($json, true);
 
-        $hospitalFee = floatval($json['hospital_fee'] ?? 0);
-        $readerFee = floatval($json['reader_fee'] ?? 0);
-        $totalFee = $hospitalFee + $readerFee;
-        $performerRole = !empty($json['performer_role']) ? $json['performer_role'] : null;
+        $category = trim($json['category_type']);
+        $prefix = trim($json['code_prefix'] ?? '');
+        if (empty($prefix)) {
+            if ($category === 'Medicine') $prefix = 'MED';
+            else if ($category === 'Equipment Scan') $prefix = 'RAD';
+            else $prefix = 'SRV';
+        }
 
-        $sql = "UPDATE Charge_Catalog 
-                SET Catalog_Type_ID = :catalog_type_id, 
-                    Station_ID      = :station_id, 
-                    Item_Name       = :item_name, 
-                    Hospital_Fee    = :hospital_fee, 
-                    Reader_Fee      = :reader_fee, 
-                    Total_Fee       = :total_fee, 
-                    Performer_Role  = :performer_role 
-                WHERE Item_ID = :item_id";
+        $sql = "UPDATE Charge_Catalogs 
+                SET Item_Name     = :name, 
+                    Category_Type = :category, 
+                    Code_Prefix   = :prefix, 
+                    Unit_Price    = :price 
+                WHERE Catalog_ID  = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":catalog_type_id", $json['catalog_type_id']);
-        $stmt->bindParam(":station_id", $json['station_id']);
-        $stmt->bindParam(":item_name", $json['item_name']);
-        $stmt->bindParam(":hospital_fee", $hospitalFee);
-        $stmt->bindParam(":reader_fee", $readerFee);
-        $stmt->bindParam(":total_fee", $totalFee);
-        $stmt->bindParam(":performer_role", $performerRole);
-        $stmt->bindParam(":item_id", $json['item_id']);
+        $stmt->bindParam(":name", $json['item_name']);
+        $stmt->bindParam(":category", $category);
+        $stmt->bindParam(":prefix", $prefix);
+        $stmt->bindParam(":price", $json['unit_price']);
+        $stmt->bindParam(":id", $json['catalog_id']);
         $stmt->execute();
 
         return json_encode($stmt->rowCount() >= 0 ? 1 : 0);
@@ -154,18 +117,18 @@ class Catalog
 
         $json = json_decode($json, true);
 
-        $sql = "UPDATE Charge_Catalog 
+        $sql = "UPDATE Charge_Catalogs 
                 SET Is_Active = CASE WHEN Is_Active = 1 THEN 0 ELSE 1 END 
-                WHERE Item_ID = :id";
+                WHERE Catalog_ID = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['item_id']);
+        $stmt->bindParam(":id", $json['catalog_id']);
         $stmt->execute();
 
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
     /**
-     * Hard Delete: Permanently remove item if not referenced in billing
+     * Hard Delete: Permanently removes item if not referenced in ledger or doctor orders
      */
     function hardDeleteCatalog($json)
     {
@@ -174,16 +137,16 @@ class Catalog
         $json = json_decode($json, true);
 
         try {
-            $sql = "DELETE FROM Charge_Catalog WHERE Item_ID = :id";
+            $sql = "DELETE FROM Charge_Catalogs WHERE Catalog_ID = :id";
             $stmt = $conn->prepare($sql);
-            $stmt->bindParam(":id", $json['item_id']);
+            $stmt->bindParam(":id", $json['catalog_id']);
             $stmt->execute();
 
             return json_encode($stmt->rowCount() > 0 ? 1 : 0);
         } catch (PDOException $e) {
             return json_encode([
                 "status" => 0,
-                "message" => "Cannot hard delete: This catalog item is referenced in doctor orders or patient billing records. Please use Soft Delete (Deactivate) instead."
+                "message" => "Cannot hard delete: This item is referenced in patient billing ledgers or doctor order requests. Please use Soft Delete instead."
             ]);
         }
     }
@@ -202,9 +165,6 @@ $catalog = new Catalog();
 switch ($operation) {
     case "getAllCatalogs":
         echo $catalog->getAllCatalogs();
-        break;
-    case "getCatalogTypes":
-        echo $catalog->getCatalogTypes();
         break;
     case "getCatalogById":
         echo $catalog->getCatalogById($json);

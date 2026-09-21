@@ -1,8 +1,8 @@
 <?php
 /**
- * Patient Master Directory API
+ * Patient Master Directory API (Instructor Approved Schema)
  * Milestone 1 Master File Module
- * Handles Patient Registration, Demographics, Blood Types, Gender Enums, Emergency Contacts, CRUD, and Soft/Hard Delete
+ * Handles Patient: Patient_ID, First_Name, Last_Name, Date_Of_Birth, Gender_ID, Blood_Type_ID, Contact_Number, Address, Emergency_Contact_Name, Emergency_Contact_Number, Is_Active
  */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
@@ -10,13 +10,15 @@ header("Access-Control-Allow-Origin: *");
 class PatientMaster
 {
     /**
-     * Read: Retrieve all patients joined with gender and blood type lookup tables
+     * Read: Retrieve all patients joined with gender and blood type lookups
      */
     function getAllPatients()
     {
         include "../connection.php";
 
-        $sql = "SELECT p.*, g.Gender_Name, b.Blood_Type_Name 
+        $sql = "SELECT p.*, 
+                       CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                       g.Gender_Name, b.Blood_Type_Name 
                 FROM Patient p 
                 INNER JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID 
                 INNER JOIN Enum_Blood_Type b ON p.Blood_Type_ID = b.Blood_Type_ID 
@@ -29,7 +31,7 @@ class PatientMaster
     }
 
     /**
-     * Read: Retrieve lookups (Gender and Blood Types) for patient registration form
+     * Read: Retrieve lookups (Gender and Blood Types)
      */
     function getPatientEnums()
     {
@@ -39,20 +41,22 @@ class PatientMaster
         $bloodTypes = $conn->query("SELECT * FROM Enum_Blood_Type ORDER BY Blood_Type_ID ASC")->fetchAll(PDO::FETCH_ASSOC);
 
         return json_encode([
-            "genders" => $genders,
+            "genders"     => $genders,
             "blood_types" => $bloodTypes
         ]);
     }
 
     /**
-     * Read: Retrieve single patient by ID for editing
+     * Read: Retrieve single patient by ID
      */
     function getPatientById($json)
     {
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT * FROM Patient WHERE Patient_ID = :id";
+        $sql = "SELECT p.*, CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code 
+                FROM Patient p 
+                WHERE p.Patient_ID = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":id", $json['patient_id']);
         $stmt->execute();
@@ -62,7 +66,7 @@ class PatientMaster
     }
 
     /**
-     * Create: Insert a new patient with automatic PAT-xxx code generation
+     * Create: Insert a new patient
      */
     function insertPatient($json)
     {
@@ -70,15 +74,9 @@ class PatientMaster
 
         $json = json_decode($json, true);
 
-        // Generate Patient_Code
-        $stmtCount = $conn->query("SELECT COUNT(*) AS total FROM Patient");
-        $nextNum = ($stmtCount->fetch(PDO::FETCH_ASSOC)['total'] ?? 0) + 1;
-        $patientCode = sprintf("PAT-%03d", $nextNum);
-
-        $sql = "INSERT INTO Patient (Patient_Code, First_Name, Last_Name, Date_Of_Birth, Gender_ID, Blood_Type_ID, Contact_Number, Address, Emergency_Contact_Name, Emergency_Contact_Number, Is_Active) 
-                VALUES (:code, :first_name, :last_name, :dob, :gender_id, :blood_type_id, :contact, :address, :em_name, :em_contact, 1)";
+        $sql = "INSERT INTO Patient (First_Name, Last_Name, Date_Of_Birth, Gender_ID, Blood_Type_ID, Contact_Number, Address, Emergency_Contact_Name, Emergency_Contact_Number, Is_Active) 
+                VALUES (:first_name, :last_name, :dob, :gender_id, :blood_type_id, :contact, :address, :em_name, :em_contact, 1)";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":code", $patientCode);
         $stmt->bindParam(":first_name", $json['first_name']);
         $stmt->bindParam(":last_name", $json['last_name']);
         $stmt->bindParam(":dob", $json['date_of_birth']);
@@ -112,7 +110,7 @@ class PatientMaster
                     Address                  = :address, 
                     Emergency_Contact_Name   = :em_name, 
                     Emergency_Contact_Number = :em_contact 
-                WHERE Patient_ID = :patient_id";
+                WHERE Patient_ID             = :patient_id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":first_name", $json['first_name']);
         $stmt->bindParam(":last_name", $json['last_name']);
@@ -149,7 +147,7 @@ class PatientMaster
     }
 
     /**
-     * Hard Delete: Permanently removes patient if not referenced in admissions
+     * Hard Delete: Permanently remove patient if not in admissions
      */
     function hardDeletePatient($json)
     {
@@ -167,7 +165,7 @@ class PatientMaster
         } catch (PDOException $e) {
             return json_encode([
                 "status" => 0,
-                "message" => "Cannot hard delete: This patient has admission records in the hospital system. Please use Soft Delete (Deactivate) instead."
+                "message" => "Cannot hard delete: This patient has admission records in the hospital system. Please use Soft Delete instead."
             ]);
         }
     }

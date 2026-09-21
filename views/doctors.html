@@ -33,12 +33,17 @@
             <select id="doctor_type_id" required>
                 <option value="">Select Classification...</option>
             </select>
+
+            <label for="station_id">Department / Station: </label>
+            <select id="station_id" required>
+                <option value="">Select Department Station...</option>
+            </select>
         </div>
         <br>
         <div>
             <label><strong>Medical Specialties (Select all that apply):</strong></label>
             <div id="specialties-checkboxes" style="margin-top: 5px; margin-bottom: 10px;">
-                <!-- Dynamically populated checkboxes -->
+                <!-- Checkboxes populated dynamically -->
             </div>
         </div>
         <div>
@@ -71,6 +76,11 @@
         <label for="filter_type">Classification: </label>
         <select id="filter_type">
             <option value="all">All Classifications</option>
+        </select>
+
+        <label for="filter_station">Station: </label>
+        <select id="filter_station">
+            <option value="all">All Stations</option>
         </select>
 
         <label for="filter_specialty">Specialty: </label>

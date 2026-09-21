@@ -1,8 +1,8 @@
 <?php
 /**
- * Hospital Rooms, Wards & Beds Master File API (Revised)
+ * Hospital Rooms & Beds API (Instructor Approved Schema)
  * Milestone 1 Master File Module
- * Handles Wards, Bed Capacities, Daily Rates, Individual Bed Tracking, CRUD, and Soft/Hard Delete
+ * Handles Room, Room_Bed, and Enum_Room_Type (with Daily_Rate)
  */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
@@ -10,21 +10,22 @@ header("Access-Control-Allow-Origin: *");
 class RoomMaster
 {
     /**
-     * Read: Retrieve all rooms/wards with aggregated bed counts
+     * Read: Retrieve all rooms with uniform Daily_Rate from Enum_Room_Type and bed counts
      */
     function getAllRooms()
     {
         include "../connection.php";
 
-        $sql = "SELECT r.*, rt.Type_Name, rt.Code_Prefix,
+        $sql = "SELECT r.Room_ID, r.Room_Name, r.Room_Type_ID, r.Capacity, r.Is_Active,
+                       rt.Type_Name, rt.Code_Prefix, rt.Daily_Rate,
                        COUNT(b.Bed_ID) AS Total_Beds,
                        COALESCE(SUM(CASE WHEN b.Is_Available = 1 THEN 1 ELSE 0 END), 0) AS Vacant_Beds,
                        COALESCE(SUM(CASE WHEN b.Is_Available = 0 THEN 1 ELSE 0 END), 0) AS Occupied_Beds
                 FROM Room r 
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
-                LEFT JOIN Bed b ON r.Room_ID = b.Room_ID AND b.Is_Active = 1 
+                LEFT JOIN Room_Bed b ON r.Room_ID = b.Room_ID AND b.Is_Active = 1 
                 GROUP BY r.Room_ID 
-                ORDER BY r.Is_Active DESC, r.Room_Number ASC";
+                ORDER BY r.Is_Active DESC, r.Room_Name ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -33,17 +34,18 @@ class RoomMaster
     }
 
     /**
-     * Read: Retrieve individual beds list
+     * Read: Retrieve individual beds from Room_Bed
      */
     function getAllBeds()
     {
         include "../connection.php";
 
-        $sql = "SELECT b.*, r.Room_Number, rt.Type_Name, r.Daily_Rate 
-                FROM Bed b 
+        $sql = "SELECT b.Bed_ID, b.Room_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
+                       r.Room_Name, rt.Type_Name, rt.Daily_Rate 
+                FROM Room_Bed b 
                 INNER JOIN Room r ON b.Room_ID = r.Room_ID 
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
-                ORDER BY b.Is_Active DESC, r.Room_Number ASC, b.Bed_Number ASC";
+                ORDER BY b.Is_Active DESC, r.Room_Name ASC, b.Bed_Code ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -52,7 +54,7 @@ class RoomMaster
     }
 
     /**
-     * Read: Retrieve active room types
+     * Read: Retrieve room types with enforced uniform Daily_Rate
      */
     function getAllRoomTypes()
     {
@@ -67,14 +69,17 @@ class RoomMaster
     }
 
     /**
-     * Read: Retrieve a single room by ID
+     * Read: Retrieve single room by ID
      */
     function getRoomById($json)
     {
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT * FROM Room WHERE Room_ID = :id";
+        $sql = "SELECT r.*, rt.Daily_Rate, rt.Type_Name 
+                FROM Room r 
+                INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
+                WHERE r.Room_ID = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
@@ -84,36 +89,41 @@ class RoomMaster
     }
 
     /**
-     * Create: Insert a new room/ward and automatically generate its beds
+     * Create: Insert a new Room and provision individual Room_Bed records
      */
     function insertRoom($json)
     {
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $capacity = max(1, intval($json['capacity_beds'] ?? 1));
-        $roomNumber = trim($json['room_number']);
+        $capacity = max(1, intval($json['capacity'] ?? 1));
+        $roomName = trim($json['room_name']);
 
-        $sql = "INSERT INTO Room (Room_Number, Room_Type_ID, Daily_Rate, Capacity_Beds, Is_Active) 
-                VALUES (:number, :type_id, :rate, :capacity, 1)";
+        $sql = "INSERT INTO Room (Room_Name, Room_Type_ID, Capacity, Is_Active) 
+                VALUES (:name, :type_id, :capacity, 1)";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":number", $roomNumber);
+        $stmt->bindParam(":name", $roomName);
         $stmt->bindParam(":type_id", $json['room_type_id']);
-        $stmt->bindParam(":rate", $json['daily_rate']);
         $stmt->bindParam(":capacity", $capacity);
         $stmt->execute();
 
         $roomId = $conn->lastInsertId();
 
-        // Auto-provision beds for this ward/room
-        $stmtBed = $conn->prepare("INSERT INTO Bed (Room_ID, Bed_Number, Bed_Code, Is_Available, Is_Active) VALUES (:room_id, :bed_num, :bed_code, 1, 1)");
+        // Auto-provision Room_Bed records
+        $stmtType = $conn->prepare("SELECT Code_Prefix FROM Enum_Room_Type WHERE Room_Type_ID = ?");
+        $stmtType->execute([$json['room_type_id']]);
+        $prefix = $stmtType->fetch(PDO::FETCH_ASSOC)['Code_Prefix'] ?? 'BED';
+
+        $stmtBed = $conn->prepare("INSERT INTO Room_Bed (Room_ID, Bed_Code, Is_Available, Is_Active) VALUES (:room_id, :code, 1, 1)");
         for ($i = 1; $i <= $capacity; $i++) {
-            $bedNumber = sprintf("Bed-%02d", $i);
-            $bedCode = sprintf("%s-B%02d", $roomNumber, $i);
+            $bedCode = sprintf("%s-%03d", $prefix, $i);
+            // Prefix with room initials if multiple words
+            $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $roomName);
+            $bedCode = sprintf("%s-%03d", strtoupper(substr($cleanName, 0, 5)), $i);
+
             $stmtBed->execute([
-                ':room_id'  => $roomId,
-                ':bed_num'  => $bedNumber,
-                ':bed_code' => $bedCode
+                ':room_id' => $roomId,
+                ':code'    => $bedCode
             ]);
         }
 
@@ -121,7 +131,7 @@ class RoomMaster
     }
 
     /**
-     * Update: Modify room details
+     * Update: Modify Room details
      */
     function updateRoom($json)
     {
@@ -130,14 +140,12 @@ class RoomMaster
         $json = json_decode($json, true);
 
         $sql = "UPDATE Room 
-                SET Room_Number  = :number, 
-                    Room_Type_ID = :type_id, 
-                    Daily_Rate   = :rate 
+                SET Room_Name    = :name, 
+                    Room_Type_ID = :type_id 
                 WHERE Room_ID    = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":number", $json['room_number']);
+        $stmt->bindParam(":name", $json['room_name']);
         $stmt->bindParam(":type_id", $json['room_type_id']);
-        $stmt->bindParam(":rate", $json['daily_rate']);
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
 
@@ -160,15 +168,15 @@ class RoomMaster
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
 
-        // Also sync active status to beds
-        $conn->prepare("UPDATE Bed SET Is_Active = (SELECT Is_Active FROM Room WHERE Room_ID = :id) WHERE Room_ID = :id2")
+        // Sync to Room_Bed
+        $conn->prepare("UPDATE Room_Bed SET Is_Active = (SELECT Is_Active FROM Room WHERE Room_ID = :id) WHERE Room_ID = :id2")
              ->execute([':id' => $json['room_id'], ':id2' => $json['room_id']]);
 
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
     /**
-     * Hard Delete: Permanently remove room and its beds if not referenced in room transfers
+     * Hard Delete: Permanently removes room and beds if not in transfer log
      */
     function hardDeleteRoom($json)
     {
@@ -186,7 +194,7 @@ class RoomMaster
         } catch (PDOException $e) {
             return json_encode([
                 "status" => 0,
-                "message" => "Cannot hard delete: This room/bed has past patient stay or transfer records. Please use Soft Delete (Deactivate) instead."
+                "message" => "Cannot hard delete: Beds in this room are referenced in patient room transfer logs. Please use Soft Delete instead."
             ]);
         }
     }

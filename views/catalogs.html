@@ -9,7 +9,7 @@
 
     <p><a href="index.html">Back to Dashboard</a></p>
 
-    <h2>Unified Charge Catalogs (Master File)</h2>
+    <h2>Charge Catalogs (Master File)</h2>
     <div>
         User: <strong id="user-display">Loading...</strong> | 
         <button id="btn-logout">Logout</button>
@@ -20,34 +20,25 @@
     <!-- Add / Edit Catalog Item Form -->
     <div>
         <h3 id="form-title">Add New Charge Catalog Item</h3>
-        <input type="hidden" id="item_id" value="">
+        <input type="hidden" id="catalog_id" value="">
 
         <div>
-            <label for="catalog_type_id">Category Type: </label>
-            <select id="catalog_type_id" required>
-                <option value="">Select Category...</option>
-            </select>
-
-            <label for="station_id">Department / Station: </label>
-            <select id="station_id" required>
-                <option value="">Select Department...</option>
-            </select>
-
-            <label for="item_name">Item / Procedure Name: </label>
+            <label for="item_name">Item Name: </label>
             <input type="text" id="item_name" placeholder="e.g. Paracetamol 500mg, Chest X-Ray" size="35" required>
-        </div>
-        <br>
-        <div>
-            <label for="hospital_fee">Hospital / Unit Fee (₱): </label>
-            <input type="number" step="0.01" min="0" id="hospital_fee" placeholder="0.00" required>
 
-            <label for="reader_fee" id="label_reader_fee">Doctor Reader's Fee (₱): </label>
-            <input type="number" step="0.01" min="0" id="reader_fee" placeholder="0.00" value="0.00">
+            <label for="category_type">Category Type: </label>
+            <select id="category_type" required>
+                <option value="">Select Category...</option>
+                <option value="Medicine">Medicine (MED)</option>
+                <option value="Equipment Scan">Equipment Scan (RAD)</option>
+                <option value="Service">Service / Procedure (SRV)</option>
+            </select>
 
-            <label for="performer_role">Performer Staff Role: </label>
-            <input type="text" id="performer_role" placeholder="e.g. Staff Nurse, MedTech" size="25">
+            <label for="code_prefix">Code Prefix: </label>
+            <input type="text" id="code_prefix" placeholder="MED" size="6" readonly>
 
-            <strong>Total Billing Fee: <span id="total_fee_display">₱ 0.00</span></strong>
+            <label for="unit_price">Unit Price (₱): </label>
+            <input type="number" step="0.01" min="0" id="unit_price" placeholder="0.00" required>
         </div>
         <br>
         <div>
@@ -65,14 +56,12 @@
         <label for="search_input">Search: </label>
         <input type="text" id="search_input" placeholder="Search item name or code...">
 
-        <label for="filter_type">Category: </label>
-        <select id="filter_type">
+        <label for="filter_category">Category: </label>
+        <select id="filter_category">
             <option value="all">All Categories</option>
-        </select>
-
-        <label for="filter_station">Department: </label>
-        <select id="filter_station">
-            <option value="all">All Departments</option>
+            <option value="Medicine">Medicines Only</option>
+            <option value="Equipment Scan">Equipment Scans Only</option>
+            <option value="Service">Services Only</option>
         </select>
 
         <label for="filter_status">Status: </label>
@@ -88,8 +77,8 @@
             <option value="code_desc">Code (Z to A)</option>
             <option value="name_asc">Item Name (A to Z)</option>
             <option value="name_desc">Item Name (Z to A)</option>
-            <option value="total_asc">Total Fee (Lowest First)</option>
-            <option value="total_desc">Total Fee (Highest First)</option>
+            <option value="price_asc">Price (Lowest First)</option>
+            <option value="price_desc">Price (Highest First)</option>
             <option value="id_desc">Newest First</option>
         </select>
     </div>

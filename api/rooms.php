@@ -1,24 +1,29 @@
 <?php
 /**
- * Hospital Rooms & Beds Master File API
+ * Hospital Rooms, Wards & Beds Master File API (Revised)
  * Milestone 1 Master File Module
- * Handles Room Numbers, Room Classifications (Ward, Private, ICU), Daily Rates, CRUD, and Soft/Hard Delete
+ * Handles Wards, Bed Capacities, Daily Rates, Individual Bed Tracking, CRUD, and Soft/Hard Delete
  */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
-class Room
+class RoomMaster
 {
     /**
-     * Read: Retrieve all rooms with room type classifications
+     * Read: Retrieve all rooms/wards with aggregated bed counts
      */
     function getAllRooms()
     {
         include "../connection.php";
 
-        $sql = "SELECT r.*, rt.Type_Name, rt.Code_Prefix 
+        $sql = "SELECT r.*, rt.Type_Name, rt.Code_Prefix,
+                       COUNT(b.Bed_ID) AS Total_Beds,
+                       COALESCE(SUM(CASE WHEN b.Is_Available = 1 THEN 1 ELSE 0 END), 0) AS Vacant_Beds,
+                       COALESCE(SUM(CASE WHEN b.Is_Available = 0 THEN 1 ELSE 0 END), 0) AS Occupied_Beds
                 FROM Room r 
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
+                LEFT JOIN Bed b ON r.Room_ID = b.Room_ID AND b.Is_Active = 1 
+                GROUP BY r.Room_ID 
                 ORDER BY r.Is_Active DESC, r.Room_Number ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -28,7 +33,26 @@ class Room
     }
 
     /**
-     * Read: Retrieve active room types for the classification dropdown
+     * Read: Retrieve individual beds list
+     */
+    function getAllBeds()
+    {
+        include "../connection.php";
+
+        $sql = "SELECT b.*, r.Room_Number, rt.Type_Name, r.Daily_Rate 
+                FROM Bed b 
+                INNER JOIN Room r ON b.Room_ID = r.Room_ID 
+                INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
+                ORDER BY b.Is_Active DESC, r.Room_Number ASC, b.Bed_Number ASC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode($rs);
+    }
+
+    /**
+     * Read: Retrieve active room types
      */
     function getAllRoomTypes()
     {
@@ -43,7 +67,7 @@ class Room
     }
 
     /**
-     * Read: Retrieve a single room by ID for editing
+     * Read: Retrieve a single room by ID
      */
     function getRoomById($json)
     {
@@ -60,66 +84,60 @@ class Room
     }
 
     /**
-     * Create: Insert a new hospital room
+     * Create: Insert a new room/ward and automatically generate its beds
      */
     function insertRoom($json)
     {
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $roomNumber = trim($json['room_number'] ?? '');
-        $dailyRate  = (float)($json['daily_rate'] ?? 0);
+        $capacity = max(1, intval($json['capacity_beds'] ?? 1));
+        $roomNumber = trim($json['room_number']);
 
-        // Check if room number already exists
-        $checkSql = "SELECT COUNT(*) FROM Room WHERE Room_Number = :num";
-        $checkStmt = $conn->prepare($checkSql);
-        $checkStmt->bindParam(":num", $roomNumber);
-        $checkStmt->execute();
-        if ($checkStmt->fetchColumn() > 0) {
-            return json_encode(["status" => 0, "message" => "Room Number '{$roomNumber}' already exists."]);
-        }
-
-        $sql = "INSERT INTO Room (Room_Number, Room_Type_ID, Daily_Rate, Is_Available, Is_Active) 
-                VALUES (:room_number, :room_type_id, :daily_rate, 1, 1)";
+        $sql = "INSERT INTO Room (Room_Number, Room_Type_ID, Daily_Rate, Capacity_Beds, Is_Active) 
+                VALUES (:number, :type_id, :rate, :capacity, 1)";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":room_number", $roomNumber);
-        $stmt->bindParam(":room_type_id", $json['room_type_id']);
-        $stmt->bindParam(":daily_rate", $dailyRate);
+        $stmt->bindParam(":number", $roomNumber);
+        $stmt->bindParam(":type_id", $json['room_type_id']);
+        $stmt->bindParam(":rate", $json['daily_rate']);
+        $stmt->bindParam(":capacity", $capacity);
         $stmt->execute();
 
-        return json_encode($stmt->rowCount() > 0 ? 1 : 0);
+        $roomId = $conn->lastInsertId();
+
+        // Auto-provision beds for this ward/room
+        $stmtBed = $conn->prepare("INSERT INTO Bed (Room_ID, Bed_Number, Bed_Code, Is_Available, Is_Active) VALUES (:room_id, :bed_num, :bed_code, 1, 1)");
+        for ($i = 1; $i <= $capacity; $i++) {
+            $bedNumber = sprintf("Bed-%02d", $i);
+            $bedCode = sprintf("%s-B%02d", $roomNumber, $i);
+            $stmtBed->execute([
+                ':room_id'  => $roomId,
+                ':bed_num'  => $bedNumber,
+                ':bed_code' => $bedCode
+            ]);
+        }
+
+        return json_encode(1);
     }
 
     /**
-     * Update: Modify an existing room
+     * Update: Modify room details
      */
     function updateRoom($json)
     {
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $roomNumber = trim($json['room_number'] ?? '');
-        $dailyRate  = (float)($json['daily_rate'] ?? 0);
-
-        // Ensure room number is unique to other rooms
-        $checkSql = "SELECT COUNT(*) FROM Room WHERE Room_Number = :num AND Room_ID != :id";
-        $checkStmt = $conn->prepare($checkSql);
-        $checkStmt->bindParam(":num", $roomNumber);
-        $checkStmt->bindParam(":id", $json['room_id']);
-        $checkStmt->execute();
-        if ($checkStmt->fetchColumn() > 0) {
-            return json_encode(["status" => 0, "message" => "Room Number '{$roomNumber}' already exists on another room."]);
-        }
 
         $sql = "UPDATE Room 
-                SET Room_Number  = :room_number, 
-                    Room_Type_ID = :room_type_id, 
-                    Daily_Rate   = :daily_rate 
-                WHERE Room_ID = :id";
+                SET Room_Number  = :number, 
+                    Room_Type_ID = :type_id, 
+                    Daily_Rate   = :rate 
+                WHERE Room_ID    = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":room_number", $roomNumber);
-        $stmt->bindParam(":room_type_id", $json['room_type_id']);
-        $stmt->bindParam(":daily_rate", $dailyRate);
+        $stmt->bindParam(":number", $json['room_number']);
+        $stmt->bindParam(":type_id", $json['room_type_id']);
+        $stmt->bindParam(":rate", $json['daily_rate']);
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
 
@@ -142,11 +160,15 @@ class Room
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
 
+        // Also sync active status to beds
+        $conn->prepare("UPDATE Bed SET Is_Active = (SELECT Is_Active FROM Room WHERE Room_ID = :id) WHERE Room_ID = :id2")
+             ->execute([':id' => $json['room_id'], ':id2' => $json['room_id']]);
+
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
     /**
-     * Hard Delete: Permanently remove the room from MySQL
+     * Hard Delete: Permanently remove room and its beds if not referenced in room transfers
      */
     function hardDeleteRoom($json)
     {
@@ -164,7 +186,7 @@ class Room
         } catch (PDOException $e) {
             return json_encode([
                 "status" => 0,
-                "message" => "Cannot hard delete: This room has historical occupancy/billing records. Please use Soft Delete instead."
+                "message" => "Cannot hard delete: This room/bed has past patient stay or transfer records. Please use Soft Delete (Deactivate) instead."
             ]);
         }
     }
@@ -179,10 +201,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $json = $_POST['json'] ?? "";
 }
 
-$room = new Room();
+$room = new RoomMaster();
 switch ($operation) {
     case "getAllRooms":
         echo $room->getAllRooms();
+        break;
+    case "getAllBeds":
+        echo $room->getAllBeds();
         break;
     case "getAllRoomTypes":
         echo $room->getAllRoomTypes();
@@ -204,4 +229,3 @@ switch ($operation) {
         break;
 }
 ?>
-

@@ -7,7 +7,7 @@
 </head>
 <body>
 
-    <h2>Hospital Billing System</h2>
+    <h2>Hospital Billing and Patient Information System</h2>
     <div>
         User: <strong id="user-display">Loading...</strong> | 
         <button id="btn-logout">Logout</button>
@@ -16,15 +16,14 @@
     <hr>
 
     <h3>Milestone 1: Master File Module</h3>
-    <p>Select a master file or lookup table to manage:</p>
+    <p>Select a master file directory to manage:</p>
 
     <ul>
-        <li><a href="medicines.html">Medicines Catalog (Catalog_Medicine)</a></li>
-        <li><a href="scans.html">Equipment & Diagnostic Scans (Catalog_Equipment_Scan)</a></li>
-        <li><a href="services.html">Hospital Services (Catalog_Service)</a></li>
-        <li><a href="rooms.html">Rooms & Daily Rates (Room & Enum_Room_Type)</a></li>
-        <li><a href="doctors.html">Doctors & Fees (Doctor & Enum_Doctor_Type)</a></li>
-        <li><a href="discounts.html">Billing Discounts (Enum_Discount)</a></li>
+        <li><a href="patients.html"><strong>Patients Directory</strong> (Patient, Demographics, Blood Types)</a></li>
+        <li><a href="doctors.html"><strong>Doctors & Professional Fees</strong> (Doctor, Multi-Specialties, Round Fees)</a></li>
+        <li><a href="rooms.html"><strong>Rooms, Wards & Beds</strong> (Room, Bed Hierarchy, Board & Lodging Rates)</a></li>
+        <li><a href="catalogs.html"><strong>Charge Catalogs</strong> (Merged Medicines [MED], Scans [RAD], Procedures [SRV])</a></li>
+        <li><a href="discounts.html"><strong>Billing Discounts</strong> (Enum_Discount, Senior, PWD, Government)</a></li>
     </ul>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

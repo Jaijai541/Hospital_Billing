@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rooms & Beds Master File — Hospital Billing System</title>
+    <title>Rooms & Beds Directory — Hospital Billing System</title>
 </head>
 <body>
 
-    <p><a href="index.html">&laquo; Back to Dashboard</a></p>
+    <p><a href="index.html">Back to Dashboard</a></p>
 
-    <h2>Hospital Rooms & Beds Directory (Master File)</h2>
+    <h2>Rooms, Wards & Beds Directory (Master File)</h2>
     <div>
         User: <strong id="user-display">Loading...</strong> | 
         <button id="btn-logout">Logout</button>
@@ -17,42 +17,42 @@
 
     <hr>
 
-    <!-- Add / Edit Form -->
+    <!-- Add / Edit Room & Ward Form -->
     <div>
-        <h3 id="form-title">Add New Room / Bed</h3>
+        <h3 id="form-title">Add New Ward / Room</h3>
         <input type="hidden" id="room_id" value="">
 
         <div>
-            <label for="room_number">Room Number / Code: </label>
-            <input type="text" id="room_number" placeholder="e.g. WRD-101, PVT-201" size="25" required>
+            <label for="room_number">Ward / Room Number: </label>
+            <input type="text" id="room_number" placeholder="e.g. WRD-03, PVT-202" size="20" required>
 
-            &nbsp;&nbsp;
-            <label for="room_type_id">Room Type Classification: </label>
+            <label for="room_type_id">Room Classification: </label>
             <select id="room_type_id" required>
-                <option value="">Select Room Type...</option>
+                <option value="">Select Classification...</option>
             </select>
 
-            &nbsp;&nbsp;
             <label for="daily_rate">Daily Board & Lodging Rate (₱): </label>
             <input type="number" step="0.01" min="0" id="daily_rate" placeholder="0.00" required>
+
+            <label for="capacity_beds">Bed Capacity (beds fitted): </label>
+            <input type="number" id="capacity_beds" min="1" max="20" value="1" required>
         </div>
         <br>
         <div>
-            <button id="btnSubmit">Submit</button>
+            <button id="btnSubmit">Submit Room</button>
             <button id="btnCancel" style="display:none;">Cancel</button>
         </div>
     </div>
 
     <hr>
 
-    <h3>Rooms & Beds List</h3>
+    <h3>1. Wards & Rooms Overview</h3>
 
     <!-- Search, Filter, and Sort Controls (Pure HTML) -->
     <div style="margin-bottom: 12px;">
         <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search room number...">
+        <input type="text" id="search_input" placeholder="Search room/ward number...">
 
-        &nbsp;&nbsp;
         <label for="filter_status">Status: </label>
         <select id="filter_status">
             <option value="all">All Records</option>
@@ -60,33 +60,30 @@
             <option value="0">Soft-Deleted Only</option>
         </select>
 
-        &nbsp;&nbsp;
         <label for="filter_room_type">Type: </label>
         <select id="filter_room_type">
             <option value="all">All Room Types</option>
         </select>
 
-        &nbsp;&nbsp;
-        <label for="filter_availability">Availability: </label>
-        <select id="filter_availability">
-            <option value="all">All Status</option>
-            <option value="1">Vacant</option>
-            <option value="0">Occupied</option>
-        </select>
-
-        &nbsp;&nbsp;
         <label for="sort_by">Sort By: </label>
         <select id="sort_by">
             <option value="number_asc">Room Number (A to Z)</option>
             <option value="number_desc">Room Number (Z to A)</option>
             <option value="rate_asc">Daily Rate (Lowest First)</option>
             <option value="rate_desc">Daily Rate (Highest First)</option>
-            <option value="id_desc">Newest First</option>
+            <option value="beds_desc">Most Beds First</option>
         </select>
     </div>
 
     <div id="table-div">
-        <!-- Dynamic Table created by JavaScript -->
+        <!-- Room/Ward Table generated dynamically by JavaScript -->
+    </div>
+
+    <hr>
+
+    <h3>2. Individual Beds List</h3>
+    <div id="beds-table-div">
+        <!-- Individual Beds Table generated dynamically by JavaScript -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

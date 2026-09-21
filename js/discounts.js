@@ -1,14 +1,8 @@
-/**
- * Billing Discounts Master File Controller (Axios / Frontend)
- * Follows the Book example structure: dynamic table creation with border="1"
- * Includes Search, Filter, Sort, Soft/Hard Delete, and Detailed Console Logging
- */
-
 const baseApiUrl = "http://localhost/Hospital_Billing/api";
 let allDiscounts = []; // In-memory cache for fast search, filter, and sort
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Session Verification
+    // 1.
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         window.location.href = "login.html";
@@ -31,22 +25,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 2. Initial Data Load
+    // 2.
     displayDiscounts();
 
-    // 3. Form Event Listeners
+    // 3.
     document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
     document.getElementById("btnCancel").addEventListener("click", resetForm);
 
-    // 4. Search, Filter, and Sort Listeners
+    // 4.
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
 });
 
-/**
- * Fetch all discounts from API into memory and apply initial filter/sort
- */
 const displayDiscounts = async () => {
     const tableDiv = document.getElementById("table-div");
 
@@ -70,9 +61,6 @@ const displayDiscounts = async () => {
     }
 };
 
-/**
- * Search, Filter, and Sort the discounts list dynamically
- */
 const filterAndSortDiscounts = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
@@ -96,7 +84,6 @@ const filterAndSortDiscounts = () => {
         return matchesSearch && matchesStatus;
     });
 
-    // Sorting logic
     filtered.sort((a, b) => {
         const codeA = `${a.Code_Prefix || 'DISC'}-${a.Discount_ID}`;
         const codeB = `${b.Code_Prefix || 'DISC'}-${b.Discount_ID}`;
@@ -125,9 +112,6 @@ const filterAndSortDiscounts = () => {
     displayDiscountsTable(filtered);
 };
 
-/**
- * Render pure HTML table matching Book/app.js pattern
- */
 const displayDiscountsTable = (discounts) => {
     const tableDiv = document.getElementById("table-div");
     tableDiv.innerHTML = "";
@@ -196,9 +180,6 @@ const displayDiscountsTable = (discounts) => {
     });
 };
 
-/**
- * Load existing discount data into form for editing
- */
 const loadDiscountForEdit = async (discountId) => {
     try {
         console.log(`[API] Requesting discount details for ID: ${discountId}`);
@@ -227,9 +208,6 @@ const loadDiscountForEdit = async (discountId) => {
     }
 };
 
-/**
- * Insert or Update Discount (POST)
- */
 const saveDiscount = async () => {
     const discountId = document.getElementById("discount_id").value;
     const discountName = document.getElementById("discount_name").value.trim();
@@ -286,9 +264,6 @@ const saveDiscount = async () => {
     }
 };
 
-/**
- * Reset form back to Add mode
- */
 const resetForm = () => {
     document.getElementById("discount_id").value = "";
     document.getElementById("discount_name").value = "";
@@ -300,9 +275,6 @@ const resetForm = () => {
     console.log("[UI] Form reset to Add mode.");
 };
 
-/**
- * Soft Delete / Restore (POST)
- */
 const toggleDiscountStatus = async (discountId, currentStatus, name) => {
     const actionText = (currentStatus == 1) ? "SOFT DELETE (mark as inactive)" : "RESTORE (reactivate)";
     if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Soft Delete keeps the record in the database so past final billing invoices remain intact)`)) {
@@ -335,9 +307,6 @@ const toggleDiscountStatus = async (discountId, currentStatus, name) => {
     }
 };
 
-/**
- * Hard Delete: Permanently remove the record from MySQL (POST)
- */
 const hardDeleteDiscount = async (discountId, name) => {
     if (!confirm(`WARNING: Are you sure you want to HARD DELETE (permanently remove) "${name}" from the database?\n\nThis action physically deletes the record from MySQL and cannot be undone!`)) {
         return;

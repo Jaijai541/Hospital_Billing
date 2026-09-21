@@ -1,10 +1,5 @@
-/**
- * Dashboard Controller (Axios / Frontend)
- * Manages admin session verification and logout
- */
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Session Verification: Ensure user is logged in
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         window.location.href = "login.html";
@@ -16,8 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userDisplay) {
         userDisplay.textContent = `${user.full_name} (${user.role_name})`;
     }
-
-    // 2. Logout Handler
+    
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {

@@ -1,11 +1,7 @@
-/**
- * Login Controller (Axios / Frontend)
- */
 
 const baseApiUrl = "http://localhost/Hospital_Billing/api";
 
 document.addEventListener("DOMContentLoaded", () => {
-    // If user is already logged in, redirect to dashboard
     const loggedInUser = sessionStorage.getItem("hospital_user");
     if (loggedInUser) {
         window.location.href = "index.html";

@@ -8,6 +8,9 @@ let admissionId = null;
 let admissionData = null;
 let catalogItems = [];
 let assignedDoctors = [];
+let currentUser = null;
+let discountList = [];
+let latestSummary = null;
 
 // 1. Initialization
 window.addEventListener('DOMContentLoaded', () => {
@@ -21,7 +24,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const currentUser = JSON.parse(userJson);
+    currentUser = JSON.parse(userJson);
     const userDisplay = document.getElementById('user-display');
     if (userDisplay) {
         userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
@@ -77,6 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadLedger();
     loadLedgerSummary();
     loadDispensedMedicines();
+    loadDiscounts();
 });
 
 // 2. Load Patient & Admission Profile Banner
@@ -665,7 +669,9 @@ function loadLedgerSummary() {
     axios.post('../api/ledger.php', formData)
         .then(response => {
             console.log("admission_details.js: Financial summary received:", response.data);
+            latestSummary = response.data;
             renderSummaryBox(response.data);
+            renderSettlementSection();
         })
         .catch(err => {
             console.error("admission_details.js: Error fetching summary:", err);
@@ -791,3 +797,146 @@ function submitMedicineReturn() {
             alert("Network error processing medicine return.");
         });
 }
+
+// 9. Section 5: Billing Settlement & Discounts
+function loadDiscounts() {
+    console.log("admission_details.js: Fetching discount options...");
+
+    const formData = new FormData();
+    formData.append('operation', 'getDiscountList');
+
+    axios.post('../api/invoices.php', formData)
+        .then(response => {
+            console.log("admission_details.js: Discounts received:", response.data);
+            discountList = response.data || [];
+            renderSettlementSection();
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error loading discounts:", err);
+        });
+}
+
+function renderSettlementSection() {
+    const container = document.getElementById('settlement-container');
+    if (!container) return;
+
+    if (!admissionData) {
+        container.innerHTML = '<p>Loading admission information...</p>';
+        return;
+    }
+
+    if (admissionData.Status === 'Billed') {
+        container.innerHTML = `
+            <div style="padding: 12px; background-color: #e8f8e8; border: 1px solid #4CAF50;">
+                <h4 style="margin-top:0;">✔ THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h4>
+                <p>The billing invoice and official Statement of Account (SOA) have been generated and finalized.</p>
+                <button onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'" style="padding: 6px 12px; font-weight: bold; cursor: pointer;">🖨 View / Print Official Statement of Account (SOA)</button>
+            </div>
+        `;
+        return;
+    }
+
+    const gross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
+    const formattedGross = gross.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    let discountOptionsHtml = '<option value="" data-pct="0">None (0.00%)</option>';
+    discountList.forEach(d => {
+        discountOptionsHtml += `<option value="${d.Discount_ID}" data-pct="${d.Discount_Percentage}">${d.Discount_Name} (${parseFloat(d.Discount_Percentage).toFixed(2)}%)</option>`;
+    });
+
+    const isOccupyingBed = admissionData.Bed_Code ? `<p style="color: #856404; background-color: #fff3cd; padding: 8px; border: 1px solid #ffeeba;"><strong>Note:</strong> The patient is currently assigned to Bed <strong>${admissionData.Bed_Code}</strong>. Processing settlement will automatically calculate final board & lodging, release the bed as available, and finalize the account.</p>` : '';
+
+    let html = `
+        ${isOccupyingBed}
+        <table border="1" cellpadding="6" cellspacing="0" width="100%">
+            <tr bgcolor="#f9f9f9">
+                <td colspan="2"><strong>BILLING SETTLEMENT & STATUTORY DISCOUNT BREAKDOWN</strong></td>
+            </tr>
+            <tr>
+                <td width="40%"><strong>Select Statutory / Institutional Discount:</strong></td>
+                <td width="60%">
+                    <select id="settle_discount_id">
+                        ${discountOptionsHtml}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Gross Total Accumulated Charges:</td>
+                <td align="right"><strong>₱<span id="settle-gross-display">${formattedGross}</span></strong></td>
+            </tr>
+            <tr>
+                <td>Applied Discount (<span id="settle-discount-pct-label">0.00%</span>):</td>
+                <td align="right" style="color: green;"><strong>-<span id="settle-discount-amount-display">₱0.00</span></strong></td>
+            </tr>
+            <tr bgcolor="#e0e0e0">
+                <td><h3 style="margin: 5px 0;">NET AMOUNT DUE / SETTLED:</h3></td>
+                <td align="right"><h3 style="margin: 5px 0;" id="settle-net-display">₱${formattedGross}</h3></td>
+            </tr>
+        </table>
+        <br>
+        <button id="btnSettleBill" style="padding: 8px 18px; font-weight: bold; cursor: pointer; background-color: #f2f2f2;">Process Final Settlement & Generate Official Invoice</button>
+    `;
+
+    container.innerHTML = html;
+
+    // Attach Discount recalculation listener
+    const discountSelect = document.getElementById('settle_discount_id');
+    if (discountSelect) {
+        discountSelect.addEventListener('change', () => {
+            const selectedOpt = discountSelect.options[discountSelect.selectedIndex];
+            const pct = parseFloat(selectedOpt.dataset.pct || 0);
+            const discountAmt = Math.round((gross * (pct / 100)) * 100) / 100;
+            const netAmt = Math.max(0, gross - discountAmt);
+
+            document.getElementById('settle-discount-pct-label').textContent = `${pct.toFixed(2)}%`;
+            document.getElementById('settle-discount-amount-display').textContent = `₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            document.getElementById('settle-net-display').textContent = `₱${netAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        });
+    }
+
+    // Attach Settle button listener
+    const btnSettle = document.getElementById('btnSettleBill');
+    if (btnSettle) {
+        btnSettle.addEventListener('click', submitSettlement);
+    }
+}
+
+function submitSettlement() {
+    console.log("admission_details.js: Submitting final billing settlement...");
+
+    const discountSelect = document.getElementById('settle_discount_id');
+    const discountId = discountSelect ? discountSelect.value : null;
+
+    if (!confirm("Are you sure you want to finalize this billing settlement?\n\nThis will record the official Final Invoice, calculate statutory discounts, release the bed (if active), and mark the admission as 'Billed'.")) {
+        return;
+    }
+
+    const payload = {
+        admission_id: admissionId,
+        user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 1) : 1,
+        discount_id: discountId
+    };
+
+    console.log("admission_details.js: Settlement payload:", payload);
+
+    const formData = new FormData();
+    formData.append('operation', 'settleInvoice');
+    formData.append('json', JSON.stringify(payload));
+
+    axios.post('../api/invoices.php', formData)
+        .then(response => {
+            console.log("admission_details.js: Settlement response:", response.data);
+            if (response.data.success) {
+                alert(response.data.message);
+                // Redirect immediately to the official printable invoice
+                window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
+            } else {
+                alert("Settlement Error: " + (response.data.error || "Failed to settle bill."));
+            }
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error during settlement:", err);
+            alert("Network error processing settlement.");
+        });
+}
+

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Statement of Account — Hospital Billing System</title>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                margin: 0;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Print and Navigation Toolbar (Hidden during printing) -->
+    <div class="no-print" style="margin-bottom: 20px; padding: 10px; background-color: #eee; border: 1px solid #ccc;">
+        <button onclick="window.print()" style="font-weight: bold; padding: 5px 15px; cursor: pointer;">🖨 Print Official Invoice / SOA</button>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="invoices.html">Invoices Directory</a>
+        &nbsp;|&nbsp;
+        <a href="admissions.html">Admissions Log</a>
+        &nbsp;|&nbsp;
+        <a href="index.html">Dashboard</a>
+    </div>
+
+    <!-- Official Hospital Letterhead -->
+    <div style="text-align: center;">
+        <h2 style="margin-bottom: 3px;">METROPOLITAN GENERAL HOSPITAL & MEDICAL CENTER</h2>
+        <p style="margin: 2px 0;">123 Healthcare Avenue, Medical District, Metro Manila, Philippines</p>
+        <p style="margin: 2px 0;">Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
+        <h3 style="margin-top: 15px; text-decoration: underline;">OFFICIAL STATEMENT OF ACCOUNT & IN-PATIENT BILLING INVOICE</h3>
+    </div>
+
+    <br>
+
+    <!-- Invoice & Settlement Metadata Table -->
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+        <tr bgcolor="#f2f2f2">
+            <td colspan="4"><strong>INVOICE & CASE RECORD</strong></td>
+        </tr>
+        <tr>
+            <td width="25%"><strong>Invoice Number:</strong></td>
+            <td width="25%"><strong id="inv-code">Loading...</strong></td>
+            <td width="25%"><strong>Settlement Date & Time:</strong></td>
+            <td width="25%" id="inv-settlement-date">Loading...</td>
+        </tr>
+        <tr>
+            <td><strong>Admission Number:</strong></td>
+            <td id="inv-admission-code">Loading...</td>
+            <td><strong>Admission Date:</strong></td>
+            <td id="inv-admission-date">Loading...</td>
+        </tr>
+        <tr>
+            <td><strong>Total Length of Stay:</strong></td>
+            <td><strong id="inv-stay-days">Loading...</strong> day(s)</td>
+            <td><strong>Cashier / Processed By:</strong></td>
+            <td id="inv-cashier">Loading...</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- Patient Demographics Table -->
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+        <tr bgcolor="#f2f2f2">
+            <td colspan="4"><strong>PATIENT DEMOGRAPHIC & ADMISSION PROFILE</strong></td>
+        </tr>
+        <tr>
+            <td width="25%"><strong>Patient Name:</strong></td>
+            <td width="25%"><strong id="patient-name">Loading...</strong></td>
+            <td width="25%"><strong>Hospital Patient Code:</strong></td>
+            <td width="25%" id="patient-code">Loading...</td>
+        </tr>
+        <tr>
+            <td><strong>Date of Birth / Age:</strong></td>
+            <td id="patient-age">Loading...</td>
+            <td><strong>Gender / Blood Type:</strong></td>
+            <td id="patient-gender-blood">Loading...</td>
+        </tr>
+        <tr>
+            <td><strong>Contact Number:</strong></td>
+            <td id="patient-contact">Loading...</td>
+            <td><strong>Residential Address:</strong></td>
+            <td id="patient-address">Loading...</td>
+        </tr>
+        <tr>
+            <td><strong>Emergency Contact:</strong></td>
+            <td id="patient-emergency">Loading...</td>
+            <td><strong>Chief Complaint:</strong></td>
+            <td id="patient-complaint">Loading...</td>
+        </tr>
+        <tr>
+            <td><strong>Assigned Physician(s):</strong></td>
+            <td colspan="3" id="patient-doctors">Loading...</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- Itemized Statement of Charges (Categorized) -->
+    <h4>ITEMIZED STATEMENT OF CHARGES & SERVICES</h4>
+
+    <div id="itemized-charges-container">
+        <!-- Tables dynamically populated by JavaScript -->
+        <p>Loading itemized statement...</p>
+    </div>
+
+    <br>
+
+    <!-- Financial Summary & Statutory Discount Table -->
+    <table border="1" cellpadding="6" cellspacing="0" width="100%">
+        <tr bgcolor="#f2f2f2">
+            <td colspan="2"><strong>BILLING SETTLEMENT & STATUTORY ADJUSTMENTS</strong></td>
+        </tr>
+        <tr>
+            <td width="70%">Room Accommodation & Board Subtotal:</td>
+            <td width="30%" align="right" id="summary-room">₱0.00</td>
+        </tr>
+        <tr>
+            <td>Attending Physician Bedside Visits & Professional Fees:</td>
+            <td align="right" id="summary-doctor">₱0.00</td>
+        </tr>
+        <tr>
+            <td>Pharmaceuticals & Medications (Net of Credited Returns):</td>
+            <td align="right" id="summary-medicine">₱0.00</td>
+        </tr>
+        <tr>
+            <td>Diagnostic & Radiology Scans Subtotal:</td>
+            <td align="right" id="summary-scan">₱0.00</td>
+        </tr>
+        <tr>
+            <td>Procedures & Medical Floor Services Subtotal:</td>
+            <td align="right" id="summary-service">₱0.00</td>
+        </tr>
+        <tr bgcolor="#f9f9f9">
+            <td><strong>GROSS TOTAL ACCUMULATED CHARGES:</strong></td>
+            <td align="right"><strong id="summary-gross">₱0.00</strong></td>
+        </tr>
+        <tr bgcolor="#eef9ee">
+            <td><strong>LESS: APPLIED STATUTORY / INSTITUTIONAL DISCOUNT (<span id="discount-label">None</span>):</strong></td>
+            <td align="right"><strong id="summary-discount">-₱0.00</strong></td>
+        </tr>
+        <tr bgcolor="#e0e0e0">
+            <td><h3 style="margin: 5px 0;">NET TOTAL AMOUNT SETTLED / DUE:</h3></td>
+            <td align="right"><h3 style="margin: 5px 0;" id="summary-net">₱0.00</h3></td>
+        </tr>
+    </table>
+
+    <br><br>
+
+    <!-- Official Certification & Signatures Table -->
+    <table border="0" cellpadding="10" cellspacing="0" width="100%">
+        <tr>
+            <td width="33%" align="center">
+                _______________________________________<br>
+                <strong id="sig-cashier">Cashier Name</strong><br>
+                <small>Billing Officer / Cashier</small>
+            </td>
+            <td width="33%" align="center">
+                _______________________________________<br>
+                <strong id="sig-doctor">Attending Physician</strong><br>
+                <small>Medical Specialist / Attending</small>
+            </td>
+            <td width="33%" align="center">
+                _______________________________________<br>
+                <strong id="sig-patient">Patient / Authorized Representative</strong><br>
+                <small>Conforme / Signature Over Printed Name</small>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+    <div style="text-align: center; font-size: 11px; color: #555;">
+        <em>This document serves as an Official In-Patient Statement of Account generated by the Hospital Billing System.</em>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/invoice_print.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices & Settled Accounts — Hospital Billing System</title>
+</head>
+<body>
+
+    <p>
+        <a href="index.html">Back to Dashboard</a> | 
+        <a href="admissions.html">Admissions Log</a> | 
+        <a href="patients.html">Patients Directory</a> | 
+        <a href="archive.html">System Archive</a>
+    </p>
+
+    <h2>Billing Invoices & Settled Accounts Directory</h2>
+    <div>
+        User: <strong id="user-display">Loading...</strong> | 
+        <button id="btn-logout">Logout</button>
+    </div>
+
+    <hr>
+
+    <p>Directory of all finalized in-patient billing statements, statutory discounts, and payment settlements.</p>
+
+    <!-- Search & Filter Controls -->
+    <div style="margin-bottom: 12px;">
+        <label for="search_input">Search Invoices: </label>
+        <input type="text" id="search_input" placeholder="Search patient name, invoice #, or cashier..." size="40">
+
+        &nbsp;&nbsp;
+        <button id="btnRefresh">Refresh Invoices</button>
+    </div>
+
+    <div id="table-div">
+        <!-- Table generated dynamically by JavaScript -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/invoices.js"></script>
+</body>
+</html>

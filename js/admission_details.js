@@ -211,8 +211,8 @@ function renderOrdersTable(orders) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-    html += '<thead><tr bgcolor="#f2f2f2">';
+    let html = '<table class="data-table">';
+    html += '<thead><tr>';
     html += '<th>Order #</th>';
     html += '<th>Prescribing Physician</th>';
     html += '<th>Item Code & Description</th>';
@@ -229,31 +229,34 @@ function renderOrdersTable(orders) {
         const unitPrice = parseFloat(o.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const total = parseFloat(o.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-        let statusText = o.Status;
+        let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
         if (o.Status === 'Administered') {
-            statusText = `<strong>Administered</strong><br><small>(Charge Posted)</small>`;
+            statusBadge = `<span class="badge badge-success">Administered</span><br><small class="text-muted">(Charge Posted)</small>`;
+        } else if (o.Status === 'Pending') {
+            statusBadge = `<span class="badge badge-warning">Pending</span>`;
+        } else if (o.Status === 'Cancelled') {
+            statusBadge = `<span class="badge badge-danger">Cancelled</span>`;
         }
 
-        let actionHtml = '—';
+        let actionHtml = '<span class="text-muted">—</span>';
         if (o.Status === 'Pending') {
             actionHtml = `
-                <button onclick="administerOrder(${o.Request_ID})"><strong>Administer / Dispense</strong></button>
-                &nbsp;
-                <button onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">Administer</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
             `;
         }
 
         html += '<tr>';
-        html += `<td align="center">ORD-${String(o.Request_ID).padStart(3, '0')}</td>`;
+        html += `<td><strong>ORD-${String(o.Request_ID).padStart(3, '0')}</strong></td>`;
         html += `<td>${o.Doctor_Name}</td>`;
         html += `<td><strong>${o.Item_Code}</strong>: ${o.Item_Name}</td>`;
-        html += `<td>${o.Category_Type}</td>`;
-        html += `<td align="center">${parseFloat(o.Quantity)}</td>`;
-        html += `<td align="right">₱${unitPrice}</td>`;
-        html += `<td align="right"><strong>₱${total}</strong></td>`;
-        html += `<td align="center">${statusText}</td>`;
-        html += `<td><small>Requested: ${o.Request_Timestamp}<br>Administered: ${o.Administered_Timestamp || 'Pending'}</small></td>`;
-        html += `<td align="center">${actionHtml}</td>`;
+        html += `<td><span class="badge badge-info">${o.Category_Type}</span></td>`;
+        html += `<td>${parseFloat(o.Quantity)}</td>`;
+        html += `<td>₱${unitPrice}</td>`;
+        html += `<td><strong>₱${total}</strong></td>`;
+        html += `<td>${statusBadge}</td>`;
+        html += `<td><small class="text-muted">Req: ${o.Request_Timestamp}<br>Adm: ${o.Administered_Timestamp || 'Pending'}</small></td>`;
+        html += `<td>${actionHtml}</td>`;
         html += '</tr>';
     });
 
@@ -393,8 +396,8 @@ function renderRoundsTable(rounds) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-    html += '<thead><tr bgcolor="#f2f2f2">';
+    let html = '<table class="data-table">';
+    html += '<thead><tr>';
     html += '<th>Round #</th>';
     html += '<th>Visiting Physician</th>';
     html += '<th>Doctor Classification</th>';
@@ -406,12 +409,12 @@ function renderRoundsTable(rounds) {
     rounds.forEach(r => {
         const fee = parseFloat(r.Charged_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2});
         html += '<tr>';
-        html += `<td align="center">RND-${String(r.Round_ID).padStart(3, '0')}</td>`;
+        html += `<td><strong>RND-${String(r.Round_ID).padStart(3, '0')}</strong></td>`;
         html += `<td><strong>${r.Doctor_Name}</strong></td>`;
         html += `<td>${r.Doctor_Type}</td>`;
-        html += `<td align="right"><strong>₱${fee}</strong></td>`;
+        html += `<td><strong>₱${fee}</strong></td>`;
         html += `<td>${r.Round_Timestamp}</td>`;
-        html += `<td align="center"><strong>Posted to Ledger</strong></td>`;
+        html += `<td><span class="badge badge-success">Posted to Ledger</span></td>`;
         html += '</tr>';
     });
 
@@ -488,14 +491,14 @@ function renderTransfersTable(transfers) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-    html += '<thead><tr bgcolor="#f2f2f2">';
+    let html = '<table class="data-table">';
+    html += '<thead><tr>';
     html += '<th>Stay #</th>';
     html += '<th>Bed & Room</th>';
     html += '<th>Classification</th>';
     html += '<th>Daily Rate</th>';
-    html += '<th>Date Admitted / Transferred In</th>';
-    html += '<th>Date Transferred Out</th>';
+    html += '<th>Date Admitted / In</th>';
+    html += '<th>Date Out</th>';
     html += '<th>Days Stayed</th>';
     html += '<th>Room Charge</th>';
     html += '<th>Status</th>';
@@ -503,19 +506,23 @@ function renderTransfersTable(transfers) {
 
     transfers.forEach(t => {
         const rate = parseFloat(t.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const fee = t.Total_Room_Fee ? `₱${parseFloat(t.Total_Room_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : 'Accumulating...';
+        const fee = t.Total_Room_Fee ? `₱${parseFloat(t.Total_Room_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '<span class="text-muted">Accumulating...</span>';
         const isCurrent = t.Is_Current_Stay == 1;
 
+        const stayBadge = isCurrent 
+            ? '<span class="badge badge-success">Active Occupancy</span>' 
+            : '<span class="badge badge-secondary">Closed & Charged</span>';
+
         html += '<tr>';
-        html += `<td align="center">STAY-${String(t.Transfer_ID).padStart(3, '0')}</td>`;
+        html += `<td><strong>STAY-${String(t.Transfer_ID).padStart(3, '0')}</strong></td>`;
         html += `<td><strong>${t.Bed_Code}</strong> (${t.Room_Name})</td>`;
         html += `<td>${t.Room_Type}</td>`;
-        html += `<td align="right">₱${rate}/day</td>`;
+        html += `<td>₱${rate}/day</td>`;
         html += `<td>${t.Date_In}</td>`;
-        html += `<td>${t.Date_Out || '<em>Currently In Bed</em>'}</td>`;
-        html += `<td align="center">${t.Total_Days || 'Active'}</td>`;
-        html += `<td align="right"><strong>${fee}</strong></td>`;
-        html += `<td align="center">${isCurrent ? '<strong>Active Occupancy</strong>' : 'Closed & Charged'}</td>`;
+        html += `<td>${t.Date_Out || '<span class="text-muted">Currently In Bed</span>'}</td>`;
+        html += `<td>${t.Total_Days || 'Active'}</td>`;
+        html += `<td><strong>${fee}</strong></td>`;
+        html += `<td>${stayBadge}</td>`;
         html += '</tr>';
     });
 
@@ -622,16 +629,16 @@ function renderLedgerTable(ledger) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-    html += '<thead><tr bgcolor="#f2f2f2">';
+    let html = '<table class="data-table">';
+    html += '<thead><tr>';
     html += '<th>Ledger #</th>';
-    html += '<th>Station / Department</th>';
+    html += '<th>Department Station</th>';
     html += '<th>Category</th>';
     html += '<th>Item Description</th>';
-    html += '<th>Quantity</th>';
+    html += '<th>Qty</th>';
     html += '<th>Unit Price</th>';
-    html += '<th>Total Charge</th>';
-    html += '<th>Transaction Type</th>';
+    html += '<th>Total Amount</th>';
+    html += '<th>Type</th>';
     html += '<th>Timestamp</th>';
     html += '</tr></thead><tbody>';
 
@@ -640,18 +647,20 @@ function renderLedgerTable(ledger) {
         const formattedTotal = parseFloat(row.Total_Charge).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const unitPrice = parseFloat(row.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-        const rowStyle = isReturn ? 'bgcolor="#e8f8e8"' : '';
+        const typeBadge = isReturn 
+            ? '<span class="badge badge-warning">CREDIT / RETURN</span>' 
+            : '<span class="badge badge-primary">CHARGE</span>';
 
-        html += `<tr ${rowStyle}>`;
-        html += `<td align="center">LDG-${String(row.Ledger_ID).padStart(4, '0')}</td>`;
+        html += `<tr ${isReturn ? 'style="background-color: #f0fff4;"' : ''}>`;
+        html += `<td><strong>LDG-${String(row.Ledger_ID).padStart(4, '0')}</strong></td>`;
         html += `<td>${row.Station_Name}</td>`;
-        html += `<td><strong>${row.Category}</strong></td>`;
+        html += `<td><span class="badge badge-info">${row.Category}</span></td>`;
         html += `<td>${row.Description}</td>`;
-        html += `<td align="center">${row.Quantity}</td>`;
-        html += `<td align="right">₱${unitPrice}</td>`;
-        html += `<td align="right"><strong>${isReturn ? '-' : ''}₱${Math.abs(parseFloat(row.Total_Charge)).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>`;
-        html += `<td align="center"><strong>${isReturn ? 'CREDIT / RETURN' : 'CHARGE'}</strong></td>`;
-        html += `<td><small>${row.Timestamp}</small></td>`;
+        html += `<td>${row.Quantity}</td>`;
+        html += `<td>₱${unitPrice}</td>`;
+        html += `<td><strong>${isReturn ? '-' : ''}₱${Math.abs(parseFloat(row.Total_Charge)).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>`;
+        html += `<td>${typeBadge}</td>`;
+        html += `<td><small class="text-muted">${row.Timestamp}</small></td>`;
         html += '</tr>';
     });
 
@@ -690,19 +699,19 @@ function renderSummaryBox(summary) {
     const returns = parseFloat(summary.return_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
     const net = parseFloat(summary.net_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-    let html = '<table border="1" cellpadding="6" cellspacing="0" width="100%">';
-    html += '<tr bgcolor="#f9f9f9"><td colspan="2"><strong>RUNNING FINANCIAL BREAKDOWN & STATEMENT OF CHARGES</strong></td></tr>';
+    let html = '<table class="data-table mb-3">';
+    html += '<thead><tr><th colspan="2">Running Financial Breakdown & Statement of Charges</th></tr></thead><tbody>';
     html += `<tr><td width="70%">Room Accommodation & Board Subtotal:</td><td align="right">₱${room}</td></tr>`;
     html += `<tr><td>Doctor Professional Fees Subtotal:</td><td align="right">₱${doc}</td></tr>`;
     html += `<tr><td>Medications Subtotal (Net of Returns):</td><td align="right">₱${med}</td></tr>`;
     html += `<tr><td>Diagnostic & Equipment Scans Subtotal:</td><td align="right">₱${scan}</td></tr>`;
     html += `<tr><td>Procedures & Medical Services Subtotal:</td><td align="right">₱${srv}</td></tr>`;
-    html += `<tr bgcolor="#f0f0f0"><td><strong>Gross Accumulated Charges:</strong></td><td align="right"><strong>₱${gross}</strong></td></tr>`;
+    html += `<tr><td><strong>Gross Accumulated Charges:</strong></td><td align="right"><strong>₱${gross}</strong></td></tr>`;
     if (parseFloat(summary.return_total) > 0) {
-        html += `<tr bgcolor="#e8f8e8"><td><strong>Less: Total Medicine Returns Credited:</strong></td><td align="right"><strong>-₱${returns}</strong></td></tr>`;
+        html += `<tr style="background-color: #f0fff4;"><td><strong style="color: #2f855a;">Less: Total Medicine Returns Credited:</strong></td><td align="right"><strong style="color: #2f855a;">-₱${returns}</strong></td></tr>`;
     }
-    html += `<tr bgcolor="#e0e0e0"><td><h3>NET CHARGES ACCUMULATED TO DATE:</h3></td><td align="right"><h3>₱${net}</h3></td></tr>`;
-    html += '</table>';
+    html += `<tr style="background-color: #edf2f7;"><td><h3 style="margin: 4px 0; color: #1a202c;">NET CHARGES ACCUMULATED TO DATE:</h3></td><td align="right"><h3 style="margin: 4px 0; color: var(--primary-color);">₱${net}</h3></td></tr>`;
+    html += '</tbody></table>';
 
     container.innerHTML = html;
 }
@@ -827,10 +836,10 @@ function renderSettlementSection() {
 
     if (admissionData.Status === 'Billed') {
         container.innerHTML = `
-            <div style="padding: 12px; background-color: #e8f8e8; border: 1px solid #4CAF50;">
-                <h4 style="margin-top:0;">✔ THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h4>
-                <p>The billing invoice and official Statement of Account (SOA) have been generated and finalized.</p>
-                <button onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'" style="padding: 6px 12px; font-weight: bold; cursor: pointer;">🖨 View / Print Official Statement of Account (SOA)</button>
+            <div class="card p-3" style="background-color: #f0fff4; border: 1px solid #48bb78; border-radius: 8px;">
+                <h3 style="margin-top:0; color: #276749;">✔ THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h3>
+                <p class="text-muted">The billing invoice and official Statement of Account (SOA) have been generated and finalized.</p>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'">🖨 View / Print Official Statement of Account (SOA)</button>
             </div>
         `;
         return;
@@ -844,18 +853,19 @@ function renderSettlementSection() {
         discountOptionsHtml += `<option value="${d.Discount_ID}" data-pct="${d.Discount_Percentage}">${d.Discount_Name} (${parseFloat(d.Discount_Percentage).toFixed(2)}%)</option>`;
     });
 
-    const isOccupyingBed = admissionData.Bed_Code ? `<p style="color: #856404; background-color: #fff3cd; padding: 8px; border: 1px solid #ffeeba;"><strong>Note:</strong> The patient is currently assigned to Bed <strong>${admissionData.Bed_Code}</strong>. Processing settlement will automatically calculate final board & lodging, release the bed as available, and finalize the account.</p>` : '';
+    const isOccupyingBed = admissionData.Bed_Code ? `<p style="color: #856404; background-color: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;"><strong>Note:</strong> The patient is currently assigned to Bed <strong>${admissionData.Bed_Code}</strong>. Processing settlement will automatically calculate final board & lodging, release the bed as available, and finalize the account.</p>` : '';
 
     let html = `
         ${isOccupyingBed}
-        <table border="1" cellpadding="6" cellspacing="0" width="100%">
-            <tr bgcolor="#f9f9f9">
-                <td colspan="2"><strong>BILLING SETTLEMENT & STATUTORY DISCOUNT BREAKDOWN</strong></td>
-            </tr>
+        <table class="data-table mb-3">
+            <thead>
+                <tr><th colspan="2">Billing Settlement & Statutory Discount Breakdown</th></tr>
+            </thead>
+            <tbody>
             <tr>
                 <td width="40%"><strong>Select Statutory / Institutional Discount:</strong></td>
                 <td width="60%">
-                    <select id="settle_discount_id">
+                    <select id="settle_discount_id" class="form-select">
                         ${discountOptionsHtml}
                     </select>
                 </td>
@@ -866,15 +876,17 @@ function renderSettlementSection() {
             </tr>
             <tr>
                 <td>Applied Discount (<span id="settle-discount-pct-label">0.00%</span>):</td>
-                <td align="right" style="color: green;"><strong>-<span id="settle-discount-amount-display">₱0.00</span></strong></td>
+                <td align="right" style="color: #276749;"><strong>-<span id="settle-discount-amount-display">₱0.00</span></strong></td>
             </tr>
-            <tr bgcolor="#e0e0e0">
+            <tr style="background-color: #edf2f7;">
                 <td><h3 style="margin: 5px 0;">NET AMOUNT DUE / SETTLED:</h3></td>
-                <td align="right"><h3 style="margin: 5px 0;" id="settle-net-display">₱${formattedGross}</h3></td>
+                <td align="right"><h3 style="margin: 5px 0; color: var(--primary-color);" id="settle-net-display">₱${formattedGross}</h3></td>
             </tr>
+            </tbody>
         </table>
-        <br>
-        <button id="btnSettleBill" style="padding: 8px 18px; font-weight: bold; cursor: pointer; background-color: #f2f2f2;">Process Final Settlement & Generate Official Invoice</button>
+        <div class="mt-3">
+            <button id="btnSettleBill" class="btn btn-primary btn-lg">Process Final Settlement & Generate Official Invoice</button>
+        </div>
     `;
 
     container.innerHTML = html;

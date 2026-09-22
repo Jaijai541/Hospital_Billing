@@ -4,90 +4,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>In-Patient Admissions — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p>
-        <a href="index.html">Back to Dashboard</a> | 
-        <a href="patients.html">Patients Directory</a> | 
-        <a href="rooms.html">Rooms & Beds</a> | 
-        <a href="archive.html">System Archive</a>
-    </p>
-
-    <h2>In-Patient Admissions & Bed Occupancy Management</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
-
-    <hr>
-
-    <!-- Admit New Patient Form -->
-    <div>
-        <h3 id="form-title">Admit New In-Patient</h3>
-        
-        <div>
-            <label for="patient_id"><strong>Select Patient: </strong></label>
-            <select id="patient_id" required>
-                <option value="">Loading patient directory...</option>
-            </select>
-            <small>(Only registered patients can be admitted)</small>
-        </div>
-        <br>
-
-        <div>
-            <label for="chief_complaint"><strong>Chief Complaint / Initial Assessment: </strong></label><br>
-            <textarea id="chief_complaint" rows="3" cols="60" placeholder="Enter reason for admission, symptoms, initial vital check fee notes..." required></textarea>
-        </div>
-        <br>
-
-        <div>
-            <label for="bed_id"><strong>Assign Vacant Bed: </strong></label>
-            <select id="bed_id" required>
-                <option value="">Loading available beds...</option>
-            </select>
-        </div>
-        <br>
-
-        <div>
-            <strong>Assign Physician(s):</strong><br>
-            <div id="doctors_container" style="margin-top: 5px; max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 8px; width: 600px;">
-                Loading physicians...
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
             </div>
-            <small>Check all attending and resident doctors assigned to this patient.</small>
-        </div>
-        <br>
 
-        <div>
-            <button id="btnSubmitAdmit">Submit In-Patient Admission</button>
-            <button id="btnReset" type="button">Reset Form</button>
-        </div>
-    </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
 
-    <hr>
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
 
-    <h3>Admissions Log</h3>
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
 
-    <!-- Filter and Search Controls -->
-    <div style="margin-bottom: 12px;">
-        <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search patient, bed code, or ID...">
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html" class="active"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
 
-        &nbsp;&nbsp;
-        <label for="filter_status">Admission Status: </label>
-        <select id="filter_status">
-            <option value="all">All Records</option>
-            <option value="Admitted" selected>Admitted (Currently In Hospital)</option>
-            <option value="Discharged">Discharged</option>
-            <option value="Billed">Billed / Settled</option>
-        </select>
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
 
-        &nbsp;&nbsp;
-        <button id="btnRefresh">Refresh List</button>
-    </div>
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
 
-    <div id="table-div">
-        <!-- Table generated dynamically by JavaScript -->
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>In-Patient Admissions & Bed Occupancy</h1>
+                    <span class="subtitle">Clinical Admittance, Bed Allocation & Care Physician Team</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Admit New Patient Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 id="form-title">Admit New In-Patient</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="form-group span-2">
+                                <label class="form-label" for="patient_id">Select Registered Patient</label>
+                                <select id="patient_id" class="form-select" required>
+                                    <option value="">Loading patient directory...</option>
+                                </select>
+                                <small class="text-muted">Only active patients from the directory can be admitted.</small>
+                            </div>
+
+                            <div class="form-group span-2">
+                                <label class="form-label" for="bed_id">Assign Vacant Bed</label>
+                                <select id="bed_id" class="form-select" required>
+                                    <option value="">Loading available beds...</option>
+                                </select>
+                                <small class="text-muted">Shows bed code, room name, type, and daily board & lodging rate.</small>
+                            </div>
+
+                            <div class="form-group span-2">
+                                <label class="form-label" for="chief_complaint">Chief Complaint / Initial Clinical Assessment</label>
+                                <textarea id="chief_complaint" class="form-control" rows="3" placeholder="Enter reason for admission, symptoms, vital signs check consultation notes..." required></textarea>
+                            </div>
+
+                            <div class="form-group span-2">
+                                <label class="form-label">Assign Attending Physician(s)</label>
+                                <div id="doctors_container" class="card-body" style="max-height: 180px; overflow-y: auto; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
+                                    Loading physicians...
+                                </div>
+                                <small class="text-muted">Check all attending and resident doctors responsible for this patient.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-actions mt-3">
+                            <button id="btnSubmitAdmit" class="btn btn-primary">Submit In-Patient Admission</button>
+                            <button id="btnReset" type="button" class="btn btn-secondary">Reset Form</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admissions Directory Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>In-Patient Admissions Log</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="form-group" style="min-width: 280px;">
+                                <label class="form-label" for="search_input">Search Patient, Bed or ID</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search patient name, bed code, or ID...">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="filter_status">Admission Status</label>
+                                <select id="filter_status" class="form-select">
+                                    <option value="all">All Records</option>
+                                    <option value="Admitted" selected>Admitted (Currently In Hospital)</option>
+                                    <option value="Discharged">Discharged</option>
+                                    <option value="Billed">Billed / Settled</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="align-self: flex-end;">
+                                <button id="btnRefresh" class="btn btn-secondary">Refresh List</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" id="table-div">
+                            <!-- Table generated dynamically by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

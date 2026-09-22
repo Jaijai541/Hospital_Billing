@@ -179,8 +179,7 @@ const displayPatientsTable = (patients) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
@@ -201,25 +200,28 @@ const displayPatientsTable = (patients) => {
     const tbody = document.createElement("tbody");
     patients.forEach(pat => {
         const isActive = (pat.Is_Active == 1);
-        const statusText = isActive ? "Active" : "Inactive (Soft Deleted)";
+        const statusBadge = isActive 
+            ? '<span class="badge badge-success">Active</span>' 
+            : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Soft Delete" : "Restore";
+        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
         const fullName = `${pat.Last_Name}, ${pat.First_Name}`;
         const emContact = pat.Emergency_Contact_Name ? `${pat.Emergency_Contact_Name} (${pat.Emergency_Contact_Number || 'N/A'})` : 'None';
 
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${pat.Patient_Code}</td>
+            <td><strong>${pat.Patient_Code}</strong></td>
             <td>${fullName}</td>
             <td>${pat.Date_Of_Birth}</td>
             <td>${pat.Gender_Name}</td>
             <td><strong>${pat.Blood_Type_Name}</strong></td>
             <td>${pat.Contact_Number || 'N/A'}</td>
             <td>${emContact}</td>
-            <td>${statusText}</td>
+            <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn-action-edit" data-id="${pat.Patient_ID}">Edit</button>
-                <button type="button" class="btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${pat.Is_Active}" data-name="${fullName}">${toggleAction}</button>
-                <button type="button" class="btn-action-hard-delete" data-id="${pat.Patient_ID}" data-name="${fullName}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${pat.Patient_ID}">Edit</button>
+                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${pat.Is_Active}" data-name="${fullName}">${toggleAction}</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${pat.Patient_ID}" data-name="${fullName}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);

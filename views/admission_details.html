@@ -4,198 +4,294 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p>
-        <a href="admissions.html">Back to Admissions Log</a> | 
-        <a href="index.html">Dashboard</a> | 
-        <a href="patients.html">Patients Directory</a> | 
-        <a href="archive.html">System Archive</a>
-    </p>
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
+            </div>
 
-    <h2>Patient In-Patient Chart & Live Billing Ledger</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
+
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
+
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
+
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html" class="active"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
+
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
+
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Patient Chart & Live Billing Ledger</h1>
+                    <span class="subtitle">Clinical Care, Doctor Orders, Bed Allocation & Real-Time Account</span>
+                </div>
+                <div>
+                    <a href="admissions.html" class="btn btn-secondary btn-sm">← Back to Admissions</a>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Patient & Admission Banner Card -->
+                <div class="card mb-4" id="patient-banner">
+                    <div class="card-header">
+                        <h2>Patient & Admission Summary</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Patient Name</label>
+                                <div><strong id="banner-patient-name" style="font-size: 1.1rem;">Loading...</strong></div>
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Patient Code</label>
+                                <div><strong id="banner-patient-code" style="font-size: 1.1rem;">Loading...</strong></div>
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">DOB / Age</label>
+                                <div id="banner-patient-age">Loading...</div>
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Gender / Blood Type</label>
+                                <div id="banner-patient-gender-blood">Loading...</div>
+                            </div>
+
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Current Bed</label>
+                                <div><strong id="banner-bed" class="text-primary">Loading...</strong></div>
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Room / Classification</label>
+                                <div id="banner-room">Loading...</div>
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Daily Board Rate</label>
+                                <div id="banner-rate">Loading...</div>
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Admission Status</label>
+                                <div id="banner-status">Loading...</div>
+                            </div>
+
+                            <div class="span-2">
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Chief Complaint / Diagnosis</label>
+                                <div id="banner-complaint" style="font-style: italic;">Loading...</div>
+                            </div>
+                            <div class="span-2">
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Assigned Physician(s)</label>
+                                <div id="banner-doctors">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Doctor Orders & Requests -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>1. Doctor Orders & Requests (Medicines, Scans, Procedures)</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Physicians submit clinical orders here. When administered or dispensed by pharmacy/nursing, charges <strong>automatically post</strong> to the Live Billing Ledger.</p>
+
+                        <div id="order-form-container" class="card p-3 mb-4" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                            <h3 style="font-size: 1rem; margin-bottom: 12px;">Place New Clinical Order</h3>
+                            <div class="form-grid">
+                                <div class="form-group span-2">
+                                    <label class="form-label" for="order_doctor_id">Ordering Physician</label>
+                                    <select id="order_doctor_id" class="form-select" required>
+                                        <option value="">Select Doctor...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group span-2">
+                                    <label class="form-label" for="order_catalog_id">Item / Medication / Procedure</label>
+                                    <select id="order_catalog_id" class="form-select" required>
+                                        <option value="">Select Catalog Item...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="order_qty">Quantity</label>
+                                    <input type="number" id="order_qty" class="form-control" min="1" value="1">
+                                </div>
+
+                                <div class="form-group" style="align-self: flex-end;">
+                                    <button id="btnSubmitOrder" class="btn btn-primary">Submit Clinical Order</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Clinical Orders History</h3>
+                        <div class="table-responsive" id="orders-table-div">
+                            <!-- Table dynamically populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Doctor Bedside Rounds -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>2. Doctor Bedside Rounds & Professional Fees</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Log physician bedside visits. Professional fees are <strong>automatically posted</strong> to the Live Billing Ledger upon logging.</p>
+
+                        <div id="round-form-container" class="card p-3 mb-4" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                            <h3 style="font-size: 1rem; margin-bottom: 12px;">Log Bedside Visit</h3>
+                            <div class="form-grid">
+                                <div class="form-group span-2">
+                                    <label class="form-label" for="round_doctor_id">Visiting Physician</label>
+                                    <select id="round_doctor_id" class="form-select" required>
+                                        <option value="">Select Doctor...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="round_fee">Professional Fee (₱)</label>
+                                    <input type="number" id="round_fee" class="form-control" step="0.01" placeholder="0.00">
+                                </div>
+
+                                <div class="form-group" style="align-self: flex-end;">
+                                    <button id="btnLogRound" class="btn btn-primary">Log Bedside Visit</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bedside Visits Log</h3>
+                        <div class="table-responsive" id="rounds-table-div">
+                            <!-- Table dynamically populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Room & Bed Stays -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>3. Board & Lodging / Bed Stays & Transfers</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Track patient bed occupancy and room upgrades. When transferred, prior room stay duration and rates are calculated and posted to the ledger.</p>
+
+                        <div id="transfer-form-container" class="card p-3 mb-4" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                            <h3 style="font-size: 1rem; margin-bottom: 12px;">Transfer Patient to Another Bed</h3>
+                            <div class="form-grid">
+                                <div class="form-group span-2">
+                                    <label class="form-label" for="transfer_bed_id">Select New Vacant Bed</label>
+                                    <select id="transfer_bed_id" class="form-select">
+                                        <option value="">Select Target Bed...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group span-2" style="align-self: flex-end;">
+                                    <button id="btnTransferBed" class="btn btn-primary">Transfer Bed & Post Stay Charge</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bed Occupancy & Transfer History</h3>
+                        <div class="table-responsive" id="transfers-table-div">
+                            <!-- Table dynamically populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Live Itemized Billing Ledger & Medicine Returns -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>4. Live Itemized Billing Ledger & Financial Breakdown</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Real-time running statement of all accumulated room stays, physician fees, medications, and diagnostics.</p>
+
+                        <!-- Category Breakdown & Grand Total -->
+                        <div id="ledger-summary-div" class="mb-4">
+                            <!-- Summary breakdown populated dynamically -->
+                        </div>
+
+                        <!-- Medicine Return Form -->
+                        <div id="return-form-container" class="card p-3 mb-4" style="background-color: #fffaf0; border: 1px dashed #dd6b20;">
+                            <h3 style="font-size: 1rem; margin-bottom: 8px; color: #c05621;">Process Medicine Return (Negative Credit Adjustment)</h3>
+                            <p class="text-muted mb-3" style="font-size: 0.85rem;">If the patient did not consume dispensed medications, return them here to post an automated negative credit to the ledger.</p>
+                            <div class="form-grid">
+                                <div class="form-group span-2">
+                                    <label class="form-label" for="return_catalog_id">Select Dispensed Medicine to Return</label>
+                                    <select id="return_catalog_id" class="form-select">
+                                        <option value="">No dispensed medicines eligible</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="return_qty">Quantity to Return</label>
+                                    <input type="number" id="return_qty" class="form-control" min="1" value="1">
+                                </div>
+
+                                <div class="form-group" style="align-self: flex-end;">
+                                    <button id="btnReturnMedicine" class="btn btn-warning">Post Return Credit</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Itemized Charges Statement</h3>
+                        <div class="table-responsive" id="ledger-table-div">
+                            <!-- Table dynamically populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Final Settlement, Discounts & Invoicing -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>5. Final Billing Settlement & Official Invoicing</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Finalize the in-patient account, apply statutory discounts (Senior Citizen, PWD, Government), discharge the bed, and generate the Official Statement of Account (SOA).</p>
+
+                        <div id="settlement-container">
+                            <!-- Dynamically rendered based on admission status -->
+                            <p>Loading settlement section...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-
-    <hr>
-
-    <!-- Patient & Admission Banner -->
-    <div id="patient-banner">
-        <table border="1" cellpadding="6" cellspacing="0" width="100%">
-            <tr bgcolor="#f9f9f9">
-                <td colspan="4"><strong>PATIENT & ADMISSION SUMMARY</strong></td>
-            </tr>
-            <tr>
-                <td width="25%"><strong>Patient Name:</strong> <span id="banner-patient-name">Loading...</span></td>
-                <td width="25%"><strong>Patient Code:</strong> <span id="banner-patient-code">Loading...</span></td>
-                <td width="25%"><strong>Date of Birth / Age:</strong> <span id="banner-patient-age">Loading...</span></td>
-                <td width="25%"><strong>Gender / Blood:</strong> <span id="banner-patient-gender-blood">Loading...</span></td>
-            </tr>
-            <tr>
-                <td><strong>Current Bed:</strong> <span id="banner-bed">Loading...</span></td>
-                <td><strong>Room / Type:</strong> <span id="banner-room">Loading...</span></td>
-                <td><strong>Daily Rate:</strong> <span id="banner-rate">Loading...</span></td>
-                <td><strong>Admission Status:</strong> <span id="banner-status">Loading...</span></td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>Chief Complaint:</strong> <span id="banner-complaint">Loading...</span></td>
-                <td colspan="2"><strong>Assigned Physician(s):</strong> <span id="banner-doctors">Loading...</span></td>
-            </tr>
-        </table>
-    </div>
-
-    <br>
-
-    <!-- Section 1: Doctor Orders & Requests -->
-    <fieldset>
-        <legend><h3>1. Doctor Orders & Requests (Medicines, Scans, Procedures)</h3></legend>
-        <p>Physicians submit orders here. When administered/dispensed, the charge <strong>automatically posts</strong> to the Live Billing Ledger.</p>
-
-        <!-- New Order Form -->
-        <div id="order-form-container">
-            <h4>Place New Clinical Order</h4>
-            <div>
-                <label for="order_doctor_id"><strong>Ordering Physician: </strong></label>
-                <select id="order_doctor_id" required>
-                    <option value="">Select Doctor...</option>
-                </select>
-
-                &nbsp;&nbsp;
-                <label for="order_catalog_id"><strong>Item / Service: </strong></label>
-                <select id="order_catalog_id" required>
-                    <option value="">Select Catalog Item...</option>
-                </select>
-
-                &nbsp;&nbsp;
-                <label for="order_qty"><strong>Quantity: </strong></label>
-                <input type="number" id="order_qty" min="1" value="1" style="width: 60px;">
-
-                &nbsp;&nbsp;
-                <button id="btnSubmitOrder">Submit Order (Status: Pending)</button>
-            </div>
-        </div>
-
-        <br>
-        <h4>Orders History</h4>
-        <div id="orders-table-div">
-            <!-- Table dynamically populated by JavaScript -->
-        </div>
-    </fieldset>
-
-    <br>
-
-    <!-- Section 2: Doctor Bedside Rounds -->
-    <fieldset>
-        <legend><h3>2. Doctor Bedside Rounds & Professional Fees</h3></legend>
-        <p>Log bedside physician visits. The professional fee is <strong>automatically posted</strong> to the Live Billing Ledger.</p>
-
-        <div id="round-form-container">
-            <h4>Log Bedside Visit</h4>
-            <div>
-                <label for="round_doctor_id"><strong>Visiting Physician: </strong></label>
-                <select id="round_doctor_id" required>
-                    <option value="">Select Doctor...</option>
-                </select>
-
-                &nbsp;&nbsp;
-                <label for="round_fee"><strong>Professional Fee (₱): </strong></label>
-                <input type="number" id="round_fee" step="0.01" style="width: 100px;">
-
-                &nbsp;&nbsp;
-                <button id="btnLogRound">Log Bedside Visit (Auto-Post Fee)</button>
-            </div>
-        </div>
-
-        <br>
-        <h4>Bedside Rounds Log</h4>
-        <div id="rounds-table-div">
-            <!-- Table dynamically populated by JavaScript -->
-        </div>
-    </fieldset>
-
-    <br>
-
-    <!-- Section 3: Room & Bed Transfer History -->
-    <fieldset>
-        <legend><h3>3. Board & Lodging / Bed Stays</h3></legend>
-        <p>Track bed allocations and transfers. When a patient is transferred, the prior stay duration and daily rate are calculated and posted to the ledger.</p>
-
-        <div id="transfer-form-container">
-            <h4>Transfer to Another Bed</h4>
-            <div>
-                <label for="transfer_bed_id"><strong>Select New Vacant Bed: </strong></label>
-                <select id="transfer_bed_id">
-                    <option value="">Select Target Bed...</option>
-                </select>
-
-                &nbsp;&nbsp;
-                <button id="btnTransferBed">Transfer Bed (Close Stay & Post Charge)</button>
-            </div>
-        </div>
-
-        <br>
-        <h4>Bed Transfer History</h4>
-        <div id="transfers-table-div">
-            <!-- Table dynamically populated by JavaScript -->
-        </div>
-    </fieldset>
-
-    <br>
-
-    <!-- Section 4: Live Itemized Billing Ledger & Medicine Returns -->
-    <fieldset>
-        <legend><h3>4. Live Itemized Billing Ledger & Financial Breakdown</h3></legend>
-        <p>Real-time running statement of all accumulated room stays, physician fees, medications, and diagnostics.</p>
-
-        <!-- Category Breakdown & Grand Total -->
-        <div id="ledger-summary-div">
-            <!-- Summary breakdown populated dynamically -->
-        </div>
-
-        <br>
-
-        <!-- Medicine Return Form -->
-        <div id="return-form-container" style="border: 1px dashed #666; padding: 10px; margin-bottom: 15px;">
-            <h4>Process Medicine Return (Negative Credit Adjustment)</h4>
-            <p><small>If a patient did not use dispensed medications, return them here to apply a negative credit adjustment to the ledger.</small></p>
-            <div>
-                <label for="return_catalog_id"><strong>Select Dispensed Medicine: </strong></label>
-                <select id="return_catalog_id">
-                    <option value="">No dispensed medicines eligible</option>
-                </select>
-
-                &nbsp;&nbsp;
-                <label for="return_qty"><strong>Quantity to Return: </strong></label>
-                <input type="number" id="return_qty" min="1" value="1" style="width: 60px;">
-
-                &nbsp;&nbsp;
-                <button id="btnReturnMedicine">Process Return (Post Credit)</button>
-            </div>
-        </div>
-
-        <h4>Itemized Charges Statement</h4>
-        <div id="ledger-table-div">
-            <!-- Table dynamically populated by JavaScript -->
-        </div>
-    </fieldset>
-
-    <br>
-
-    <!-- Section 5: Final Settlement, Discounts & Official Invoicing -->
-    <fieldset>
-        <legend><h3>5. Final Billing Settlement & Official Invoicing</h3></legend>
-        <p>Complete the patient billing cycle, apply statutory discounts (Senior Citizen, PWD, Government), settle the account, and generate the Official Statement of Account (SOA).</p>
-
-        <div id="settlement-container">
-            <!-- Dynamically rendered based on admission status (Unbilled vs Billed) -->
-            <p>Loading settlement section...</p>
-        </div>
-    </fieldset>
-
-    <br><br>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/admission_details.js"></script>

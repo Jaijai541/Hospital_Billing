@@ -3,47 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospital Billing System - Dashboard</title>
+    <title>Hospital Billing System — Executive Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <h2>Hospital Billing and Patient Information System</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
+
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html" class="active"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
+
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
+
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
+
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
+
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Executive Hospital Dashboard</h2>
+                    <p>Overview of in-patient admissions, bed capacity, and billing activity.</p>
+                </div>
+                <div>
+                    <a href="admissions.html" class="btn btn-primary">+ Admit New Patient</a>
+                </div>
+            </div>
+
+            <!-- KPI Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">🏥</div>
+                    <div class="stat-info">
+                        <h4>Active In-Patients</h4>
+                        <div class="stat-value" id="stat-active-admissions">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon green">🛏</div>
+                    <div class="stat-info">
+                        <h4>Available Vacant Beds</h4>
+                        <div class="stat-value" id="stat-available-beds">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon amber">👤</div>
+                    <div class="stat-info">
+                        <h4>Registered Patients</h4>
+                        <div class="stat-value" id="stat-total-patients">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon red">🧾</div>
+                    <div class="stat-info">
+                        <h4>Settled Invoices</h4>
+                        <div class="stat-value" id="stat-total-invoices">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Navigation Cards -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Hospital Management Modules</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="card" style="margin-bottom: 0; padding: 15px; border-left: 4px solid var(--primary);">
+                            <h4>Milestone 1: Master Files</h4>
+                            <p style="color: var(--text-muted); font-size: 12px; margin: 6px 0 12px;">Manage patients, doctors, beds, catalogs, and discounts.</p>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <a href="patients.html" class="btn btn-sm btn-outline">Patients</a>
+                                <a href="doctors.html" class="btn btn-sm btn-outline">Doctors</a>
+                                <a href="rooms.html" class="btn btn-sm btn-outline">Rooms/Beds</a>
+                                <a href="catalogs.html" class="btn btn-sm btn-outline">Catalogs</a>
+                                <a href="discounts.html" class="btn btn-sm btn-outline">Discounts</a>
+                            </div>
+                        </div>
+
+                        <div class="card" style="margin-bottom: 0; padding: 15px; border-left: 4px solid var(--success);">
+                            <h4>Milestone 2: Clinical Transactions</h4>
+                            <p style="color: var(--text-muted); font-size: 12px; margin: 6px 0 12px;">In-patient admissions, bed transfers, doctor orders, rounds & live ledger.</p>
+                            <a href="admissions.html" class="btn btn-sm btn-success">Open Admissions & Bed Log &raquo;</a>
+                        </div>
+
+                        <div class="card" style="margin-bottom: 0; padding: 15px; border-left: 4px solid var(--warning);">
+                            <h4>Milestone 3: Billing Settlement</h4>
+                            <p style="color: var(--text-muted); font-size: 12px; margin: 6px 0 12px;">Statutory discounts, final invoices, and official Statements of Account.</p>
+                            <a href="invoices.html" class="btn btn-sm btn-primary">View Settled Invoices &raquo;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Admissions Snapshot -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Currently Admitted Patients</h3>
+                    <a href="admissions.html" class="btn btn-sm btn-outline">View All Admissions &raquo;</a>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-responsive">
+                        <div id="recent-admissions-container">
+                            <p style="padding: 20px;">Loading active admissions snapshot...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-
-    <hr>
-
-    <h3>Milestone 1: Master File Module</h3>
-    <p>Select a master file directory to manage:</p>
-
-    <ul>
-        <li><a href="patients.html"><strong>Patients Directory</strong> (Patient, Demographics, Blood Types)</a></li>
-        <li><a href="doctors.html"><strong>Doctors & Professional Fees</strong> (Doctor, Multi-Specialties, Round Fees)</a></li>
-        <li><a href="rooms.html"><strong>Rooms, Wards & Beds</strong> (Room, Bed Hierarchy, Board & Lodging Rates)</a></li>
-        <li><a href="catalogs.html"><strong>Charge Catalogs</strong> (Merged Medicines [MED], Scans [RAD], Procedures [SRV])</a></li>
-        <li><a href="discounts.html"><strong>Billing Discounts</strong> (Enum_Discount, Senior, PWD, Government)</a></li>
-    </ul>
-
-    <h3>Milestone 2: Transactions & Clinical Charging</h3>
-    <p>In-patient admission, bed assignments, orders & charging:</p>
-
-    <ul>
-        <li><a href="admissions.html"><strong>In-Patient Admissions & Bed Occupancy</strong> (Admit Patient, Bed Transfers, Clinical Chart, Charges Ledger)</a></li>
-    </ul>
-
-    <h3>Milestone 3: Billing Settlement & Invoicing</h3>
-    <p>Financial discharge, discounts & official receipts:</p>
-
-    <ul>
-        <li><a href="invoices.html"><strong>Billing Invoices & Settled Accounts</strong> (Official Invoices, Statements of Account [SOA], Payment Receipts)</a></li>
-    </ul>
-
-    <h3>System Tools & Archives</h3>
-    <ul>
-        <li><a href="archive.html"><strong>System Archive / Recycle Bin</strong> (Soft-deleted records hub, Restore & Permanent Deletion)</a></li>
-    </ul>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/dashboard.js"></script>

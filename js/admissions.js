@@ -223,9 +223,9 @@ function renderAdmissionsTable(admissions) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0">';
+    let html = '<table class="data-table">';
     html += '<thead>';
-    html += '<tr bgcolor="#f2f2f2">';
+    html += '<tr>';
     html += '<th>Admission #</th>';
     html += '<th>Patient Code & Name</th>';
     html += '<th>Current Bed & Room</th>';
@@ -240,24 +240,29 @@ function renderAdmissionsTable(admissions) {
 
     admissions.forEach(a => {
         const bedInfo = a.Bed_Code 
-            ? `<strong>${a.Bed_Code}</strong> (${a.Room_Name || ''} - ${a.Room_Type || ''})<br><small>₱${parseFloat(a.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</small>`
-            : '<em>Discharged / None</em>';
+            ? `<strong>${a.Bed_Code}</strong> (${a.Room_Name || ''} - ${a.Room_Type || ''})<br><small class="text-muted">₱${parseFloat(a.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</small>`
+            : '<span class="text-muted">None / Discharged</span>';
 
-        const doctors = a.Assigned_Doctors ? a.Assigned_Doctors.split('; ').join('<br>') : '<em>None</em>';
+        const doctors = a.Assigned_Doctors ? a.Assigned_Doctors.split('; ').join('<br>') : '<span class="text-muted">None</span>';
+
+        let statusBadge = '<span class="badge badge-info">' + a.Status + '</span>';
+        if (a.Status === 'Admitted') statusBadge = '<span class="badge badge-success">Admitted</span>';
+        else if (a.Status === 'Discharged') statusBadge = '<span class="badge badge-warning">Discharged</span>';
+        else if (a.Status === 'Billed') statusBadge = '<span class="badge badge-info">Billed / Settled</span>';
 
         html += '<tr>';
-        html += `<td align="center"><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
-        html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}<br><small>Contact: ${a.Contact_Number || 'N/A'}</small></td>`;
+        html += `<td><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
+        html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}<br><small class="text-muted">Contact: ${a.Contact_Number || 'N/A'}</small></td>`;
         html += `<td>${bedInfo}</td>`;
         html += `<td>${a.Chief_Complaint}</td>`;
         html += `<td><small>${doctors}</small></td>`;
         html += `<td>${a.Admission_Date}</td>`;
-        html += `<td align="center"><strong>${a.Status}</strong></td>`;
-        html += '<td align="center">';
-        html += `<button onclick="openChart(${a.Admission_ID})"><strong>Open Chart & Ledger</strong></button>`;
+        html += `<td>${statusBadge}</td>`;
+        html += '<td>';
+        html += `<button type="button" class="btn btn-sm btn-primary" onclick="openChart(${a.Admission_ID})">Open Chart & Ledger</button>`;
         
         if (a.Status === 'Admitted') {
-            html += `&nbsp;<button onclick="dischargePatient(${a.Admission_ID}, '${a.Patient_Name.replace(/'/g, "\\'")}')">Discharge</button>`;
+            html += ` <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="dischargePatient(${a.Admission_ID}, '${a.Patient_Name.replace(/'/g, "\\'")}')">Discharge</button>`;
         }
         
         html += '</td>';

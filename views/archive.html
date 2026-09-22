@@ -4,39 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archive / Recycle Bin — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p><a href="index.html">Back to Dashboard</a></p>
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
+            </div>
 
-    <h2>System Archive (Soft-Deleted Records Hub)</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
 
-    <hr>
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
 
-    <p>This page allows you to view, restore, or permanently remove items that have been soft-deleted across all master files.</p>
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
 
-    <!-- Category Selector -->
-    <div style="margin-bottom: 15px;">
-        <label for="archive_category"><strong>Select Archive Category: </strong></label>
-        <select id="archive_category">
-            <option value="patients">Archived Patients</option>
-            <option value="doctors">Archived Doctors</option>
-            <option value="rooms">Archived Rooms & Beds</option>
-            <option value="catalogs">Archived Charge Catalogs</option>
-            <option value="discounts">Archived Billing Discounts</option>
-        </select>
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
 
-        &nbsp;&nbsp;
-        <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search archived records...">
-    </div>
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
 
-    <div id="table-div">
-        <!-- Archived items table created dynamically by JavaScript -->
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html" class="active"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>System Archive & Recycle Bin</h1>
+                    <span class="subtitle">Restore or Permanently Purge Soft-Deleted Master Records</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Archived Master Records</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="form-group" style="min-width: 250px;">
+                                <label class="form-label" for="archive_category">Archive Category</label>
+                                <select id="archive_category" class="form-select">
+                                    <option value="patients">Archived Patients</option>
+                                    <option value="doctors">Archived Doctors</option>
+                                    <option value="rooms">Archived Rooms & Beds</option>
+                                    <option value="catalogs">Archived Charge Catalogs</option>
+                                    <option value="discounts">Archived Billing Discounts</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="min-width: 300px;">
+                                <label class="form-label" for="search_input">Search Archived Records</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search by name, code or details...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" id="table-div">
+                            <!-- Archived items table created dynamically by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

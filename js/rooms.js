@@ -174,8 +174,7 @@ const displayRoomsTable = (rooms) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
@@ -195,8 +194,11 @@ const displayRoomsTable = (rooms) => {
     const tbody = document.createElement("tbody");
     rooms.forEach(r => {
         const isActive = (r.Is_Active == 1);
-        const statusText = isActive ? "Active" : "Inactive (Soft Deleted)";
+        const statusBadge = isActive 
+            ? '<span class="badge badge-success">Active</span>' 
+            : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Soft Delete" : "Restore";
+        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
 
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -204,13 +206,13 @@ const displayRoomsTable = (rooms) => {
             <td>${r.Type_Name}</td>
             <td>₱ ${parseFloat(r.Daily_Rate).toFixed(2)}</td>
             <td>${r.Capacity} bed(s)</td>
-            <td style="color: green;"><strong>${r.Vacant_Beds} vacant</strong></td>
-            <td style="color: orange;"><strong>${r.Occupied_Beds} occupied</strong></td>
-            <td>${statusText}</td>
+            <td><span class="badge badge-success">${r.Vacant_Beds} vacant</span></td>
+            <td><span class="badge badge-warning">${r.Occupied_Beds} occupied</span></td>
+            <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn-action-edit" data-id="${r.Room_ID}">Edit</button>
-                <button type="button" class="btn-action-soft-delete" data-id="${r.Room_ID}" data-status="${r.Is_Active}" data-name="${r.Room_Name}">${toggleAction}</button>
-                <button type="button" class="btn-action-hard-delete" data-id="${r.Room_ID}" data-name="${r.Room_Name}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${r.Room_ID}">Edit</button>
+                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${r.Room_ID}" data-status="${r.Is_Active}" data-name="${r.Room_Name}">${toggleAction}</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${r.Room_ID}" data-name="${r.Room_Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -250,8 +252,7 @@ const displayBedsTable = (beds) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
@@ -269,9 +270,13 @@ const displayBedsTable = (beds) => {
     const tbody = document.createElement("tbody");
     beds.forEach(b => {
         const isAvail = (b.Is_Available == 1);
-        const availText = isAvail ? "✔ Vacant (Available)" : "Occupied";
-        const availColor = isAvail ? "green" : "orange";
+        const availBadge = isAvail 
+            ? '<span class="badge badge-success">✔ Vacant</span>' 
+            : '<span class="badge badge-warning">Occupied</span>';
         const isActive = (b.Is_Active == 1);
+        const statusBadge = isActive 
+            ? '<span class="badge badge-success">Active</span>' 
+            : '<span class="badge badge-danger">Archived</span>';
 
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -279,8 +284,8 @@ const displayBedsTable = (beds) => {
             <td>${b.Room_Name}</td>
             <td>${b.Type_Name}</td>
             <td>₱ ${parseFloat(b.Daily_Rate).toFixed(2)}</td>
-            <td style="color: ${availColor};"><strong>${availText}</strong></td>
-            <td>${isActive ? "Active" : "Inactive"}</td>
+            <td>${availBadge}</td>
+            <td>${statusBadge}</td>
         `;
         tbody.appendChild(row);
     });

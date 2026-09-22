@@ -144,8 +144,7 @@ const displayCatalogsTable = (items) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
@@ -153,7 +152,7 @@ const displayCatalogsTable = (items) => {
             <th>Code</th>
             <th>Item Name</th>
             <th>Category Type</th>
-            <th>Unit Price (₱)</th>
+            <th>Unit Price</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
@@ -163,20 +162,27 @@ const displayCatalogsTable = (items) => {
     const tbody = document.createElement("tbody");
     items.forEach(item => {
         const isActive = (item.Is_Active == 1);
-        const statusText = isActive ? "Active" : "Inactive (Soft Deleted)";
+        const statusBadge = isActive 
+            ? '<span class="badge badge-success">Active</span>' 
+            : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Soft Delete" : "Restore";
+        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
+
+        let catBadge = '<span class="badge badge-info">' + item.Category_Type + '</span>';
+        if (item.Category_Type === 'Medicine') catBadge = '<span class="badge badge-primary">Medicine</span>';
+        else if (item.Category_Type === 'Equipment Scan') catBadge = '<span class="badge badge-warning">Scan</span>';
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${item.Formatted_Code}</strong></td>
-            <td>${item.Item_Name}</td>
-            <td>${item.Category_Type}</td>
+            <td><strong>${item.Item_Name}</strong></td>
+            <td>${catBadge}</td>
             <td>₱ ${parseFloat(item.Unit_Price).toFixed(2)}</td>
-            <td>${statusText}</td>
+            <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn-action-edit" data-id="${item.Catalog_ID}">Edit</button>
-                <button type="button" class="btn-action-soft-delete" data-id="${item.Catalog_ID}" data-status="${item.Is_Active}" data-name="${item.Item_Name}">${toggleAction}</button>
-                <button type="button" class="btn-action-hard-delete" data-id="${item.Catalog_ID}" data-name="${item.Item_Name}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${item.Catalog_ID}">Edit</button>
+                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${item.Catalog_ID}" data-status="${item.Is_Active}" data-name="${item.Item_Name}">${toggleAction}</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${item.Catalog_ID}" data-name="${item.Item_Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);

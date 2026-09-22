@@ -4,104 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctors & Professional Fees — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p><a href="index.html">Back to Dashboard</a></p>
-
-    <h2>Medical Doctors & Professional Fees Directory (Master File)</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
-
-    <hr>
-
-    <!-- Add / Edit Doctor Form -->
-    <div>
-        <h3 id="form-title">Add New Doctor</h3>
-        <input type="hidden" id="doctor_id" value="">
-
-        <div>
-            <label for="first_name">First Name: </label>
-            <input type="text" id="first_name" placeholder="First Name" required>
-
-            <label for="last_name">Last Name: </label>
-            <input type="text" id="last_name" placeholder="Last Name" required>
-
-            <label for="doctor_type_id">Classification: </label>
-            <select id="doctor_type_id" required>
-                <option value="">Select Classification...</option>
-            </select>
-
-            <label for="station_id">Department / Station: </label>
-            <select id="station_id" required>
-                <option value="">Select Department Station...</option>
-            </select>
-        </div>
-        <br>
-        <div>
-            <label><strong>Medical Specialties (Select all that apply):</strong></label>
-            <div id="specialties-checkboxes" style="margin-top: 5px; margin-bottom: 10px;">
-                <!-- Checkboxes populated dynamically -->
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
             </div>
-        </div>
-        <div>
-            <label for="base_round_fee">Base Bedside Round Fee (₱): </label>
-            <input type="number" step="0.01" min="0" id="base_round_fee" placeholder="0.00" required>
-        </div>
-        <br>
-        <div>
-            <button id="btnSubmit">Submit Doctor</button>
-            <button id="btnCancel" style="display:none;">Cancel</button>
-        </div>
-    </div>
 
-    <hr>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
 
-    <h3>Doctors List</h3>
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
 
-    <!-- Search, Filter, and Sort Controls (Pure HTML) -->
-    <div style="margin-bottom: 12px;">
-        <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search doctor name or code...">
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html" class="active"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
 
-        <label for="filter_status">Status: </label>
-        <select id="filter_status">
-            <option value="all">All Records</option>
-            <option value="1">Active Only</option>
-            <option value="0">Soft-Deleted Only</option>
-        </select>
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
 
-        <label for="filter_type">Classification: </label>
-        <select id="filter_type">
-            <option value="all">All Classifications</option>
-        </select>
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
 
-        <label for="filter_station">Station: </label>
-        <select id="filter_station">
-            <option value="all">All Stations</option>
-        </select>
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
 
-        <label for="filter_specialty">Specialty: </label>
-        <select id="filter_specialty">
-            <option value="all">All Specialties</option>
-        </select>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Doctors & Professional Fees Directory</h2>
+                    <p>Manage physician profiles, multi-specialties, station assignments, and bedside round fees.</p>
+                </div>
+            </div>
 
-        <label for="sort_by">Sort By: </label>
-        <select id="sort_by">
-            <option value="code_asc">Code (A to Z)</option>
-            <option value="code_desc">Code (Z to A)</option>
-            <option value="name_asc">Last Name (A to Z)</option>
-            <option value="name_desc">Last Name (Z to A)</option>
-            <option value="fee_asc">Round Fee (Lowest First)</option>
-            <option value="fee_desc">Round Fee (Highest First)</option>
-            <option value="id_desc">Newest First</option>
-        </select>
-    </div>
+            <!-- Add / Edit Doctor Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 id="form-title">Add New Doctor</h3>
+                </div>
+                <div class="card-body">
+                    <input type="hidden" id="doctor_id" value="">
 
-    <div id="table-div">
-        <!-- Table generated dynamically by JavaScript -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="first_name">First Name *</label>
+                            <input type="text" id="first_name" class="form-control" placeholder="First Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="last_name">Last Name *</label>
+                            <input type="text" id="last_name" class="form-control" placeholder="Last Name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="doctor_type_id">Classification *</label>
+                            <select id="doctor_type_id" class="form-select" required>
+                                <option value="">Select Classification...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="station_id">Department / Station *</label>
+                            <select id="station_id" class="form-select" required>
+                                <option value="">Select Department Station...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="base_round_fee">Base Bedside Round Fee (₱) *</label>
+                            <input type="number" step="0.01" min="0" id="base_round_fee" class="form-control" placeholder="0.00" required>
+                        </div>
+
+                        <div class="form-group col-full">
+                            <label class="form-label">Medical Specialties (Check all that apply):</label>
+                            <div id="specialties-checkboxes" style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                                <!-- Checkboxes populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button id="btnSubmit" class="btn btn-primary">Submit Doctor</button>
+                        <button id="btnCancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Master List Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Doctor Master List</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Toolbar -->
+                    <div class="filter-toolbar">
+                        <div class="search-box">
+                            <input type="text" id="search_input" class="form-control" placeholder="Search doctor name or code...">
+                        </div>
+
+                        <div>
+                            <select id="filter_status" class="form-select" style="width: auto;">
+                                <option value="all">All Statuses</option>
+                                <option value="1" selected>Active Only</option>
+                                <option value="0">Soft-Deleted Only</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="filter_type" class="form-select" style="width: auto;">
+                                <option value="all">All Classifications</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="filter_station" class="form-select" style="width: auto;">
+                                <option value="all">All Stations</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="sort_by" class="form-select" style="width: auto;">
+                                <option value="name_asc">Last Name (A to Z)</option>
+                                <option value="name_desc">Last Name (Z to A)</option>
+                                <option value="code_asc">Code (A to Z)</option>
+                                <option value="fee_desc">Highest Round Fee</option>
+                                <option value="fee_asc">Lowest Round Fee</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Table Container -->
+                    <div class="table-responsive">
+                        <div id="table-div">
+                            <p style="padding: 20px;">Loading doctors...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

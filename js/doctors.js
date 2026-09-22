@@ -219,8 +219,7 @@ const displayDoctorsTable = (doctors) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
@@ -240,23 +239,26 @@ const displayDoctorsTable = (doctors) => {
     const tbody = document.createElement("tbody");
     doctors.forEach(doc => {
         const isActive = (doc.Is_Active == 1);
-        const statusText = isActive ? "Active" : "Inactive (Soft Deleted)";
+        const statusBadge = isActive 
+            ? '<span class="badge badge-success">Active</span>' 
+            : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Soft Delete" : "Restore";
+        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
         const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${doc.Formatted_Code}</strong></td>
-            <td>${fullName}</td>
+            <td><strong>${fullName}</strong></td>
             <td>${doc.Doctor_Type_Name}</td>
             <td>${doc.Station_Name}</td>
-            <td>${doc.Specialties || 'General Practice'}</td>
+            <td><small>${doc.Specialties || 'General Practice'}</small></td>
             <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
-            <td>${statusText}</td>
+            <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn-action-edit" data-id="${doc.Doctor_ID}">Edit</button>
-                <button type="button" class="btn-action-soft-delete" data-id="${doc.Doctor_ID}" data-status="${doc.Is_Active}" data-name="${fullName}">${toggleAction}</button>
-                <button type="button" class="btn-action-hard-delete" data-id="${doc.Doctor_ID}" data-name="${fullName}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${doc.Doctor_ID}">Edit</button>
+                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${doc.Doctor_ID}" data-status="${doc.Is_Active}" data-name="${fullName}">${toggleAction}</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${doc.Doctor_ID}" data-name="${fullName}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);

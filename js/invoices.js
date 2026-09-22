@@ -84,8 +84,8 @@ function renderInvoicesTable(invoices) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0">';
-    html += '<thead><tr bgcolor="#f2f2f2">';
+    let html = '<table class="data-table">';
+    html += '<thead><tr>';
     html += '<th>Invoice #</th>';
     html += '<th>Admission #</th>';
     html += '<th>Patient Code & Name</th>';
@@ -103,22 +103,22 @@ function renderInvoicesTable(invoices) {
         const discAmt = parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const net = parseFloat(inv.Net_Amount_Due || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-        const discInfo = inv.Discount_Name !== 'None' 
-            ? `<strong>${inv.Discount_Name}</strong> (${parseFloat(inv.Discount_Percentage).toFixed(0)}%)` 
-            : 'None';
+        const discBadge = inv.Discount_Name !== 'None' 
+            ? `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage).toFixed(0)}%)</span>` 
+            : '<span class="text-muted">None</span>';
 
         html += '<tr>';
-        html += `<td align="center"><strong>${inv.Invoice_Code}</strong></td>`;
-        html += `<td align="center">${inv.Admission_Code}</td>`;
+        html += `<td><strong>${inv.Invoice_Code}</strong></td>`;
+        html += `<td><strong>${inv.Admission_Code}</strong></td>`;
         html += `<td><strong>${inv.Patient_Code}</strong><br>${inv.Patient_Name}</td>`;
-        html += `<td align="right">₱${gross}</td>`;
-        html += `<td>${discInfo}</td>`;
-        html += `<td align="right" style="color: green;">-₱${discAmt}</td>`;
-        html += `<td align="right"><strong>₱${net}</strong></td>`;
+        html += `<td>₱${gross}</td>`;
+        html += `<td>${discBadge}</td>`;
+        html += `<td style="color: #276749;">-₱${discAmt}</td>`;
+        html += `<td><strong style="color: var(--primary-color);">₱${net}</strong></td>`;
         html += `<td>${inv.Settlement_Date}</td>`;
         html += `<td>${inv.Cashier_Name}</td>`;
-        html += '<td align="center">';
-        html += `<button onclick="viewPrintInvoice(${inv.Invoice_ID})"><strong>View / Print Statement</strong></button>`;
+        html += '<td>';
+        html += `<button type="button" class="btn btn-sm btn-primary" onclick="viewPrintInvoice(${inv.Invoice_ID})">View / Print SOA</button>`;
         html += '</td>';
         html += '</tr>';
     });

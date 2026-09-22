@@ -4,86 +4,168 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooms & Beds Directory — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p><a href="index.html">Back to Dashboard</a></p>
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
+            </div>
 
-    <h2>Rooms & Beds Directory (Master File)</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
 
-    <hr>
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
 
-    <!-- Add / Edit Room Form -->
-    <div>
-        <h3 id="form-title">Add New Room</h3>
-        <input type="hidden" id="room_id" value="">
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html" class="active"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
 
-        <div>
-            <label for="room_name">Room Name: </label>
-            <input type="text" id="room_name" placeholder="e.g. Ward A, Private 301" size="25" required>
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
 
-            <label for="room_type_id">Room Classification: </label>
-            <select id="room_type_id" required>
-                <option value="">Select Classification...</option>
-            </select>
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
 
-            <label for="daily_rate">Daily Rate (₱): </label>
-            <input type="number" step="0.01" id="daily_rate" placeholder="0.00" readonly>
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
 
-            <label for="capacity">Bed Capacity: </label>
-            <input type="number" id="capacity" min="1" max="20" value="1" required>
-        </div>
-        <br>
-        <div>
-            <button id="btnSubmit">Submit Room</button>
-            <button id="btnCancel" style="display:none;">Cancel</button>
-        </div>
-    </div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Rooms, Wards & Beds Directory</h2>
+                    <p>Configure room classifications, bed capacity, uniform board & lodging rates, and bed codes.</p>
+                </div>
+            </div>
 
-    <hr>
+            <!-- Add / Edit Room Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 id="form-title">Add New Room</h3>
+                </div>
+                <div class="card-body">
+                    <input type="hidden" id="room_id" value="">
 
-    <h3>1. Rooms Overview</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="room_name">Room Name *</label>
+                            <input type="text" id="room_name" class="form-control" placeholder="e.g. Ward A, Private 301" required>
+                        </div>
 
-    <!-- Search, Filter, and Sort Controls (Pure HTML) -->
-    <div style="margin-bottom: 12px;">
-        <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search room name...">
+                        <div class="form-group">
+                            <label class="form-label" for="room_type_id">Room Classification *</label>
+                            <select id="room_type_id" class="form-select" required>
+                                <option value="">Select Classification...</option>
+                            </select>
+                        </div>
 
-        <label for="filter_status">Status: </label>
-        <select id="filter_status">
-            <option value="all">All Records</option>
-            <option value="1">Active Only</option>
-            <option value="0">Soft-Deleted Only</option>
-        </select>
+                        <div class="form-group">
+                            <label class="form-label" for="daily_rate">Daily Board & Lodging Rate (₱)</label>
+                            <input type="number" step="0.01" id="daily_rate" class="form-control" placeholder="0.00" readonly>
+                            <small style="color: var(--text-muted); font-size: 11px;">Enforced uniformly from classification</small>
+                        </div>
 
-        <label for="filter_room_type">Type: </label>
-        <select id="filter_room_type">
-            <option value="all">All Room Types</option>
-        </select>
+                        <div class="form-group">
+                            <label class="form-label" for="capacity">Bed Capacity *</label>
+                            <input type="number" id="capacity" class="form-control" min="1" max="20" value="1" required>
+                            <small style="color: var(--text-muted); font-size: 11px;">Individual bed codes generated automatically</small>
+                        </div>
+                    </div>
 
-        <label for="sort_by">Sort By: </label>
-        <select id="sort_by">
-            <option value="name_asc">Room Name (A to Z)</option>
-            <option value="name_desc">Room Name (Z to A)</option>
-            <option value="rate_asc">Daily Rate (Lowest First)</option>
-            <option value="rate_desc">Daily Rate (Highest First)</option>
-            <option value="capacity_desc">Highest Capacity First</option>
-        </select>
-    </div>
+                    <div class="form-actions">
+                        <button id="btnSubmit" class="btn btn-primary">Submit Room</button>
+                        <button id="btnCancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+                    </div>
+                </div>
+            </div>
 
-    <div id="table-div">
-        <!-- Room Table generated dynamically by JavaScript -->
-    </div>
+            <!-- Rooms Master List Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>1. Hospital Rooms & Board Rates</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Toolbar -->
+                    <div class="filter-toolbar">
+                        <div class="search-box">
+                            <input type="text" id="search_input" class="form-control" placeholder="Search room name...">
+                        </div>
 
-    <hr>
+                        <div>
+                            <select id="filter_status" class="form-select" style="width: auto;">
+                                <option value="all">All Statuses</option>
+                                <option value="1" selected>Active Only</option>
+                                <option value="0">Soft-Deleted Only</option>
+                            </select>
+                        </div>
 
-    <h3>2. Individual Beds List (Room_Bed)</h3>
-    <div id="beds-table-div">
-        <!-- Beds Table generated dynamically by JavaScript -->
+                        <div>
+                            <select id="filter_type" class="form-select" style="width: auto;">
+                                <option value="all">All Classifications</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="sort_by" class="form-select" style="width: auto;">
+                                <option value="name_asc">Room Name (A to Z)</option>
+                                <option value="name_desc">Room Name (Z to A)</option>
+                                <option value="rate_desc">Highest Daily Rate</option>
+                                <option value="rate_asc">Lowest Daily Rate</option>
+                                <option value="capacity_desc">Highest Capacity</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Table Container -->
+                    <div class="table-responsive">
+                        <div id="table-div">
+                            <p style="padding: 20px;">Loading rooms...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual Beds Inventory Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>2. Real-Time Bed Availability & Inventory</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <div id="beds-table-div">
+                            <p style="padding: 20px;">Loading individual bed inventory...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

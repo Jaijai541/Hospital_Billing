@@ -99,15 +99,14 @@ const displayArchiveTable = (records) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
             <th>Code</th>
             <th>Name / Description</th>
-            <th>Details</th>
+            <th>Details / Info</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
@@ -119,12 +118,12 @@ const displayArchiveTable = (records) => {
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${rec.Code}</strong></td>
-            <td>${rec.Name}</td>
+            <td><strong>${rec.Name}</strong></td>
             <td>${rec.Details}</td>
-            <td style="color: red;">Archived (Soft Deleted)</td>
+            <td><span class="badge badge-danger">Archived</span></td>
             <td>
-                <button type="button" class="btn-action-restore" data-id="${rec.ID}" data-name="${rec.Name}">Restore</button>
-                <button type="button" class="btn-action-hard-delete" data-id="${rec.ID}" data-name="${rec.Name}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-success btn-action-restore" data-id="${rec.ID}" data-name="${rec.Name}">Restore</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${rec.ID}" data-name="${rec.Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);

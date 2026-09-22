@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official Statement of Account — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
     <style>
+        body {
+            background-color: #ffffff;
+            color: #1a202c;
+            font-family: Arial, sans-serif;
+            padding: 24px;
+        }
         @media print {
             .no-print {
                 display: none !important;
@@ -19,14 +26,13 @@
 <body>
 
     <!-- Print and Navigation Toolbar (Hidden during printing) -->
-    <div class="no-print" style="margin-bottom: 20px; padding: 10px; background-color: #eee; border: 1px solid #ccc;">
-        <button onclick="window.print()" style="font-weight: bold; padding: 5px 15px; cursor: pointer;">🖨 Print Official Invoice / SOA</button>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="invoices.html">Invoices Directory</a>
-        &nbsp;|&nbsp;
-        <a href="admissions.html">Admissions Log</a>
-        &nbsp;|&nbsp;
-        <a href="index.html">Dashboard</a>
+    <div class="no-print" style="margin-bottom: 24px; padding: 12px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+        <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Official Invoice / SOA</button>
+        <div style="display: flex; gap: 12px;">
+            <a href="invoices.html" class="btn btn-secondary btn-sm">Invoices Directory</a>
+            <a href="admissions.html" class="btn btn-secondary btn-sm">Admissions Log</a>
+            <a href="index.html" class="btn btn-secondary btn-sm">Dashboard</a>
+        </div>
     </div>
 
     <!-- Official Hospital Letterhead -->

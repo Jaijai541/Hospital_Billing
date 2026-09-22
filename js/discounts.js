@@ -122,15 +122,14 @@ const displayDiscountsTable = (discounts) => {
     }
 
     const table = document.createElement("table");
-    table.border = "1";
-    table.cellPadding = "5";
+    table.className = "data-table";
 
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
             <th>Code</th>
-            <th>Discount Name</th>
-            <th>Percentage</th>
+            <th>Discount Policy</th>
+            <th>Deduction Percentage</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
@@ -140,20 +139,23 @@ const displayDiscountsTable = (discounts) => {
     const tbody = document.createElement("tbody");
     discounts.forEach(disc => {
         const isActive = (disc.Is_Active == 1);
-        const statusText = isActive ? "Active" : "Inactive (Soft Deleted)";
+        const statusBadge = isActive 
+            ? '<span class="badge badge-success">Active</span>' 
+            : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Soft Delete" : "Restore";
+        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
 
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${code}</td>
-            <td>${disc.Discount_Name}</td>
-            <td>${parseFloat(disc.Discount_Percentage).toFixed(2)}%</td>
-            <td>${statusText}</td>
+            <td><strong>${code}</strong></td>
+            <td><strong>${disc.Discount_Name}</strong></td>
+            <td><span class="badge badge-info">${parseFloat(disc.Discount_Percentage).toFixed(2)}%</span></td>
+            <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn-action-edit" data-id="${disc.Discount_ID}">Edit</button>
-                <button type="button" class="btn-action-soft-delete" data-id="${disc.Discount_ID}" data-status="${disc.Is_Active}" data-name="${disc.Discount_Name}">${toggleAction}</button>
-                <button type="button" class="btn-action-hard-delete" data-id="${disc.Discount_ID}" data-name="${disc.Discount_Name}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${disc.Discount_ID}">Edit</button>
+                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${disc.Discount_ID}" data-status="${disc.Is_Active}" data-name="${disc.Discount_Name}">${toggleAction}</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${disc.Discount_ID}" data-name="${disc.Discount_Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);

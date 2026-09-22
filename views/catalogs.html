@@ -4,87 +4,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Charge Catalogs — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p><a href="index.html">Back to Dashboard</a></p>
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
+            </div>
 
-    <h2>Charge Catalogs (Master File)</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
 
-    <hr>
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
 
-    <!-- Add / Edit Catalog Item Form -->
-    <div>
-        <h3 id="form-title">Add New Charge Catalog Item</h3>
-        <input type="hidden" id="catalog_id" value="">
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html" class="active"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
 
-        <div>
-            <label for="item_name">Item Name: </label>
-            <input type="text" id="item_name" placeholder="e.g. Paracetamol 500mg, Chest X-Ray" size="35" required>
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
 
-            <label for="category_type">Category Type: </label>
-            <select id="category_type" required>
-                <option value="">Select Category...</option>
-                <option value="Medicine">Medicine (MED)</option>
-                <option value="Equipment Scan">Equipment Scan (RAD)</option>
-                <option value="Service">Service / Procedure (SRV)</option>
-            </select>
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
 
-            <label for="code_prefix">Code Prefix: </label>
-            <input type="text" id="code_prefix" placeholder="MED" size="6" readonly>
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
 
-            <label for="unit_price">Unit Price (₱): </label>
-            <input type="number" step="0.01" min="0" id="unit_price" placeholder="0.00" required>
-        </div>
-        <br>
-        <div>
-            <button id="btnSubmit">Submit Item</button>
-            <button id="btnCancel" style="display:none;">Cancel</button>
-        </div>
-    </div>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Hospital Charge Catalogs</h1>
+                    <span class="subtitle">Standardized Billable Medicines, Scans & Medical Services</span>
+                </div>
+            </div>
 
-    <hr>
+            <div class="content-body">
+                <!-- Add / Edit Catalog Item Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 id="form-title">Add New Charge Catalog Item</h2>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="catalog_id" value="">
 
-    <h3>Charge Catalogs List</h3>
+                        <div class="form-grid">
+                            <div class="form-group span-2">
+                                <label class="form-label" for="item_name">Item / Procedure / Medicine Name</label>
+                                <input type="text" id="item_name" class="form-control" placeholder="e.g. Paracetamol 500mg, Chest X-Ray" required>
+                            </div>
 
-    <!-- Search, Filter, and Sort Controls (Pure HTML) -->
-    <div style="margin-bottom: 12px;">
-        <label for="search_input">Search: </label>
-        <input type="text" id="search_input" placeholder="Search item name or code...">
+                            <div class="form-group">
+                                <label class="form-label" for="category_type">Category Type</label>
+                                <select id="category_type" class="form-select" required>
+                                    <option value="">Select Category...</option>
+                                    <option value="Medicine">Medicine (MED)</option>
+                                    <option value="Equipment Scan">Equipment Scan (RAD)</option>
+                                    <option value="Service">Service / Procedure (SRV)</option>
+                                </select>
+                            </div>
 
-        <label for="filter_category">Category: </label>
-        <select id="filter_category">
-            <option value="all">All Categories</option>
-            <option value="Medicine">Medicines Only</option>
-            <option value="Equipment Scan">Equipment Scans Only</option>
-            <option value="Service">Services Only</option>
-        </select>
+                            <div class="form-group">
+                                <label class="form-label" for="code_prefix">Code Prefix</label>
+                                <input type="text" id="code_prefix" class="form-control" placeholder="MED" readonly style="background-color: #f1f5f9;">
+                            </div>
 
-        <label for="filter_status">Status: </label>
-        <select id="filter_status">
-            <option value="all">All Records</option>
-            <option value="1">Active Only</option>
-            <option value="0">Soft-Deleted Only</option>
-        </select>
+                            <div class="form-group">
+                                <label class="form-label" for="unit_price">Standard Unit Price (₱)</label>
+                                <input type="number" step="0.01" min="0" id="unit_price" class="form-control" placeholder="0.00" required>
+                            </div>
+                        </div>
 
-        <label for="sort_by">Sort By: </label>
-        <select id="sort_by">
-            <option value="code_asc">Code (A to Z)</option>
-            <option value="code_desc">Code (Z to A)</option>
-            <option value="name_asc">Item Name (A to Z)</option>
-            <option value="name_desc">Item Name (Z to A)</option>
-            <option value="price_asc">Price (Lowest First)</option>
-            <option value="price_desc">Price (Highest First)</option>
-            <option value="id_desc">Newest First</option>
-        </select>
-    </div>
+                        <div class="form-actions mt-3">
+                            <button id="btnSubmit" class="btn btn-primary">Submit Item</button>
+                            <button id="btnCancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+                        </div>
+                    </div>
+                </div>
 
-    <div id="table-div">
-        <!-- Table generated dynamically by JavaScript -->
+                <!-- Catalog Items Directory Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Charge Catalogs Directory</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="form-group" style="min-width: 260px;">
+                                <label class="form-label" for="search_input">Search Catalog</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search item name or code...">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="filter_category">Category</label>
+                                <select id="filter_category" class="form-select">
+                                    <option value="all">All Categories</option>
+                                    <option value="Medicine">Medicines Only</option>
+                                    <option value="Equipment Scan">Equipment Scans Only</option>
+                                    <option value="Service">Services Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="filter_status">Status</label>
+                                <select id="filter_status" class="form-select">
+                                    <option value="all">All Records</option>
+                                    <option value="1">Active Only</option>
+                                    <option value="0">Soft-Deleted Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="sort_by">Sort By</label>
+                                <select id="sort_by" class="form-select">
+                                    <option value="code_asc">Code (A to Z)</option>
+                                    <option value="code_desc">Code (Z to A)</option>
+                                    <option value="name_asc">Item Name (A to Z)</option>
+                                    <option value="name_desc">Item Name (Z to A)</option>
+                                    <option value="price_asc">Price (Lowest First)</option>
+                                    <option value="price_desc">Price (Highest First)</option>
+                                    <option value="id_desc">Newest First</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" id="table-div">
+                            <!-- Table generated dynamically by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

@@ -4,68 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Billing Discounts — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
-    <p><a href="index.html">&laquo; Back to Dashboard</a></p>
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🏥 St. Jude Hospital</h2>
+                <span class="subtitle">Billing & Patient System</span>
+            </div>
 
-    <h2>Billing Discounts (Master File)</h2>
-    <div>
-        User: <strong id="user-display">Loading...</strong> | 
-        <button id="btn-logout">Logout</button>
-    </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <strong id="user-display">Loading...</strong>
+                    <span>Active Session</span>
+                </div>
+                <button id="btn-logout" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.2); color: #fff;">Logout</button>
+            </div>
 
-    <hr>
+            <div class="sidebar-nav-container">
+                <div class="nav-section-title">Overview</div>
+                <ul class="sidebar-nav">
+                    <li><a href="index.html"><span class="nav-icon">📊</span> Dashboard</a></li>
+                </ul>
 
-    <!-- Add / Edit Form -->
-    <div>
-        <h3 id="form-title">Add New Discount</h3>
-        <input type="hidden" id="discount_id" value="">
+                <div class="nav-section-title">Master Files (M1)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="patients.html"><span class="nav-icon">👤</span> Patients Directory</a></li>
+                    <li><a href="doctors.html"><span class="nav-icon">🩺</span> Doctors & Fees</a></li>
+                    <li><a href="rooms.html"><span class="nav-icon">🛏</span> Rooms & Beds</a></li>
+                    <li><a href="catalogs.html"><span class="nav-icon">💊</span> Charge Catalogs</a></li>
+                    <li><a href="discounts.html" class="active"><span class="nav-icon">🏷</span> Billing Discounts</a></li>
+                </ul>
 
-        <label for="discount_name">Discount Name: </label>
-        <input type="text" id="discount_name" placeholder="e.g. Senior Citizen, PWD" required>
+                <div class="nav-section-title">Clinical Care (M2)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="admissions.html"><span class="nav-icon">📋</span> Admissions & Beds</a></li>
+                </ul>
 
-        <label for="discount_percentage">Discount Percentage (%): </label>
-        <input type="number" step="0.01" min="0" max="100" id="discount_percentage" placeholder="e.g. 20.00" required>
+                <div class="nav-section-title">Billing & Settlement (M3)</div>
+                <ul class="sidebar-nav">
+                    <li><a href="invoices.html"><span class="nav-icon">🧾</span> Settled Invoices</a></li>
+                </ul>
 
-        <button id="btnSubmit">Submit</button>
-        <button id="btnCancel" style="display:none;">Cancel</button>
-    </div>
+                <div class="nav-section-title">System & Tools</div>
+                <ul class="sidebar-nav">
+                    <li><a href="archive.html"><span class="nav-icon">🗑</span> System Archive</a></li>
+                </ul>
+            </div>
+        </aside>
 
-    <hr>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Billing Discounts Configuration</h1>
+                    <span class="subtitle">Statutory and Hospital Policy Invoicing Reductions</span>
+                </div>
+            </div>
 
-    <h3>Discounts List</h3>
+            <div class="content-body">
+                <!-- Add / Edit Discount Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 id="form-title">Add New Discount Scheme</h2>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="discount_id" value="">
 
-    <!-- Search, Filter, and Sort Controls (Pure HTML) -->
-    <div style="margin-bottom: 12px;">
-        <label for="search_input">Search Name/Code: </label>
-        <input type="text" id="search_input" placeholder="Search discount...">
+                        <div class="form-grid">
+                            <div class="form-group span-2">
+                                <label class="form-label" for="discount_name">Discount Policy Name</label>
+                                <input type="text" id="discount_name" class="form-control" placeholder="e.g. Senior Citizen, PWD, Employee Privilege" required>
+                            </div>
 
-        <label for="filter_status">Filter Status: </label>
-        <select id="filter_status">
-            <option value="all">All Records</option>
-            <option value="1">Active Only</option>
-            <option value="0">Soft-Deleted Only</option>
-        </select>
+                            <div class="form-group">
+                                <label class="form-label" for="discount_percentage">Discount Percentage (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" id="discount_percentage" class="form-control" placeholder="e.g. 20.00" required>
+                            </div>
+                        </div>
 
-        <label for="sort_by">Sort By: </label>
-        <select id="sort_by">
-            <option value="code_asc">Code (A to Z)</option>
-            <option value="code_desc">Code (Z to A)</option>
-            <option value="name_asc">Name (A to Z)</option>
-            <option value="name_desc">Name (Z to A)</option>
-            <option value="percent_asc">Percentage (Lowest First)</option>
-            <option value="percent_desc">Percentage (Highest First)</option>
-            <option value="id_desc">Newest First (ID)</option>
-        </select>
-    </div>
+                        <div class="form-actions mt-3">
+                            <button id="btnSubmit" class="btn btn-primary">Submit Discount</button>
+                            <button id="btnCancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+                        </div>
+                    </div>
+                </div>
 
-    <div id="table-div">
-        <!-- Table -->
+                <!-- Discounts Directory Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Discounts Directory</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="form-group" style="min-width: 260px;">
+                                <label class="form-label" for="search_input">Search Discount</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search name or code...">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="filter_status">Status</label>
+                                <select id="filter_status" class="form-select">
+                                    <option value="all">All Records</option>
+                                    <option value="1">Active Only</option>
+                                    <option value="0">Soft-Deleted Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="sort_by">Sort By</label>
+                                <select id="sort_by" class="form-select">
+                                    <option value="code_asc">Code (A to Z)</option>
+                                    <option value="code_desc">Code (Z to A)</option>
+                                    <option value="name_asc">Name (A to Z)</option>
+                                    <option value="name_desc">Name (Z to A)</option>
+                                    <option value="percent_asc">Percentage (Lowest First)</option>
+                                    <option value="percent_desc">Percentage (Highest First)</option>
+                                    <option value="id_desc">Newest First (ID)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" id="table-div">
+                            <!-- Table generated dynamically by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/discounts.js"></script>
 </body>
 </html>
-

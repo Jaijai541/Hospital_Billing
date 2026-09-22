@@ -4,33 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Billing System - Login</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
+<body class="login-body">
 
-    <h2>Hospital Billing System</h2>
-    <h3>Login</h3>
-
-    <div id="error-message" style="color: red; margin-bottom: 10px;"></div>
-
-    <form id="loginForm">
-        <div>
-            <label for="username">Username: </label>
-            <input type="text" id="username" placeholder="Username" required autofocus>
+    <div class="login-card">
+        <div class="brand">
+            <h2>🏥 St. Jude Hospital</h2>
+            <p>Billing & Patient Information System</p>
         </div>
-        <br>
-        <div>
-            <label for="password">Password: </label>
-            <input type="password" id="password" placeholder="Password" required>
-        </div>
-        <br>
-        <button type="submit" id="btn-login">Login</button>
-    </form>
 
-    <hr>
-    <p><small>Default testing account: admin / admin123</small></p>
+        <div id="error-message" class="text-danger mb-3" style="font-size: 13px; text-align: center; min-height: 18px; font-weight: 600;"></div>
+
+        <form id="loginForm">
+            <div class="form-group mb-3">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter username" required autofocus>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" id="btn-login" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 10px; font-size: 14px;">
+                Sign In to System
+            </button>
+        </form>
+
+        <div class="mt-4 pt-3 text-center" style="border-top: 1px solid #e2e8f0; font-size: 12px; color: #718096;">
+            <span>Default Test Credentials: <strong>admin</strong> / <strong>admin123</strong></span>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/login.js"></script>
 </body>
 </html>
-

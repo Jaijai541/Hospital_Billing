@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive / Recycle Bin — Hospital Billing System</title>
+</head>
+<body>
+
+    <p><a href="index.html">Back to Dashboard</a></p>
+
+    <h2>System Archive (Soft-Deleted Records Hub)</h2>
+    <div>
+        User: <strong id="user-display">Loading...</strong> | 
+        <button id="btn-logout">Logout</button>
+    </div>
+
+    <hr>
+
+    <p>This page allows you to view, restore, or permanently remove items that have been soft-deleted across all master files.</p>
+
+    <!-- Category Selector -->
+    <div style="margin-bottom: 15px;">
+        <label for="archive_category"><strong>Select Archive Category: </strong></label>
+        <select id="archive_category">
+            <option value="patients">Archived Patients</option>
+            <option value="doctors">Archived Doctors</option>
+            <option value="rooms">Archived Rooms & Beds</option>
+            <option value="catalogs">Archived Charge Catalogs</option>
+            <option value="discounts">Archived Billing Discounts</option>
+        </select>
+
+        &nbsp;&nbsp;
+        <label for="search_input">Search: </label>
+        <input type="text" id="search_input" placeholder="Search archived records...">
+    </div>
+
+    <div id="table-div">
+        <!-- Archived items table created dynamically by JavaScript -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/archive.js"></script>
+</body>
+</html>

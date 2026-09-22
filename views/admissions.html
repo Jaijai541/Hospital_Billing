@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-Patient Admissions — Hospital Billing System</title>
+</head>
+<body>
+
+    <p>
+        <a href="index.html">Back to Dashboard</a> | 
+        <a href="patients.html">Patients Directory</a> | 
+        <a href="rooms.html">Rooms & Beds</a> | 
+        <a href="archive.html">System Archive</a>
+    </p>
+
+    <h2>In-Patient Admissions & Bed Occupancy Management</h2>
+    <div>
+        User: <strong id="user-display">Loading...</strong> | 
+        <button id="btn-logout">Logout</button>
+    </div>
+
+    <hr>
+
+    <!-- Admit New Patient Form -->
+    <div>
+        <h3 id="form-title">Admit New In-Patient</h3>
+        
+        <div>
+            <label for="patient_id"><strong>Select Patient: </strong></label>
+            <select id="patient_id" required>
+                <option value="">Loading patient directory...</option>
+            </select>
+            <small>(Only registered patients can be admitted)</small>
+        </div>
+        <br>
+
+        <div>
+            <label for="chief_complaint"><strong>Chief Complaint / Initial Assessment: </strong></label><br>
+            <textarea id="chief_complaint" rows="3" cols="60" placeholder="Enter reason for admission, symptoms, initial vital check fee notes..." required></textarea>
+        </div>
+        <br>
+
+        <div>
+            <label for="bed_id"><strong>Assign Vacant Bed: </strong></label>
+            <select id="bed_id" required>
+                <option value="">Loading available beds...</option>
+            </select>
+        </div>
+        <br>
+
+        <div>
+            <strong>Assign Physician(s):</strong><br>
+            <div id="doctors_container" style="margin-top: 5px; max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 8px; width: 600px;">
+                Loading physicians...
+            </div>
+            <small>Check all attending and resident doctors assigned to this patient.</small>
+        </div>
+        <br>
+
+        <div>
+            <button id="btnSubmitAdmit">Submit In-Patient Admission</button>
+            <button id="btnReset" type="button">Reset Form</button>
+        </div>
+    </div>
+
+    <hr>
+
+    <h3>Admissions Log</h3>
+
+    <!-- Filter and Search Controls -->
+    <div style="margin-bottom: 12px;">
+        <label for="search_input">Search: </label>
+        <input type="text" id="search_input" placeholder="Search patient, bed code, or ID...">
+
+        &nbsp;&nbsp;
+        <label for="filter_status">Admission Status: </label>
+        <select id="filter_status">
+            <option value="all">All Records</option>
+            <option value="Admitted" selected>Admitted (Currently In Hospital)</option>
+            <option value="Discharged">Discharged</option>
+            <option value="Billed">Billed / Settled</option>
+        </select>
+
+        &nbsp;&nbsp;
+        <button id="btnRefresh">Refresh List</button>
+    </div>
+
+    <div id="table-div">
+        <!-- Table generated dynamically by JavaScript -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/admissions.js"></script>
+</body>
+</html>

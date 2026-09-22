@@ -165,8 +165,8 @@ const displayCatalogsTable = (items) => {
         const statusBadge = isActive 
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Soft Delete" : "Restore";
-        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
+        const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
 
         let catBadge = '<span class="badge badge-info">' + item.Category_Type + '</span>';
         if (item.Category_Type === 'Medicine') catBadge = '<span class="badge badge-primary">Medicine</span>';
@@ -182,7 +182,6 @@ const displayCatalogsTable = (items) => {
             <td>
                 <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${item.Catalog_ID}">Edit</button>
                 <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${item.Catalog_ID}" data-status="${item.Is_Active}" data-name="${item.Item_Name}">${toggleAction}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${item.Catalog_ID}" data-name="${item.Item_Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -315,8 +314,8 @@ const resetForm = () => {
  * Soft Delete / Restore (POST)
  */
 const toggleCatalogStatus = async (catalogId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "SOFT DELETE (deactivate)" : "RESTORE (reactivate)";
-    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Soft Delete preserves historical billing ledgers)`)) {
+    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
+    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Archived catalog items preserve historical billing ledgers)`)) {
         return;
     }
 

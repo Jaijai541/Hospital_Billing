@@ -242,15 +242,15 @@ const displayDoctorsTable = (doctors) => {
         const statusBadge = isActive 
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Soft Delete" : "Restore";
-        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
+        const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${doc.Formatted_Code}</strong></td>
             <td><strong>${fullName}</strong></td>
-            <td>${doc.Doctor_Type_Name}</td>
+            <td><span class="badge badge-primary">${doc.Doctor_Type_Name}</span></td>
             <td>${doc.Station_Name}</td>
             <td><small>${doc.Specialties || 'General Practice'}</small></td>
             <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
@@ -258,7 +258,6 @@ const displayDoctorsTable = (doctors) => {
             <td>
                 <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${doc.Doctor_ID}">Edit</button>
                 <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${doc.Doctor_ID}" data-status="${doc.Is_Active}" data-name="${fullName}">${toggleAction}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${doc.Doctor_ID}" data-name="${fullName}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -412,8 +411,8 @@ const resetForm = () => {
  * Soft Delete / Restore (POST)
  */
 const toggleDoctorStatus = async (doctorId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "SOFT DELETE (deactivate)" : "RESTORE (reactivate)";
-    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Soft Delete preserves historical rounds and billing records)`)) {
+    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
+    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Archived doctor profiles are preserved for past rounds and billing ledgers)`)) {
         return;
     }
 

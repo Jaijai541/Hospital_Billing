@@ -1,0 +1,36 @@
+/* ==========================================================================
+   St. Jude Hospital Billing & Patient Information System
+   Invoices Module Stylesheet (css/invoices.css)
+   ========================================================================== */
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.invoice-badge-none {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 13.5px;
+}
+
+.discount-saved-val {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.net-settled-val {
+    color: var(--primary);
+    font-size: 15.5px;
+    font-weight: 700;
+}
+
+.inv-code-cell {
+    font-family: monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+}

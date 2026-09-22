@@ -142,8 +142,8 @@ const displayDiscountsTable = (discounts) => {
         const statusBadge = isActive 
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Soft Delete" : "Restore";
-        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
+        const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
 
         const row = document.createElement("tr");
@@ -155,7 +155,6 @@ const displayDiscountsTable = (discounts) => {
             <td>
                 <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${disc.Discount_ID}">Edit</button>
                 <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${disc.Discount_ID}" data-status="${disc.Is_Active}" data-name="${disc.Discount_Name}">${toggleAction}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${disc.Discount_ID}" data-name="${disc.Discount_Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -278,8 +277,8 @@ const resetForm = () => {
 };
 
 const toggleDiscountStatus = async (discountId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "SOFT DELETE (mark as inactive)" : "RESTORE (reactivate)";
-    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Soft Delete keeps the record in the database so past final billing invoices remain intact)`)) {
+    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
+    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Archived discount policies are kept so past finalized billing invoices remain intact)`)) {
         return;
     }
 

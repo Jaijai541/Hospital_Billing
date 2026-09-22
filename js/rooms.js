@@ -197,13 +197,13 @@ const displayRoomsTable = (rooms) => {
         const statusBadge = isActive 
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Soft Delete" : "Restore";
-        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
+        const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${r.Room_Name}</strong></td>
-            <td>${r.Type_Name}</td>
+            <td><span class="badge badge-info">${r.Type_Name}</span></td>
             <td>₱ ${parseFloat(r.Daily_Rate).toFixed(2)}</td>
             <td>${r.Capacity} bed(s)</td>
             <td><span class="badge badge-success">${r.Vacant_Beds} vacant</span></td>
@@ -212,7 +212,6 @@ const displayRoomsTable = (rooms) => {
             <td>
                 <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${r.Room_ID}">Edit</button>
                 <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${r.Room_ID}" data-status="${r.Is_Active}" data-name="${r.Room_Name}">${toggleAction}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${r.Room_ID}" data-name="${r.Room_Name}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -399,8 +398,8 @@ const resetForm = () => {
  * Soft Delete / Restore (POST)
  */
 const toggleRoomStatus = async (roomId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "SOFT DELETE (deactivate)" : "RESTORE (reactivate)";
-    if (!confirm(`Are you sure you want to ${actionText} room "${name}"?\n\n(Soft Delete keeps records of past board and lodging stays intact)`)) {
+    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
+    if (!confirm(`Are you sure you want to ${actionText} room "${name}"?\n\n(Archived rooms keep records of past board and lodging stays intact)`)) {
         return;
     }
 

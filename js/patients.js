@@ -203,25 +203,24 @@ const displayPatientsTable = (patients) => {
         const statusBadge = isActive 
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Soft Delete" : "Restore";
-        const toggleBtnClass = isActive ? "btn-danger btn-delete" : "btn-success";
+        const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const fullName = `${pat.Last_Name}, ${pat.First_Name}`;
         const emContact = pat.Emergency_Contact_Name ? `${pat.Emergency_Contact_Name} (${pat.Emergency_Contact_Number || 'N/A'})` : 'None';
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${pat.Patient_Code}</strong></td>
-            <td>${fullName}</td>
+            <td><strong>${fullName}</strong></td>
             <td>${pat.Date_Of_Birth}</td>
             <td>${pat.Gender_Name}</td>
-            <td><strong>${pat.Blood_Type_Name}</strong></td>
-            <td>${pat.Contact_Number || 'N/A'}</td>
-            <td>${emContact}</td>
+            <td><span class="badge badge-info">${pat.Blood_Type_Name}</span></td>
+            <td>${pat.Contact_Number || '<span class="text-muted">N/A</span>'}</td>
+            <td><small>${emContact}</small></td>
             <td>${statusBadge}</td>
             <td>
                 <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${pat.Patient_ID}">Edit</button>
                 <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${pat.Is_Active}" data-name="${fullName}">${toggleAction}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${pat.Patient_ID}" data-name="${fullName}">Hard Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -376,8 +375,8 @@ const resetForm = () => {
  * Soft Delete / Restore (POST)
  */
 const togglePatientStatus = async (patientId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "SOFT DELETE (deactivate)" : "RESTORE (reactivate)";
-    if (!confirm(`Are you sure you want to ${actionText} patient "${name}"?\n\n(Soft Delete keeps the record in the database for past billing ledgers)`)) {
+    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
+    if (!confirm(`Are you sure you want to ${actionText} patient "${name}"?\n\n(Archived records can be viewed or restored at any time in the System Archive)`)) {
         return;
     }
 

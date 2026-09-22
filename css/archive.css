@@ -1,0 +1,51 @@
+/* ==========================================================================
+   St. Jude Hospital Billing & Patient Information System
+   System Archive Module Stylesheet (css/archive.css)
+   ========================================================================== */
+
+.archive-alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background-color: var(--primary-subtle);
+    border: 1px solid var(--primary-light);
+    border-radius: var(--radius-md);
+    color: var(--primary-hover);
+    margin-bottom: 24px;
+    font-size: 14.5px;
+}
+
+.archive-alert-banner .banner-icon {
+    font-size: 20px;
+}
+
+.archive-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.archive-filter-bar .form-group {
+    flex: 1;
+    min-width: 260px;
+}
+
+.archive-table td strong {
+    color: var(--text-main);
+}
+
+.archive-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.archive-empty-state .empty-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    opacity: 0.6;
+}

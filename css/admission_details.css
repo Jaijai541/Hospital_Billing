@@ -1,0 +1,87 @@
+/* ==========================================================================
+   Patient Chart & Billing Hub Specific Styles (Clinical Care M2 & M3)
+   ========================================================================== */
+
+/* ── Patient & Admission Banner ───────────────────────────────── */
+#patient-banner .card-body {
+    background: linear-gradient(to right, #ffffff, var(--primary-subtle));
+}
+
+#patient-banner .form-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px 24px;
+}
+
+@media (max-width: 1024px) {
+    #patient-banner .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    #patient-banner .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Inline Action Cards (Order, Round, Transfer, Return) ────── */
+.clinical-action-box {
+    background-color: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.clinical-action-box h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 14px;
+}
+
+/* ── Medicine Return Credit Card ──────────────────────────────── */
+.return-medicine-box {
+    background-color: #fffaf0;
+    border: 1px dashed var(--warning);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.return-medicine-box h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #b45309;
+    margin-bottom: 8px;
+}
+
+/* ── Running Financial Breakdown Box ─────────────────────────── */
+#ledger-summary-div table {
+    margin-bottom: 20px;
+}
+
+#ledger-summary-div table tr:last-child td {
+    border-top: 2px solid var(--border-color);
+    background-color: #f1f5f9;
+}
+
+/* ── Final Settlement Section ─────────────────────────────────── */
+#settlement-container {
+    padding: 4px 0;
+}
+
+.settlement-alert-settled {
+    background-color: var(--success-light);
+    border: 1px solid #86efac;
+    border-radius: var(--radius-md);
+    padding: 24px;
+    text-align: center;
+}
+
+.settlement-alert-settled h3 {
+    color: #15803d;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}

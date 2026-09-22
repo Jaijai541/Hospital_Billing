@@ -123,7 +123,7 @@ const displayArchiveTable = (records) => {
             <td><span class="badge badge-danger">Archived</span></td>
             <td>
                 <button type="button" class="btn btn-sm btn-success btn-action-restore" data-id="${rec.ID}" data-name="${rec.Name}">Restore</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${rec.ID}" data-name="${rec.Name}">Hard Delete</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete btn-action-hard-delete" data-id="${rec.ID}" data-name="${rec.Name}">Permanently Delete</button>
             </td>
         `;
         tbody.appendChild(row);

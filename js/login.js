@@ -1,5 +1,4 @@
-
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 
 document.addEventListener("DOMContentLoaded", () => {
     const loggedInUser = sessionStorage.getItem("hospital_user");

@@ -4,7 +4,7 @@
  * Handles Doctor, Doctor_Specialty, Enum_Doctor_Type, and Enum_Department_Station
  */
 
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 let allDoctors = [];
 let allSpecialties = [];
 
@@ -45,7 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter_status").addEventListener("change", filterAndSortDoctors);
     document.getElementById("filter_type").addEventListener("change", filterAndSortDoctors);
     document.getElementById("filter_station").addEventListener("change", filterAndSortDoctors);
-    document.getElementById("filter_specialty").addEventListener("change", filterAndSortDoctors);
+    const filterSpec = document.getElementById("filter_specialty");
+    if (filterSpec) {
+        filterSpec.addEventListener("change", filterAndSortDoctors);
+    }
     document.getElementById("sort_by").addEventListener("change", filterAndSortDoctors);
 });
 
@@ -109,10 +112,12 @@ const loadDoctorLookups = async () => {
                 `;
                 specContainer.appendChild(label);
 
-                const filterOpt = document.createElement("option");
-                filterOpt.value = s.Specialty_ID;
-                filterOpt.textContent = s.Specialty_Name;
-                filterSpec.appendChild(filterOpt);
+                if (filterSpec) {
+                    const filterOpt = document.createElement("option");
+                    filterOpt.value = s.Specialty_ID;
+                    filterOpt.textContent = s.Specialty_Name;
+                    filterSpec.appendChild(filterOpt);
+                }
             });
         }
     } catch (error) {
@@ -140,8 +145,8 @@ const displayDoctors = async () => {
             alert("Error loading doctor records!");
         }
     } catch (error) {
-        console.error("[API] Network error:", error);
-        tableDiv.innerHTML = `<p style="color: red;">Failed to connect to API.</p>`;
+        console.error("[API] Error in displayDoctors:", error);
+        tableDiv.innerHTML = `<p style="color: red;">Failed to load doctor records. Please refresh the page.</p>`;
     }
 };
 
@@ -149,12 +154,18 @@ const displayDoctors = async () => {
  * Filter & sort doctors
  */
 const filterAndSortDoctors = () => {
-    const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
-    const filterStatus = document.getElementById("filter_status").value;
-    const filterType = document.getElementById("filter_type").value;
-    const filterStation = document.getElementById("filter_station").value;
-    const filterSpec = document.getElementById("filter_specialty").value;
-    const sortBy = document.getElementById("sort_by").value;
+    const searchInput = document.getElementById("search_input");
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const filterStatusElem = document.getElementById("filter_status");
+    const filterStatus = filterStatusElem ? filterStatusElem.value : "all";
+    const filterTypeElem = document.getElementById("filter_type");
+    const filterType = filterTypeElem ? filterTypeElem.value : "all";
+    const filterStationElem = document.getElementById("filter_station");
+    const filterStation = filterStationElem ? filterStationElem.value : "all";
+    const filterSpecElem = document.getElementById("filter_specialty");
+    const filterSpec = filterSpecElem ? filterSpecElem.value : "all";
+    const sortByElem = document.getElementById("sort_by");
+    const sortBy = sortByElem ? sortByElem.value : "name_asc";
 
     let filtered = allDoctors.filter(doc => {
         const name = `${doc.First_Name} ${doc.Last_Name}`.toLowerCase();

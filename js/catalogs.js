@@ -4,7 +4,7 @@
  * Handles Charge_Catalogs: Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price
  */
 
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 let allCatalogs = [];
 
 document.addEventListener("DOMContentLoaded", () => {

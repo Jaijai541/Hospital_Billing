@@ -4,7 +4,7 @@
  * Includes Multi-Filter, Search, Sort, Soft/Hard Delete, and Console Logging
  */
 
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 let allPatients = [];
 
 document.addEventListener("DOMContentLoaded", () => {

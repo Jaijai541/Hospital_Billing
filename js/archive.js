@@ -4,7 +4,7 @@
  * Allows viewing, restoring, and hard deleting soft-deleted items across all entities
  */
 
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 let currentArchivedRecords = [];
 
 document.addEventListener("DOMContentLoaded", () => {

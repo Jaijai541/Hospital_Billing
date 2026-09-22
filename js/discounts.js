@@ -1,4 +1,4 @@
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 let allDiscounts = []; // In-memory cache for fast search, filter, and sort
 
 document.addEventListener("DOMContentLoaded", () => {

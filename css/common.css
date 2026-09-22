@@ -333,19 +333,31 @@ textarea.form-control {
     margin-top: 24px;
 }
 
-/* ── Filter Bar with Baseline Alignment ───────────────────────── */
-.filter-bar {
+/* ── Filter Bar & Toolbar with Baseline Alignment ─────────────── */
+.filter-bar,
+.filter-toolbar {
     display: flex;
     align-items: flex-end;
     flex-wrap: wrap;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding-bottom: 20px;
     border-bottom: 1px solid #f1f5f9;
 }
 
-.filter-bar .form-group {
+.filter-bar .form-group,
+.filter-toolbar .form-group {
     margin-bottom: 0;
+}
+
+.search-box {
+    flex: 0 1 320px;
+    min-width: 260px;
+    max-width: 360px;
+}
+
+.search-box input {
+    width: 100%;
 }
 
 /* ── Standardized Button System ──────────────────────────────── */

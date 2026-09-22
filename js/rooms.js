@@ -4,7 +4,7 @@
  * Handles Room, Room_Bed, and Enum_Room_Type (with Daily_Rate)
  */
 
-const baseApiUrl = "http://localhost/Hospital_Billing/api";
+const baseApiUrl = "../api";
 let allRooms = [];
 let allBeds = [];
 let roomTypes = [];

@@ -41,12 +41,44 @@ document.addEventListener("DOMContentLoaded", () => {
         else prefixInput.value = "";
     });
 
+    // Modal Controls
+    const btnOpenAdd = document.getElementById("btnOpenAddModal");
+    if (btnOpenAdd) {
+        btnOpenAdd.addEventListener("click", () => {
+            resetForm();
+            openModal();
+        });
+    }
+
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener("click", closeModal);
+    }
+
+    const formModal = document.getElementById("formModal");
+    if (formModal) {
+        formModal.addEventListener("click", (e) => {
+            if (e.target === formModal) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeModal();
+        }
+    });
+
     // Initial Data Load
     displayCatalogs();
 
     // Form Events
     document.getElementById("btnSubmit").addEventListener("click", saveCatalogItem);
-    document.getElementById("btnCancel").addEventListener("click", resetForm);
+    document.getElementById("btnCancel").addEventListener("click", () => {
+        resetForm();
+        closeModal();
+    });
 
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortCatalogs);
@@ -54,6 +86,27 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter_status").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("sort_by").addEventListener("change", filterAndSortCatalogs);
 });
+
+/**
+ * Modal Window Helpers
+ */
+const openModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+        const firstInput = document.getElementById("item_name");
+        if (firstInput) firstInput.focus();
+    }
+};
+
+const closeModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+    }
+};
 
 /**
  * Fetch all catalog items from API
@@ -231,8 +284,7 @@ const loadCatalogForEdit = async (catalogId) => {
 
             document.getElementById("form-title").textContent = `Edit Catalog Item (${item.Code_Prefix}-${String(item.Catalog_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Item";
-            document.getElementById("btnCancel").style.display = "inline";
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            openModal();
         }
     } catch (error) {
         console.error("[API] Error loading catalog details:", error);
@@ -285,6 +337,7 @@ const saveCatalogItem = async () => {
         if (response.data == 1) {
             alert(isEdit ? "Catalog item updated successfully!" : "Catalog item added successfully!");
             resetForm();
+            closeModal();
             displayCatalogs();
         } else {
             alert("Error saving catalog item.");

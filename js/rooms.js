@@ -37,9 +37,41 @@ document.addEventListener("DOMContentLoaded", () => {
     loadRoomTypes();
     displayRoomsAndBeds();
 
+    // Modal Controls
+    const btnOpenAdd = document.getElementById("btnOpenAddModal");
+    if (btnOpenAdd) {
+        btnOpenAdd.addEventListener("click", () => {
+            resetForm();
+            openModal();
+        });
+    }
+
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener("click", closeModal);
+    }
+
+    const formModal = document.getElementById("formModal");
+    if (formModal) {
+        formModal.addEventListener("click", (e) => {
+            if (e.target === formModal) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeModal();
+        }
+    });
+
     // Form Events
     document.getElementById("btnSubmit").addEventListener("click", saveRoom);
-    document.getElementById("btnCancel").addEventListener("click", resetForm);
+    document.getElementById("btnCancel").addEventListener("click", () => {
+        resetForm();
+        closeModal();
+    });
 
     // Auto-fill daily rate on room type selection
     document.getElementById("room_type_id").addEventListener("change", (e) => {
@@ -55,9 +87,33 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortRooms);
     document.getElementById("filter_status").addEventListener("change", filterAndSortRooms);
-    document.getElementById("filter_room_type").addEventListener("change", filterAndSortRooms);
+    const filterRoomType = document.getElementById("filter_room_type") || document.getElementById("filter_type");
+    if (filterRoomType) {
+        filterRoomType.addEventListener("change", filterAndSortRooms);
+    }
     document.getElementById("sort_by").addEventListener("change", filterAndSortRooms);
 });
+
+/**
+ * Modal Window Helpers
+ */
+const openModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+        const firstInput = document.getElementById("room_name");
+        if (firstInput) firstInput.focus();
+    }
+};
+
+const closeModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+    }
+};
 
 /**
  * Load room types (Daily_Rate is in Enum_Room_Type)
@@ -317,8 +373,7 @@ const loadRoomForEdit = async (roomId) => {
 
             document.getElementById("form-title").textContent = `Edit Room (${r.Room_Name})`;
             document.getElementById("btnSubmit").textContent = "Update Room";
-            document.getElementById("btnCancel").style.display = "inline";
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            openModal();
         }
     } catch (error) {
         console.error("[API] Error loading room:", error);
@@ -368,6 +423,7 @@ const saveRoom = async () => {
         if (response.data == 1) {
             alert(isEdit ? "Room updated successfully!" : "Room and beds registered successfully!");
             resetForm();
+            closeModal();
             displayRoomsAndBeds();
         } else {
             alert("Error saving room.");

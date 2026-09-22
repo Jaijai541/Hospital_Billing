@@ -36,9 +36,41 @@ document.addEventListener("DOMContentLoaded", () => {
     loadDoctorLookups();
     displayDoctors();
 
+    // Modal Controls
+    const btnOpenAdd = document.getElementById("btnOpenAddModal");
+    if (btnOpenAdd) {
+        btnOpenAdd.addEventListener("click", () => {
+            resetForm();
+            openModal();
+        });
+    }
+
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener("click", closeModal);
+    }
+
+    const formModal = document.getElementById("formModal");
+    if (formModal) {
+        formModal.addEventListener("click", (e) => {
+            if (e.target === formModal) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeModal();
+        }
+    });
+
     // Form Events
     document.getElementById("btnSubmit").addEventListener("click", saveDoctor);
-    document.getElementById("btnCancel").addEventListener("click", resetForm);
+    document.getElementById("btnCancel").addEventListener("click", () => {
+        resetForm();
+        closeModal();
+    });
 
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDoctors);
@@ -51,6 +83,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     document.getElementById("sort_by").addEventListener("change", filterAndSortDoctors);
 });
+
+/**
+ * Modal Window Helpers
+ */
+const openModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+        const firstInput = document.getElementById("first_name");
+        if (firstInput) firstInput.focus();
+    }
+};
+
+const closeModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+    }
+};
 
 /**
  * Load Doctor Types, Stations, and Specialties
@@ -325,8 +378,7 @@ const loadDoctorForEdit = async (doctorId) => {
 
             document.getElementById("form-title").textContent = `Edit Doctor (DOC-${String(doc.Doctor_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Doctor";
-            document.getElementById("btnCancel").style.display = "inline";
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            openModal();
         }
     } catch (error) {
         console.error("[API] Error loading doctor details:", error);
@@ -388,6 +440,7 @@ const saveDoctor = async () => {
         if (response.data == 1) {
             alert(isEdit ? "Doctor updated successfully!" : "Doctor registered successfully!");
             resetForm();
+            closeModal();
             displayDoctors();
         } else {
             alert("Error saving doctor record.");

@@ -28,15 +28,68 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2.
     displayDiscounts();
 
-    // 3.
-    document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
-    document.getElementById("btnCancel").addEventListener("click", resetForm);
+    // Modal Controls
+    const btnOpenAdd = document.getElementById("btnOpenAddModal");
+    if (btnOpenAdd) {
+        btnOpenAdd.addEventListener("click", () => {
+            resetForm();
+            openModal();
+        });
+    }
 
-    // 4.
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener("click", closeModal);
+    }
+
+    const formModal = document.getElementById("formModal");
+    if (formModal) {
+        formModal.addEventListener("click", (e) => {
+            if (e.target === formModal) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeModal();
+        }
+    });
+
+    // Form Events
+    document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
+    document.getElementById("btnCancel").addEventListener("click", () => {
+        resetForm();
+        closeModal();
+    });
+
+    // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
 });
+
+/**
+ * Modal Window Helpers
+ */
+const openModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+        const firstInput = document.getElementById("discount_name");
+        if (firstInput) firstInput.focus();
+    }
+};
+
+const closeModal = () => {
+    const modal = document.getElementById("formModal");
+    if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+    }
+};
 
 const displayDiscounts = async () => {
     const tableDiv = document.getElementById("table-div");
@@ -199,8 +252,7 @@ const loadDiscountForEdit = async (discountId) => {
 
             document.getElementById("form-title").textContent = `Edit Discount (DISC-${disc.Discount_ID})`;
             document.getElementById("btnSubmit").textContent = "Update Discount";
-            document.getElementById("btnCancel").style.display = "inline";
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            openModal();
             console.log("[UI] Form populated for edit:", disc);
         }
     } catch (error) {
@@ -253,6 +305,7 @@ const saveDiscount = async () => {
         if (response.data == 1) {
             console.log(`[Success] ${operation} completed successfully.`);
             alert(isEdit ? "Discount updated successfully!" : "Discount added successfully!");
+            closeModal();
             resetForm();
             displayDiscounts();
         } else {
@@ -270,9 +323,8 @@ const resetForm = () => {
     document.getElementById("discount_name").value = "";
     document.getElementById("discount_percentage").value = "";
 
-    document.getElementById("form-title").textContent = "Add New Discount";
-    document.getElementById("btnSubmit").textContent = "Submit";
-    document.getElementById("btnCancel").style.display = "none";
+    document.getElementById("form-title").textContent = "Add New Discount Scheme";
+    document.getElementById("btnSubmit").textContent = "Submit Discount";
     console.log("[UI] Form reset to Add mode.");
 };
 

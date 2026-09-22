@@ -64,57 +64,62 @@
                     <h2>Doctors & Professional Fees Directory</h2>
                     <p>Manage physician profiles, multi-specialties, station assignments, and bedside round fees.</p>
                 </div>
+                <button type="button" id="btnOpenAddModal" class="btn btn-primary">
+                    <span>➕</span> Add New Doctor
+                </button>
             </div>
 
-            <!-- Add / Edit Doctor Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 id="form-title">Add New Doctor</h3>
-                </div>
-                <div class="card-body">
-                    <input type="hidden" id="doctor_id" value="">
+            <!-- Pop-Up Modal Window for Add / Edit Doctor -->
+            <div id="formModal" class="modal-overlay">
+                <div class="modal-container modal-lg">
+                    <div class="modal-header">
+                        <h3 id="form-title">Add New Doctor</h3>
+                        <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="doctor_id" value="">
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label" for="first_name">First Name *</label>
-                            <input type="text" id="first_name" class="form-control" placeholder="First Name" required>
-                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="first_name">First Name *</label>
+                                <input type="text" id="first_name" class="form-control" placeholder="First Name" required>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="last_name">Last Name *</label>
-                            <input type="text" id="last_name" class="form-control" placeholder="Last Name" required>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label" for="last_name">Last Name *</label>
+                                <input type="text" id="last_name" class="form-control" placeholder="Last Name" required>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="doctor_type_id">Classification *</label>
-                            <select id="doctor_type_id" class="form-select" required>
-                                <option value="">Select Classification...</option>
-                            </select>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label" for="doctor_type_id">Classification *</label>
+                                <select id="doctor_type_id" class="form-select" required>
+                                    <option value="">Select Classification...</option>
+                                </select>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="station_id">Department / Station *</label>
-                            <select id="station_id" class="form-select" required>
-                                <option value="">Select Department Station...</option>
-                            </select>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label" for="station_id">Department / Station *</label>
+                                <select id="station_id" class="form-select" required>
+                                    <option value="">Select Department Station...</option>
+                                </select>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="base_round_fee">Base Bedside Round Fee (₱) *</label>
-                            <input type="number" step="0.01" min="0" id="base_round_fee" class="form-control" placeholder="0.00" required>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label" for="base_round_fee">Base Bedside Round Fee (₱) *</label>
+                                <input type="number" step="0.01" min="0" id="base_round_fee" class="form-control" placeholder="0.00" required>
+                            </div>
 
-                        <div class="form-group col-full">
-                            <label class="form-label">Medical Specialties (Check all that apply):</label>
-                            <div id="specialties-checkboxes" style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
-                                <!-- Checkboxes populated dynamically -->
+                            <div class="form-group col-full">
+                                <label class="form-label">Medical Specialties (Check all that apply):</label>
+                                <div id="specialties-checkboxes">
+                                    <!-- Checkboxes populated dynamically -->
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="form-actions">
-                        <button id="btnSubmit" class="btn btn-primary">Submit Doctor</button>
-                        <button id="btnCancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
+                        <button type="button" id="btnSubmit" class="btn btn-primary">Submit Doctor</button>
                     </div>
                 </div>
             </div>

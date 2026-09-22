@@ -64,45 +64,50 @@
                     <h2>Rooms, Wards & Beds Directory</h2>
                     <p>Configure room classifications, bed capacity, uniform board & lodging rates, and bed codes.</p>
                 </div>
+                <button type="button" id="btnOpenAddModal" class="btn btn-primary">
+                    <span>➕</span> Add New Room
+                </button>
             </div>
 
-            <!-- Add / Edit Room Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 id="form-title">Add New Room</h3>
-                </div>
-                <div class="card-body">
-                    <input type="hidden" id="room_id" value="">
+            <!-- Pop-Up Modal Window for Add / Edit Room -->
+            <div id="formModal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3 id="form-title">Add New Room</h3>
+                        <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="room_id" value="">
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label" for="room_name">Room Name *</label>
-                            <input type="text" id="room_name" class="form-control" placeholder="e.g. Ward A, Private 301" required>
-                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="room_name">Room Name *</label>
+                                <input type="text" id="room_name" class="form-control" placeholder="e.g. Ward A, Private 301" required>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="room_type_id">Room Classification *</label>
-                            <select id="room_type_id" class="form-select" required>
-                                <option value="">Select Classification...</option>
-                            </select>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label" for="room_type_id">Room Classification *</label>
+                                <select id="room_type_id" class="form-select" required>
+                                    <option value="">Select Classification...</option>
+                                </select>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="daily_rate">Daily Board & Lodging Rate (₱)</label>
-                            <input type="number" step="0.01" id="daily_rate" class="form-control" placeholder="0.00" readonly>
-                            <small style="color: var(--text-muted); font-size: 11px;">Enforced uniformly from classification</small>
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label" for="daily_rate">Daily Board & Lodging Rate (₱)</label>
+                                <input type="number" step="0.01" id="daily_rate" class="form-control" placeholder="0.00" readonly>
+                                <small style="color: var(--text-muted); font-size: 11px;">Enforced uniformly from classification</small>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="capacity">Bed Capacity *</label>
-                            <input type="number" id="capacity" class="form-control" min="1" max="20" value="1" required>
-                            <small style="color: var(--text-muted); font-size: 11px;">Individual bed codes generated automatically</small>
+                            <div class="form-group">
+                                <label class="form-label" for="capacity">Bed Capacity *</label>
+                                <input type="number" id="capacity" class="form-control" min="1" max="20" value="1" required>
+                                <small style="color: var(--text-muted); font-size: 11px;">Individual bed codes generated automatically</small>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="form-actions">
-                        <button id="btnSubmit" class="btn btn-primary">Submit Room</button>
-                        <button id="btnCancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
+                        <button type="button" id="btnSubmit" class="btn btn-primary">Submit Room</button>
                     </div>
                 </div>
             </div>
@@ -130,8 +135,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="filter_type">Classification</label>
-                            <select id="filter_type" class="form-select">
+                            <label class="form-label" for="filter_room_type">Classification</label>
+                            <select id="filter_room_type" class="form-select">
                                 <option value="all">All Classifications</option>
                             </select>
                         </div>

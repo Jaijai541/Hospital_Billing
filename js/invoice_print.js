@@ -6,6 +6,13 @@
 window.addEventListener('DOMContentLoaded', () => {
     console.log("invoice_print.js: Initializing printable Statement of Account...");
 
+    // Session Verification
+    const userJson = sessionStorage.getItem("hospital_user");
+    if (!userJson) {
+        window.location.href = "login.html";
+        return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const invoiceId = urlParams.get('id');
     const admissionId = urlParams.get('admission_id');
@@ -33,13 +40,22 @@ function loadInvoiceData(invoiceId, admissionId) {
     axios.post('../api/invoices.php', formData)
         .then(response => {
             console.log("invoice_print.js: Invoice data received:", response.data);
-            if (response.data.error) {
-                alert("Error loading invoice: " + response.data.error);
+            let inv = response.data;
+            if (typeof inv === 'string') {
+                try {
+                    inv = JSON.parse(inv);
+                } catch (e) {
+                    console.error("invoice_print.js: Failed to parse invoice JSON:", e);
+                }
+            }
+
+            if (!inv || inv.error) {
+                alert("Error loading invoice: " + (inv ? inv.error : "Empty response"));
                 window.location.href = "invoices.html";
                 return;
             }
 
-            renderInvoice(response.data);
+            renderInvoice(inv);
 
             // If ?print=true parameter was provided, automatically open print dialog
             const urlParams = new URLSearchParams(window.location.search);
@@ -57,31 +73,48 @@ function loadInvoiceData(invoiceId, admissionId) {
 
 function renderInvoice(inv) {
     // 1. Invoice & Case Record
-    document.getElementById('inv-code').textContent = inv.Invoice_Code;
-    document.getElementById('inv-settlement-date').textContent = inv.Settlement_Date;
-    document.getElementById('inv-admission-code').textContent = inv.Admission_Code;
-    document.getElementById('inv-admission-date').textContent = inv.Admission_Date;
-    document.getElementById('inv-stay-days').textContent = inv.Length_Of_Stay_Days;
-    document.getElementById('inv-cashier').textContent = `${inv.Cashier_Name} (${inv.Cashier_Role})`;
+    document.getElementById('inv-code').textContent = inv.Invoice_Code || 'N/A';
+    document.getElementById('inv-settlement-date').textContent = inv.Settlement_Date || 'N/A';
+    document.getElementById('inv-admission-code').textContent = inv.Admission_Code || 'N/A';
+    document.getElementById('inv-admission-date').textContent = inv.Admission_Date || 'N/A';
+    document.getElementById('inv-stay-days').textContent = (inv.Length_Of_Stay_Days !== undefined && inv.Length_Of_Stay_Days !== null) ? inv.Length_Of_Stay_Days : '1';
+    
+    const cashierName = inv.Cashier_Name || 'Cashier / Billing Officer';
+    const cashierRole = inv.Cashier_Role ? ` (${inv.Cashier_Role})` : '';
+    document.getElementById('inv-cashier').textContent = `${cashierName}${cashierRole}`;
 
     // 2. Patient Demographics
-    document.getElementById('patient-name').textContent = inv.Patient_Name;
-    document.getElementById('patient-code').textContent = inv.Patient_Code;
-    document.getElementById('patient-age').textContent = `${inv.Date_Of_Birth} (${inv.Age} years old)`;
-    document.getElementById('patient-gender-blood').textContent = `${inv.Gender_Name || 'N/A'} / Blood: ${inv.Blood_Type_Name || 'N/A'}`;
+    document.getElementById('patient-name').textContent = inv.Patient_Name || 'N/A';
+    document.getElementById('patient-code').textContent = inv.Patient_Code || 'N/A';
+    
+    const dob = inv.Date_Of_Birth || 'N/A';
+    const ageText = (inv.Age !== null && inv.Age !== undefined && inv.Age !== '') ? ` (${inv.Age} years old)` : '';
+    document.getElementById('patient-age').textContent = `${dob}${ageText}`;
+    
+    document.getElementById('patient-gender-blood').textContent = `${inv.Gender_Name || 'Unspecified'} / Blood: ${inv.Blood_Type_Name || 'N/A'}`;
     document.getElementById('patient-contact').textContent = inv.Contact_Number || 'N/A';
     document.getElementById('patient-address').textContent = inv.Address || 'N/A';
-    document.getElementById('patient-emergency').textContent = `${inv.Emergency_Contact_Name || 'N/A'} (${inv.Emergency_Contact_Number || 'N/A'})`;
-    document.getElementById('patient-complaint').textContent = inv.Chief_Complaint;
+    
+    let emergText = 'None Recorded';
+    if (inv.Emergency_Contact_Name && inv.Emergency_Contact_Number) {
+        emergText = `${inv.Emergency_Contact_Name} (${inv.Emergency_Contact_Number})`;
+    } else if (inv.Emergency_Contact_Name) {
+        emergText = inv.Emergency_Contact_Name;
+    } else if (inv.Emergency_Contact_Number) {
+        emergText = inv.Emergency_Contact_Number;
+    }
+    document.getElementById('patient-emergency').textContent = emergText;
+    document.getElementById('patient-complaint').textContent = inv.Chief_Complaint || 'None Recorded';
 
     // Assigned Physicians
     const doctors = inv.Attending_Doctors || [];
     if (doctors.length > 0) {
-        const docText = doctors.map(d => `${d.Doctor_Name} (${d.Doctor_Type}${d.Specialties ? ' - ' + d.Specialties : ''})`).join('; ');
+        const docText = doctors.map(d => `${d.Doctor_Name || 'Doctor'} (${d.Doctor_Type || 'Attending'}${d.Specialties ? ' - ' + d.Specialties : ''})`).join('; ');
         document.getElementById('patient-doctors').textContent = docText;
-        document.getElementById('sig-doctor').textContent = doctors[0].Doctor_Name;
+        document.getElementById('sig-doctor').textContent = doctors[0].Doctor_Name || 'Attending Physician';
     } else {
         document.getElementById('patient-doctors').textContent = 'None Recorded';
+        document.getElementById('sig-doctor').textContent = 'Attending Physician';
     }
 
     // 3. Itemized Charges Table
@@ -101,16 +134,18 @@ function renderInvoice(inv) {
 
     document.getElementById('summary-gross').textContent = `₱${gross.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
     
-    const discLabel = inv.Discount_Name !== 'None' 
-        ? `${inv.Discount_Name} - ${parseFloat(inv.Discount_Percentage).toFixed(2)}%` 
+    const discName = inv.Discount_Name || 'None';
+    const discPct = parseFloat(inv.Discount_Percentage || 0);
+    const discLabel = (discName !== 'None' && discPct > 0) 
+        ? `${discName} - ${discPct.toFixed(2)}%` 
         : 'None (0.00%)';
     document.getElementById('discount-label').textContent = discLabel;
     document.getElementById('summary-discount').textContent = `-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
     document.getElementById('summary-net').textContent = `₱${net.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
     // 5. Signatures
-    document.getElementById('sig-cashier').textContent = inv.Cashier_Name;
-    document.getElementById('sig-patient').textContent = inv.Patient_Name;
+    document.getElementById('sig-cashier').textContent = inv.Cashier_Name || 'Billing Officer';
+    document.getElementById('sig-patient').textContent = inv.Patient_Name || 'Patient / Authorized Representative';
 }
 
 function renderItemizedTable(items) {
@@ -121,29 +156,29 @@ function renderItemizedTable(items) {
         return;
     }
 
-    let html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-    html += '<thead><tr bgcolor="#f2f2f2">';
-    html += '<th width="8%">Item #</th>';
-    html += '<th width="18%">Classification / Station</th>';
-    html += '<th width="42%">Particulars & Description</th>';
-    html += '<th width="8%" align="center">Qty</th>';
-    html += '<th width="12%" align="right">Unit Price</th>';
-    html += '<th width="12%" align="right">Amount (₱)</th>';
+    let html = '<table class="soa-table" style="margin-top: 6px;">';
+    html += '<thead><tr class="header-row" style="background-color: #f1f5f9;">';
+    html += '<th width="8%" style="text-align: center;">Item #</th>';
+    html += '<th width="20%">Classification / Station</th>';
+    html += '<th width="40%">Particulars & Description</th>';
+    html += '<th width="8%" style="text-align: center;">Qty</th>';
+    html += '<th width="12%" style="text-align: right;">Unit Price</th>';
+    html += '<th width="12%" style="text-align: right;">Amount (₱)</th>';
     html += '</tr></thead><tbody>';
 
     items.forEach((row, idx) => {
-        const isReturn = row.Transaction_Type === 'Return' || parseFloat(row.Total_Charge) < 0;
-        const total = Math.abs(parseFloat(row.Total_Charge)).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const unit = parseFloat(row.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const isReturn = row.Transaction_Type === 'Return' || parseFloat(row.Total_Charge || 0) < 0;
+        const total = Math.abs(parseFloat(row.Total_Charge || 0)).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const unit = parseFloat(row.Unit_Price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
         const sign = isReturn ? '- ' : '';
-        const highlight = isReturn ? 'bgcolor="#f0fff0"' : '';
+        const rowStyle = isReturn ? 'style="background-color: #f0fdf4;"' : '';
 
-        html += `<tr ${highlight}>`;
+        html += `<tr ${rowStyle}>`;
         html += `<td align="center">${idx + 1}</td>`;
-        html += `<td><strong>${row.Category}</strong><br><small>${row.Station_Name}</small></td>`;
-        html += `<td>${row.Description}</td>`;
-        html += `<td align="center">${parseFloat(row.Quantity)}</td>`;
+        html += `<td><strong>${row.Category || 'Charge'}</strong><br><small style="color: #64748b;">${row.Station_Name || ''}</small></td>`;
+        html += `<td>${row.Description || 'Item'}</td>`;
+        html += `<td align="center">${parseFloat(row.Quantity || 1)}</td>`;
         html += `<td align="right">₱${unit}</td>`;
         html += `<td align="right"><strong>${sign}₱${total}</strong></td>`;
         html += '</tr>';

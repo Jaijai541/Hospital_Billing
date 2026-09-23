@@ -16,7 +16,7 @@
     --success: #10b981;             /* Emerald for Restore / Confirm */
     --success-hover: #059669;
     --success-light: #dcfce7;
-    --warning: #f59e0b;             /* Amber for Send to Archive */
+    --warning: #ffffff;             /* Amber for Send to Archive */
     --warning-hover: #d97706;
     --warning-light: #fef3c7;
     --danger: #ef4444;              /* Crimson for Hard Delete / Cancel */
@@ -585,12 +585,13 @@ textarea.form-control {
 
 /* Secondary Button (Slate Neutral) */
 .btn-secondary {
-    background-color: #64748b;
+    background-color: #7e7d7d;
+    border: black solid 1px;
     color: #ffffff;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background-color: #475569;
+    background-color: #52555a;
     color: #ffffff;
 }
 
@@ -608,6 +609,7 @@ textarea.form-control {
 /* Warning / Archive Button (Soft Delete -> Send to Archive) */
 .btn-warning, .btn-archive {
     background-color: var(--warning);
+    border: black 1px solid;
     color: #ffffff;
 }
 

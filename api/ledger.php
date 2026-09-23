@@ -318,31 +318,34 @@ class LedgerManager
 }
 
 // ── Router ──────────────────────────────────────────────────────────
-$operation = $_POST['operation'] ?? '';
-$json = $_POST['json'] ?? '{}';
+if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'ledger.php') {
+    $operation = $_POST['operation'] ?? '';
+    $json = $_POST['json'] ?? '{}';
 
-if (!empty($operation)) {
-    $ledger = new LedgerManager();
+    if (!empty($operation)) {
+        $ledger = new LedgerManager();
 
-    switch ($operation) {
-        case 'getAdmissionLedger':
-            echo $ledger->getAdmissionLedger($json);
-            break;
+        switch ($operation) {
+            case 'getAdmissionLedger':
+                echo $ledger->getAdmissionLedger($json);
+                break;
 
-        case 'getLedgerSummary':
-            echo $ledger->getLedgerSummary($json);
-            break;
+            case 'getLedgerSummary':
+                echo $ledger->getLedgerSummary($json);
+                break;
 
-        case 'getDispensedMedicines':
-            echo $ledger->getDispensedMedicines($json);
-            break;
+            case 'getDispensedMedicines':
+                echo $ledger->getDispensedMedicines($json);
+                break;
 
-        case 'returnMedicine':
-            echo $ledger->returnMedicine($json);
-            break;
+            case 'returnMedicine':
+                echo $ledger->returnMedicine($json);
+                break;
 
-        default:
-            echo json_encode(['error' => 'Invalid operation specified.']);
-            break;
+            default:
+                echo json_encode(['error' => 'Invalid operation specified.']);
+                break;
+        }
     }
 }
+

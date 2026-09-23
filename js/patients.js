@@ -4,72 +4,16 @@
  * Includes Multi-Filter, Search, Sort, Soft/Hard Delete, and Console Logging
  */
 
-const baseApiUrl = "../api";
 let allPatients = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Session Verification
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        window.location.href = "login.html";
-        return;
-    }
-    const user = JSON.parse(userJson);
-    const userDisplay = document.getElementById("user-display");
-    if (userDisplay) {
-        userDisplay.textContent = `${user.full_name} (${user.role_name})`;
-    }
-
-    const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to log out?")) {
-                console.log("[Auth] User logged out:", user.username);
-                sessionStorage.removeItem("hospital_user");
-                window.location.href = "login.html";
-            }
-        });
-    }
-
     // Initial Data Load
     loadPatientEnums();
     displayPatients();
 
-    // Modal Controls
-    const btnOpenAdd = document.getElementById("btnOpenAddModal");
-    if (btnOpenAdd) {
-        btnOpenAdd.addEventListener("click", () => {
-            resetForm();
-            openModal();
-        });
-    }
-
-    const btnCloseModal = document.getElementById("btnCloseModal");
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener("click", closeModal);
-    }
-
-    const formModal = document.getElementById("formModal");
-    if (formModal) {
-        formModal.addEventListener("click", (e) => {
-            if (e.target === formModal) {
-                closeModal();
-            }
-        });
-    }
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            closeModal();
-        }
-    });
-
-    // Form Events
+    // Modal & Form Controls
+    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", savePatient);
-    document.getElementById("btnCancel").addEventListener("click", () => {
-        resetForm();
-        closeModal();
-    });
 
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortPatients);
@@ -77,27 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter_blood").addEventListener("change", filterAndSortPatients);
     document.getElementById("sort_by").addEventListener("change", filterAndSortPatients);
 });
-
-/**
- * Modal Window Helpers
- */
-const openModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.add("active");
-        modal.style.display = "flex";
-        const firstInput = document.getElementById("first_name");
-        if (firstInput) firstInput.focus();
-    }
-};
-
-const closeModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.remove("active");
-        modal.style.display = "none";
-    }
-};
 
 /**
  * Fetch lookup enums (Genders and Blood Types)
@@ -254,12 +177,6 @@ const displayPatientsTable = (patients) => {
     patients.forEach(pat => {
         const isActive = (pat.Is_Active == 1);
         const statusBadge = isActive 
-            ? '<span class="badge badge-success">Active</span>' 
-            : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Send to Archive" : "Restore";
-        const toggleIcon = isActive ? "🗑️" : "🔄";
-        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Patient";
-        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const fullName = `${pat.Last_Name}, ${pat.First_Name}`;
         const emContact = pat.Emergency_Contact_Name ? `${pat.Emergency_Contact_Name} (${pat.Emergency_Contact_Number || 'N/A'})` : 'None';
 
@@ -272,13 +189,8 @@ const displayPatientsTable = (patients) => {
             <td><span class="badge badge-info">${pat.Blood_Type_Name}</span></td>
             <td>${pat.Contact_Number || '<span class="text-muted">N/A</span>'}</td>
             <td><small>${emContact}</small></td>
-            <td>${statusBadge}</td>
-            <td>
-                <div class="table-actions">
-                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${pat.Patient_ID}" title="Edit Patient" aria-label="Edit Patient">✏️</button>
-                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${pat.Is_Active}" data-name="${fullName}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
-                </div>
-            </td>
+            <td>${getStatusBadge(pat.Is_Active)}</td>
+            <td>${getActionButtons(pat.Patient_ID, pat.Is_Active, fullName, 'Edit Patient')}</td>
         `;
         tbody.appendChild(row);
     });
@@ -293,13 +205,7 @@ const displayPatientsTable = (patients) => {
 
     document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
         btn.addEventListener("click", () => {
-            togglePatientStatus(btn.dataset.id, btn.dataset.status, btn.dataset.name);
-        });
-    });
-
-    document.querySelectorAll(".btn-action-hard-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            hardDeletePatient(btn.dataset.id, btn.dataset.name);
+            toggleRecordStatus("patients.php", "patient_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayPatients);
         });
     });
 };
@@ -426,74 +332,4 @@ const resetForm = () => {
     document.getElementById("form-title").textContent = "Register New Patient";
     document.getElementById("btnSubmit").textContent = "Submit Patient";
     document.getElementById("btnCancel").style.display = "none";
-};
-
-/**
- * Soft Delete / Restore (POST)
- */
-const togglePatientStatus = async (patientId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
-    if (!confirm(`Are you sure you want to ${actionText} patient "${name}"?\n\n(Archived records can be viewed or restored at any time in the System Archive)`)) {
-        return;
-    }
-
-    console.log(`[Action] Toggling status for Patient ID: ${patientId}`);
-
-    const formData = new FormData();
-    formData.append("operation", "toggleStatus");
-    formData.append("json", JSON.stringify({ patient_id: patientId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/patients.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            console.log(`[Success] Status toggled for Patient ID: ${patientId}`);
-            displayPatients();
-        } else {
-            alert("Error updating patient status.");
-        }
-    } catch (error) {
-        console.error("[Error] Toggle failed:", error);
-        alert("Error occurred.");
-    }
-};
-
-/**
- * Hard Delete (POST)
- */
-const hardDeletePatient = async (patientId, name) => {
-    if (!confirm(`WARNING: Are you sure you want to HARD DELETE patient "${name}" from MySQL?\n\nThis permanently removes the record and cannot be undone!`)) {
-        return;
-    }
-
-    console.log(`[Action] Hard deleting Patient ID: ${patientId}`);
-
-    const formData = new FormData();
-    formData.append("operation", "hardDeletePatient");
-    formData.append("json", JSON.stringify({ patient_id: patientId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/patients.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            console.log(`[Success] Hard deleted Patient ID: ${patientId}`);
-            alert(`Patient "${name}" was permanently deleted.`);
-            displayPatients();
-        } else if (response.data && response.data.message) {
-            alert(response.data.message);
-        } else {
-            alert("Could not permanently delete patient record.");
-        }
-    } catch (error) {
-        console.error("[Error] Hard delete failed:", error);
-        alert("Server error during deletion.");
-    }
 };

@@ -1,95 +1,18 @@
-const baseApiUrl = "../api";
 let allDiscounts = []; // In-memory cache for fast search, filter, and sort
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1.
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        window.location.href = "login.html";
-        return;
-    }
-    const user = JSON.parse(userJson);
-    const userDisplay = document.getElementById("user-display");
-    if (userDisplay) {
-        userDisplay.textContent = `${user.full_name} (${user.role_name})`;
-    }
-
-    const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to log out?")) {
-                console.log("[Auth] User logged out:", user.username);
-                sessionStorage.removeItem("hospital_user");
-                window.location.href = "login.html";
-            }
-        });
-    }
-
-    // 2.
+    // Initial Data Load
     displayDiscounts();
 
-    // Modal Controls
-    const btnOpenAdd = document.getElementById("btnOpenAddModal");
-    if (btnOpenAdd) {
-        btnOpenAdd.addEventListener("click", () => {
-            resetForm();
-            openModal();
-        });
-    }
-
-    const btnCloseModal = document.getElementById("btnCloseModal");
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener("click", closeModal);
-    }
-
-    const formModal = document.getElementById("formModal");
-    if (formModal) {
-        formModal.addEventListener("click", (e) => {
-            if (e.target === formModal) {
-                closeModal();
-            }
-        });
-    }
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            closeModal();
-        }
-    });
-
-    // Form Events
+    // Modal & Form Controls
+    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
-    document.getElementById("btnCancel").addEventListener("click", () => {
-        resetForm();
-        closeModal();
-    });
 
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
 });
-
-/**
- * Modal Window Helpers
- */
-const openModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.add("active");
-        modal.style.display = "flex";
-        const firstInput = document.getElementById("discount_name");
-        if (firstInput) firstInput.focus();
-    }
-};
-
-const closeModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.remove("active");
-        modal.style.display = "none";
-    }
-};
 
 const displayDiscounts = async () => {
     const tableDiv = document.getElementById("table-div");
@@ -191,28 +114,14 @@ const displayDiscountsTable = (discounts) => {
 
     const tbody = document.createElement("tbody");
     discounts.forEach(disc => {
-        const isActive = (disc.Is_Active == 1);
-        const statusBadge = isActive 
-            ? '<span class="badge badge-success">Active</span>' 
-            : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Send to Archive" : "Restore";
-        const toggleIcon = isActive ? "🗑️" : "🔄";
-        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Discount";
-        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
-
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${code}</strong></td>
             <td><strong>${disc.Discount_Name}</strong></td>
             <td><span class="badge badge-info">${parseFloat(disc.Discount_Percentage).toFixed(2)}%</span></td>
-            <td>${statusBadge}</td>
-            <td>
-                <div class="table-actions">
-                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${disc.Discount_ID}" title="Edit Discount" aria-label="Edit Discount">✏️</button>
-                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${disc.Discount_ID}" data-status="${disc.Is_Active}" data-name="${disc.Discount_Name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
-                </div>
-            </td>
+            <td>${getStatusBadge(disc.Is_Active)}</td>
+            <td>${getActionButtons(disc.Discount_ID, disc.Is_Active, disc.Discount_Name, 'Edit Discount')}</td>
         `;
         tbody.appendChild(row);
     });
@@ -227,13 +136,7 @@ const displayDiscountsTable = (discounts) => {
 
     document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
         btn.addEventListener("click", () => {
-            toggleDiscountStatus(btn.dataset.id, btn.dataset.status, btn.dataset.name);
-        });
-    });
-
-    document.querySelectorAll(".btn-action-hard-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            hardDeleteDiscount(btn.dataset.id, btn.dataset.name);
+            toggleRecordStatus("discounts.php", "discount_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayDiscounts);
         });
     });
 };
@@ -332,70 +235,4 @@ const resetForm = () => {
     console.log("[UI] Form reset to Add mode.");
 };
 
-const toggleDiscountStatus = async (discountId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
-    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Archived discount policies are kept so past finalized billing invoices remain intact)`)) {
-        return;
-    }
-
-    console.log(`[Action] Toggling status for Discount ID: ${discountId} (Current: ${currentStatus})`);
-
-    const formData = new FormData();
-    formData.append("operation", "toggleStatus");
-    formData.append("json", JSON.stringify({ discount_id: discountId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/discounts.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            console.log(`[Success] Status toggled successfully for Discount ID: ${discountId}`);
-            displayDiscounts();
-        } else {
-            console.warn("[Failed] Status toggle returned non-success:", response.data);
-            alert("Error updating status.");
-        }
-    } catch (error) {
-        console.error("[Error] Toggle request failed:", error);
-        alert("Error occurred.");
-    }
-};
-
-const hardDeleteDiscount = async (discountId, name) => {
-    if (!confirm(`WARNING: Are you sure you want to HARD DELETE (permanently remove) "${name}" from the database?\n\nThis action physically deletes the record from MySQL and cannot be undone!`)) {
-        return;
-    }
-
-    console.log(`[Action] Attempting Hard Delete for Discount ID: ${discountId}`);
-
-    const formData = new FormData();
-    formData.append("operation", "hardDeleteDiscount");
-    formData.append("json", JSON.stringify({ discount_id: discountId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/discounts.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            console.log(`[Success] Hard deleted Discount ID: ${discountId}`);
-            alert(`"${name}" was permanently deleted from the database.`);
-            displayDiscounts();
-        } else if (response.data && response.data.message) {
-            console.warn("[Protected] Hard delete blocked:", response.data.message);
-            alert(response.data.message);
-        } else {
-            console.error("[Failed] Hard delete failed:", response.data);
-            alert("Error: Could not permanently delete record.");
-        }
-    } catch (error) {
-        console.error("[Error] Hard delete request failed:", error);
-        alert("Server error during hard delete.");
-    }
-};
 

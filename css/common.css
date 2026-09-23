@@ -613,7 +613,6 @@ textarea.form-control {
     letter-spacing: 0.5px;
     padding: 13px 16px;
     border-bottom: 2px solid var(--border-color);
-    white-space: nowrap;
 }
 
 .data-table td {

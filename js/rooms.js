@@ -4,84 +4,24 @@
  * Handles Room, Room_Bed, and Enum_Room_Type (with Daily_Rate)
  */
 
-const baseApiUrl = "../api";
 let allRooms = [];
 let allBeds = [];
 let roomTypes = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Session Verification
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        window.location.href = "login.html";
-        return;
-    }
-    const user = JSON.parse(userJson);
-    const userDisplay = document.getElementById("user-display");
-    if (userDisplay) {
-        userDisplay.textContent = `${user.full_name} (${user.role_name})`;
-    }
-
-    const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to log out?")) {
-                console.log("[Auth] User logged out:", user.username);
-                sessionStorage.removeItem("hospital_user");
-                window.location.href = "login.html";
-            }
-        });
-    }
-
     // Initial Data Load
     loadRoomTypes();
     displayRoomsAndBeds();
 
-    // Modal Controls
-    const btnOpenAdd = document.getElementById("btnOpenAddModal");
-    if (btnOpenAdd) {
-        btnOpenAdd.addEventListener("click", () => {
-            resetForm();
-            openModal();
-        });
-    }
-
-    const btnCloseModal = document.getElementById("btnCloseModal");
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener("click", closeModal);
-    }
-
-    const formModal = document.getElementById("formModal");
-    if (formModal) {
-        formModal.addEventListener("click", (e) => {
-            if (e.target === formModal) {
-                closeModal();
-            }
-        });
-    }
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            closeModal();
-        }
-    });
-
-    // Form Events
+    // Modal & Form Controls
+    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveRoom);
-    document.getElementById("btnCancel").addEventListener("click", () => {
-        resetForm();
-        closeModal();
-    });
 
     // Auto-fill daily rate on room type selection
     document.getElementById("room_type_id").addEventListener("change", (e) => {
         const selectedId = e.target.value;
         const found = roomTypes.find(rt => rt.Room_Type_ID == selectedId);
-        if (found) {
-            document.getElementById("daily_rate").value = found.Daily_Rate || "";
-        } else {
-            document.getElementById("daily_rate").value = "";
-        }
+        document.getElementById("daily_rate").value = found ? (found.Daily_Rate || "") : "";
     });
 
     // Search, Filter, and Sort Listeners
@@ -93,27 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     document.getElementById("sort_by").addEventListener("change", filterAndSortRooms);
 });
-
-/**
- * Modal Window Helpers
- */
-const openModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.add("active");
-        modal.style.display = "flex";
-        const firstInput = document.getElementById("room_name");
-        if (firstInput) firstInput.focus();
-    }
-};
-
-const closeModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.remove("active");
-        modal.style.display = "none";
-    }
-};
 
 /**
  * Load room types (Daily_Rate is in Enum_Room_Type)
@@ -249,15 +168,6 @@ const displayRoomsTable = (rooms) => {
 
     const tbody = document.createElement("tbody");
     rooms.forEach(r => {
-        const isActive = (r.Is_Active == 1);
-        const statusBadge = isActive 
-            ? '<span class="badge badge-success">Active</span>' 
-            : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Send to Archive" : "Restore";
-        const toggleIcon = isActive ? "🗑️" : "🔄";
-        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Room";
-        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
-
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${r.Room_Name}</strong></td>
@@ -266,13 +176,8 @@ const displayRoomsTable = (rooms) => {
             <td>${r.Capacity} bed(s)</td>
             <td><span class="badge badge-success">${r.Vacant_Beds} vacant</span></td>
             <td><span class="badge badge-warning">${r.Occupied_Beds} occupied</span></td>
-            <td>${statusBadge}</td>
-            <td>
-                <div class="table-actions">
-                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${r.Room_ID}" title="Edit Room" aria-label="Edit Room">✏️</button>
-                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${r.Room_ID}" data-status="${r.Is_Active}" data-name="${r.Room_Name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
-                </div>
-            </td>
+            <td>${getStatusBadge(r.Is_Active)}</td>
+            <td>${getActionButtons(r.Room_ID, r.Is_Active, r.Room_Name, 'Edit Room')}</td>
         `;
         tbody.appendChild(row);
     });
@@ -287,13 +192,7 @@ const displayRoomsTable = (rooms) => {
 
     document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
         btn.addEventListener("click", () => {
-            toggleRoomStatus(btn.dataset.id, btn.dataset.status, btn.dataset.name);
-        });
-    });
-
-    document.querySelectorAll(".btn-action-hard-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            hardDeleteRoom(btn.dataset.id, btn.dataset.name);
+            toggleRecordStatus("rooms.php", "room_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayRoomsAndBeds);
         });
     });
 };
@@ -452,68 +351,4 @@ const resetForm = () => {
     document.getElementById("form-title").textContent = "Add New Room";
     document.getElementById("btnSubmit").textContent = "Submit Room";
     document.getElementById("btnCancel").style.display = "none";
-};
-
-/**
- * Soft Delete / Restore (POST)
- */
-const toggleRoomStatus = async (roomId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
-    if (!confirm(`Are you sure you want to ${actionText} room "${name}"?\n\n(Archived rooms keep records of past board and lodging stays intact)`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("operation", "toggleStatus");
-    formData.append("json", JSON.stringify({ room_id: roomId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/rooms.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            displayRoomsAndBeds();
-        } else {
-            alert("Error updating room status.");
-        }
-    } catch (error) {
-        console.error("[Error] Toggle failed:", error);
-        alert("Error occurred.");
-    }
-};
-
-/**
- * Hard Delete (POST)
- */
-const hardDeleteRoom = async (roomId, name) => {
-    if (!confirm(`WARNING: Are you sure you want to HARD DELETE room "${name}" and its beds from MySQL?\n\nThis permanently removes the room and cannot be undone!`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("operation", "hardDeleteRoom");
-    formData.append("json", JSON.stringify({ room_id: roomId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/rooms.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            alert(`"${name}" was permanently deleted.`);
-            displayRoomsAndBeds();
-        } else if (response.data && response.data.message) {
-            alert(response.data.message);
-        } else {
-            alert("Could not permanently delete room record.");
-        }
-    } catch (error) {
-        console.error("[Error] Hard delete failed:", error);
-        alert("Server error during deletion.");
-    }
 };

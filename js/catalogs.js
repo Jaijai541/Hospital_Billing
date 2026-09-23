@@ -4,32 +4,15 @@
  * Handles Charge_Catalogs: Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price
  */
 
-const baseApiUrl = "../api";
 let allCatalogs = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Session Verification
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        window.location.href = "login.html";
-        return;
-    }
-    const user = JSON.parse(userJson);
-    const userDisplay = document.getElementById("user-display");
-    if (userDisplay) {
-        userDisplay.textContent = `${user.full_name} (${user.role_name})`;
-    }
+    // Initial Data Load
+    displayCatalogs();
 
-    const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to log out?")) {
-                console.log("[Auth] User logged out:", user.username);
-                sessionStorage.removeItem("hospital_user");
-                window.location.href = "login.html";
-            }
-        });
-    }
+    // Modal & Form Controls
+    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
+    document.getElementById("btnSubmit").addEventListener("click", saveCatalogItem);
 
     // Auto-fill prefix on category selection
     document.getElementById("category_type").addEventListener("change", (e) => {
@@ -41,72 +24,12 @@ document.addEventListener("DOMContentLoaded", () => {
         else prefixInput.value = "";
     });
 
-    // Modal Controls
-    const btnOpenAdd = document.getElementById("btnOpenAddModal");
-    if (btnOpenAdd) {
-        btnOpenAdd.addEventListener("click", () => {
-            resetForm();
-            openModal();
-        });
-    }
-
-    const btnCloseModal = document.getElementById("btnCloseModal");
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener("click", closeModal);
-    }
-
-    const formModal = document.getElementById("formModal");
-    if (formModal) {
-        formModal.addEventListener("click", (e) => {
-            if (e.target === formModal) {
-                closeModal();
-            }
-        });
-    }
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            closeModal();
-        }
-    });
-
-    // Initial Data Load
-    displayCatalogs();
-
-    // Form Events
-    document.getElementById("btnSubmit").addEventListener("click", saveCatalogItem);
-    document.getElementById("btnCancel").addEventListener("click", () => {
-        resetForm();
-        closeModal();
-    });
-
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortCatalogs);
     document.getElementById("filter_category").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("filter_status").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("sort_by").addEventListener("change", filterAndSortCatalogs);
 });
-
-/**
- * Modal Window Helpers
- */
-const openModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.add("active");
-        modal.style.display = "flex";
-        const firstInput = document.getElementById("item_name");
-        if (firstInput) firstInput.focus();
-    }
-};
-
-const closeModal = () => {
-    const modal = document.getElementById("formModal");
-    if (modal) {
-        modal.classList.remove("active");
-        modal.style.display = "none";
-    }
-};
 
 /**
  * Fetch all catalog items from API
@@ -214,15 +137,6 @@ const displayCatalogsTable = (items) => {
 
     const tbody = document.createElement("tbody");
     items.forEach(item => {
-        const isActive = (item.Is_Active == 1);
-        const statusBadge = isActive 
-            ? '<span class="badge badge-success">Active</span>' 
-            : '<span class="badge badge-danger">Archived</span>';
-        const toggleAction = isActive ? "Send to Archive" : "Restore";
-        const toggleIcon = isActive ? "🗑️" : "🔄";
-        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Catalog Item";
-        const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
-
         let catBadge = '<span class="badge badge-info">' + item.Category_Type + '</span>';
         if (item.Category_Type === 'Medicine') catBadge = '<span class="badge badge-primary">Medicine</span>';
         else if (item.Category_Type === 'Equipment Scan') catBadge = '<span class="badge badge-warning">Scan</span>';
@@ -233,13 +147,8 @@ const displayCatalogsTable = (items) => {
             <td><strong>${item.Item_Name}</strong></td>
             <td>${catBadge}</td>
             <td>₱ ${parseFloat(item.Unit_Price).toFixed(2)}</td>
-            <td>${statusBadge}</td>
-            <td>
-                <div class="table-actions">
-                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${item.Catalog_ID}" title="Edit Item" aria-label="Edit Item">✏️</button>
-                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${item.Catalog_ID}" data-status="${item.Is_Active}" data-name="${item.Item_Name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
-                </div>
-            </td>
+            <td>${getStatusBadge(item.Is_Active)}</td>
+            <td>${getActionButtons(item.Catalog_ID, item.Is_Active, item.Item_Name, 'Edit Item')}</td>
         `;
         tbody.appendChild(row);
     });
@@ -254,13 +163,7 @@ const displayCatalogsTable = (items) => {
 
     document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
         btn.addEventListener("click", () => {
-            toggleCatalogStatus(btn.dataset.id, btn.dataset.status, btn.dataset.name);
-        });
-    });
-
-    document.querySelectorAll(".btn-action-hard-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            hardDeleteCatalog(btn.dataset.id, btn.dataset.name);
+            toggleRecordStatus("catalogs.php", "catalog_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayCatalogs);
         });
     });
 };
@@ -367,70 +270,4 @@ const resetForm = () => {
     document.getElementById("btnCancel").style.display = "none";
 };
 
-/**
- * Soft Delete / Restore (POST)
- */
-const toggleCatalogStatus = async (catalogId, currentStatus, name) => {
-    const actionText = (currentStatus == 1) ? "send to the System Archive" : "restore from the System Archive";
-    if (!confirm(`Are you sure you want to ${actionText} "${name}"?\n\n(Archived catalog items preserve historical billing ledgers)`)) {
-        return;
-    }
 
-    console.log(`[Action] Toggling status for Catalog ID: ${catalogId}`);
-
-    const formData = new FormData();
-    formData.append("operation", "toggleStatus");
-    formData.append("json", JSON.stringify({ catalog_id: catalogId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/catalogs.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            displayCatalogs();
-        } else {
-            alert("Error updating item status.");
-        }
-    } catch (error) {
-        console.error("[Error] Toggle failed:", error);
-        alert("Error occurred.");
-    }
-};
-
-/**
- * Hard Delete (POST)
- */
-const hardDeleteCatalog = async (catalogId, name) => {
-    if (!confirm(`WARNING: Are you sure you want to HARD DELETE "${name}" from MySQL?\n\nThis permanently removes the record and cannot be undone!`)) {
-        return;
-    }
-
-    console.log(`[Action] Hard deleting Catalog ID: ${catalogId}`);
-
-    const formData = new FormData();
-    formData.append("operation", "hardDeleteCatalog");
-    formData.append("json", JSON.stringify({ catalog_id: catalogId }));
-
-    try {
-        const response = await axios({
-            url: `${baseApiUrl}/catalogs.php`,
-            method: "POST",
-            data: formData
-        });
-
-        if (response.data == 1) {
-            alert(`"${name}" was permanently deleted.`);
-            displayCatalogs();
-        } else if (response.data && response.data.message) {
-            alert(response.data.message);
-        } else {
-            alert("Could not permanently delete catalog item.");
-        }
-    } catch (error) {
-        console.error("[Error] Hard delete failed:", error);
-        alert("Server error during deletion.");
-    }
-};

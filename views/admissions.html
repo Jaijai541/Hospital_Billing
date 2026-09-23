@@ -65,23 +65,25 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <div class="topbar">
-                <div class="topbar-title">
-                    <h1>In-Patient Admissions & Bed Occupancy</h1>
-                    <span class="subtitle">Clinical Admittance, Bed Allocation & Care Physician Team</span>
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>In-Patient Admissions & Bed Occupancy</h2>
+                    <p>Clinical Admittance, Bed Allocation & Care Physician Team</p>
                 </div>
+                <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Admit New Patient</button>
             </div>
 
-            <div class="content-body">
-                <!-- Admit New Patient Card -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h2 id="form-title">Admit New In-Patient</h2>
+            <!-- Pop-Up Modal Window for Admit New Patient -->
+            <div id="formModal" class="modal-overlay">
+                <div class="modal-container modal-lg">
+                    <div class="modal-header">
+                        <h3 id="form-title">Admit New In-Patient</h3>
+                        <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
                     </div>
-                    <div class="card-body">
+                    <div class="modal-body">
                         <div class="form-grid">
                             <div class="form-group span-2">
-                                <label class="form-label" for="patient_id">Select Registered Patient</label>
+                                <label class="form-label" for="patient_id">Select Registered Patient *</label>
                                 <select id="patient_id" class="form-select" required>
                                     <option value="">Loading patient directory...</option>
                                 </select>
@@ -89,7 +91,7 @@
                             </div>
 
                             <div class="form-group span-2">
-                                <label class="form-label" for="bed_id">Assign Vacant Bed</label>
+                                <label class="form-label" for="bed_id">Assign Vacant Bed *</label>
                                 <select id="bed_id" class="form-select" required>
                                     <option value="">Loading available beds...</option>
                                 </select>
@@ -97,25 +99,25 @@
                             </div>
 
                             <div class="form-group span-2">
-                                <label class="form-label" for="chief_complaint">Chief Complaint / Initial Clinical Assessment</label>
+                                <label class="form-label" for="chief_complaint">Chief Complaint / Initial Clinical Assessment *</label>
                                 <textarea id="chief_complaint" class="form-control" rows="3" placeholder="Enter reason for admission, symptoms, vital signs check consultation notes..." required></textarea>
                             </div>
 
                             <div class="form-group span-2">
-                                <label class="form-label">Assign Attending Physician(s)</label>
-                                <div id="doctors_container" class="card-body" style="max-height: 180px; overflow-y: auto; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
+                                <label class="form-label">Assign Attending Physician(s) *</label>
+                                <div id="doctors_container">
                                     Loading physicians...
                                 </div>
                                 <small class="text-muted">Check all attending and resident doctors responsible for this patient.</small>
                             </div>
                         </div>
-
-                        <div class="form-actions mt-3">
-                            <button id="btnSubmitAdmit" class="btn btn-primary">Submit In-Patient Admission</button>
-                            <button id="btnReset" type="button" class="btn btn-secondary">Reset Form</button>
-                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="btnCancel">Cancel</button>
+                        <button type="button" id="btnSubmitAdmit" class="btn btn-primary">Submit In-Patient Admission</button>
                     </div>
                 </div>
+            </div>
 
                 <!-- Admissions Directory Card -->
                 <div class="card">
@@ -149,7 +151,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
         </main>
     </div>
 

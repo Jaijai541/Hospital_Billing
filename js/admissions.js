@@ -36,9 +36,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners
+    // Event Listeners & Modal Controls
+    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById('btnSubmitAdmit').addEventListener('click', submitAdmission);
-    document.getElementById('btnReset').addEventListener('click', resetForm);
     document.getElementById('btnRefresh').addEventListener('click', () => {
         loadBeds();
         loadPatients();
@@ -321,6 +321,7 @@ function submitAdmission() {
         .then(response => {
             console.log("admissions.js: Response from admitPatient:", response.data);
             if (response.data.success) {
+                closeModal();
                 alert(response.data.message);
                 resetForm();
                 loadBeds();

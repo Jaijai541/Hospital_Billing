@@ -10,11 +10,17 @@
 <body>
 
     <div class="app-wrapper">
+        <!-- Floating Sidebar Re-Open Button -->
+        <button type="button" id="btn-sidebar-open" class="sidebar-open-btn" title="Expand Sidebar (Alt + S)" aria-label="Expand Sidebar">☰</button>
+
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-brand">
-                <h2>🏥 St. Jude Hospital</h2>
-                <span class="subtitle">Billing & Patient System</span>
+                <div class="sidebar-brand-text">
+                    <h2>🏥 St. Jude Hospital</h2>
+                    <span class="subtitle">Billing & Patient System</span>
+                </div>
+                <button type="button" id="btn-sidebar-close" class="sidebar-close-btn" title="Collapse Sidebar (Alt + S)" aria-label="Collapse Sidebar">&times;</button>
             </div>
 
             <div class="sidebar-user">
@@ -145,6 +151,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/sidebar.js"></script>
     <script src="../js/discounts.js"></script>
 </body>
 </html>

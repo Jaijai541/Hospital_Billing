@@ -564,6 +564,45 @@ textarea.form-control {
     vertical-align: middle;
 }
 
+/* White background specifically for table action icon buttons */
+.table-actions .btn-icon,
+.table-actions .btn,
+.btn-action-icon {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.table-actions .btn-icon:hover:not(:disabled),
+.table-actions .btn:hover:not(:disabled),
+.btn-action-icon:hover:not(:disabled) {
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Subtle contextual hover accents on white action icon buttons */
+.table-actions .btn-action-edit:hover:not(:disabled) {
+    background-color: #f0f9ff !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 3px 8px rgba(2, 132, 199, 0.18);
+}
+
+.table-actions .btn-action-soft-delete:hover:not(:disabled),
+.table-actions .btn-archive:hover:not(:disabled),
+.table-actions .btn-action-archive:hover:not(:disabled) {
+    background-color: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.18);
+}
+
+.table-actions .btn-restore:hover:not(:disabled),
+.table-actions .btn-action-restore:hover:not(:disabled) {
+    background-color: #f0fdf4 !important;
+    border-color: #16a34a !important;
+    box-shadow: 0 3px 8px rgba(22, 163, 74, 0.18);
+}
+
 /* Large Button (Used in final settlement & primary modals) */
 .btn-lg {
     padding: 12px 24px;
@@ -583,15 +622,16 @@ textarea.form-control {
     box-shadow: 0 2px 4px var(--primary-glow);
 }
 
-/* Secondary Button (Slate Neutral) */
+/* Secondary Button (Slate Neutral / Modal Cancel / Refresh) */
 .btn-secondary {
-    background-color: #7e7d7d;
-    border: black solid 1px;
+    background-color: #64748b;
+    border: 1px solid #475569;
     color: #ffffff;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background-color: #52555a;
+    background-color: #475569;
+    border-color: #334155;
     color: #ffffff;
 }
 
@@ -609,7 +649,7 @@ textarea.form-control {
 /* Warning / Archive Button (Soft Delete -> Send to Archive) */
 .btn-warning, .btn-archive {
     background-color: var(--warning);
-    border: black 1px solid;
+    border: 1px solid #d97706;
     color: #ffffff;
 }
 

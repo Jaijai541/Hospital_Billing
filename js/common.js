@@ -198,13 +198,13 @@ function getStatusBadge(isActive) {
 function getActionButtons(id, isActive, name, editTitle = "Edit Record") {
     const isAct = (isActive == 1 || isActive === true);
     const toggleIcon = isAct ? "🗑️" : "🔄";
-    const toggleCls = isAct ? "btn-warning btn-archive" : "btn-success btn-restore";
+    const toggleCls = isAct ? "btn-action-archive" : "btn-action-restore";
     const toggleTitle = isAct ? "Send to Archive (Soft Delete)" : "Restore Record";
 
     return `
         <div class="table-actions">
-            <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${id}" title="${editTitle}" aria-label="${editTitle}">✏️</button>
-            <button type="button" class="btn btn-sm btn-icon ${toggleCls} btn-action-soft-delete" data-id="${id}" data-status="${isAct ? 1 : 0}" data-name="${name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
+            <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-edit" data-id="${id}" title="${editTitle}" aria-label="${editTitle}">✏️</button>
+            <button type="button" class="btn btn-sm btn-icon btn-action-icon ${toggleCls} btn-action-soft-delete" data-id="${id}" data-status="${isAct ? 1 : 0}" data-name="${name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
         </div>
     `;
 }

@@ -224,12 +224,6 @@ const displayPatientsTable = (patients) => {
             genderDisplay += `<br><small class="text-muted">(${pat.Gender_Specification})</small>`;
         }
 
-        // Returnee Quick Action Button for Discharged patients
-        let returneeBtn = "";
-        if (isActive && (pat.Latest_Admission_Status === "Discharged" || pat.Latest_Admission_Status === "Billed")) {
-            returneeBtn = `<button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-returnee" data-id="${pat.Patient_ID}" data-name="${fullName}" title="Register as Returnee (Generate New Patient Code for New Admission)" aria-label="Register Returnee">🔁</button>`;
-        }
-
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${pat.Patient_Code}</strong></td>
@@ -243,7 +237,6 @@ const displayPatientsTable = (patients) => {
             <td>
                 <div class="table-actions">
                     <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-edit" data-id="${pat.Patient_ID}" title="Edit Patient" aria-label="Edit Patient">✏️</button>
-                    ${returneeBtn}
                     <button type="button" class="btn btn-sm btn-icon btn-action-icon ${isActive ? 'btn-action-archive' : 'btn-action-restore'} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${isActive ? 1 : 0}" data-name="${fullName}" title="${isActive ? 'Send to Archive (Soft Delete)' : 'Restore Record'}" aria-label="Toggle Status">${isActive ? '🗑️' : '🔄'}</button>
                 </div>
             </td>
@@ -257,10 +250,6 @@ const displayPatientsTable = (patients) => {
     // Event delegation
     document.querySelectorAll(".btn-action-edit").forEach(btn => {
         btn.addEventListener("click", () => loadPatientForEdit(btn.dataset.id));
-    });
-
-    document.querySelectorAll(".btn-action-returnee").forEach(btn => {
-        btn.addEventListener("click", () => registerReturnee(btn.dataset.id));
     });
 
     document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
@@ -310,51 +299,6 @@ const loadPatientForEdit = async (patientId) => {
     } catch (error) {
         console.error("[API] Error loading patient details:", error);
         alert("Failed to load patient record.");
-    }
-};
-
-/**
- * Pre-fills patient demographic info to register as a Returnee under a new Patient Code
- */
-const registerReturnee = async (patientId) => {
-    try {
-        console.log(`[API] Preparing returnee registration for patient ID: ${patientId}`);
-        const response = await axios.get(`${baseApiUrl}/patients.php`, {
-            params: {
-                operation: "getPatientById",
-                json: JSON.stringify({ patient_id: patientId })
-            }
-        });
-
-        if (response.status === 200 && response.data) {
-            const p = response.data;
-            resetForm();
-            // Leave patient_id empty so insertPatient generates a brand new record & code
-            document.getElementById("patient_id").value = "";
-            document.getElementById("first_name").value = p.First_Name;
-            document.getElementById("last_name").value = p.Last_Name;
-            document.getElementById("date_of_birth").value = p.Date_Of_Birth;
-            document.getElementById("gender_id").value = p.Gender_ID;
-            document.getElementById("blood_type_id").value = p.Blood_Type_ID;
-            document.getElementById("contact_number").value = p.Contact_Number || "";
-            document.getElementById("address").value = p.Address || "";
-            document.getElementById("emergency_contact_name").value = p.Emergency_Contact_Name || "";
-            document.getElementById("emergency_contact_number").value = p.Emergency_Contact_Number || "";
-
-            // Gender 'Other'
-            const isOther = (p.Gender_ID == 3);
-            const otherGroup = document.getElementById("gender_other_group");
-            const specInput = document.getElementById("gender_specification");
-            if (otherGroup) otherGroup.style.display = isOther ? "block" : "none";
-            if (specInput) specInput.value = p.Gender_Specification || "";
-
-            document.getElementById("form-title").textContent = `Register Returnee Patient: ${p.First_Name} ${p.Last_Name}`;
-            document.getElementById("btnSubmit").textContent = "Register Returnee (Generate New Code)";
-            openModal();
-        }
-    } catch (error) {
-        console.error("[API] Error preparing returnee:", error);
-        alert("Failed to prepare returnee registration.");
     }
 };
 

@@ -113,14 +113,10 @@ function populatePatientDropdown() {
         const option = document.createElement('option');
         option.value = p.Patient_ID;
         const isAdmitted = (p.Active_Admission_ID !== null || p.Latest_Admission_Status === 'Admitted');
-        const isDischarged = (p.Latest_Admission_Status === 'Discharged' || p.Latest_Admission_Status === 'Billed');
 
         let note = '';
         if (isAdmitted) {
             note = ' [Currently Admitted]';
-            option.disabled = true;
-        } else if (isDischarged) {
-            note = ' [Discharged — Re-register as Returnee in Directory]';
             option.disabled = true;
         }
 

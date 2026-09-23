@@ -254,6 +254,8 @@ const displayRoomsTable = (rooms) => {
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleIcon = isActive ? "🗑️" : "🔄";
+        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Room";
         const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
 
         const row = document.createElement("tr");
@@ -266,8 +268,10 @@ const displayRoomsTable = (rooms) => {
             <td><span class="badge badge-warning">${r.Occupied_Beds} occupied</span></td>
             <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${r.Room_ID}">Edit</button>
-                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${r.Room_ID}" data-status="${r.Is_Active}" data-name="${r.Room_Name}">${toggleAction}</button>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${r.Room_ID}" title="Edit Room" aria-label="Edit Room">✏️</button>
+                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${r.Room_ID}" data-status="${r.Is_Active}" data-name="${r.Room_Name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
+                </div>
             </td>
         `;
         tbody.appendChild(row);

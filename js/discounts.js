@@ -196,6 +196,8 @@ const displayDiscountsTable = (discounts) => {
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleIcon = isActive ? "🗑️" : "🔄";
+        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Discount";
         const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
 
@@ -206,8 +208,10 @@ const displayDiscountsTable = (discounts) => {
             <td><span class="badge badge-info">${parseFloat(disc.Discount_Percentage).toFixed(2)}%</span></td>
             <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${disc.Discount_ID}">Edit</button>
-                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${disc.Discount_ID}" data-status="${disc.Is_Active}" data-name="${disc.Discount_Name}">${toggleAction}</button>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${disc.Discount_ID}" title="Edit Discount" aria-label="Edit Discount">✏️</button>
+                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${disc.Discount_ID}" data-status="${disc.Is_Active}" data-name="${disc.Discount_Name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
+                </div>
             </td>
         `;
         tbody.appendChild(row);

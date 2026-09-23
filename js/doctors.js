@@ -307,6 +307,8 @@ const displayDoctorsTable = (doctors) => {
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleIcon = isActive ? "🗑️" : "🔄";
+        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Doctor";
         const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
 
@@ -320,8 +322,10 @@ const displayDoctorsTable = (doctors) => {
             <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
             <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${doc.Doctor_ID}">Edit</button>
-                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${doc.Doctor_ID}" data-status="${doc.Is_Active}" data-name="${fullName}">${toggleAction}</button>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${doc.Doctor_ID}" title="Edit Doctor" aria-label="Edit Doctor">✏️</button>
+                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${doc.Doctor_ID}" data-status="${doc.Is_Active}" data-name="${fullName}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
+                </div>
             </td>
         `;
         tbody.appendChild(row);

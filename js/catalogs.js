@@ -219,6 +219,8 @@ const displayCatalogsTable = (items) => {
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleIcon = isActive ? "🗑️" : "🔄";
+        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Catalog Item";
         const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
 
         let catBadge = '<span class="badge badge-info">' + item.Category_Type + '</span>';
@@ -233,8 +235,10 @@ const displayCatalogsTable = (items) => {
             <td>₱ ${parseFloat(item.Unit_Price).toFixed(2)}</td>
             <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${item.Catalog_ID}">Edit</button>
-                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${item.Catalog_ID}" data-status="${item.Is_Active}" data-name="${item.Item_Name}">${toggleAction}</button>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${item.Catalog_ID}" title="Edit Item" aria-label="Edit Item">✏️</button>
+                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${item.Catalog_ID}" data-status="${item.Is_Active}" data-name="${item.Item_Name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
+                </div>
             </td>
         `;
         tbody.appendChild(row);

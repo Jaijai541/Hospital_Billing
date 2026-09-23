@@ -257,6 +257,8 @@ const displayPatientsTable = (patients) => {
             ? '<span class="badge badge-success">Active</span>' 
             : '<span class="badge badge-danger">Archived</span>';
         const toggleAction = isActive ? "Send to Archive" : "Restore";
+        const toggleIcon = isActive ? "🗑️" : "🔄";
+        const toggleTitle = isActive ? "Send to Archive (Soft Delete)" : "Restore Patient";
         const toggleBtnClass = isActive ? "btn-warning btn-archive" : "btn-success btn-restore";
         const fullName = `${pat.Last_Name}, ${pat.First_Name}`;
         const emContact = pat.Emergency_Contact_Name ? `${pat.Emergency_Contact_Name} (${pat.Emergency_Contact_Number || 'N/A'})` : 'None';
@@ -272,8 +274,10 @@ const displayPatientsTable = (patients) => {
             <td><small>${emContact}</small></td>
             <td>${statusBadge}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-secondary btn-action-edit" data-id="${pat.Patient_ID}">Edit</button>
-                <button type="button" class="btn btn-sm ${toggleBtnClass} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${pat.Is_Active}" data-name="${fullName}">${toggleAction}</button>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-icon btn-secondary btn-action-edit" data-id="${pat.Patient_ID}" title="Edit Patient" aria-label="Edit Patient">✏️</button>
+                    <button type="button" class="btn btn-sm btn-icon ${toggleBtnClass} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${pat.Is_Active}" data-name="${fullName}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
+                </div>
             </td>
         `;
         tbody.appendChild(row);

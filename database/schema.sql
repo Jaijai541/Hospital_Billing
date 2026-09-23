@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS Room (
     Room_ID INT AUTO_INCREMENT PRIMARY KEY,
     Room_Name VARCHAR(50) NOT NULL, -- e.g., 'Ward A'
     Room_Type_ID INT NOT NULL,
-    Capacity INT NOT NULL,          -- Daily_Rate defined in Enum_Room_Type
+    Capacity INT NOT NULL,          -- Default Daily_Rate defined in Enum_Room_Type
+    Custom_Daily_Rate DECIMAL(10, 2) NULL, -- Optional customized rate per room preference
     Is_Active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (Room_Type_ID) REFERENCES Enum_Room_Type(Room_Type_ID)
 );
@@ -140,6 +141,7 @@ CREATE TABLE IF NOT EXISTS Patient (
     Last_Name VARCHAR(50) NOT NULL,
     Date_Of_Birth DATE NOT NULL,
     Gender_ID INT NOT NULL,
+    Gender_Specification VARCHAR(50) NULL, -- Custom preference when Gender is 'Other'
     Blood_Type_ID INT NOT NULL,
     Contact_Number VARCHAR(20),
     Address VARCHAR(255),

@@ -18,7 +18,21 @@ class PatientMaster
 
         $sql = "SELECT p.*, 
                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
-                       g.Gender_Name, b.Blood_Type_Name 
+                       g.Gender_Name, b.Blood_Type_Name,
+                       (
+                           SELECT a.Status 
+                           FROM Admission a 
+                           WHERE a.Patient_ID = p.Patient_ID 
+                           ORDER BY a.Admission_ID DESC 
+                           LIMIT 1
+                       ) AS Latest_Admission_Status,
+                       (
+                           SELECT a.Admission_ID 
+                           FROM Admission a 
+                           WHERE a.Patient_ID = p.Patient_ID 
+                           ORDER BY a.Admission_ID DESC 
+                           LIMIT 1
+                       ) AS Latest_Admission_ID
                 FROM Patient p 
                 INNER JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID 
                 INNER JOIN Enum_Blood_Type b ON p.Blood_Type_ID = b.Blood_Type_ID 
@@ -73,14 +87,16 @@ class PatientMaster
         include "../connection.php";
 
         $json = json_decode($json, true);
+        $genderSpec = !empty($json['gender_specification']) ? trim($json['gender_specification']) : null;
 
-        $sql = "INSERT INTO Patient (First_Name, Last_Name, Date_Of_Birth, Gender_ID, Blood_Type_ID, Contact_Number, Address, Emergency_Contact_Name, Emergency_Contact_Number, Is_Active) 
-                VALUES (:first_name, :last_name, :dob, :gender_id, :blood_type_id, :contact, :address, :em_name, :em_contact, 1)";
+        $sql = "INSERT INTO Patient (First_Name, Last_Name, Date_Of_Birth, Gender_ID, Gender_Specification, Blood_Type_ID, Contact_Number, Address, Emergency_Contact_Name, Emergency_Contact_Number, Is_Active) 
+                VALUES (:first_name, :last_name, :dob, :gender_id, :gender_spec, :blood_type_id, :contact, :address, :em_name, :em_contact, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":first_name", $json['first_name']);
         $stmt->bindParam(":last_name", $json['last_name']);
         $stmt->bindParam(":dob", $json['date_of_birth']);
         $stmt->bindParam(":gender_id", $json['gender_id']);
+        $stmt->bindParam(":gender_spec", $genderSpec);
         $stmt->bindParam(":blood_type_id", $json['blood_type_id']);
         $stmt->bindParam(":contact", $json['contact_number']);
         $stmt->bindParam(":address", $json['address']);
@@ -99,12 +115,14 @@ class PatientMaster
         include "../connection.php";
 
         $json = json_decode($json, true);
+        $genderSpec = !empty($json['gender_specification']) ? trim($json['gender_specification']) : null;
 
         $sql = "UPDATE Patient 
                 SET First_Name               = :first_name, 
                     Last_Name                = :last_name, 
                     Date_Of_Birth            = :dob, 
                     Gender_ID                = :gender_id, 
+                    Gender_Specification     = :gender_spec,
                     Blood_Type_ID            = :blood_type_id, 
                     Contact_Number           = :contact, 
                     Address                  = :address, 
@@ -116,6 +134,7 @@ class PatientMaster
         $stmt->bindParam(":last_name", $json['last_name']);
         $stmt->bindParam(":dob", $json['date_of_birth']);
         $stmt->bindParam(":gender_id", $json['gender_id']);
+        $stmt->bindParam(":gender_spec", $genderSpec);
         $stmt->bindParam(":blood_type_id", $json['blood_type_id']);
         $stmt->bindParam(":contact", $json['contact_number']);
         $stmt->bindParam(":address", $json['address']);

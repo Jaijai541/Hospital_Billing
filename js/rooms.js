@@ -291,6 +291,7 @@ const saveRoom = async () => {
     const roomName = document.getElementById("room_name").value.trim();
     const typeId = document.getElementById("room_type_id").value;
     const capacity = document.getElementById("capacity").value;
+    const dailyRate = document.getElementById("daily_rate").value.trim();
 
     if (!roomName || !typeId) {
         alert("Please fill in Room Name and Classification.");
@@ -300,6 +301,7 @@ const saveRoom = async () => {
     const jsonData = {
         room_name: roomName,
         room_type_id: typeId,
+        daily_rate: dailyRate !== "" ? parseFloat(dailyRate) : null,
         capacity: parseInt(capacity) || 1
     };
 

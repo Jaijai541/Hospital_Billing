@@ -84,14 +84,16 @@
                         <div class="form-grid">
                             <div class="form-group span-2">
                                 <label class="form-label" for="patient_id">Select Registered Patient *</label>
+                                <input type="text" id="patient_search_input" class="form-control form-control-sm mb-1" placeholder="🔍 Search patient by name or code...">
                                 <select id="patient_id" class="form-select" required>
                                     <option value="">Loading patient directory...</option>
                                 </select>
-                                <small class="text-muted">Only active patients from the directory can be admitted.</small>
+                                <small class="text-muted">Only active, un-discharged patients can be admitted. Discharged patients require returnee registration.</small>
                             </div>
 
                             <div class="form-group span-2">
                                 <label class="form-label" for="bed_id">Assign Vacant Bed *</label>
+                                <input type="text" id="bed_search_input" class="form-control form-control-sm mb-1" placeholder="🔍 Search bed by room, code, or type...">
                                 <select id="bed_id" class="form-select" required>
                                     <option value="">Loading available beds...</option>
                                 </select>
@@ -105,6 +107,7 @@
 
                             <div class="form-group span-2">
                                 <label class="form-label">Assign Attending Physician(s) *</label>
+                                <input type="text" id="doctor_search_input" class="form-control form-control-sm mb-2" placeholder="🔍 Search physician by name, type, or specialty...">
                                 <div id="doctors_container">
                                     Loading physicians...
                                 </div>
@@ -134,8 +137,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="filter_status">Admission Status</label>
                                 <select id="filter_status" class="form-select">
-                                    <option value="all">All Records</option>
-                                    <option value="Admitted" selected>Admitted (Currently In Hospital)</option>
+                                    <option value="all" selected>All Records</option>
+                                    <option value="Admitted">Admitted (Currently In Hospital)</option>
                                     <option value="Discharged">Discharged</option>
                                     <option value="Billed">Billed / Settled</option>
                                 </select>

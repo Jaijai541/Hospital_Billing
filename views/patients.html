@@ -106,6 +106,11 @@
                                 </select>
                             </div>
 
+                            <div class="form-group" id="gender_other_group" style="display: none;">
+                                <label class="form-label" for="gender_specification">Specify Gender Preference *</label>
+                                <input type="text" id="gender_specification" class="form-control" placeholder="Enter gender preference / identity">
+                            </div>
+
                             <div class="form-group">
                                 <label class="form-label" for="blood_type_id">Blood Type *</label>
                                 <select id="blood_type_id" class="form-select" required>
@@ -157,9 +162,11 @@
                         <div class="form-group">
                             <label class="form-label" for="filter_status">Status</label>
                             <select id="filter_status" class="form-select">
-                                <option value="all">All Statuses</option>
-                                <option value="1" selected>Active Only</option>
-                                <option value="0">Soft-Deleted Only</option>
+                                <option value="all" selected>All Statuses</option>
+                                <option value="active">Active / Registered</option>
+                                <option value="admitted">Currently Admitted</option>
+                                <option value="discharged">Discharged</option>
+                                <option value="archived">Archived Only</option>
                             </select>
                         </div>
 

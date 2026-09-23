@@ -8,6 +8,8 @@ let admissionId = null;
 let admissionData = null;
 let catalogItems = [];
 let assignedDoctors = [];
+let availableBedsList = [];
+let dispensedMedicinesList = [];
 let currentUser = null;
 let discountList = [];
 let latestSummary = null;
@@ -53,11 +55,30 @@ window.addEventListener('DOMContentLoaded', () => {
     admissionId = parseInt(idParam, 10);
     console.log("admission_details.js: Loaded Admission ID:", admissionId);
 
+    // Setup Clinical Navigation Tabs
+    initClinicalTabs();
+
     // Attach Event Listeners
     document.getElementById('btnSubmitOrder').addEventListener('click', submitDoctorOrder);
     document.getElementById('btnLogRound').addEventListener('click', submitDoctorRound);
     document.getElementById('btnTransferBed').addEventListener('click', submitBedTransfer);
     document.getElementById('btnReturnMedicine').addEventListener('click', submitMedicineReturn);
+
+    // Attach Live Quick Search Filters for Selectors
+    const orderDocSearch = document.getElementById('order_doctor_search');
+    if (orderDocSearch) orderDocSearch.addEventListener('input', filterOrderDoctors);
+
+    const orderCatSearch = document.getElementById('order_catalog_search');
+    if (orderCatSearch) orderCatSearch.addEventListener('input', filterCatalogItems);
+
+    const roundDocSearch = document.getElementById('round_doctor_search');
+    if (roundDocSearch) roundDocSearch.addEventListener('input', filterRoundDoctors);
+
+    const transferBedSearch = document.getElementById('transfer_bed_search');
+    if (transferBedSearch) transferBedSearch.addEventListener('input', filterAvailableBeds);
+
+    const returnCatSearch = document.getElementById('return_catalog_search');
+    if (returnCatSearch) returnCatSearch.addEventListener('input', filterDispensedMedicines);
 
     // Auto-fill round fee when doctor changes
     document.getElementById('round_doctor_id').addEventListener('change', (e) => {
@@ -82,6 +103,45 @@ window.addEventListener('DOMContentLoaded', () => {
     loadDispensedMedicines();
     loadDiscounts();
 });
+
+// Tab Controller
+function initClinicalTabs() {
+    const tabBtns = document.querySelectorAll('.clinical-tabs-nav .tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-content-panel');
+
+    function activateTab(tabId) {
+        tabBtns.forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        tabPanels.forEach(panel => {
+            if (panel.id === tabId) {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        });
+    }
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-tab');
+            activateTab(target);
+            if (history.replaceState) {
+                history.replaceState(null, null, `#${target}`);
+            }
+        });
+    });
+
+    const hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById(hash)) {
+        activateTab(hash);
+    }
+}
 
 // 2. Load Patient & Admission Profile Banner
 function loadAdmissionDetails() {
@@ -136,24 +196,61 @@ function loadAdmissionDetails() {
 }
 
 function populateAssignedDoctorDropdowns() {
-    const orderDocSelect = document.getElementById('order_doctor_id');
-    const roundDocSelect = document.getElementById('round_doctor_id');
+    filterOrderDoctors();
+    filterRoundDoctors();
+}
 
-    if (!orderDocSelect || !roundDocSelect) return;
+function filterOrderDoctors() {
+    const select = document.getElementById('order_doctor_id');
+    if (!select) return;
+    const query = (document.getElementById('order_doctor_search')?.value || '').toLowerCase().trim();
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">-- Select Prescribing Doctor --</option>';
 
-    orderDocSelect.innerHTML = '<option value="">-- Select Prescribing Doctor --</option>';
-    roundDocSelect.innerHTML = '<option value="">-- Select Visiting Doctor --</option>';
+    const filtered = assignedDoctors.filter(doc => {
+        if (!query) return true;
+        const text = `${doc.Doctor_Name || ''} ${doc.Doctor_Type || ''} ${doc.Doctor_Code || ''}`.toLowerCase();
+        return text.includes(query);
+    });
 
-    assignedDoctors.forEach(doc => {
-        const optOrder = document.createElement('option');
-        optOrder.value = doc.Admission_Doctor_ID;
-        optOrder.textContent = `${doc.Doctor_Name} (${doc.Doctor_Type})`;
-        orderDocSelect.appendChild(optOrder);
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching physicians</option>';
+        return;
+    }
 
-        const optRound = document.createElement('option');
-        optRound.value = doc.Admission_Doctor_ID;
-        optRound.textContent = `${doc.Doctor_Name} (${doc.Doctor_Type}) — Fee: ₱${parseFloat(doc.Base_Round_Fee).toFixed(2)}`;
-        roundDocSelect.appendChild(optRound);
+    filtered.forEach(doc => {
+        const opt = document.createElement('option');
+        opt.value = doc.Admission_Doctor_ID;
+        opt.textContent = `${doc.Doctor_Name} (${doc.Doctor_Type})`;
+        if (String(doc.Admission_Doctor_ID) === String(currentVal)) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+function filterRoundDoctors() {
+    const select = document.getElementById('round_doctor_id');
+    if (!select) return;
+    const query = (document.getElementById('round_doctor_search')?.value || '').toLowerCase().trim();
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">-- Select Visiting Doctor --</option>';
+
+    const filtered = assignedDoctors.filter(doc => {
+        if (!query) return true;
+        const text = `${doc.Doctor_Name || ''} ${doc.Doctor_Type || ''} ${doc.Doctor_Code || ''}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching physicians</option>';
+        return;
+    }
+
+    filtered.forEach(doc => {
+        const opt = document.createElement('option');
+        opt.value = doc.Admission_Doctor_ID;
+        opt.textContent = `${doc.Doctor_Name} (${doc.Doctor_Type}) — Fee: ₱${parseFloat(doc.Base_Round_Fee).toFixed(2)}`;
+        if (String(doc.Admission_Doctor_ID) === String(currentVal)) opt.selected = true;
+        select.appendChild(opt);
     });
 }
 
@@ -167,22 +264,40 @@ function loadCatalogItems() {
     axios.post('../api/clinical_orders.php', formData)
         .then(response => {
             console.log("admission_details.js: Catalog items received:", response.data);
-            catalogItems = response.data;
-
-            const catalogSelect = document.getElementById('order_catalog_id');
-            catalogSelect.innerHTML = '<option value="">-- Select Catalog Item / Medication / Service --</option>';
-
-            catalogItems.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.Catalog_ID;
-                const price = parseFloat(item.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
-                opt.textContent = `[${item.Item_Code}] ${item.Item_Name} (${item.Category_Type}) — ₱${price}`;
-                catalogSelect.appendChild(opt);
-            });
+            catalogItems = response.data || [];
+            filterCatalogItems();
         })
         .catch(err => {
             console.error("admission_details.js: Error fetching catalog:", err);
         });
+}
+
+function filterCatalogItems() {
+    const select = document.getElementById('order_catalog_id');
+    if (!select) return;
+    const query = (document.getElementById('order_catalog_search')?.value || '').toLowerCase().trim();
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">-- Select Catalog Item / Medication / Service --</option>';
+
+    const filtered = catalogItems.filter(item => {
+        if (!query) return true;
+        const text = `${item.Item_Code || ''} ${item.Item_Name || ''} ${item.Category_Type || ''}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching catalog items</option>';
+        return;
+    }
+
+    filtered.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.Catalog_ID;
+        const price = parseFloat(item.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        opt.textContent = `[${item.Item_Code}] ${item.Item_Name} (${item.Category_Type}) — ₱${price}`;
+        if (String(item.Catalog_ID) === String(currentVal)) opt.selected = true;
+        select.appendChild(opt);
+    });
 }
 
 // 4. Section 1: Orders (Medicines, Scans, Procedures)
@@ -538,26 +653,45 @@ function loadAvailableBeds() {
 
     axios.post('../api/admissions.php', formData)
         .then(response => {
-            const select = document.getElementById('transfer_bed_id');
-            if (!select) return;
-
-            select.innerHTML = '<option value="">-- Select Vacant Target Bed --</option>';
-            if (response.data.length === 0) {
-                select.innerHTML = '<option value="">No other vacant beds available</option>';
-                return;
-            }
-
-            response.data.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.Bed_ID;
-                const rate = parseFloat(b.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2});
-                opt.textContent = `Bed: ${b.Bed_Code} | ${b.Room_Name} (${b.Room_Type}) — ₱${rate}/day`;
-                select.appendChild(opt);
-            });
+            availableBedsList = response.data || [];
+            filterAvailableBeds();
         })
         .catch(err => {
             console.error("admission_details.js: Error fetching vacant beds:", err);
         });
+}
+
+function filterAvailableBeds() {
+    const select = document.getElementById('transfer_bed_id');
+    if (!select) return;
+    const query = (document.getElementById('transfer_bed_search')?.value || '').toLowerCase().trim();
+    const currentVal = select.value;
+
+    select.innerHTML = '<option value="">-- Select Vacant Target Bed --</option>';
+    if (availableBedsList.length === 0) {
+        select.innerHTML = '<option value="">No other vacant beds available</option>';
+        return;
+    }
+
+    const filtered = availableBedsList.filter(b => {
+        if (!query) return true;
+        const text = `${b.Bed_Code || ''} ${b.Room_Name || ''} ${b.Room_Type || ''} ${b.Daily_Rate || ''}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching vacant beds</option>';
+        return;
+    }
+
+    filtered.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.Bed_ID;
+        const rate = parseFloat(b.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        opt.textContent = `Bed: ${b.Bed_Code} | ${b.Room_Name} (${b.Room_Type}) — ₱${rate}/day`;
+        if (String(b.Bed_ID) === String(currentVal)) opt.selected = true;
+        select.appendChild(opt);
+    });
 }
 
 function submitBedTransfer() {
@@ -588,6 +722,9 @@ function submitBedTransfer() {
             console.log("admission_details.js: Bed transfer response:", response.data);
             if (response.data.success) {
                 alert(response.data.message);
+                if (document.getElementById('transfer_bed_search')) {
+                    document.getElementById('transfer_bed_search').value = '';
+                }
                 loadAdmissionDetails();
                 loadTransfers();
                 loadAvailableBeds();
@@ -727,26 +864,47 @@ function loadDispensedMedicines() {
     axios.post('../api/ledger.php', formData)
         .then(response => {
             console.log("admission_details.js: Dispensed medicines received:", response.data);
-            const select = document.getElementById('return_catalog_id');
-
-            if (!response.data || response.data.length === 0) {
-                select.innerHTML = '<option value="">No dispensed medicines eligible for return</option>';
-                return;
-            }
-
-            select.innerHTML = '<option value="">-- Select Dispensed Medicine to Return --</option>';
-            response.data.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.Catalog_ID;
-                const unitPrice = parseFloat(m.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
-                opt.textContent = `[${m.Item_Code}] ${m.Item_Name} — Available for return: ${parseFloat(m.Net_Remaining_Qty)} unit(s) (₱${unitPrice}/unit)`;
-                opt.dataset.max = m.Net_Remaining_Qty;
-                select.appendChild(opt);
-            });
+            dispensedMedicinesList = response.data || [];
+            filterDispensedMedicines();
         })
         .catch(err => {
             console.error("admission_details.js: Error loading dispensed medicines:", err);
         });
+}
+
+function filterDispensedMedicines() {
+    const select = document.getElementById('return_catalog_id');
+    if (!select) return;
+    const query = (document.getElementById('return_catalog_search')?.value || '').toLowerCase().trim();
+    const currentVal = select.value;
+
+    if (!dispensedMedicinesList || dispensedMedicinesList.length === 0) {
+        select.innerHTML = '<option value="">No dispensed medicines eligible for return</option>';
+        return;
+    }
+
+    select.innerHTML = '<option value="">-- Select Dispensed Medicine to Return --</option>';
+
+    const filtered = dispensedMedicinesList.filter(m => {
+        if (!query) return true;
+        const text = `${m.Item_Code || ''} ${m.Item_Name || ''}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching dispensed medicines</option>';
+        return;
+    }
+
+    filtered.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.Catalog_ID;
+        const unitPrice = parseFloat(m.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        opt.textContent = `[${m.Item_Code}] ${m.Item_Name} — Available for return: ${parseFloat(m.Net_Remaining_Qty)} unit(s) (₱${unitPrice}/unit)`;
+        opt.dataset.max = m.Net_Remaining_Qty;
+        if (String(m.Catalog_ID) === String(currentVal)) opt.selected = true;
+        select.appendChild(opt);
+    });
 }
 
 function submitMedicineReturn() {
@@ -793,6 +951,9 @@ function submitMedicineReturn() {
             console.log("admission_details.js: Return medicine response:", response.data);
             if (response.data.success) {
                 alert(response.data.message);
+                if (document.getElementById('return_catalog_search')) {
+                    document.getElementById('return_catalog_search').value = '';
+                }
                 loadLedger();
                 loadLedgerSummary();
                 loadDispensedMedicines();

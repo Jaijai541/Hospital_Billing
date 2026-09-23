@@ -15,6 +15,26 @@ document.addEventListener("DOMContentLoaded", () => {
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", savePatient);
 
+    // Gender 'Other' dynamic specification input
+    const genderSelect = document.getElementById("gender_id");
+    if (genderSelect) {
+        genderSelect.addEventListener("change", () => {
+            const selectedText = genderSelect.options[genderSelect.selectedIndex] ? genderSelect.options[genderSelect.selectedIndex].text.toLowerCase() : "";
+            const isOther = selectedText.includes("other") || genderSelect.value === "3";
+            const otherGroup = document.getElementById("gender_other_group");
+            if (otherGroup) {
+                otherGroup.style.display = isOther ? "block" : "none";
+                if (isOther) {
+                    const specInput = document.getElementById("gender_specification");
+                    if (specInput) specInput.focus();
+                } else {
+                    const specInput = document.getElementById("gender_specification");
+                    if (specInput) specInput.value = "";
+                }
+            }
+        });
+    }
+
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortPatients);
     document.getElementById("filter_status").addEventListener("change", filterAndSortPatients);
@@ -107,8 +127,15 @@ const filterAndSortPatients = () => {
         const matchesSearch = fullName.includes(searchTerm) || code.includes(searchTerm);
 
         let matchesStatus = true;
-        if (filterStatus === "1") matchesStatus = (pat.Is_Active == 1);
-        else if (filterStatus === "0") matchesStatus = (pat.Is_Active == 0);
+        if (filterStatus === "active" || filterStatus === "1") {
+            matchesStatus = (pat.Is_Active == 1 && (!pat.Latest_Admission_Status || pat.Latest_Admission_Status === ""));
+        } else if (filterStatus === "admitted") {
+            matchesStatus = (pat.Is_Active == 1 && pat.Latest_Admission_Status === "Admitted");
+        } else if (filterStatus === "discharged") {
+            matchesStatus = (pat.Is_Active == 1 && (pat.Latest_Admission_Status === "Discharged" || pat.Latest_Admission_Status === "Billed"));
+        } else if (filterStatus === "archived" || filterStatus === "0") {
+            matchesStatus = (pat.Is_Active == 0);
+        }
 
         let matchesBlood = true;
         if (filterBlood !== "all") matchesBlood = (pat.Blood_Type_ID == filterBlood);
@@ -176,21 +203,50 @@ const displayPatientsTable = (patients) => {
     const tbody = document.createElement("tbody");
     patients.forEach(pat => {
         const isActive = (pat.Is_Active == 1);
-        const statusBadge = isActive 
         const fullName = `${pat.Last_Name}, ${pat.First_Name}`;
         const emContact = pat.Emergency_Contact_Name ? `${pat.Emergency_Contact_Name} (${pat.Emergency_Contact_Number || 'N/A'})` : 'None';
+
+        // Clinical Status Badge
+        let statusBadge = "";
+        if (!isActive) {
+            statusBadge = '<span class="badge badge-danger">Archived</span>';
+        } else if (pat.Latest_Admission_Status === "Admitted") {
+            statusBadge = '<span class="badge badge-info">Admitted</span>';
+        } else if (pat.Latest_Admission_Status === "Discharged" || pat.Latest_Admission_Status === "Billed") {
+            statusBadge = '<span class="badge badge-warning">Discharged</span>';
+        } else {
+            statusBadge = '<span class="badge badge-success">Active</span>';
+        }
+
+        // Gender Display with specification
+        let genderDisplay = pat.Gender_Name;
+        if (pat.Gender_Specification) {
+            genderDisplay += `<br><small class="text-muted">(${pat.Gender_Specification})</small>`;
+        }
+
+        // Returnee Quick Action Button for Discharged patients
+        let returneeBtn = "";
+        if (isActive && (pat.Latest_Admission_Status === "Discharged" || pat.Latest_Admission_Status === "Billed")) {
+            returneeBtn = `<button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-returnee" data-id="${pat.Patient_ID}" data-name="${fullName}" title="Register as Returnee (Generate New Patient Code for New Admission)" aria-label="Register Returnee">🔁</button>`;
+        }
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${pat.Patient_Code}</strong></td>
             <td><strong>${fullName}</strong></td>
             <td>${pat.Date_Of_Birth}</td>
-            <td>${pat.Gender_Name}</td>
+            <td>${genderDisplay}</td>
             <td><span class="badge badge-info">${pat.Blood_Type_Name}</span></td>
             <td>${pat.Contact_Number || '<span class="text-muted">N/A</span>'}</td>
             <td><small>${emContact}</small></td>
-            <td>${getStatusBadge(pat.Is_Active)}</td>
-            <td>${getActionButtons(pat.Patient_ID, pat.Is_Active, fullName, 'Edit Patient')}</td>
+            <td>${statusBadge}</td>
+            <td>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-edit" data-id="${pat.Patient_ID}" title="Edit Patient" aria-label="Edit Patient">✏️</button>
+                    ${returneeBtn}
+                    <button type="button" class="btn btn-sm btn-icon btn-action-icon ${isActive ? 'btn-action-archive' : 'btn-action-restore'} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${isActive ? 1 : 0}" data-name="${fullName}" title="${isActive ? 'Send to Archive (Soft Delete)' : 'Restore Record'}" aria-label="Toggle Status">${isActive ? '🗑️' : '🔄'}</button>
+                </div>
+            </td>
         `;
         tbody.appendChild(row);
     });
@@ -201,6 +257,10 @@ const displayPatientsTable = (patients) => {
     // Event delegation
     document.querySelectorAll(".btn-action-edit").forEach(btn => {
         btn.addEventListener("click", () => loadPatientForEdit(btn.dataset.id));
+    });
+
+    document.querySelectorAll(".btn-action-returnee").forEach(btn => {
+        btn.addEventListener("click", () => registerReturnee(btn.dataset.id));
     });
 
     document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
@@ -236,6 +296,13 @@ const loadPatientForEdit = async (patientId) => {
             document.getElementById("emergency_contact_name").value = p.Emergency_Contact_Name || "";
             document.getElementById("emergency_contact_number").value = p.Emergency_Contact_Number || "";
 
+            // Gender 'Other' handling
+            const isOther = (p.Gender_ID == 3);
+            const otherGroup = document.getElementById("gender_other_group");
+            const specInput = document.getElementById("gender_specification");
+            if (otherGroup) otherGroup.style.display = isOther ? "block" : "none";
+            if (specInput) specInput.value = p.Gender_Specification || "";
+
             document.getElementById("form-title").textContent = `Edit Patient (${p.Patient_Code})`;
             document.getElementById("btnSubmit").textContent = "Update Patient";
             openModal();
@@ -243,6 +310,51 @@ const loadPatientForEdit = async (patientId) => {
     } catch (error) {
         console.error("[API] Error loading patient details:", error);
         alert("Failed to load patient record.");
+    }
+};
+
+/**
+ * Pre-fills patient demographic info to register as a Returnee under a new Patient Code
+ */
+const registerReturnee = async (patientId) => {
+    try {
+        console.log(`[API] Preparing returnee registration for patient ID: ${patientId}`);
+        const response = await axios.get(`${baseApiUrl}/patients.php`, {
+            params: {
+                operation: "getPatientById",
+                json: JSON.stringify({ patient_id: patientId })
+            }
+        });
+
+        if (response.status === 200 && response.data) {
+            const p = response.data;
+            resetForm();
+            // Leave patient_id empty so insertPatient generates a brand new record & code
+            document.getElementById("patient_id").value = "";
+            document.getElementById("first_name").value = p.First_Name;
+            document.getElementById("last_name").value = p.Last_Name;
+            document.getElementById("date_of_birth").value = p.Date_Of_Birth;
+            document.getElementById("gender_id").value = p.Gender_ID;
+            document.getElementById("blood_type_id").value = p.Blood_Type_ID;
+            document.getElementById("contact_number").value = p.Contact_Number || "";
+            document.getElementById("address").value = p.Address || "";
+            document.getElementById("emergency_contact_name").value = p.Emergency_Contact_Name || "";
+            document.getElementById("emergency_contact_number").value = p.Emergency_Contact_Number || "";
+
+            // Gender 'Other'
+            const isOther = (p.Gender_ID == 3);
+            const otherGroup = document.getElementById("gender_other_group");
+            const specInput = document.getElementById("gender_specification");
+            if (otherGroup) otherGroup.style.display = isOther ? "block" : "none";
+            if (specInput) specInput.value = p.Gender_Specification || "";
+
+            document.getElementById("form-title").textContent = `Register Returnee Patient: ${p.First_Name} ${p.Last_Name}`;
+            document.getElementById("btnSubmit").textContent = "Register Returnee (Generate New Code)";
+            openModal();
+        }
+    } catch (error) {
+        console.error("[API] Error preparing returnee:", error);
+        alert("Failed to prepare returnee registration.");
     }
 };
 
@@ -260,9 +372,17 @@ const savePatient = async () => {
     const address = document.getElementById("address").value.trim();
     const emName = document.getElementById("emergency_contact_name").value.trim();
     const emContact = document.getElementById("emergency_contact_number").value.trim();
+    const genderSpec = document.getElementById("gender_specification") ? document.getElementById("gender_specification").value.trim() : "";
 
     if (!firstName || !lastName || !dob || !genderId || !bloodTypeId) {
         alert("Please fill in all required fields (First Name, Last Name, DOB, Gender, Blood Type).");
+        return;
+    }
+
+    if (genderId == "3" && !genderSpec) {
+        alert("Please specify the patient's gender preference.");
+        const specInput = document.getElementById("gender_specification");
+        if (specInput) specInput.focus();
         return;
     }
 
@@ -271,6 +391,7 @@ const savePatient = async () => {
         last_name: lastName,
         date_of_birth: dob,
         gender_id: genderId,
+        gender_specification: genderSpec,
         blood_type_id: bloodTypeId,
         contact_number: contact,
         address: address,
@@ -329,7 +450,11 @@ const resetForm = () => {
     document.getElementById("emergency_contact_name").value = "";
     document.getElementById("emergency_contact_number").value = "";
 
+    const specInput = document.getElementById("gender_specification");
+    if (specInput) specInput.value = "";
+    const otherGroup = document.getElementById("gender_other_group");
+    if (otherGroup) otherGroup.style.display = "none";
+
     document.getElementById("form-title").textContent = "Register New Patient";
     document.getElementById("btnSubmit").textContent = "Submit Patient";
-    document.getElementById("btnCancel").style.display = "none";
 };

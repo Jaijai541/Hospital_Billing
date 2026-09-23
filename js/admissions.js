@@ -53,6 +53,21 @@ window.addEventListener('DOMContentLoaded', () => {
         loadAdmissions();
     });
 
+    const patSearch = document.getElementById('patient_search_input');
+    if (patSearch) {
+        patSearch.addEventListener('input', populatePatientDropdown);
+    }
+
+    const bedSearch = document.getElementById('bed_search_input');
+    if (bedSearch) {
+        bedSearch.addEventListener('input', populateBedDropdown);
+    }
+
+    const docSearch = document.getElementById('doctor_search_input');
+    if (docSearch) {
+        docSearch.addEventListener('input', filterDoctorsCheckboxes);
+    }
+
     // Initial Data Fetch
     loadPatients();
     loadBeds();
@@ -80,16 +95,36 @@ function loadPatients() {
 
 function populatePatientDropdown() {
     const select = document.getElementById('patient_id');
+    const query = (document.getElementById('patient_search_input')?.value || '').toLowerCase().trim();
     select.innerHTML = '<option value="">-- Select Patient --</option>';
 
-    activePatients.forEach(p => {
+    const filtered = activePatients.filter(p => {
+        if (!query) return true;
+        const text = `${p.Patient_Code || ''} ${p.Full_Name || ''} ${p.Gender_Name || ''} ${p.Blood_Type_Name || ''}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching patients found</option>';
+        return;
+    }
+
+    filtered.forEach(p => {
         const option = document.createElement('option');
         option.value = p.Patient_ID;
-        const isAdmitted = p.Active_Admission_ID !== null;
-        option.textContent = `${p.Patient_Code} — ${p.Full_Name} (${p.Gender_Name || 'N/A'}, Blood: ${p.Blood_Type_Name || 'N/A'})${isAdmitted ? ' [Currently Admitted]' : ''}`;
+        const isAdmitted = (p.Active_Admission_ID !== null || p.Latest_Admission_Status === 'Admitted');
+        const isDischarged = (p.Latest_Admission_Status === 'Discharged' || p.Latest_Admission_Status === 'Billed');
+
+        let note = '';
         if (isAdmitted) {
+            note = ' [Currently Admitted]';
+            option.disabled = true;
+        } else if (isDischarged) {
+            note = ' [Discharged — Re-register as Returnee in Directory]';
             option.disabled = true;
         }
+
+        option.textContent = `${p.Patient_Code} — ${p.Full_Name} (${p.Gender_Name || 'N/A'}, Blood: ${p.Blood_Type_Name || 'N/A'})${note}`;
         select.appendChild(option);
     });
 }
@@ -113,6 +148,7 @@ function loadBeds() {
 
 function populateBedDropdown() {
     const select = document.getElementById('bed_id');
+    const query = (document.getElementById('bed_search_input')?.value || '').toLowerCase().trim();
     select.innerHTML = '<option value="">-- Select Vacant Bed --</option>';
 
     if (availableBeds.length === 0) {
@@ -120,7 +156,18 @@ function populateBedDropdown() {
         return;
     }
 
-    availableBeds.forEach(b => {
+    const filtered = availableBeds.filter(b => {
+        if (!query) return true;
+        const text = `${b.Bed_Code || ''} ${b.Room_Name || ''} ${b.Room_Type || ''} ${b.Daily_Rate || ''}`.toLowerCase();
+        return text.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        select.innerHTML = '<option value="">No matching beds found</option>';
+        return;
+    }
+
+    filtered.forEach(b => {
         const option = document.createElement('option');
         option.value = b.Bed_ID;
         option.textContent = `Bed: ${b.Bed_Code} | Room: ${b.Room_Name} (${b.Room_Type}) — ₱${parseFloat(b.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day`;
@@ -156,6 +203,7 @@ function populateDoctorsCheckboxes() {
 
     activeDoctors.forEach(d => {
         const div = document.createElement('div');
+        div.className = 'doctor-row';
         div.style.marginBottom = '4px';
 
         const checkbox = document.createElement('input');
@@ -173,6 +221,17 @@ function populateDoctorsCheckboxes() {
         div.appendChild(checkbox);
         div.appendChild(label);
         container.appendChild(div);
+    });
+
+    filterDoctorsCheckboxes();
+}
+
+function filterDoctorsCheckboxes() {
+    const query = (document.getElementById('doctor_search_input')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#doctors_container .doctor-row');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!query || text.includes(query)) ? '' : 'none';
     });
 }
 
@@ -342,11 +401,19 @@ function submitAdmission() {
 }
 
 function resetForm() {
+    if (document.getElementById('patient_search_input')) document.getElementById('patient_search_input').value = '';
+    if (document.getElementById('bed_search_input')) document.getElementById('bed_search_input').value = '';
+    if (document.getElementById('doctor_search_input')) document.getElementById('doctor_search_input').value = '';
+
     document.getElementById('patient_id').value = '';
     document.getElementById('chief_complaint').value = '';
     document.getElementById('bed_id').value = '';
     const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
     checkedBoxes.forEach(cb => cb.checked = false);
+
+    populatePatientDropdown();
+    populateBedDropdown();
+    filterDoctorsCheckboxes();
 }
 
 // 5. Open Clinical Chart & Ledger Hub

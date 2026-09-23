@@ -16,6 +16,19 @@ document.addEventListener("DOMContentLoaded", () => {
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDoctor);
 
+    // Specialty Instant Search in Modal
+    const specSearch = document.getElementById("specialty_search");
+    if (specSearch) {
+        specSearch.addEventListener("input", () => {
+            const query = specSearch.value.trim().toLowerCase();
+            const labels = document.querySelectorAll("#specialties-checkboxes label");
+            labels.forEach(lbl => {
+                const text = lbl.textContent.toLowerCase();
+                lbl.style.display = text.includes(query) ? "inline-block" : "none";
+            });
+        });
+    }
+
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDoctors);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDoctors);
@@ -369,6 +382,12 @@ const resetForm = () => {
     document.getElementById("doctor_type_id").value = "";
     document.getElementById("station_id").value = "";
     document.getElementById("base_round_fee").value = "";
+
+    const specSearch = document.getElementById("specialty_search");
+    if (specSearch) specSearch.value = "";
+    document.querySelectorAll('#specialties-checkboxes label').forEach(lbl => {
+        lbl.style.display = "inline-block";
+    });
 
     document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
         cb.checked = false;

@@ -31,7 +31,7 @@ class AdmissionManager
                     rb.Bed_Code,
                     r.Room_Name,
                     rt.Type_Name AS Room_Type,
-                    rt.Daily_Rate,
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     (
                         SELECT GROUP_CONCAT(CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) SEPARATOR '; ')
                         FROM Admission_Doctor ad
@@ -105,7 +105,7 @@ class AdmissionManager
                     rb.Bed_Code,
                     r.Room_Name,
                     rt.Type_Name AS Room_Type,
-                    rt.Daily_Rate,
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Bed_Date_In
                 FROM Admission a
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
@@ -166,7 +166,7 @@ class AdmissionManager
                     r.Room_ID,
                     r.Room_Name,
                     rt.Type_Name AS Room_Type,
-                    rt.Daily_Rate
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
                 FROM Room_Bed rb
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
@@ -200,7 +200,14 @@ class AdmissionManager
                         FROM Admission a 
                         WHERE a.Patient_ID = p.Patient_ID AND a.Status = 'Admitted'
                         LIMIT 1
-                    ) AS Active_Admission_ID
+                    ) AS Active_Admission_ID,
+                    (
+                        SELECT a.Status 
+                        FROM Admission a 
+                        WHERE a.Patient_ID = p.Patient_ID 
+                        ORDER BY a.Admission_ID DESC 
+                        LIMIT 1
+                    ) AS Latest_Admission_Status
                 FROM Patient p
                 LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
                 LEFT JOIN Enum_Blood_Type bt ON p.Blood_Type_ID = bt.Blood_Type_ID
@@ -257,7 +264,7 @@ class AdmissionManager
                     rb.Bed_Code,
                     r.Room_Name,
                     rt.Type_Name AS Room_Type,
-                    rt.Daily_Rate,
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Date_In,
                     DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Date_Out,
                     rtl.Total_Days,
@@ -393,7 +400,7 @@ class AdmissionManager
                     rtl.Transfer_ID,
                     rtl.Bed_ID,
                     rtl.Date_In,
-                    rt.Daily_Rate,
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     rb.Bed_Code,
                     r.Room_Name
                 FROM Room_Transfer_Log rtl
@@ -500,7 +507,7 @@ class AdmissionManager
                     rtl.Transfer_ID,
                     rtl.Bed_ID,
                     rtl.Date_In,
-                    rt.Daily_Rate
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
                 FROM Room_Transfer_Log rtl
                 INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID

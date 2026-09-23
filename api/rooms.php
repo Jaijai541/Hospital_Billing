@@ -16,8 +16,9 @@ class RoomMaster
     {
         include "../connection.php";
 
-        $sql = "SELECT r.Room_ID, r.Room_Name, r.Room_Type_ID, r.Capacity, r.Is_Active,
-                       rt.Type_Name, rt.Code_Prefix, rt.Daily_Rate,
+        $sql = "SELECT r.Room_ID, r.Room_Name, r.Room_Type_ID, r.Capacity, r.Custom_Daily_Rate, r.Is_Active,
+                       rt.Type_Name, rt.Code_Prefix, 
+                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                        COUNT(b.Bed_ID) AS Total_Beds,
                        COALESCE(SUM(CASE WHEN b.Is_Available = 1 THEN 1 ELSE 0 END), 0) AS Vacant_Beds,
                        COALESCE(SUM(CASE WHEN b.Is_Available = 0 THEN 1 ELSE 0 END), 0) AS Occupied_Beds
@@ -41,7 +42,8 @@ class RoomMaster
         include "../connection.php";
 
         $sql = "SELECT b.Bed_ID, b.Room_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
-                       r.Room_Name, rt.Type_Name, rt.Daily_Rate 
+                       r.Room_Name, rt.Type_Name, 
+                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate 
                 FROM Room_Bed b 
                 INNER JOIN Room r ON b.Room_ID = r.Room_ID 
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
@@ -54,7 +56,7 @@ class RoomMaster
     }
 
     /**
-     * Read: Retrieve room types with enforced uniform Daily_Rate
+     * Read: Retrieve room types with default Daily_Rate
      */
     function getAllRoomTypes()
     {
@@ -76,7 +78,10 @@ class RoomMaster
         include "../connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT r.*, rt.Daily_Rate, rt.Type_Name 
+        $sql = "SELECT r.*, 
+                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate, 
+                       rt.Daily_Rate AS Default_Daily_Rate, 
+                       rt.Type_Name 
                 FROM Room r 
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
                 WHERE r.Room_ID = :id";
@@ -98,13 +103,15 @@ class RoomMaster
         $json = json_decode($json, true);
         $capacity = max(1, intval($json['capacity'] ?? 1));
         $roomName = trim($json['room_name']);
+        $dailyRate = isset($json['daily_rate']) && $json['daily_rate'] !== '' ? floatval($json['daily_rate']) : null;
 
-        $sql = "INSERT INTO Room (Room_Name, Room_Type_ID, Capacity, Is_Active) 
-                VALUES (:name, :type_id, :capacity, 1)";
+        $sql = "INSERT INTO Room (Room_Name, Room_Type_ID, Capacity, Custom_Daily_Rate, Is_Active) 
+                VALUES (:name, :type_id, :capacity, :custom_rate, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $roomName);
         $stmt->bindParam(":type_id", $json['room_type_id']);
         $stmt->bindParam(":capacity", $capacity);
+        $stmt->bindParam(":custom_rate", $dailyRate);
         $stmt->execute();
 
         $roomId = $conn->lastInsertId();
@@ -116,8 +123,6 @@ class RoomMaster
 
         $stmtBed = $conn->prepare("INSERT INTO Room_Bed (Room_ID, Bed_Code, Is_Available, Is_Active) VALUES (:room_id, :code, 1, 1)");
         for ($i = 1; $i <= $capacity; $i++) {
-            $bedCode = sprintf("%s-%03d", $prefix, $i);
-            // Prefix with room initials if multiple words
             $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $roomName);
             $bedCode = sprintf("%s-%03d", strtoupper(substr($cleanName, 0, 5)), $i);
 
@@ -138,14 +143,17 @@ class RoomMaster
         include "../connection.php";
 
         $json = json_decode($json, true);
+        $dailyRate = isset($json['daily_rate']) && $json['daily_rate'] !== '' ? floatval($json['daily_rate']) : null;
 
         $sql = "UPDATE Room 
-                SET Room_Name    = :name, 
-                    Room_Type_ID = :type_id 
-                WHERE Room_ID    = :id";
+                SET Room_Name         = :name, 
+                    Room_Type_ID      = :type_id,
+                    Custom_Daily_Rate = :custom_rate 
+                WHERE Room_ID         = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['room_name']);
         $stmt->bindParam(":type_id", $json['room_type_id']);
+        $stmt->bindParam(":custom_rate", $dailyRate);
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
 

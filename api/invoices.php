@@ -223,7 +223,7 @@ class InvoiceManager
                     rtl.Transfer_ID,
                     rtl.Bed_ID,
                     rtl.Date_In,
-                    rt.Daily_Rate
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
                 FROM Room_Transfer_Log rtl
                 INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID

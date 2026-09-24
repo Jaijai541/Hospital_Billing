@@ -7,6 +7,7 @@
 let allRooms = [];
 let allBeds = [];
 let roomTypes = [];
+let currentLoadedRoom = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Data Load
@@ -16,6 +17,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveRoom);
+
+    const btnReset = document.getElementById("btnReset");
+    if (btnReset) {
+        btnReset.addEventListener("click", () => {
+            if (currentLoadedRoom) {
+                populateRoomForm(currentLoadedRoom);
+            } else {
+                resetForm();
+            }
+        });
+    }
 
     // Auto-fill daily rate on room type selection
     document.getElementById("room_type_id").addEventListener("change", (e) => {
@@ -161,7 +173,6 @@ const displayRoomsTable = (rooms) => {
             <th>Vacant Beds</th>
             <th>Occupied Beds</th>
             <th>Status</th>
-            <th>Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -169,6 +180,8 @@ const displayRoomsTable = (rooms) => {
     const tbody = document.createElement("tbody");
     rooms.forEach(r => {
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click to view / edit room details";
         row.innerHTML = `
             <td><strong>${r.Room_Name}</strong></td>
             <td><span class="badge badge-info">${r.Type_Name}</span></td>
@@ -177,24 +190,25 @@ const displayRoomsTable = (rooms) => {
             <td><span class="badge badge-success">${r.Vacant_Beds} vacant</span></td>
             <td><span class="badge badge-warning">${r.Occupied_Beds} occupied</span></td>
             <td>${getStatusBadge(r.Is_Active)}</td>
-            <td>${getActionButtons(r.Room_ID, r.Is_Active, r.Room_Name, 'Edit Room')}</td>
         `;
+        row.addEventListener("click", () => loadRoomForEdit(r.Room_ID));
         tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
 
-    // Event delegation
-    document.querySelectorAll(".btn-action-edit").forEach(btn => {
-        btn.addEventListener("click", () => loadRoomForEdit(btn.dataset.id));
-    });
-
-    document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            toggleRecordStatus("rooms.php", "room_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayRoomsAndBeds);
-        });
-    });
+/**
+ * Populate form inputs from a room object
+ */
+const populateRoomForm = (r) => {
+    document.getElementById("room_id").value = r.Room_ID || "";
+    document.getElementById("room_name").value = r.Room_Name || "";
+    document.getElementById("room_type_id").value = r.Room_Type_ID || "";
+    document.getElementById("daily_rate").value = r.Daily_Rate || "";
+    document.getElementById("capacity").value = r.Capacity || 1;
+    document.getElementById("capacity").disabled = true;
 };
 
 /**
@@ -267,15 +281,27 @@ const loadRoomForEdit = async (roomId) => {
 
         if (response.status === 200 && response.data) {
             const r = response.data;
-            document.getElementById("room_id").value = r.Room_ID;
-            document.getElementById("room_name").value = r.Room_Name;
-            document.getElementById("room_type_id").value = r.Room_Type_ID;
-            document.getElementById("daily_rate").value = r.Daily_Rate;
-            document.getElementById("capacity").value = r.Capacity || 1;
-            document.getElementById("capacity").disabled = true;
+            currentLoadedRoom = r;
+            populateRoomForm(r);
 
             document.getElementById("form-title").textContent = `Edit Room (${r.Room_Name})`;
             document.getElementById("btnSubmit").textContent = "Update Room";
+
+            // Configure In-Modal Archive / Restore Button
+            const btnArchive = document.getElementById("btnArchive");
+            if (btnArchive) {
+                btnArchive.style.display = "inline-flex";
+                const isActive = (r.Is_Active == 1);
+                btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
+                btnArchive.textContent = isActive ? "Send to Archive" : "Restore Record";
+                btnArchive.onclick = () => {
+                    toggleRecordStatus("rooms.php", "room_id", r.Room_ID, isActive ? 1 : 0, r.Room_Name, () => {
+                        closeModal();
+                        displayRoomsAndBeds();
+                    });
+                };
+            }
+
             openModal();
         }
     } catch (error) {
@@ -343,6 +369,8 @@ const saveRoom = async () => {
  * Reset form
  */
 const resetForm = () => {
+    currentLoadedRoom = null;
+
     document.getElementById("room_id").value = "";
     document.getElementById("room_name").value = "";
     document.getElementById("room_type_id").value = "";
@@ -350,7 +378,9 @@ const resetForm = () => {
     document.getElementById("capacity").value = "1";
     document.getElementById("capacity").disabled = false;
 
+    const btnArchive = document.getElementById("btnArchive");
+    if (btnArchive) btnArchive.style.display = "none";
+
     document.getElementById("form-title").textContent = "Add New Room";
     document.getElementById("btnSubmit").textContent = "Submit Room";
-    document.getElementById("btnCancel").style.display = "none";
 };

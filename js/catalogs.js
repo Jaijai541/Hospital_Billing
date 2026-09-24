@@ -5,6 +5,7 @@
  */
 
 let allCatalogs = [];
+let currentLoadedCatalog = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Data Load
@@ -13,6 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveCatalogItem);
+
+    const btnReset = document.getElementById("btnReset");
+    if (btnReset) {
+        btnReset.addEventListener("click", () => {
+            if (currentLoadedCatalog) {
+                populateCatalogForm(currentLoadedCatalog);
+            } else {
+                resetForm();
+            }
+        });
+    }
 
     // Auto-fill prefix on category selection
     document.getElementById("category_type").addEventListener("change", (e) => {
@@ -130,7 +142,6 @@ const displayCatalogsTable = (items) => {
             <th>Category Type</th>
             <th>Unit Price</th>
             <th>Status</th>
-            <th>Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -142,30 +153,32 @@ const displayCatalogsTable = (items) => {
         else if (item.Category_Type === 'Equipment Scan') catBadge = '<span class="badge badge-warning">Scan</span>';
 
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click to view / edit catalog item";
         row.innerHTML = `
             <td><strong>${item.Formatted_Code}</strong></td>
             <td><strong>${item.Item_Name}</strong></td>
             <td>${catBadge}</td>
             <td>₱ ${parseFloat(item.Unit_Price).toFixed(2)}</td>
             <td>${getStatusBadge(item.Is_Active)}</td>
-            <td>${getActionButtons(item.Catalog_ID, item.Is_Active, item.Item_Name, 'Edit Item')}</td>
         `;
+        row.addEventListener("click", () => loadCatalogForEdit(item.Catalog_ID));
         tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
 
-    // Event delegation
-    document.querySelectorAll(".btn-action-edit").forEach(btn => {
-        btn.addEventListener("click", () => loadCatalogForEdit(btn.dataset.id));
-    });
-
-    document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            toggleRecordStatus("catalogs.php", "catalog_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayCatalogs);
-        });
-    });
+/**
+ * Populate form inputs from a catalog item object
+ */
+const populateCatalogForm = (item) => {
+    document.getElementById("catalog_id").value = item.Catalog_ID || "";
+    document.getElementById("item_name").value = item.Item_Name || "";
+    document.getElementById("category_type").value = item.Category_Type || "";
+    document.getElementById("code_prefix").value = item.Code_Prefix || "";
+    document.getElementById("unit_price").value = item.Unit_Price || "";
 };
 
 /**
@@ -183,14 +196,27 @@ const loadCatalogForEdit = async (catalogId) => {
 
         if (response.status === 200 && response.data) {
             const item = response.data;
-            document.getElementById("catalog_id").value = item.Catalog_ID;
-            document.getElementById("item_name").value = item.Item_Name;
-            document.getElementById("category_type").value = item.Category_Type;
-            document.getElementById("code_prefix").value = item.Code_Prefix;
-            document.getElementById("unit_price").value = item.Unit_Price;
+            currentLoadedCatalog = item;
+            populateCatalogForm(item);
 
             document.getElementById("form-title").textContent = `Edit Catalog Item (${item.Code_Prefix}-${String(item.Catalog_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Item";
+
+            // Configure In-Modal Archive / Restore Button
+            const btnArchive = document.getElementById("btnArchive");
+            if (btnArchive) {
+                btnArchive.style.display = "inline-flex";
+                const isActive = (item.Is_Active == 1);
+                btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
+                btnArchive.textContent = isActive ? "Send to Archive" : "Restore Record";
+                btnArchive.onclick = () => {
+                    toggleRecordStatus("catalogs.php", "catalog_id", item.Catalog_ID, isActive ? 1 : 0, item.Item_Name, () => {
+                        closeModal();
+                        displayCatalogs();
+                    });
+                };
+            }
+
             openModal();
         }
     } catch (error) {
@@ -259,15 +285,19 @@ const saveCatalogItem = async () => {
  * Reset form back to Add mode
  */
 const resetForm = () => {
+    currentLoadedCatalog = null;
+
     document.getElementById("catalog_id").value = "";
     document.getElementById("item_name").value = "";
     document.getElementById("category_type").value = "";
     document.getElementById("code_prefix").value = "";
     document.getElementById("unit_price").value = "";
 
+    const btnArchive = document.getElementById("btnArchive");
+    if (btnArchive) btnArchive.style.display = "none";
+
     document.getElementById("form-title").textContent = "Add New Charge Catalog Item";
     document.getElementById("btnSubmit").textContent = "Submit Item";
-    document.getElementById("btnCancel").style.display = "none";
 };
 
 

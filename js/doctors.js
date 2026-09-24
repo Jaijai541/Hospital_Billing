@@ -6,6 +6,7 @@
 
 let allDoctors = [];
 let allSpecialties = [];
+let currentLoadedDoctor = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Data Load
@@ -15,6 +16,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDoctor);
+
+    const btnReset = document.getElementById("btnReset");
+    if (btnReset) {
+        btnReset.addEventListener("click", () => {
+            if (currentLoadedDoctor) {
+                populateDoctorForm(currentLoadedDoctor);
+            } else {
+                resetForm();
+            }
+        });
+    }
 
     // Specialty Instant Search in Modal
     const specSearch = document.getElementById("specialty_search");
@@ -231,7 +243,6 @@ const displayDoctorsTable = (doctors) => {
             <th>Medical Specialties</th>
             <th>Base Round Fee</th>
             <th>Status</th>
-            <th>Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -241,6 +252,8 @@ const displayDoctorsTable = (doctors) => {
         const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
 
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click to view / edit doctor details";
         row.innerHTML = `
             <td><strong>${doc.Formatted_Code}</strong></td>
             <td><strong>${fullName}</strong></td>
@@ -249,23 +262,30 @@ const displayDoctorsTable = (doctors) => {
             <td><small>${doc.Specialties || 'General Practice'}</small></td>
             <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
             <td>${getStatusBadge(doc.Is_Active)}</td>
-            <td>${getActionButtons(doc.Doctor_ID, doc.Is_Active, fullName, 'Edit Doctor')}</td>
         `;
+        row.addEventListener("click", () => loadDoctorForEdit(doc.Doctor_ID));
         tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
 
-    // Event delegation
-    document.querySelectorAll(".btn-action-edit").forEach(btn => {
-        btn.addEventListener("click", () => loadDoctorForEdit(btn.dataset.id));
-    });
+/**
+ * Populate form inputs from a doctor object
+ */
+const populateDoctorForm = (doc) => {
+    document.getElementById("doctor_id").value = doc.Doctor_ID || "";
+    document.getElementById("first_name").value = doc.First_Name || "";
+    document.getElementById("last_name").value = doc.Last_Name || "";
+    document.getElementById("doctor_type_id").value = doc.Doctor_Type_ID || "";
+    document.getElementById("station_id").value = doc.Station_ID || "";
+    document.getElementById("base_round_fee").value = doc.Base_Round_Fee || "";
 
-    document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            toggleRecordStatus("doctors.php", "doctor_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayDoctors);
-        });
+    // Check checkboxes for specialties
+    const assignedSpecs = doc.specialty_ids_array || [];
+    document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
+        cb.checked = assignedSpecs.includes(cb.value);
     });
 };
 
@@ -284,21 +304,28 @@ const loadDoctorForEdit = async (doctorId) => {
 
         if (response.status === 200 && response.data) {
             const doc = response.data;
-            document.getElementById("doctor_id").value = doc.Doctor_ID;
-            document.getElementById("first_name").value = doc.First_Name;
-            document.getElementById("last_name").value = doc.Last_Name;
-            document.getElementById("doctor_type_id").value = doc.Doctor_Type_ID;
-            document.getElementById("station_id").value = doc.Station_ID;
-            document.getElementById("base_round_fee").value = doc.Base_Round_Fee;
-
-            // Check checkboxes for specialties
-            const assignedSpecs = doc.specialty_ids_array || [];
-            document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
-                cb.checked = assignedSpecs.includes(cb.value);
-            });
+            currentLoadedDoctor = doc;
+            populateDoctorForm(doc);
 
             document.getElementById("form-title").textContent = `Edit Doctor (DOC-${String(doc.Doctor_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Doctor";
+
+            // Configure In-Modal Archive / Restore Button
+            const btnArchive = document.getElementById("btnArchive");
+            if (btnArchive) {
+                btnArchive.style.display = "inline-flex";
+                const isActive = (doc.Is_Active == 1);
+                btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
+                btnArchive.textContent = isActive ? "Send to Archive" : "Restore Record";
+                btnArchive.onclick = () => {
+                    const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
+                    toggleRecordStatus("doctors.php", "doctor_id", doc.Doctor_ID, isActive ? 1 : 0, fullName, () => {
+                        closeModal();
+                        displayDoctors();
+                    });
+                };
+            }
+
             openModal();
         }
     } catch (error) {
@@ -376,6 +403,8 @@ const saveDoctor = async () => {
  * Reset form
  */
 const resetForm = () => {
+    currentLoadedDoctor = null;
+
     document.getElementById("doctor_id").value = "";
     document.getElementById("first_name").value = "";
     document.getElementById("last_name").value = "";
@@ -393,7 +422,9 @@ const resetForm = () => {
         cb.checked = false;
     });
 
+    const btnArchive = document.getElementById("btnArchive");
+    if (btnArchive) btnArchive.style.display = "none";
+
     document.getElementById("form-title").textContent = "Add New Doctor";
     document.getElementById("btnSubmit").textContent = "Submit Doctor";
-    document.getElementById("btnCancel").style.display = "none";
 };

@@ -1,4 +1,5 @@
 let allDiscounts = []; // In-memory cache for fast search, filter, and sort
+let currentLoadedDiscount = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Data Load
@@ -7,6 +8,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
+
+    const btnReset = document.getElementById("btnReset");
+    if (btnReset) {
+        btnReset.addEventListener("click", () => {
+            if (currentLoadedDiscount) {
+                populateDiscountForm(currentLoadedDiscount);
+            } else {
+                resetForm();
+            }
+        });
+    }
 
     // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
@@ -107,7 +119,6 @@ const displayDiscountsTable = (discounts) => {
             <th>Discount Policy</th>
             <th>Deduction Percentage</th>
             <th>Status</th>
-            <th>Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -116,29 +127,29 @@ const displayDiscountsTable = (discounts) => {
     discounts.forEach(disc => {
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click to view / edit discount scheme";
         row.innerHTML = `
             <td><strong>${code}</strong></td>
             <td><strong>${disc.Discount_Name}</strong></td>
             <td><span class="badge badge-info">${parseFloat(disc.Discount_Percentage).toFixed(2)}%</span></td>
             <td>${getStatusBadge(disc.Is_Active)}</td>
-            <td>${getActionButtons(disc.Discount_ID, disc.Is_Active, disc.Discount_Name, 'Edit Discount')}</td>
         `;
+        row.addEventListener("click", () => loadDiscountForEdit(disc.Discount_ID));
         tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
 
-    // Event delegation with semantic classes
-    document.querySelectorAll(".btn-action-edit").forEach(btn => {
-        btn.addEventListener("click", () => loadDiscountForEdit(btn.dataset.id));
-    });
-
-    document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            toggleRecordStatus("discounts.php", "discount_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayDiscounts);
-        });
-    });
+/**
+ * Populate form inputs from a discount object
+ */
+const populateDiscountForm = (disc) => {
+    document.getElementById("discount_id").value = disc.Discount_ID || "";
+    document.getElementById("discount_name").value = disc.Discount_Name || "";
+    document.getElementById("discount_percentage").value = disc.Discount_Percentage || "";
 };
 
 const loadDiscountForEdit = async (discountId) => {
@@ -153,12 +164,27 @@ const loadDiscountForEdit = async (discountId) => {
 
         if (response.status === 200 && response.data) {
             const disc = response.data;
-            document.getElementById("discount_id").value = disc.Discount_ID;
-            document.getElementById("discount_name").value = disc.Discount_Name;
-            document.getElementById("discount_percentage").value = disc.Discount_Percentage;
+            currentLoadedDiscount = disc;
+            populateDiscountForm(disc);
 
             document.getElementById("form-title").textContent = `Edit Discount (DISC-${disc.Discount_ID})`;
             document.getElementById("btnSubmit").textContent = "Update Discount";
+
+            // Configure In-Modal Archive / Restore Button
+            const btnArchive = document.getElementById("btnArchive");
+            if (btnArchive) {
+                btnArchive.style.display = "inline-flex";
+                const isActive = (disc.Is_Active == 1);
+                btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
+                btnArchive.textContent = isActive ? "Send to Archive" : "Restore Record";
+                btnArchive.onclick = () => {
+                    toggleRecordStatus("discounts.php", "discount_id", disc.Discount_ID, isActive ? 1 : 0, disc.Discount_Name, () => {
+                        closeModal();
+                        displayDiscounts();
+                    });
+                };
+            }
+
             openModal();
             console.log("[UI] Form populated for edit:", disc);
         }
@@ -226,9 +252,14 @@ const saveDiscount = async () => {
 };
 
 const resetForm = () => {
+    currentLoadedDiscount = null;
+
     document.getElementById("discount_id").value = "";
     document.getElementById("discount_name").value = "";
     document.getElementById("discount_percentage").value = "";
+
+    const btnArchive = document.getElementById("btnArchive");
+    if (btnArchive) btnArchive.style.display = "none";
 
     document.getElementById("form-title").textContent = "Add New Discount Scheme";
     document.getElementById("btnSubmit").textContent = "Submit Discount";

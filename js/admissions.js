@@ -305,7 +305,7 @@ function renderAdmissionsTable(admissions) {
         else if (a.Status === 'Discharged') statusBadge = '<span class="badge badge-warning">Discharged</span>';
         else if (a.Status === 'Billed') statusBadge = '<span class="badge badge-info">Billed / Settled</span>';
 
-        html += '<tr>';
+        html += `<tr class="clickable-row" onclick="openChart(${a.Admission_ID})" title="Click row to open clinical chart & ledger">`;
         html += `<td><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
         html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}<br><small class="text-muted">Contact: ${a.Contact_Number || 'N/A'}</small></td>`;
         html += `<td>${bedInfo}</td>`;
@@ -314,12 +314,11 @@ function renderAdmissionsTable(admissions) {
         html += `<td>${a.Admission_Date}</td>`;
         html += `<td>${statusBadge}</td>`;
         html += '<td>';
-        html += `<button type="button" class="btn btn-sm btn-primary" onclick="openChart(${a.Admission_ID})">Open Chart & Ledger</button>`;
-        
         if (a.Status === 'Admitted') {
-            html += ` <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="dischargePatient(${a.Admission_ID}, '${a.Patient_Name.replace(/'/g, "\\'")}')">Discharge</button>`;
+            html += `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="event.stopPropagation(); dischargePatient(${a.Admission_ID}, '${a.Patient_Name.replace(/'/g, "\\'")}')">Discharge</button>`;
+        } else {
+            html += '<span class="text-muted">—</span>';
         }
-        
         html += '</td>';
         html += '</tr>';
     });

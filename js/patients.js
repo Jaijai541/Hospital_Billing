@@ -5,6 +5,7 @@
  */
 
 let allPatients = [];
+let currentLoadedPatient = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial Data Load
@@ -14,6 +15,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", savePatient);
+
+    const btnReset = document.getElementById("btnReset");
+    if (btnReset) {
+        btnReset.addEventListener("click", () => {
+            if (currentLoadedPatient) {
+                populatePatientForm(currentLoadedPatient);
+            } else {
+                resetForm();
+            }
+        });
+    }
 
     // Gender 'Other' dynamic specification input
     const genderSelect = document.getElementById("gender_id");
@@ -195,7 +207,6 @@ const displayPatientsTable = (patients) => {
             <th>Contact</th>
             <th>Emergency Contact</th>
             <th>Status</th>
-            <th>Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -225,6 +236,8 @@ const displayPatientsTable = (patients) => {
         }
 
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click to view / edit patient details";
         row.innerHTML = `
             <td><strong>${pat.Patient_Code}</strong></td>
             <td><strong>${fullName}</strong></td>
@@ -234,29 +247,36 @@ const displayPatientsTable = (patients) => {
             <td>${pat.Contact_Number || '<span class="text-muted">N/A</span>'}</td>
             <td><small>${emContact}</small></td>
             <td>${statusBadge}</td>
-            <td>
-                <div class="table-actions">
-                    <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-edit" data-id="${pat.Patient_ID}" title="Edit Patient" aria-label="Edit Patient">✏️</button>
-                    <button type="button" class="btn btn-sm btn-icon btn-action-icon ${isActive ? 'btn-action-archive' : 'btn-action-restore'} btn-action-soft-delete" data-id="${pat.Patient_ID}" data-status="${isActive ? 1 : 0}" data-name="${fullName}" title="${isActive ? 'Send to Archive (Soft Delete)' : 'Restore Record'}" aria-label="Toggle Status">${isActive ? '🗑️' : '🔄'}</button>
-                </div>
-            </td>
         `;
+        row.addEventListener("click", () => loadPatientForEdit(pat.Patient_ID));
         tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
 
-    // Event delegation
-    document.querySelectorAll(".btn-action-edit").forEach(btn => {
-        btn.addEventListener("click", () => loadPatientForEdit(btn.dataset.id));
-    });
+/**
+ * Populate form inputs from a patient object
+ */
+const populatePatientForm = (p) => {
+    document.getElementById("patient_id").value = p.Patient_ID || "";
+    document.getElementById("first_name").value = p.First_Name || "";
+    document.getElementById("last_name").value = p.Last_Name || "";
+    document.getElementById("date_of_birth").value = p.Date_Of_Birth || "";
+    document.getElementById("gender_id").value = p.Gender_ID || "";
+    document.getElementById("blood_type_id").value = p.Blood_Type_ID || "";
+    document.getElementById("contact_number").value = p.Contact_Number || "";
+    document.getElementById("address").value = p.Address || "";
+    document.getElementById("emergency_contact_name").value = p.Emergency_Contact_Name || "";
+    document.getElementById("emergency_contact_number").value = p.Emergency_Contact_Number || "";
 
-    document.querySelectorAll(".btn-action-soft-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            toggleRecordStatus("patients.php", "patient_id", btn.dataset.id, btn.dataset.status, btn.dataset.name, displayPatients);
-        });
-    });
+    // Gender 'Other' handling
+    const isOther = (p.Gender_ID == 3);
+    const otherGroup = document.getElementById("gender_other_group");
+    const specInput = document.getElementById("gender_specification");
+    if (otherGroup) otherGroup.style.display = isOther ? "block" : "none";
+    if (specInput) specInput.value = p.Gender_Specification || "";
 };
 
 /**
@@ -274,26 +294,28 @@ const loadPatientForEdit = async (patientId) => {
 
         if (response.status === 200 && response.data) {
             const p = response.data;
-            document.getElementById("patient_id").value = p.Patient_ID;
-            document.getElementById("first_name").value = p.First_Name;
-            document.getElementById("last_name").value = p.Last_Name;
-            document.getElementById("date_of_birth").value = p.Date_Of_Birth;
-            document.getElementById("gender_id").value = p.Gender_ID;
-            document.getElementById("blood_type_id").value = p.Blood_Type_ID;
-            document.getElementById("contact_number").value = p.Contact_Number || "";
-            document.getElementById("address").value = p.Address || "";
-            document.getElementById("emergency_contact_name").value = p.Emergency_Contact_Name || "";
-            document.getElementById("emergency_contact_number").value = p.Emergency_Contact_Number || "";
-
-            // Gender 'Other' handling
-            const isOther = (p.Gender_ID == 3);
-            const otherGroup = document.getElementById("gender_other_group");
-            const specInput = document.getElementById("gender_specification");
-            if (otherGroup) otherGroup.style.display = isOther ? "block" : "none";
-            if (specInput) specInput.value = p.Gender_Specification || "";
+            currentLoadedPatient = p;
+            populatePatientForm(p);
 
             document.getElementById("form-title").textContent = `Edit Patient (${p.Patient_Code})`;
             document.getElementById("btnSubmit").textContent = "Update Patient";
+
+            // Configure In-Modal Archive / Restore Button
+            const btnArchive = document.getElementById("btnArchive");
+            if (btnArchive) {
+                btnArchive.style.display = "inline-flex";
+                const isActive = (p.Is_Active == 1);
+                btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
+                btnArchive.textContent = isActive ? "Send to Archive" : "Restore Record";
+                btnArchive.onclick = () => {
+                    const fullName = `${p.Last_Name}, ${p.First_Name}`;
+                    toggleRecordStatus("patients.php", "patient_id", p.Patient_ID, isActive ? 1 : 0, fullName, () => {
+                        closeModal();
+                        displayPatients();
+                    });
+                };
+            }
+
             openModal();
         }
     } catch (error) {
@@ -383,6 +405,8 @@ const savePatient = async () => {
  * Reset form back to register mode
  */
 const resetForm = () => {
+    currentLoadedPatient = null;
+
     document.getElementById("patient_id").value = "";
     document.getElementById("first_name").value = "";
     document.getElementById("last_name").value = "";
@@ -398,6 +422,9 @@ const resetForm = () => {
     if (specInput) specInput.value = "";
     const otherGroup = document.getElementById("gender_other_group");
     if (otherGroup) otherGroup.style.display = "none";
+
+    const btnArchive = document.getElementById("btnArchive");
+    if (btnArchive) btnArchive.style.display = "none";
 
     document.getElementById("form-title").textContent = "Register New Patient";
     document.getElementById("btnSubmit").textContent = "Submit Patient";

@@ -288,7 +288,6 @@ function renderAdmissionsTable(admissions) {
     html += '<th>Assigned Physician(s)</th>';
     html += '<th>Admission Date</th>';
     html += '<th>Status</th>';
-    html += '<th>Actions</th>';
     html += '</tr>';
     html += '</thead>';
     html += '<tbody>';
@@ -313,13 +312,6 @@ function renderAdmissionsTable(admissions) {
         html += `<td><small>${doctors}</small></td>`;
         html += `<td>${a.Admission_Date}</td>`;
         html += `<td>${statusBadge}</td>`;
-        html += '<td>';
-        if (a.Status === 'Admitted') {
-            html += `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="event.stopPropagation(); dischargePatient(${a.Admission_ID}, '${a.Patient_Name.replace(/'/g, "\\'")}')">Discharge</button>`;
-        } else {
-            html += '<span class="text-muted">—</span>';
-        }
-        html += '</td>';
         html += '</tr>';
     });
 

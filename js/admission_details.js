@@ -182,6 +182,17 @@ function loadAdmissionDetails() {
             // Populate Doctors in Order and Round forms
             populateAssignedDoctorDropdowns();
 
+            // Configure Discharge Patient button in Chart Topbar
+            const btnDischarge = document.getElementById('btnChartDischarge');
+            if (btnDischarge) {
+                if (admissionData.Status === 'Admitted') {
+                    btnDischarge.style.display = 'inline-flex';
+                    btnDischarge.onclick = () => dischargePatientFromChart(admissionData.Admission_ID, admissionData.Full_Name);
+                } else {
+                    btnDischarge.style.display = 'none';
+                }
+            }
+
             // Disable transactional actions if not admitted
             if (admissionData.Status !== 'Admitted') {
                 document.getElementById('order-form-container').innerHTML = '<p><em>Orders disabled: Patient is already discharged or billed.</em></p>';
@@ -192,6 +203,32 @@ function loadAdmissionDetails() {
         .catch(err => {
             console.error("admission_details.js: Error loading admission details:", err);
             alert("Failed to load admission details.");
+        });
+}
+
+function dischargePatientFromChart(admId, patientName) {
+    const confirmed = confirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`);
+    if (!confirmed) return;
+
+    const formData = new FormData();
+    formData.append('operation', 'dischargePatient');
+    formData.append('json', JSON.stringify({ admission_id: admId }));
+
+    axios.post('../api/admissions.php', formData)
+        .then(response => {
+            if (response.data.success) {
+                alert(response.data.message);
+                loadAdmissionDetails();
+                loadBedHistory();
+                loadLedger();
+                loadLedgerSummary();
+            } else {
+                alert("Discharge Error: " + (response.data.error || "Unknown error"));
+            }
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error discharging patient:", err);
+            alert("Network error discharging patient.");
         });
 }
 

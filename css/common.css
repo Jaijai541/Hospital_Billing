@@ -16,7 +16,7 @@
     --success: #10b981;             /* Emerald for Restore / Confirm */
     --success-hover: #059669;
     --success-light: #dcfce7;
-    --warning: #ffffff;             /* Amber for Send to Archive */
+    --warning: #f59e0b;             /* Amber for Send to Archive */
     --warning-hover: #d97706;
     --warning-light: #fef3c7;
     --danger: #ef4444;              /* Crimson for Hard Delete / Cancel */
@@ -650,12 +650,13 @@ textarea.form-control {
 .btn-warning, .btn-archive {
     background-color: var(--warning);
     border: 1px solid #d97706;
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .btn-warning:hover:not(:disabled), .btn-archive:hover:not(:disabled) {
     background-color: var(--warning-hover);
-    color: #ffffff;
+    border-color: #b45309;
+    color: #ffffff !important;
 }
 
 /* Danger / Delete Button (Hard Delete / Cancel / Discharge) */
@@ -886,6 +887,37 @@ textarea.form-control {
 .modal-footer .btn-archive,
 .modal-footer #btnArchive {
     margin-right: auto;
+    background-color: #f59e0b !important;
+    border: 1px solid #d97706 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(217, 119, 6, 0.25);
+}
+
+.modal-footer .btn-archive:hover:not(:disabled),
+.modal-footer #btnArchive:hover:not(:disabled) {
+    background-color: #d97706 !important;
+    border-color: #b45309 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
+}
+
+.modal-footer .btn-restore,
+.modal-footer #btnArchive.btn-restore {
+    margin-right: auto;
+    background-color: #10b981 !important;
+    border: 1px solid #059669 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
+}
+
+.modal-footer .btn-restore:hover:not(:disabled),
+.modal-footer #btnArchive.btn-restore:hover:not(:disabled) {
+    background-color: #059669 !important;
+    border-color: #047857 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
 }
 
 @keyframes fadeInModal {

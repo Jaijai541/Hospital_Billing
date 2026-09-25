@@ -677,16 +677,19 @@ textarea.form-control {
     color: #ffffff;
 }
 
-/* Outline Button (e.g. Sidebar Logout) */
+/* Outline Button (Clinical Slate / Light Theme Default) */
 .btn-outline {
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: #ffffff;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #cbd5e1);
+    color: var(--primary, #0284c7);
+    font-weight: 600;
 }
 
 .btn-outline:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: var(--primary-light, #f0f9ff);
+    border-color: var(--primary, #0284c7);
+    color: var(--primary-hover, #0369a1);
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.12);
 }
 
 /* ── Data Tables with Spacious Cells & Hover ─────────────────── */

@@ -78,3 +78,40 @@
 .dashboard-recent-table th {
     font-size: 13px;
 }
+
+/* ── Milestone 1 Master File Navigation Buttons ────────────────── */
+.m1-btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn-m1-module {
+    background-color: #e0f2fe !important;
+    border: 1px solid #7dd3fc !important;
+    color: #0369a1 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    padding: 6px 12px !important;
+    border-radius: var(--radius-sm) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    text-decoration: none !important;
+    line-height: 1.25 !important;
+    transition: all 0.15s ease !important;
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.08) !important;
+}
+
+.btn-m1-module .m1-icon {
+    font-size: 14px;
+}
+
+.btn-m1-module:hover {
+    background-color: var(--primary, #0284c7) !important;
+    border-color: var(--primary, #0284c7) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 8px rgba(2, 132, 199, 0.22) !important;
+}

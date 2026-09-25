@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Billing System — System Audit Log</title>
     <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="../css/archive.css">
 </head>
 <body>
@@ -26,7 +27,7 @@
             </div>
 
             <!-- KPI Stats Row -->
-            <div class="stats-grid" style="margin-bottom: 20px;">
+            <div class="stats-grid">
                 <div class="stat-card" style="border-left: 4px solid var(--primary);">
                     <div class="stat-info">
                         <h4>Total Audit Events</h4>
@@ -61,15 +62,15 @@
                     <h3>Activity & Transaction Trail</h3>
                 </div>
                 <div class="card-body">
-                    <div class="filter-bar" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="search_input">Search Keyword / Reference</label>
-                            <input type="text" id="search_input" placeholder="Search by reference (ADM-001, INV-0001), patient, or description...">
+                    <div class="filter-bar">
+                        <div class="form-group" style="flex: 2; min-width: 260px;">
+                            <label class="form-label" for="search_input">Search Keyword / Reference</label>
+                            <input type="text" id="search_input" class="form-control" placeholder="Search by reference (ADM-001, INV-0001), patient, or description...">
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="filter_module">Module</label>
-                            <select id="filter_module">
+                        <div class="form-group" style="flex: 1; min-width: 180px;">
+                            <label class="form-label" for="filter_module">Module</label>
+                            <select id="filter_module" class="form-select">
                                 <option value="ALL">All Modules</option>
                                 <option value="Admissions & Beds">Admissions & Beds</option>
                                 <option value="Clinical Orders">Clinical Orders</option>
@@ -85,9 +86,9 @@
                             </select>
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="filter_action">Action Type</label>
-                            <select id="filter_action">
+                        <div class="form-group" style="flex: 1; min-width: 160px;">
+                            <label class="form-label" for="filter_action">Action Type</label>
+                            <select id="filter_action" class="form-select">
                                 <option value="ALL">All Actions</option>
                                 <option value="ADMIT">ADMIT</option>
                                 <option value="TRANSFER">TRANSFER</option>
@@ -105,9 +106,9 @@
                             </select>
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="sort_order">Sort Order</label>
-                            <select id="sort_order">
+                        <div class="form-group" style="flex: 1; min-width: 150px;">
+                            <label class="form-label" for="sort_order">Sort Order</label>
+                            <select id="sort_order" class="form-select">
                                 <option value="DESC">Newest First</option>
                                 <option value="ASC">Oldest First</option>
                             </select>

@@ -26,6 +26,7 @@ class AdmissionManager
                     CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
                     p.Contact_Number,
                     a.Chief_Complaint,
+                    a.Diagnosis,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
                     a.Status,
                     rb.Bed_Code,
@@ -57,6 +58,8 @@ class AdmissionManager
             $sql .= " AND (p.First_Name LIKE :search 
                            OR p.Last_Name LIKE :search 
                            OR rb.Bed_Code LIKE :search 
+                           OR a.Chief_Complaint LIKE :search 
+                           OR a.Diagnosis LIKE :search 
                            OR a.Admission_ID = :search_id)";
             $params[':search'] = "%{$search}%";
             $params[':search_id'] = is_numeric($search) ? intval($search) : 0;
@@ -85,6 +88,7 @@ class AdmissionManager
         $sql = "SELECT 
                     a.Admission_ID,
                     a.Chief_Complaint,
+                    a.Diagnosis,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
                     a.Status,
                     p.Patient_ID,
@@ -292,6 +296,7 @@ class AdmissionManager
         $json = is_array($json) ? $json : json_decode($json, true);
         $patientId = intval($json['patient_id'] ?? 0);
         $chiefComplaint = trim($json['chief_complaint'] ?? '');
+        $diagnosis = trim($json['diagnosis'] ?? '');
         $bedId = intval($json['bed_id'] ?? 0);
         $doctorIds = $json['doctor_ids'] ?? [];
 
@@ -324,11 +329,12 @@ class AdmissionManager
             }
 
             // 3. Insert Admission
-            $admStmt = $conn->prepare("INSERT INTO Admission (Patient_ID, Chief_Complaint, Status, Admission_Date) 
-                                      VALUES (:pid, :complaint, 'Admitted', NOW())");
+            $admStmt = $conn->prepare("INSERT INTO Admission (Patient_ID, Chief_Complaint, Diagnosis, Status, Admission_Date) 
+                                      VALUES (:pid, :complaint, :diagnosis, 'Admitted', NOW())");
             $admStmt->execute([
                 ':pid' => $patientId,
-                ':complaint' => $chiefComplaint
+                ':complaint' => $chiefComplaint,
+                ':diagnosis' => !empty($diagnosis) ? $diagnosis : null
             ]);
             $admissionId = $conn->lastInsertId();
 
@@ -572,6 +578,42 @@ class AdmissionManager
             return json_encode(['error' => 'Discharge failed: ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Update: Record or update clinical diagnosis for an admission
+     */
+    function updateDiagnosis($json = '{}')
+    {
+        include __DIR__ . "/../connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+        $diagnosis = trim($json['diagnosis'] ?? '');
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+
+        if (empty($diagnosis)) {
+            return json_encode(['error' => 'Clinical Diagnosis cannot be empty.']);
+        }
+
+        try {
+            $stmt = $conn->prepare("UPDATE Admission SET Diagnosis = :diagnosis WHERE Admission_ID = :aid");
+            $stmt->execute([
+                ':diagnosis' => $diagnosis,
+                ':aid' => $admissionId
+            ]);
+
+            return json_encode([
+                'success' => true,
+                'message' => 'Clinical diagnosis recorded successfully.',
+                'diagnosis' => $diagnosis
+            ]);
+        } catch (PDOException $e) {
+            return json_encode(['error' => 'Database error updating diagnosis: ' . $e->getMessage()]);
+        }
+    }
 }
 
 // ── Router ──────────────────────────────────────────────────────────
@@ -616,6 +658,10 @@ if (!empty($operation)) {
 
         case 'dischargePatient':
             echo $admission->dischargePatient($json);
+            break;
+
+        case 'updateDiagnosis':
+            echo $admission->updateDiagnosis($json);
             break;
 
         default:

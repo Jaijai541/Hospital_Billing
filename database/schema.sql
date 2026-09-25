@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS Admission (
     Admission_ID INT AUTO_INCREMENT PRIMARY KEY,
     Patient_ID INT NOT NULL,
     Chief_Complaint VARCHAR(500) NOT NULL,
+    Diagnosis VARCHAR(500) NULL, -- Clinical medical finding recorded after assessment
     Admission_Date DATETIME DEFAULT CURRENT_TIMESTAMP,
     Status VARCHAR(20) DEFAULT 'Admitted',
     FOREIGN KEY (Patient_ID) REFERENCES Patient(Patient_ID)

@@ -119,10 +119,17 @@
                             </div>
 
                             <div class="span-2">
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Chief Complaint / Diagnosis</label>
-                                <div id="banner-complaint" style="font-style: italic;">Loading...</div>
+                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Chief Complaint (On Admission)</label>
+                                <div id="banner-complaint" style="font-style: italic; color: #334155;">Loading...</div>
                             </div>
                             <div class="span-2">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0;">Clinical Medical Diagnosis</label>
+                                    <button type="button" id="btnEditDiagnosis" class="btn btn-sm btn-outline" style="padding: 2px 10px; font-size: 0.78rem; font-weight: 600;">✏️ Update Diagnosis</button>
+                                </div>
+                                <div id="banner-diagnosis" style="font-weight: 600; color: #0284c7;">Loading...</div>
+                            </div>
+                            <div style="grid-column: 1 / -1;">
                                 <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Assigned Physician(s)</label>
                                 <div id="banner-doctors">Loading...</div>
                             </div>
@@ -338,6 +345,31 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Diagnosis Update Pop-up Modal -->
+    <div class="modal-overlay" id="diagnosisModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="diagnosis-modal-title">Record / Update Clinical Diagnosis</h3>
+                <button type="button" class="modal-close" id="btnCloseDiagnosisModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-size: 0.85rem; color: #64748b;">Patient's Chief Complaint</label>
+                    <div id="diag-chief-complaint" style="padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-style: italic; font-size: 0.9rem; color: #334155;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="diag_input">Medical / Clinical Diagnosis *</label>
+                    <textarea id="diag_input" class="form-control" rows="3" placeholder="Enter clinical diagnosis based on complaints, lab results, and patient examination..." required></textarea>
+                    <small class="text-muted">Recorded official diagnosis will appear in the patient chart, directory, and billing statements.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelDiagnosis">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveDiagnosis">Save Diagnosis</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

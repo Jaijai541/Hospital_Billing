@@ -63,6 +63,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnLogRound').addEventListener('click', submitDoctorRound);
     document.getElementById('btnTransferBed').addEventListener('click', submitBedTransfer);
     document.getElementById('btnReturnMedicine').addEventListener('click', submitMedicineReturn);
+    initDiagnosisModal();
 
     // Attach Live Quick Search Filters for Selectors
     const orderDocSearch = document.getElementById('order_doctor_search');
@@ -143,6 +144,85 @@ function initClinicalTabs() {
     }
 }
 
+// Diagnosis Modal Controller
+function initDiagnosisModal() {
+    const btnEdit = document.getElementById('btnEditDiagnosis');
+    const modal = document.getElementById('diagnosisModal');
+    const btnClose = document.getElementById('btnCloseDiagnosisModal');
+    const btnCancel = document.getElementById('btnCancelDiagnosis');
+    const btnSave = document.getElementById('btnSaveDiagnosis');
+
+    if (!btnEdit || !modal) return;
+
+    function openDiagnosisModal() {
+        if (!admissionData) return;
+        document.getElementById('diagnosis-modal-title').textContent = `Record / Update Diagnosis (${admissionData.Patient_Code} - ${admissionData.Full_Name})`;
+        document.getElementById('diag-chief-complaint').textContent = admissionData.Chief_Complaint || 'None Recorded';
+        document.getElementById('diag_input').value = admissionData.Diagnosis || '';
+        modal.style.display = 'flex';
+        setTimeout(() => document.getElementById('diag_input').focus(), 100);
+    }
+
+    function closeDiagnosisModal() {
+        modal.style.display = 'none';
+    }
+
+    btnEdit.addEventListener('click', openDiagnosisModal);
+    if (btnClose) btnClose.addEventListener('click', closeDiagnosisModal);
+    if (btnCancel) btnCancel.addEventListener('click', closeDiagnosisModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeDiagnosisModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') closeDiagnosisModal();
+    });
+
+    if (btnSave) {
+        btnSave.addEventListener('click', saveDiagnosis);
+    }
+}
+
+function saveDiagnosis() {
+    const diagInput = document.getElementById('diag_input');
+    const val = diagInput.value.trim();
+
+    if (!val) {
+        alert("Please enter the medical diagnosis.");
+        diagInput.focus();
+        return;
+    }
+
+    const payload = {
+        admission_id: admissionId,
+        diagnosis: val
+    };
+
+    const formData = new FormData();
+    formData.append('operation', 'updateDiagnosis');
+    formData.append('json', JSON.stringify(payload));
+
+    axios.post('../api/admissions.php', formData)
+        .then(response => {
+            if (response.data.success) {
+                admissionData.Diagnosis = val;
+                const diagEl = document.getElementById('banner-diagnosis');
+                if (diagEl) {
+                    diagEl.innerHTML = `<span style="color: #0284c7; font-weight: 700;">${val}</span>`;
+                }
+                document.getElementById('diagnosisModal').style.display = 'none';
+                alert(response.data.message || "Clinical diagnosis recorded successfully.");
+            } else {
+                alert("Error updating diagnosis: " + (response.data.error || "Unknown error"));
+            }
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error saving diagnosis:", err);
+            alert("Network error saving diagnosis.");
+        });
+}
+
 // 2. Load Patient & Admission Profile Banner
 function loadAdmissionDetails() {
     console.log("admission_details.js: Fetching admission profile for ID:", admissionId);
@@ -174,7 +254,16 @@ function loadAdmissionDetails() {
             document.getElementById('banner-rate').textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
             document.getElementById('banner-status').innerHTML = `<strong>${admissionData.Status}</strong> (Admitted: ${admissionData.Admission_Date})`;
 
-            document.getElementById('banner-complaint').textContent = admissionData.Chief_Complaint;
+            document.getElementById('banner-complaint').textContent = admissionData.Chief_Complaint || 'None Recorded';
+
+            const diagEl = document.getElementById('banner-diagnosis');
+            if (diagEl) {
+                if (admissionData.Diagnosis) {
+                    diagEl.innerHTML = `<span style="color: #0284c7; font-weight: 700;">${admissionData.Diagnosis}</span>`;
+                } else {
+                    diagEl.innerHTML = `<span class="badge badge-warning" style="font-size: 0.8rem;">Pending Clinical Diagnosis</span>`;
+                }
+            }
 
             const docNames = assignedDoctors.map(d => `${d.Doctor_Name} (${d.Doctor_Type})`).join(', ');
             document.getElementById('banner-doctors').textContent = docNames || 'None assigned';

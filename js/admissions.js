@@ -264,6 +264,8 @@ function filterAndRenderTable() {
         return (a.Patient_Name && a.Patient_Name.toLowerCase().includes(query)) ||
                (a.Patient_Code && a.Patient_Code.toLowerCase().includes(query)) ||
                (a.Bed_Code && a.Bed_Code.toLowerCase().includes(query)) ||
+               (a.Chief_Complaint && a.Chief_Complaint.toLowerCase().includes(query)) ||
+               (a.Diagnosis && a.Diagnosis.toLowerCase().includes(query)) ||
                (a.Admission_ID && a.Admission_ID.toString().includes(query));
     });
 
@@ -285,6 +287,7 @@ function renderAdmissionsTable(admissions) {
     html += '<th>Patient Code & Name</th>';
     html += '<th>Current Bed & Room</th>';
     html += '<th>Chief Complaint</th>';
+    html += '<th>Clinical Diagnosis</th>';
     html += '<th>Assigned Physician(s)</th>';
     html += '<th>Admission Date</th>';
     html += '<th>Status</th>';
@@ -304,11 +307,16 @@ function renderAdmissionsTable(admissions) {
         else if (a.Status === 'Discharged') statusBadge = '<span class="badge badge-warning">Discharged</span>';
         else if (a.Status === 'Billed') statusBadge = '<span class="badge badge-info">Billed / Settled</span>';
 
+        const diagnosisBadge = a.Diagnosis 
+            ? `<strong>${a.Diagnosis}</strong>` 
+            : '<span class="badge badge-warning" style="font-size: 0.75rem;">Pending Dx</span>';
+
         html += `<tr class="clickable-row" onclick="openChart(${a.Admission_ID})" title="Click row to open clinical chart & ledger">`;
         html += `<td><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
         html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}<br><small class="text-muted">Contact: ${a.Contact_Number || 'N/A'}</small></td>`;
         html += `<td>${bedInfo}</td>`;
         html += `<td>${a.Chief_Complaint}</td>`;
+        html += `<td>${diagnosisBadge}</td>`;
         html += `<td><small>${doctors}</small></td>`;
         html += `<td>${a.Admission_Date}</td>`;
         html += `<td>${statusBadge}</td>`;
@@ -325,6 +333,7 @@ function submitAdmission() {
 
     const patientId = document.getElementById('patient_id').value;
     const chiefComplaint = document.getElementById('chief_complaint').value.trim();
+    const diagnosis = document.getElementById('diagnosis') ? document.getElementById('diagnosis').value.trim() : '';
     const bedId = document.getElementById('bed_id').value;
 
     if (!patientId) {
@@ -333,7 +342,7 @@ function submitAdmission() {
     }
 
     if (!chiefComplaint) {
-        alert("Please enter the Chief Complaint / Initial Assessment.");
+        alert("Please enter the Chief Complaint.");
         return;
     }
 
@@ -353,6 +362,7 @@ function submitAdmission() {
     const payload = {
         patient_id: patientId,
         chief_complaint: chiefComplaint,
+        diagnosis: diagnosis,
         bed_id: bedId,
         doctor_ids: doctorIds
     };
@@ -394,6 +404,7 @@ function resetForm() {
 
     document.getElementById('patient_id').value = '';
     document.getElementById('chief_complaint').value = '';
+    if (document.getElementById('diagnosis')) document.getElementById('diagnosis').value = '';
     document.getElementById('bed_id').value = '';
     const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
     checkedBoxes.forEach(cb => cb.checked = false);

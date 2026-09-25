@@ -105,6 +105,10 @@ function renderInvoice(inv) {
     }
     document.getElementById('patient-emergency').textContent = emergText;
     document.getElementById('patient-complaint').textContent = inv.Chief_Complaint || 'None Recorded';
+    const diagEl = document.getElementById('patient-diagnosis');
+    if (diagEl) {
+        diagEl.textContent = inv.Diagnosis || 'None Recorded';
+    }
 
     // Assigned Physicians
     const doctors = inv.Attending_Doctors || [];

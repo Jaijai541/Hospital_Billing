@@ -107,7 +107,7 @@ function renderRecentAdmissions(admissions) {
         html += `<td align="center"><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
         html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}</td>`;
         html += `<td>${bedInfo}</td>`;
-        html += `<td>${a.Chief_Complaint}</td>`;
+        html += `<td>${a.Chief_Complaint}<br><small style="color: #0369a1;"><strong>Dx:</strong> ${a.Diagnosis || '<em class="text-muted">Pending</em>'}</small></td>`;
         html += `<td><small>${a.Assigned_Doctors || 'None Assigned'}</small></td>`;
         html += `<td>${a.Admission_Date}</td>`;
         html += `<td align="center">`;

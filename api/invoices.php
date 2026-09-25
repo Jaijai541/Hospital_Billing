@@ -111,6 +111,7 @@ class InvoiceManager
                     a.Admission_ID,
                     CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
                     a.Chief_Complaint,
+                    a.Diagnosis,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
                     GREATEST(1, DATEDIFF(fi.Settlement_Date, a.Admission_Date)) AS Length_Of_Stay_Days,
                     a.Status AS Admission_Status,

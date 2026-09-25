@@ -710,8 +710,7 @@ textarea.form-control {
     background-color: #f8fafc;
     color: #475569;
     font-weight: 700;
-    font-size: 13.5px;
-    text-transform: uppercase;
+    font-size: 12px;
     letter-spacing: 0.5px;
     padding: 13px 16px;
     border-bottom: 2px solid var(--border-color);

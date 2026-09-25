@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Billing System — System Audit Log</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/archive.css">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation (Rendered from ../js/sidebar.js) -->
+        <aside id="sidebar-container" class="sidebar"></aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>System Audit Log (M3)</h2>
+                    <p>Chronological trail of clinical admissions, doctor orders, billing settlements, and master file updates.</p>
+                </div>
+                <div>
+                    <button type="button" id="btn-refresh-logs" class="btn btn-primary">Refresh Audit Log</button>
+                </div>
+            </div>
+
+            <!-- KPI Stats Row -->
+            <div class="stats-grid" style="margin-bottom: 20px;">
+                <div class="stat-card" style="border-left: 4px solid var(--primary);">
+                    <div class="stat-info">
+                        <h4>Total Audit Events</h4>
+                        <div class="stat-value" id="stat-total-logs">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid var(--success);">
+                    <div class="stat-info">
+                        <h4>Clinical & Admission Events</h4>
+                        <div class="stat-value" id="stat-clinical-logs">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid var(--warning);">
+                    <div class="stat-info">
+                        <h4>Billing & Invoice Events</h4>
+                        <div class="stat-value" id="stat-billing-logs">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid var(--danger);">
+                    <div class="stat-info">
+                        <h4>Master Files & Archive</h4>
+                        <div class="stat-value" id="stat-system-logs">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Activity & Transaction Trail</h3>
+                </div>
+                <div class="card-body">
+                    <div class="filter-bar" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="search_input">Search Keyword / Reference</label>
+                            <input type="text" id="search_input" placeholder="Search by reference (ADM-001, INV-0001), patient, or description...">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="filter_module">Module</label>
+                            <select id="filter_module">
+                                <option value="ALL">All Modules</option>
+                                <option value="Admissions & Beds">Admissions & Beds</option>
+                                <option value="Clinical Orders">Clinical Orders</option>
+                                <option value="Billing & Settlement">Billing & Settlement</option>
+                                <option value="Billing & Ledger">Billing & Ledger</option>
+                                <option value="Patients Directory">Patients Directory</option>
+                                <option value="Doctors & Fees">Doctors & Fees</option>
+                                <option value="Rooms & Beds">Rooms & Beds</option>
+                                <option value="Charge Catalogs">Charge Catalogs</option>
+                                <option value="Billing Discounts">Billing Discounts</option>
+                                <option value="System Archive">System Archive</option>
+                                <option value="Authentication">Authentication</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="filter_action">Action Type</label>
+                            <select id="filter_action">
+                                <option value="ALL">All Actions</option>
+                                <option value="ADMIT">ADMIT</option>
+                                <option value="TRANSFER">TRANSFER</option>
+                                <option value="DISCHARGE">DISCHARGE</option>
+                                <option value="ORDER">ORDER</option>
+                                <option value="ROUND">ROUND</option>
+                                <option value="BILLING">BILLING</option>
+                                <option value="RETURN">RETURN</option>
+                                <option value="CREATE">CREATE</option>
+                                <option value="UPDATE">UPDATE</option>
+                                <option value="ARCHIVE">ARCHIVE</option>
+                                <option value="RESTORE">RESTORE</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="AUTH">AUTH</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="sort_order">Sort Order</label>
+                            <select id="sort_order">
+                                <option value="DESC">Newest First</option>
+                                <option value="ASC">Oldest First</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <div id="table-div">
+                            <p>Loading system audit logs...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/audit_log.js"></script>
+</body>
+</html>

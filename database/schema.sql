@@ -251,3 +251,17 @@ CREATE TABLE IF NOT EXISTS Final_Invoice (
     FOREIGN KEY (Processed_By_User_ID) REFERENCES System_User(User_ID),
     FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID)
 );
+
+-- ============================================================
+-- 8. SYSTEM AUDIT LOG
+-- ============================================================
+CREATE TABLE IF NOT EXISTS Audit_Log (
+    Audit_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Action_Type VARCHAR(50) NOT NULL,
+    Module_Name VARCHAR(60) NOT NULL,
+    Record_Reference VARCHAR(60) DEFAULT '-',
+    Description TEXT NOT NULL,
+    Performed_By VARCHAR(100) DEFAULT 'System Admin',
+    Created_At DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+

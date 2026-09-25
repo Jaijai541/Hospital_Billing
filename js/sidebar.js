@@ -69,8 +69,9 @@ function renderSidebar() {
                 <li><a href="invoices.html"${isActive("invoices.html")}>Settled Invoices</a></li>
             </ul>
 
-            <div class="nav-section-title">System & Tools</div>
+            <div class="nav-section-title">System & Tools (M3)</div>
             <ul class="sidebar-nav">
+                <li><a href="audit_log.html"${isActive("audit_log.html")}>Audit Log</a></li>
                 <li><a href="archive.html"${isActive("archive.html")}>System Archive</a></li>
             </ul>
         </div>

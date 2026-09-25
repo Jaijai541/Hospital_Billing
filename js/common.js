@@ -28,6 +28,9 @@ const postApiUrl = "../api/POST";
 
 // ── 2. Global Initialization on DOM Ready ──────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+    if (typeof renderSidebar === "function") {
+        renderSidebar();
+    }
     initAppSession();
     initSidebarControls();
 });

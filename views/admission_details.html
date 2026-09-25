@@ -10,58 +10,8 @@
 <body>
 
     <div class="app-wrapper">
-        <!-- Floating Sidebar Re-Open Button -->
-        <button type="button" id="btn-sidebar-open" class="sidebar-open-btn" title="Expand Sidebar (Alt + S)" aria-label="Expand Sidebar">☰</button>
-
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-text">
-                    <h2>St. Jude Hospital</h2>
-                    <span class="subtitle">Billing & Patient System</span>
-                </div>
-                <button type="button" id="btn-sidebar-close" class="sidebar-close-btn" title="Collapse Sidebar (Alt + S)" aria-label="Collapse Sidebar">&times;</button>
-            </div>
-
-            <div class="sidebar-user">
-                <div class="sidebar-user-info">
-                    <strong id="user-display">Loading...</strong>
-                    <span>Active Session</span>
-                </div>
-                <button id="btn-logout" class="btn btn-sm btn-outline">Logout</button>
-            </div>
-
-            <div class="sidebar-nav-container">
-                <div class="nav-section-title">Overview</div>
-                <ul class="sidebar-nav">
-                    <li><a href="index.html">Dashboard</a></li>
-                </ul>
-
-                <div class="nav-section-title">Master Files (M1)</div>
-                <ul class="sidebar-nav">
-                    <li><a href="patients.html">Patients Directory</a></li>
-                    <li><a href="doctors.html">Doctors & Fees</a></li>
-                    <li><a href="rooms.html">Rooms & Beds</a></li>
-                    <li><a href="catalogs.html">Charge Catalogs</a></li>
-                    <li><a href="discounts.html">Billing Discounts</a></li>
-                </ul>
-
-                <div class="nav-section-title">Clinical Care (M2)</div>
-                <ul class="sidebar-nav">
-                    <li><a href="admissions.html" class="active">Admissions & Beds</a></li>
-                </ul>
-
-                <div class="nav-section-title">Billing & Settlement (M3)</div>
-                <ul class="sidebar-nav">
-                    <li><a href="invoices.html">Settled Invoices</a></li>
-                </ul>
-
-                <div class="nav-section-title">System & Tools</div>
-                <ul class="sidebar-nav">
-                    <li><a href="archive.html">System Archive</a></li>
-                </ul>
-            </div>
-        </aside>
+        <!-- Sidebar Navigation (Rendered from ../js/sidebar.js) -->
+        <aside id="sidebar-container" class="sidebar"></aside>
 
         <!-- Main Content Area -->
         <main class="main-content">
@@ -368,6 +318,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/sidebar.js"></script>
     <script src="../js/common.js"></script>
     <script src="../js/admission_details.js"></script>
 </body>

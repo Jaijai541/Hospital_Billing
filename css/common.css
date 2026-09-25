@@ -526,9 +526,16 @@ textarea.form-control {
     line-height: 1.25;
 }
 
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.btn:disabled,
+.btn-icon:disabled,
+.btn-action-icon:disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 /* Small Button (Used in table action rows) */

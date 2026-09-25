@@ -156,6 +156,10 @@ function initDiagnosisModal() {
 
     function openDiagnosisModal() {
         if (!admissionData) return;
+        if (admissionData.Status === 'Billed') {
+            alert("Diagnosis cannot be modified because this admission is already billed and settled.");
+            return;
+        }
         document.getElementById('diagnosis-modal-title').textContent = `Record / Update Diagnosis (${admissionData.Patient_Code} - ${admissionData.Full_Name})`;
         document.getElementById('diag-chief-complaint').textContent = admissionData.Chief_Complaint || 'None Recorded';
         document.getElementById('diag_input').value = admissionData.Diagnosis || '';
@@ -185,6 +189,11 @@ function initDiagnosisModal() {
 }
 
 function saveDiagnosis() {
+    if (admissionData && admissionData.Status === 'Billed') {
+        alert("Diagnosis cannot be modified because this admission is already billed and settled.");
+        return;
+    }
+
     const diagInput = document.getElementById('diag_input');
     const val = diagInput.value.trim();
 
@@ -262,6 +271,20 @@ function loadAdmissionDetails() {
                     diagEl.innerHTML = `<span style="color: #0284c7; font-weight: 700;">${admissionData.Diagnosis}</span>`;
                 } else {
                     diagEl.innerHTML = `<span class="badge badge-warning" style="font-size: 0.8rem;">Pending Clinical Diagnosis</span>`;
+                }
+            }
+
+            // Configure Edit Diagnosis button: Disabled when Billed/settled (editable on Admitted and Discharged)
+            const btnEditDiag = document.getElementById('btnEditDiagnosis');
+            if (btnEditDiag) {
+                if (admissionData.Status === 'Billed') {
+                    btnEditDiag.disabled = true;
+                    btnEditDiag.title = "Diagnosis locked: Admission is settled and billed";
+                    btnEditDiag.style.cursor = "not-allowed";
+                } else {
+                    btnEditDiag.disabled = false;
+                    btnEditDiag.title = "Edit Clinical Diagnosis";
+                    btnEditDiag.style.cursor = "pointer";
                 }
             }
 

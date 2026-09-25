@@ -599,6 +599,19 @@ class AdmissionManager
         }
 
         try {
+            // Guard: Verify admission exists and is not Billed
+            $stmtCheck = $conn->prepare("SELECT Status FROM Admission WHERE Admission_ID = :aid");
+            $stmtCheck->execute([':aid' => $admissionId]);
+            $admission = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$admission) {
+                return json_encode(['error' => 'Admission record not found.']);
+            }
+
+            if ($admission['Status'] === 'Billed') {
+                return json_encode(['error' => 'Diagnosis cannot be modified because this admission is already settled and billed.']);
+            }
+
             $stmt = $conn->prepare("UPDATE Admission SET Diagnosis = :diagnosis WHERE Admission_ID = :aid");
             $stmt->execute([
                 ':diagnosis' => $diagnosis,

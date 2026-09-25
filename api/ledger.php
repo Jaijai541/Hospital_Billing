@@ -13,7 +13,7 @@ class LedgerManager
      */
     function getAdmissionLedger($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -115,7 +115,7 @@ class LedgerManager
      */
     function getLedgerSummary($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -203,7 +203,7 @@ class LedgerManager
      */
     function getDispensedMedicines($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -241,7 +241,7 @@ class LedgerManager
      */
     function returnMedicine($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -317,35 +317,29 @@ class LedgerManager
     }
 }
 
-// ── Router ──────────────────────────────────────────────────────────
-if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'ledger.php') {
-    $operation = $_POST['operation'] ?? '';
-    $json = $_POST['json'] ?? '{}';
-
-    if (!empty($operation)) {
-        $ledger = new LedgerManager();
-
-        switch ($operation) {
-            case 'getAdmissionLedger':
-                echo $ledger->getAdmissionLedger($json);
-                break;
-
-            case 'getLedgerSummary':
-                echo $ledger->getLedgerSummary($json);
-                break;
-
-            case 'getDispensedMedicines':
-                echo $ledger->getDispensedMedicines($json);
-                break;
-
-            case 'returnMedicine':
-                echo $ledger->returnMedicine($json);
-                break;
-
-            default:
-                echo json_encode(['error' => 'Invalid operation specified.']);
-                break;
-        }
-    }
+// Router for operation and json payload
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    $operation = $_GET['operation'] ?? "";
+    $json = $_GET['json'] ?? "{}";
+} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $operation = $_POST['operation'] ?? "";
+    $json = $_POST['json'] ?? "{}";
 }
+
+$ledger = new LedgerManager();
+switch ($operation) {
+    case 'getAdmissionLedger':
+        echo $ledger->getAdmissionLedger($json);
+        break;
+    case 'getLedgerSummary':
+        echo $ledger->getLedgerSummary($json);
+        break;
+    case 'getDispensedMedicines':
+        echo $ledger->getDispensedMedicines($json);
+        break;
+    case 'returnMedicine':
+        echo $ledger->returnMedicine($json);
+        break;
+}
+?>
 

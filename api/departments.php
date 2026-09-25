@@ -10,7 +10,7 @@ class Department
 {
     function getAllDepartments()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT * FROM Enum_Department_Station WHERE Is_Active = 1 ORDER BY Station_Name ASC";
         $stmt = $conn->prepare($sql);

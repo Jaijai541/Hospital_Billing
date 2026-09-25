@@ -14,7 +14,7 @@ class DoctorMaster
      */
     function getAllDoctors()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT d.Doctor_ID, d.First_Name, d.Last_Name, d.Doctor_Type_ID, d.Station_ID, d.Code_Prefix, d.Base_Round_Fee, d.Is_Active,
                        dt.Type_Name AS Doctor_Type_Name,
@@ -41,7 +41,7 @@ class DoctorMaster
      */
     function getDoctorLookups()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $types = $conn->query("SELECT * FROM Enum_Doctor_Type WHERE Is_Active = 1 ORDER BY Doctor_Type_ID ASC")->fetchAll(PDO::FETCH_ASSOC);
         $stations = $conn->query("SELECT * FROM Enum_Department_Station WHERE Is_Active = 1 ORDER BY Station_Name ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -59,7 +59,7 @@ class DoctorMaster
      */
     function getDoctorById($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $sql = "SELECT d.*, GROUP_CONCAT(ds.Specialty_ID) AS Specialty_IDs 
@@ -84,7 +84,7 @@ class DoctorMaster
      */
     function insertDoctor($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -119,7 +119,7 @@ class DoctorMaster
      */
     function updateDoctor($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $doctorId = $json['doctor_id'];
@@ -157,7 +157,7 @@ class DoctorMaster
      */
     function toggleStatus($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -176,7 +176,7 @@ class DoctorMaster
      */
     function hardDeleteDoctor($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 

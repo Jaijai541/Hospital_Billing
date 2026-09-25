@@ -14,7 +14,7 @@ class Discount
      */
     function getAllDiscounts()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT Discount_ID, Discount_Name, Discount_Percentage, Is_Active, 'DISC' AS Code_Prefix 
                 FROM Enum_Discount 
@@ -31,7 +31,7 @@ class Discount
      */
     function getDiscountById($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $sql = "SELECT Discount_ID, Discount_Name, Discount_Percentage, Is_Active, 'DISC' AS Code_Prefix 
@@ -50,7 +50,7 @@ class Discount
      */
     function insertDiscount($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -69,7 +69,7 @@ class Discount
      */
     function updateDiscount($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -92,7 +92,7 @@ class Discount
      */
     function toggleStatus($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -112,7 +112,7 @@ class Discount
      */
     function hardDeleteDiscount($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 

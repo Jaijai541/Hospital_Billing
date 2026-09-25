@@ -13,7 +13,7 @@ class ArchiveManager
      */
     function getArchivedRecords($json)
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $entity = $json['entity'] ?? 'patients';
@@ -88,7 +88,7 @@ class ArchiveManager
      */
     function restoreRecord($json)
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $entity = $json['entity'] ?? '';
@@ -127,7 +127,7 @@ class ArchiveManager
      */
     function hardDeleteRecord($json)
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $entity = $json['entity'] ?? '';

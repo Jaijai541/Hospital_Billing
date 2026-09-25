@@ -13,7 +13,7 @@ class ClinicalOrderManager
      */
     function getCatalogList()
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $sql = "SELECT 
                     Catalog_ID,
@@ -35,7 +35,7 @@ class ClinicalOrderManager
      */
     function getDoctorOrders($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -71,7 +71,7 @@ class ClinicalOrderManager
      */
     function createDoctorOrder($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionDoctorId = intval($json['admission_doctor_id'] ?? 0);
@@ -107,7 +107,7 @@ class ClinicalOrderManager
      */
     function administerOrder($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $requestId = intval($json['request_id'] ?? 0);
@@ -201,7 +201,7 @@ class ClinicalOrderManager
      */
     function cancelOrder($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $requestId = intval($json['request_id'] ?? 0);
@@ -240,7 +240,7 @@ class ClinicalOrderManager
      */
     function getDoctorRounds($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -269,7 +269,7 @@ class ClinicalOrderManager
      */
     function logDoctorRound($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionDoctorId = intval($json['admission_doctor_id'] ?? 0);
@@ -340,44 +340,37 @@ class ClinicalOrderManager
     }
 }
 
-// ── Router ──────────────────────────────────────────────────────────
-$operation = $_POST['operation'] ?? '';
-$json = $_POST['json'] ?? '{}';
-
-if (!empty($operation)) {
-    $clinical = new ClinicalOrderManager();
-
-    switch ($operation) {
-        case 'getCatalogList':
-            echo $clinical->getCatalogList();
-            break;
-
-        case 'getDoctorOrders':
-            echo $clinical->getDoctorOrders($json);
-            break;
-
-        case 'createDoctorOrder':
-            echo $clinical->createDoctorOrder($json);
-            break;
-
-        case 'administerOrder':
-            echo $clinical->administerOrder($json);
-            break;
-
-        case 'cancelOrder':
-            echo $clinical->cancelOrder($json);
-            break;
-
-        case 'getDoctorRounds':
-            echo $clinical->getDoctorRounds($json);
-            break;
-
-        case 'logDoctorRound':
-            echo $clinical->logDoctorRound($json);
-            break;
-
-        default:
-            echo json_encode(['error' => 'Invalid operation specified.']);
-            break;
-    }
+// Router for operation and json payload
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    $operation = $_GET['operation'] ?? "";
+    $json = $_GET['json'] ?? "{}";
+} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $operation = $_POST['operation'] ?? "";
+    $json = $_POST['json'] ?? "{}";
 }
+
+$clinical = new ClinicalOrderManager();
+switch ($operation) {
+    case 'getCatalogList':
+        echo $clinical->getCatalogList();
+        break;
+    case 'getDoctorOrders':
+        echo $clinical->getDoctorOrders($json);
+        break;
+    case 'createDoctorOrder':
+        echo $clinical->createDoctorOrder($json);
+        break;
+    case 'administerOrder':
+        echo $clinical->administerOrder($json);
+        break;
+    case 'cancelOrder':
+        echo $clinical->cancelOrder($json);
+        break;
+    case 'getDoctorRounds':
+        echo $clinical->getDoctorRounds($json);
+        break;
+    case 'logDoctorRound':
+        echo $clinical->logDoctorRound($json);
+        break;
+}
+?>

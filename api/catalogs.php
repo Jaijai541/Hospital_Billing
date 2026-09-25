@@ -14,7 +14,7 @@ class Catalog
      */
     function getAllCatalogs()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price, Is_Active,
                        CONCAT(Code_Prefix, '-', LPAD(Catalog_ID, 3, '0')) AS Formatted_Code
@@ -32,7 +32,7 @@ class Catalog
      */
     function getCatalogById($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $sql = "SELECT * FROM Charge_Catalogs WHERE Catalog_ID = :id";
@@ -49,7 +49,7 @@ class Catalog
      */
     function insertCatalog($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -79,7 +79,7 @@ class Catalog
      */
     function updateCatalog($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -113,7 +113,7 @@ class Catalog
      */
     function toggleStatus($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -132,7 +132,7 @@ class Catalog
      */
     function hardDeleteCatalog($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 

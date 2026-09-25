@@ -13,7 +13,7 @@ class AdmissionManager
      */
     function getAllAdmissions($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $statusFilter = $json['status'] ?? 'all';
@@ -79,7 +79,7 @@ class AdmissionManager
      */
     function getAdmissionById($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['id'] ?? 0);
@@ -162,7 +162,7 @@ class AdmissionManager
      */
     function getAvailableBeds()
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $sql = "SELECT 
                     rb.Bed_ID,
@@ -189,7 +189,7 @@ class AdmissionManager
      */
     function getActivePatients()
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $sql = "SELECT 
                     p.Patient_ID,
@@ -228,7 +228,7 @@ class AdmissionManager
      */
     function getActiveDoctors()
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $sql = "SELECT 
                     d.Doctor_ID,
@@ -257,7 +257,7 @@ class AdmissionManager
      */
     function getBedTransfers($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -291,7 +291,7 @@ class AdmissionManager
      */
     function admitPatient($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $patientId = intval($json['patient_id'] ?? 0);
@@ -378,7 +378,7 @@ class AdmissionManager
      */
     function transferBed($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -495,7 +495,7 @@ class AdmissionManager
      */
     function dischargePatient($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -584,7 +584,7 @@ class AdmissionManager
      */
     function updateDiagnosis($json = '{}')
     {
-        include __DIR__ . "/../connection.php";
+        include "connection.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -629,56 +629,46 @@ class AdmissionManager
     }
 }
 
-// ── Router ──────────────────────────────────────────────────────────
-$operation = $_POST['operation'] ?? '';
-$json = $_POST['json'] ?? '{}';
-
-if (!empty($operation)) {
-    $admission = new AdmissionManager();
-
-    switch ($operation) {
-        case 'getAllAdmissions':
-            echo $admission->getAllAdmissions($json);
-            break;
-
-        case 'getAdmissionById':
-            echo $admission->getAdmissionById($json);
-            break;
-
-        case 'getAvailableBeds':
-            echo $admission->getAvailableBeds();
-            break;
-
-        case 'getActivePatients':
-            echo $admission->getActivePatients();
-            break;
-
-        case 'getActiveDoctors':
-            echo $admission->getActiveDoctors();
-            break;
-
-        case 'getBedTransfers':
-            echo $admission->getBedTransfers($json);
-            break;
-
-        case 'admitPatient':
-            echo $admission->admitPatient($json);
-            break;
-
-        case 'transferBed':
-            echo $admission->transferBed($json);
-            break;
-
-        case 'dischargePatient':
-            echo $admission->dischargePatient($json);
-            break;
-
-        case 'updateDiagnosis':
-            echo $admission->updateDiagnosis($json);
-            break;
-
-        default:
-            echo json_encode(['error' => 'Invalid operation specified.']);
-            break;
-    }
+// Router for operation and json payload
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    $operation = $_GET['operation'] ?? "";
+    $json = $_GET['json'] ?? "{}";
+} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $operation = $_POST['operation'] ?? "";
+    $json = $_POST['json'] ?? "{}";
 }
+
+$admission = new AdmissionManager();
+switch ($operation) {
+    case 'getAllAdmissions':
+        echo $admission->getAllAdmissions($json);
+        break;
+    case 'getAdmissionById':
+        echo $admission->getAdmissionById($json);
+        break;
+    case 'getAvailableBeds':
+        echo $admission->getAvailableBeds();
+        break;
+    case 'getActivePatients':
+        echo $admission->getActivePatients();
+        break;
+    case 'getActiveDoctors':
+        echo $admission->getActiveDoctors();
+        break;
+    case 'getBedTransfers':
+        echo $admission->getBedTransfers($json);
+        break;
+    case 'admitPatient':
+        echo $admission->admitPatient($json);
+        break;
+    case 'transferBed':
+        echo $admission->transferBed($json);
+        break;
+    case 'dischargePatient':
+        echo $admission->dischargePatient($json);
+        break;
+    case 'updateDiagnosis':
+        echo $admission->updateDiagnosis($json);
+        break;
+}
+?>

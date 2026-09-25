@@ -14,7 +14,7 @@ class RoomMaster
      */
     function getAllRooms()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT r.Room_ID, r.Room_Name, r.Room_Type_ID, r.Capacity, r.Custom_Daily_Rate, r.Is_Active,
                        rt.Type_Name, rt.Code_Prefix, 
@@ -39,7 +39,7 @@ class RoomMaster
      */
     function getAllBeds()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT b.Bed_ID, b.Room_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
                        r.Room_Name, rt.Type_Name, 
@@ -60,7 +60,7 @@ class RoomMaster
      */
     function getAllRoomTypes()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT * FROM Enum_Room_Type WHERE Is_Active = 1 ORDER BY Room_Type_ID ASC";
         $stmt = $conn->prepare($sql);
@@ -75,7 +75,7 @@ class RoomMaster
      */
     function getRoomById($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $sql = "SELECT r.*, 
@@ -98,7 +98,7 @@ class RoomMaster
      */
     function insertRoom($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $capacity = max(1, intval($json['capacity'] ?? 1));
@@ -140,7 +140,7 @@ class RoomMaster
      */
     function updateRoom($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $dailyRate = isset($json['daily_rate']) && $json['daily_rate'] !== '' ? floatval($json['daily_rate']) : null;
@@ -165,7 +165,7 @@ class RoomMaster
      */
     function toggleStatus($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -188,7 +188,7 @@ class RoomMaster
      */
     function hardDeleteRoom($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 

@@ -14,7 +14,7 @@ class PatientMaster
      */
     function getAllPatients()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $sql = "SELECT p.*, 
                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
@@ -49,7 +49,7 @@ class PatientMaster
      */
     function getPatientEnums()
     {
-        include "../connection.php";
+        include "connection.php";
 
         $genders = $conn->query("SELECT * FROM Enum_Gender ORDER BY Gender_ID ASC")->fetchAll(PDO::FETCH_ASSOC);
         $bloodTypes = $conn->query("SELECT * FROM Enum_Blood_Type ORDER BY Blood_Type_ID ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -65,7 +65,7 @@ class PatientMaster
      */
     function getPatientById($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $sql = "SELECT p.*, CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code 
@@ -84,7 +84,7 @@ class PatientMaster
      */
     function insertPatient($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $genderSpec = !empty($json['gender_specification']) ? trim($json['gender_specification']) : null;
@@ -112,7 +112,7 @@ class PatientMaster
      */
     function updatePatient($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $genderSpec = !empty($json['gender_specification']) ? trim($json['gender_specification']) : null;
@@ -151,7 +151,7 @@ class PatientMaster
      */
     function toggleStatus($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 
@@ -170,7 +170,7 @@ class PatientMaster
      */
     function hardDeletePatient($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
 

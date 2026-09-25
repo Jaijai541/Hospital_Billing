@@ -13,7 +13,7 @@ class Auth
      */
     function login($json)
     {
-        include "../connection.php";
+        include "connection.php";
 
         $json = json_decode($json, true);
         $username = trim($json['username'] ?? '');

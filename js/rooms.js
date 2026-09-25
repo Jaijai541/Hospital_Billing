@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 const loadRoomTypes = async () => {
     try {
         console.log("[API] Loading room types...");
-        const response = await axios.get(`${baseApiUrl}/rooms.php`, {
+        const response = await axios.get(`${getApiUrl}/rooms.php`, {
             params: { operation: "getAllRoomTypes" }
         });
 
@@ -86,8 +86,8 @@ const displayRoomsAndBeds = async () => {
     try {
         console.log("[API] Fetching rooms and beds...");
         const [roomsRes, bedsRes] = await Promise.all([
-            axios.get(`${baseApiUrl}/rooms.php`, { params: { operation: "getAllRooms" } }),
-            axios.get(`${baseApiUrl}/rooms.php`, { params: { operation: "getAllBeds" } })
+            axios.get(`${getApiUrl}/rooms.php`, { params: { operation: "getAllRooms" } }),
+            axios.get(`${getApiUrl}/rooms.php`, { params: { operation: "getAllBeds" } })
         ]);
 
         if (roomsRes.status === 200) {
@@ -272,7 +272,7 @@ const displayBedsTable = (beds) => {
 const loadRoomForEdit = async (roomId) => {
     try {
         console.log(`[API] Requesting room details for ID: ${roomId}`);
-        const response = await axios.get(`${baseApiUrl}/rooms.php`, {
+        const response = await axios.get(`${getApiUrl}/rooms.php`, {
             params: {
                 operation: "getRoomById",
                 json: JSON.stringify({ room_id: roomId })
@@ -346,7 +346,7 @@ const saveRoom = async () => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/rooms.php`,
+            url: `${postApiUrl}/rooms.php`,
             method: "POST",
             data: formData
         });

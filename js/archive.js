@@ -48,7 +48,7 @@ const loadArchivedRecords = async () => {
 
     try {
         console.log(`[API] Requesting archived records for entity: ${entity}`);
-        const response = await axios.get(`${baseApiUrl}/archive.php`, {
+        const response = await axios.get("../api/GET/archive.php", {
             params: {
                 operation: "getArchivedRecords",
                 json: JSON.stringify({ entity: entity })
@@ -162,7 +162,7 @@ const restoreRecord = async (entity, id, name) => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/archive.php`,
+            url: "../api/POST/archive.php",
             method: "POST",
             data: formData
         });
@@ -195,7 +195,7 @@ const hardDeleteRecord = async (entity, id, name) => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/archive.php`,
+            url: "../api/POST/archive.php",
             method: "POST",
             data: formData
         });

@@ -51,7 +51,7 @@ const displayCatalogs = async () => {
 
     try {
         console.log("[API] Requesting: getAllCatalogs");
-        const response = await axios.get(`${baseApiUrl}/catalogs.php`, {
+        const response = await axios.get(`${getApiUrl}/catalogs.php`, {
             params: { operation: "getAllCatalogs" }
         });
 
@@ -187,7 +187,7 @@ const populateCatalogForm = (item) => {
 const loadCatalogForEdit = async (catalogId) => {
     try {
         console.log(`[API] Requesting item details for ID: ${catalogId}`);
-        const response = await axios.get(`${baseApiUrl}/catalogs.php`, {
+        const response = await axios.get(`${getApiUrl}/catalogs.php`, {
             params: {
                 operation: "getCatalogById",
                 json: JSON.stringify({ catalog_id: catalogId })
@@ -262,7 +262,7 @@ const saveCatalogItem = async () => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/catalogs.php`,
+            url: `${postApiUrl}/catalogs.php`,
             method: "POST",
             data: formData
         });

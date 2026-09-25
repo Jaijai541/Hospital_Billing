@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
 const loadPatientEnums = async () => {
     try {
         console.log("[API] Requesting: getPatientEnums");
-        const response = await axios.get(`${baseApiUrl}/patients.php`, {
+        const response = await axios.get(`${getApiUrl}/patients.php`, {
             params: { operation: "getPatientEnums" }
         });
 
@@ -105,7 +105,7 @@ const displayPatients = async () => {
 
     try {
         console.log("[API] Requesting: getAllPatients");
-        const response = await axios.get(`${baseApiUrl}/patients.php`, {
+        const response = await axios.get(`${getApiUrl}/patients.php`, {
             params: { operation: "getAllPatients" }
         });
 
@@ -285,7 +285,7 @@ const populatePatientForm = (p) => {
 const loadPatientForEdit = async (patientId) => {
     try {
         console.log(`[API] Requesting patient details for ID: ${patientId}`);
-        const response = await axios.get(`${baseApiUrl}/patients.php`, {
+        const response = await axios.get(`${getApiUrl}/patients.php`, {
             params: {
                 operation: "getPatientById",
                 json: JSON.stringify({ patient_id: patientId })
@@ -380,7 +380,7 @@ const savePatient = async () => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/patients.php`,
+            url: `${postApiUrl}/patients.php`,
             method: "POST",
             data: formData
         });

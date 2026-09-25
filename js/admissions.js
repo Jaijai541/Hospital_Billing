@@ -81,7 +81,7 @@ function loadPatients() {
     const formData = new FormData();
     formData.append('operation', 'getActivePatients');
 
-    axios.post('../api/admissions.php', formData)
+    axios.post('../api/GET/admissions.php', formData)
         .then(response => {
             console.log("admissions.js: Active patients received:", response.data);
             activePatients = response.data;
@@ -130,7 +130,7 @@ function loadBeds() {
     const formData = new FormData();
     formData.append('operation', 'getAvailableBeds');
 
-    axios.post('../api/admissions.php', formData)
+    axios.post('../api/GET/admissions.php', formData)
         .then(response => {
             console.log("admissions.js: Vacant beds received:", response.data);
             availableBeds = response.data;
@@ -176,7 +176,7 @@ function loadDoctors() {
     const formData = new FormData();
     formData.append('operation', 'getActiveDoctors');
 
-    axios.post('../api/admissions.php', formData)
+    axios.post('../api/GET/admissions.php', formData)
         .then(response => {
             console.log("admissions.js: Active physicians received:", response.data);
             activeDoctors = response.data;
@@ -241,7 +241,7 @@ function loadAdmissions() {
     formData.append('operation', 'getAllAdmissions');
     formData.append('json', JSON.stringify({ status: status, search: search }));
 
-    axios.post('../api/admissions.php', formData)
+    axios.post('../api/GET/admissions.php', formData)
         .then(response => {
             console.log("admissions.js: Admissions received:", response.data);
             allAdmissions = response.data;
@@ -373,7 +373,7 @@ function submitAdmission() {
     formData.append('operation', 'admitPatient');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/admissions.php', formData)
+    axios.post('../api/POST/admissions.php', formData)
         .then(response => {
             console.log("admissions.js: Response from admitPatient:", response.data);
             if (response.data.success) {
@@ -433,7 +433,7 @@ window.dischargePatient = function(admissionId, patientName) {
     formData.append('operation', 'dischargePatient');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/admissions.php', formData)
+    axios.post('../api/POST/admissions.php', formData)
         .then(response => {
             console.log("admissions.js: Discharge response:", response.data);
             if (response.data.success) {

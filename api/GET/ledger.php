@@ -1,16 +1,9 @@
 <?php
-/**
- * Billing Ledger & Itemized Charges API
- * Milestone 2: Transaction & Clinical Workflow
- */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
 class LedgerManager
 {
-    /**
-     * Read: Retrieve all itemized charges for an admission
-     */
     function getAdmissionLedger($json = '{}')
     {
         include "connection.php";
@@ -66,7 +59,6 @@ class LedgerManager
         $stmt->execute([':aid' => $admissionId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Format descriptions cleanly
         $ledger = [];
         foreach ($rows as $row) {
             $category = 'General';
@@ -110,9 +102,6 @@ class LedgerManager
         return json_encode($ledger);
     }
 
-    /**
-     * Read: Retrieve category breakdown and Net Grand Total
-     */
     function getLedgerSummary($json = '{}')
     {
         include "connection.php";
@@ -122,15 +111,14 @@ class LedgerManager
 
         if (empty($admissionId)) {
             return json_encode([
-                'room_total' => 0,
-                'doctor_total' => 0,
-                'medicine_total' => 0,
-                'scan_total' => 0,
-                'service_total' => 0,
-                'gross_total' => 0,
-                'return_total' => 0,
-                'net_total' => 0,
-                'total_items' => 0
+                'room_total' => 0.00,
+                'doctor_total' => 0.00,
+                'medicine_total' => 0.00,
+                'scan_total' => 0.00,
+                'service_total' => 0.00,
+                'gross_total' => 0.00,
+                'return_total' => 0.00,
+                'net_total' => 0.00
             ]);
         }
 
@@ -160,47 +148,44 @@ class LedgerManager
         $netTotal = 0.0;
 
         foreach ($rows as $r) {
-            $charge = floatval($r['Total_Charge']);
-            $netTotal += $charge;
+            $amt = floatval($r['Total_Charge']);
+            $netTotal += $amt;
 
-            if ($r['Transaction_Type'] === 'Return' || $charge < 0) {
-                $returnTotal += abs($charge);
-                $medicineTotal += $charge; // Reduces medicine subtotal
+            if ($r['Transaction_Type'] === 'Return') {
+                $returnTotal += abs($amt);
+                $medicineTotal += $amt;
             } else {
-                $grossTotal += $charge;
-
+                $grossTotal += $amt;
                 if (!empty($r['Transfer_ID'])) {
-                    $roomTotal += $charge;
+                    $roomTotal += $amt;
                 } elseif (!empty($r['Round_ID'])) {
-                    $doctorTotal += $charge;
-                } elseif (($r['Category_Type'] ?? '') === 'Medicine') {
-                    $medicineTotal += $charge;
-                } elseif (($r['Category_Type'] ?? '') === 'Equipment Scan') {
-                    $scanTotal += $charge;
-                } elseif (($r['Category_Type'] ?? '') === 'Service') {
-                    $serviceTotal += $charge;
+                    $doctorTotal += $amt;
                 } else {
-                    $serviceTotal += $charge;
+                    $cat = $r['Category_Type'] ?? '';
+                    if ($cat === 'Medicine') {
+                        $medicineTotal += $amt;
+                    } elseif ($cat === 'Equipment Scan') {
+                        $scanTotal += $amt;
+                    } elseif ($cat === 'Service') {
+                        $serviceTotal += $amt;
+                    }
                 }
             }
         }
 
         return json_encode([
-            'room_total' => $roomTotal,
-            'doctor_total' => $doctorTotal,
-            'medicine_total' => $medicineTotal,
-            'scan_total' => $scanTotal,
-            'service_total' => $serviceTotal,
-            'gross_total' => $grossTotal,
-            'return_total' => $returnTotal,
-            'net_total' => $netTotal,
+            'room_total' => round($roomTotal, 2),
+            'doctor_total' => round($doctorTotal, 2),
+            'medicine_total' => round($medicineTotal, 2),
+            'scan_total' => round($scanTotal, 2),
+            'service_total' => round($serviceTotal, 2),
+            'gross_total' => round($grossTotal, 2),
+            'return_total' => round($returnTotal, 2),
+            'net_total' => round($netTotal, 2),
             'total_items' => count($rows)
         ]);
     }
 
-    /**
-     * Read: Retrieve list of dispensed medicines eligible for return
-     */
     function getDispensedMedicines($json = '{}')
     {
         include "connection.php";
@@ -235,89 +220,8 @@ class LedgerManager
         $stmt->execute([':aid' => $admissionId]);
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
-
-    /**
-     * Create: Return unused medicine -> Auto-post negative charge to Billing_Ledger
-     */
-    function returnMedicine($json = '{}')
-    {
-        include "connection.php";
-
-        $json = is_array($json) ? $json : json_decode($json, true);
-        $admissionId = intval($json['admission_id'] ?? 0);
-        $catalogId = intval($json['catalog_id'] ?? 0);
-        $returnQty = floatval($json['quantity'] ?? 0);
-
-        if (empty($admissionId) || empty($catalogId) || $returnQty <= 0) {
-            return json_encode(['error' => 'Admission ID, Medicine, and valid positive return quantity are required.']);
-        }
-
-        try {
-            $conn->beginTransaction();
-
-            // 1. Verify item is Medicine and get price
-            $itemStmt = $conn->prepare("SELECT Item_Name, Unit_Price, Category_Type FROM Charge_Catalogs WHERE Catalog_ID = :cid");
-            $itemStmt->execute([':cid' => $catalogId]);
-            $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$item || $item['Category_Type'] !== 'Medicine') {
-                $conn->rollBack();
-                return json_encode(['error' => 'Only medicines are eligible for return credits.']);
-            }
-
-            // 2. Compute net dispensed quantity
-            $qtyCheck = $conn->prepare("
-                SELECT 
-                    COALESCE(SUM(CASE WHEN Transaction_Type = 'Charge' THEN Quantity ELSE 0 END), 0) AS Dispensed,
-                    COALESCE(SUM(CASE WHEN Transaction_Type = 'Return' THEN ABS(Quantity) ELSE 0 END), 0) AS Returned
-                FROM Billing_Ledger
-                WHERE Admission_ID = :aid AND Catalog_ID = :cid
-            ");
-            $qtyCheck->execute([':aid' => $admissionId, ':cid' => $catalogId]);
-            $quantities = $qtyCheck->fetch(PDO::FETCH_ASSOC);
-
-            $availableQty = floatval($quantities['Dispensed']) - floatval($quantities['Returned']);
-
-            if ($returnQty > $availableQty) {
-                $conn->rollBack();
-                return json_encode([
-                    'error' => "Cannot return {$returnQty} units. Only {$availableQty} units remain eligible for return."
-                ]);
-            }
-
-            // 3. Calculate negative credit
-            $unitPrice = floatval($item['Unit_Price']);
-            $negativeQty = -1.0 * $returnQty;
-            $negativeCredit = -1.0 * ($returnQty * $unitPrice);
-
-            // 4. Post negative entry to Billing_Ledger (Station_ID = 1: Central Pharmacy)
-            $postSql = "INSERT INTO Billing_Ledger 
-                            (Admission_ID, Station_ID, Catalog_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
-                        VALUES 
-                            (:aid, 1, :cid, :qty, :uprice, :tot, 'Return', NOW())";
-            $postStmt = $conn->prepare($postSql);
-            $postStmt->execute([
-                ':aid' => $admissionId,
-                ':cid' => $catalogId,
-                ':qty' => $negativeQty,
-                ':uprice' => $unitPrice,
-                ':tot' => $negativeCredit
-            ]);
-
-            $conn->commit();
-            return json_encode([
-                'success' => true,
-                'message' => "Returned {$returnQty} unit(s) of {$item['Item_Name']}. Negative credit adjustment of ₱" . number_format(abs($negativeCredit), 2) . " applied to ledger."
-            ]);
-
-        } catch (Exception $e) {
-            $conn->rollBack();
-            return json_encode(['error' => 'Medicine return failed: ' . $e->getMessage()]);
-        }
-    }
 }
 
-// Router for operation and json payload
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
@@ -337,9 +241,5 @@ switch ($operation) {
     case 'getDispensedMedicines':
         echo $ledger->getDispensedMedicines($json);
         break;
-    case 'returnMedicine':
-        echo $ledger->returnMedicine($json);
-        break;
 }
 ?>
-

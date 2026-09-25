@@ -12,6 +12,8 @@
  */
 
 const baseApiUrl = "../api";
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
 
 // ── 1. Immediate Preload State (Prevents layout shift) ─────────────
 (function() {
@@ -228,7 +230,7 @@ async function toggleRecordStatus(apiFile, idKey, idVal, currentStatus, recordNa
     formData.append("json", JSON.stringify({ [idKey]: idVal }));
 
     try {
-        const response = await axios.post(`${baseApiUrl}/${apiFile}`, formData);
+        const response = await axios.post(`${postApiUrl}/${apiFile}`, formData);
         if (response.data == 1) {
             console.log(`[API] Status toggled successfully for ${idKey}: ${idVal}`);
             if (typeof onDone === "function") {

@@ -1,8 +1,4 @@
 <?php
-/**
- * Department / Station API
- * Provides lookup data for dropdowns (Pharmacy, Radiology, Cardiology, etc.)
- */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
@@ -36,4 +32,3 @@ switch ($operation) {
         break;
 }
 ?>
-

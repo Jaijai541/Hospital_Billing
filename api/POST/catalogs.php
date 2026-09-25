@@ -1,59 +1,15 @@
 <?php
-/**
- * Unified Charge Catalogs API (Instructor Approved Schema)
- * Milestone 1 Master File Module
- * Handles Charge_Catalogs: Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price, Is_Active
- */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
 class Catalog
 {
-    /**
-     * Read: Retrieve all catalog items
-     */
-    function getAllCatalogs()
-    {
-        include "connection.php";
-
-        $sql = "SELECT Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price, Is_Active,
-                       CONCAT(Code_Prefix, '-', LPAD(Catalog_ID, 3, '0')) AS Formatted_Code
-                FROM Charge_Catalogs 
-                ORDER BY Is_Active DESC, Category_Type ASC, Item_Name ASC";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return json_encode($rs);
-    }
-
-    /**
-     * Read: Retrieve single catalog item by ID
-     */
-    function getCatalogById($json)
-    {
-        include "connection.php";
-
-        $json = json_decode($json, true);
-        $sql = "SELECT * FROM Charge_Catalogs WHERE Catalog_ID = :id";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['catalog_id']);
-        $stmt->execute();
-        $rs = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return json_encode($rs ?: []);
-    }
-
-    /**
-     * Create: Insert a new item into Charge_Catalogs
-     */
     function insertCatalog($json)
     {
         include "connection.php";
 
         $json = json_decode($json, true);
 
-        // Derive code prefix if not explicitly provided
         $category = trim($json['category_type']);
         $prefix = trim($json['code_prefix'] ?? '');
         if (empty($prefix)) {
@@ -74,9 +30,6 @@ class Catalog
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
-    /**
-     * Update: Modify existing catalog item
-     */
     function updateCatalog($json)
     {
         include "connection.php";
@@ -108,9 +61,6 @@ class Catalog
         return json_encode($stmt->rowCount() >= 0 ? 1 : 0);
     }
 
-    /**
-     * Soft Delete / Restore: Toggles Is_Active
-     */
     function toggleStatus($json)
     {
         include "connection.php";
@@ -127,9 +77,6 @@ class Catalog
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
-    /**
-     * Hard Delete: Permanently removes item if not referenced in ledger or doctor orders
-     */
     function hardDeleteCatalog($json)
     {
         include "connection.php";
@@ -152,7 +99,6 @@ class Catalog
     }
 }
 
-// Router for operation and json payload
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "";
@@ -163,12 +109,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 $catalog = new Catalog();
 switch ($operation) {
-    case "getAllCatalogs":
-        echo $catalog->getAllCatalogs();
-        break;
-    case "getCatalogById":
-        echo $catalog->getCatalogById($json);
-        break;
     case "insertCatalog":
         echo $catalog->insertCatalog($json);
         break;

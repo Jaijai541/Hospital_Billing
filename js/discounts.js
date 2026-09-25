@@ -31,7 +31,7 @@ const displayDiscounts = async () => {
 
     try {
         console.log("[API] Requesting: getAllDiscounts");
-        const response = await axios.get(`${baseApiUrl}/discounts.php`, {
+        const response = await axios.get(`${getApiUrl}/discounts.php`, {
             params: { operation: "getAllDiscounts" }
         });
 
@@ -155,7 +155,7 @@ const populateDiscountForm = (disc) => {
 const loadDiscountForEdit = async (discountId) => {
     try {
         console.log(`[API] Requesting discount details for ID: ${discountId}`);
-        const response = await axios.get(`${baseApiUrl}/discounts.php`, {
+        const response = await axios.get(`${getApiUrl}/discounts.php`, {
             params: {
                 operation: "getDiscountById",
                 json: JSON.stringify({ discount_id: discountId })
@@ -230,7 +230,7 @@ const saveDiscount = async () => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/discounts.php`,
+            url: `${postApiUrl}/discounts.php`,
             method: "POST",
             data: formData
         });

@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 const loadDoctorLookups = async () => {
     try {
         console.log("[API] Loading doctor lookups...");
-        const response = await axios.get(`${baseApiUrl}/doctors.php`, {
+        const response = await axios.get(`${getApiUrl}/doctors.php`, {
             params: { operation: "getDoctorLookups" }
         });
 
@@ -134,7 +134,7 @@ const displayDoctors = async () => {
 
     try {
         console.log("[API] Requesting: getAllDoctors");
-        const response = await axios.get(`${baseApiUrl}/doctors.php`, {
+        const response = await axios.get(`${getApiUrl}/doctors.php`, {
             params: { operation: "getAllDoctors" }
         });
 
@@ -295,7 +295,7 @@ const populateDoctorForm = (doc) => {
 const loadDoctorForEdit = async (doctorId) => {
     try {
         console.log(`[API] Requesting doctor details for ID: ${doctorId}`);
-        const response = await axios.get(`${baseApiUrl}/doctors.php`, {
+        const response = await axios.get(`${getApiUrl}/doctors.php`, {
             params: {
                 operation: "getDoctorById",
                 json: JSON.stringify({ doctor_id: doctorId })
@@ -380,7 +380,7 @@ const saveDoctor = async () => {
 
     try {
         const response = await axios({
-            url: `${baseApiUrl}/doctors.php`,
+            url: `${postApiUrl}/doctors.php`,
             method: "POST",
             data: formData
         });

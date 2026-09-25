@@ -37,7 +37,7 @@ function loadInvoiceData(invoiceId, admissionId) {
     formData.append('operation', 'getInvoiceById');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/invoices.php', formData)
+    axios.post('../api/GET/invoices.php', formData)
         .then(response => {
             console.log("invoice_print.js: Invoice data received:", response.data);
             let inv = response.data;

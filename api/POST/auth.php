@@ -1,16 +1,9 @@
 <?php
-/**
- * Authentication API
- * Verifies system user login using password_verify
- */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
 class Auth
 {
-    /**
-     * Authenticate user credentials
-     */
     function login($json)
     {
         include "connection.php";
@@ -55,7 +48,6 @@ class Auth
     }
 }
 
-// Router for operation and json payload
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "";
@@ -71,4 +63,3 @@ switch ($operation) {
         break;
 }
 ?>
-

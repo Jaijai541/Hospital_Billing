@@ -46,7 +46,7 @@ function loadInvoices() {
     const formData = new FormData();
     formData.append('operation', 'getAllInvoices');
 
-    axios.post('../api/invoices.php', formData)
+    axios.post('../api/GET/invoices.php', formData)
         .then(response => {
             console.log("invoices.js: Invoices received:", response.data);
             allInvoices = response.data || [];

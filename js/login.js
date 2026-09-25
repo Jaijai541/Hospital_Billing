@@ -1,4 +1,4 @@
-const baseApiUrl = "../api";
+const postApiUrl = "../api/POST";
 
 document.addEventListener("DOMContentLoaded", () => {
     const loggedInUser = sessionStorage.getItem("hospital_user");
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.append("json", JSON.stringify(jsonData));
 
         try {
-            const response = await axios.post(`${baseApiUrl}/auth.php`, formData);
+            const response = await axios.post(`${postApiUrl}/auth.php`, formData);
 
             if (response.status === 200 && response.data.status === 1) {
                 sessionStorage.setItem("hospital_user", JSON.stringify(response.data.user));

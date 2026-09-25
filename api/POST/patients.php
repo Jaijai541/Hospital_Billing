@@ -1,87 +1,9 @@
 <?php
-/**
- * Patient Master Directory API (Instructor Approved Schema)
- * Milestone 1 Master File Module
- * Handles Patient: Patient_ID, First_Name, Last_Name, Date_Of_Birth, Gender_ID, Blood_Type_ID, Contact_Number, Address, Emergency_Contact_Name, Emergency_Contact_Number, Is_Active
- */
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
 class PatientMaster
 {
-    /**
-     * Read: Retrieve all patients joined with gender and blood type lookups
-     */
-    function getAllPatients()
-    {
-        include "connection.php";
-
-        $sql = "SELECT p.*, 
-                       CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
-                       g.Gender_Name, b.Blood_Type_Name,
-                       (
-                           SELECT a.Status 
-                           FROM Admission a 
-                           WHERE a.Patient_ID = p.Patient_ID 
-                           ORDER BY a.Admission_ID DESC 
-                           LIMIT 1
-                       ) AS Latest_Admission_Status,
-                       (
-                           SELECT a.Admission_ID 
-                           FROM Admission a 
-                           WHERE a.Patient_ID = p.Patient_ID 
-                           ORDER BY a.Admission_ID DESC 
-                           LIMIT 1
-                       ) AS Latest_Admission_ID
-                FROM Patient p 
-                INNER JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID 
-                INNER JOIN Enum_Blood_Type b ON p.Blood_Type_ID = b.Blood_Type_ID 
-                ORDER BY p.Is_Active DESC, p.Last_Name ASC, p.First_Name ASC";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return json_encode($rs);
-    }
-
-    /**
-     * Read: Retrieve lookups (Gender and Blood Types)
-     */
-    function getPatientEnums()
-    {
-        include "connection.php";
-
-        $genders = $conn->query("SELECT * FROM Enum_Gender ORDER BY Gender_ID ASC")->fetchAll(PDO::FETCH_ASSOC);
-        $bloodTypes = $conn->query("SELECT * FROM Enum_Blood_Type ORDER BY Blood_Type_ID ASC")->fetchAll(PDO::FETCH_ASSOC);
-
-        return json_encode([
-            "genders"     => $genders,
-            "blood_types" => $bloodTypes
-        ]);
-    }
-
-    /**
-     * Read: Retrieve single patient by ID
-     */
-    function getPatientById($json)
-    {
-        include "connection.php";
-
-        $json = json_decode($json, true);
-        $sql = "SELECT p.*, CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code 
-                FROM Patient p 
-                WHERE p.Patient_ID = :id";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['patient_id']);
-        $stmt->execute();
-        $rs = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return json_encode($rs ?: []);
-    }
-
-    /**
-     * Create: Insert a new patient
-     */
     function insertPatient($json)
     {
         include "connection.php";
@@ -107,9 +29,6 @@ class PatientMaster
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
-    /**
-     * Update: Modify patient record
-     */
     function updatePatient($json)
     {
         include "connection.php";
@@ -146,9 +65,6 @@ class PatientMaster
         return json_encode($stmt->rowCount() >= 0 ? 1 : 0);
     }
 
-    /**
-     * Soft Delete / Restore: Toggles Is_Active
-     */
     function toggleStatus($json)
     {
         include "connection.php";
@@ -165,9 +81,6 @@ class PatientMaster
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
     }
 
-    /**
-     * Hard Delete: Permanently remove patient if not in admissions
-     */
     function hardDeletePatient($json)
     {
         include "connection.php";
@@ -190,7 +103,6 @@ class PatientMaster
     }
 }
 
-// Router for operation and json payload
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "";
@@ -201,15 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 $patient = new PatientMaster();
 switch ($operation) {
-    case "getAllPatients":
-        echo $patient->getAllPatients();
-        break;
-    case "getPatientEnums":
-        echo $patient->getPatientEnums();
-        break;
-    case "getPatientById":
-        echo $patient->getPatientById($json);
-        break;
     case "insertPatient":
         echo $patient->insertPatient($json);
         break;

@@ -4,6 +4,9 @@
  * Includes Multi-Filter, Search, Sort, Soft/Hard Delete, and Console Logging
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let allPatients = [];
 let currentLoadedPatient = null;
 

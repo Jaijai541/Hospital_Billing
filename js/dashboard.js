@@ -3,6 +3,9 @@
  * Loads KPI metrics, active admissions snapshot, and handles session/logout
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Session Verification
     const userJson = sessionStorage.getItem("hospital_user");
@@ -40,22 +43,22 @@ async function loadDashboardMetrics() {
         const admForm = new FormData();
         admForm.append('operation', 'getAllAdmissions');
         admForm.append('json', JSON.stringify({ status: 'Admitted' }));
-        const admPromise = axios.post('../api/GET/admissions.php', admForm);
+        const admPromise = axios.post(`${getApiUrl}/admissions.php`, admForm);
 
         // Fetch Vacant Beds
         const bedForm = new FormData();
         bedForm.append('operation', 'getAvailableBeds');
-        const bedPromise = axios.post('../api/GET/admissions.php', bedForm);
+        const bedPromise = axios.post(`${getApiUrl}/admissions.php`, bedForm);
 
         // Fetch Patients
         const patForm = new FormData();
         patForm.append('operation', 'getAllPatients');
-        const patPromise = axios.post('../api/GET/patients.php', patForm);
+        const patPromise = axios.post(`${getApiUrl}/patients.php`, patForm);
 
         // Fetch Invoices
         const invForm = new FormData();
         invForm.append('operation', 'getAllInvoices');
-        const invPromise = axios.post('../api/GET/invoices.php', invForm);
+        const invPromise = axios.post(`${getApiUrl}/invoices.php`, invForm);
 
         const [admRes, bedRes, patRes, invRes] = await Promise.all([admPromise, bedPromise, patPromise, invPromise]);
 

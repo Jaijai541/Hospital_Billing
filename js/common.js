@@ -11,9 +11,6 @@
  * 6. Generic Record Status Toggle API Handler
  */
 
-const getApiUrl = "../api/GET";
-const postApiUrl = "../api/POST";
-
 // ── 1. Immediate Preload State (Prevents layout shift) ─────────────
 (function() {
     try {
@@ -232,7 +229,8 @@ async function toggleRecordStatus(apiFile, idKey, idVal, currentStatus, recordNa
     formData.append("json", JSON.stringify({ [idKey]: idVal }));
 
     try {
-        const response = await axios.post(`${postApiUrl}/${apiFile}`, formData);
+        const postUrl = (typeof postApiUrl !== "undefined") ? postApiUrl : "../api/POST";
+        const response = await axios.post(`${postUrl}/${apiFile}`, formData);
         if (response.data == 1) {
             console.log(`[API] Status toggled successfully for ${idKey}: ${idVal}`);
             if (typeof onDone === "function") {

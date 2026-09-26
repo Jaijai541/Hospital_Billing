@@ -3,6 +3,9 @@
  * Milestone 3: Financial Settlement & Statements of Account (SOA)
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let allInvoices = [];
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -46,7 +49,7 @@ function loadInvoices() {
     const formData = new FormData();
     formData.append('operation', 'getAllInvoices');
 
-    axios.post('../api/GET/invoices.php', formData)
+    axios.post(`${getApiUrl}/invoices.php`, formData)
         .then(response => {
             console.log("invoices.js: Invoices received:", response.data);
             allInvoices = response.data || [];

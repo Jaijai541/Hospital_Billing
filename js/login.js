@@ -1,3 +1,4 @@
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 document.addEventListener("DOMContentLoaded", () => {

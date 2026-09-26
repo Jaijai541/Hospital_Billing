@@ -4,6 +4,9 @@
  * Handles Charge_Catalogs: Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let allCatalogs = [];
 let currentLoadedCatalog = null;
 

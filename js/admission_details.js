@@ -1,5 +1,10 @@
 /**
  * In-Patient Clinical Chart & Live Billing Ledger Controller
+ */
+
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+/*
  * Milestone 2: Transaction & Clinical Workflow
  */
 
@@ -212,7 +217,7 @@ function saveDiagnosis() {
     formData.append('operation', 'updateDiagnosis');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/POST/admissions.php', formData)
+    axios.post(`${postApiUrl}/admissions.php`, formData)
         .then(response => {
             if (response.data.success) {
                 admissionData.Diagnosis = val;
@@ -240,7 +245,7 @@ function loadAdmissionDetails() {
     formData.append('operation', 'getAdmissionById');
     formData.append('json', JSON.stringify({ id: admissionId }));
 
-    axios.post('../api/GET/admissions.php', formData)
+    axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
             console.log("admission_details.js: Admission profile received:", response.data);
             if (response.data.error) {
@@ -326,7 +331,7 @@ function dischargePatientFromChart(admId, patientName) {
     formData.append('operation', 'dischargePatient');
     formData.append('json', JSON.stringify({ admission_id: admId }));
 
-    axios.post('../api/POST/admissions.php', formData)
+    axios.post(`${postApiUrl}/admissions.php`, formData)
         .then(response => {
             if (response.data.success) {
                 alert(response.data.message);
@@ -410,7 +415,7 @@ function loadCatalogItems() {
     const formData = new FormData();
     formData.append('operation', 'getCatalogList');
 
-    axios.post('../api/GET/clinical_orders.php', formData)
+    axios.post(`${getApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             console.log("admission_details.js: Catalog items received:", response.data);
             catalogItems = response.data || [];
@@ -457,7 +462,7 @@ function loadOrders() {
     formData.append('operation', 'getDoctorOrders');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/GET/clinical_orders.php', formData)
+    axios.post(`${getApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             console.log("admission_details.js: Orders received:", response.data);
             renderOrdersTable(response.data);
@@ -560,7 +565,7 @@ function submitDoctorOrder() {
     formData.append('operation', 'createDoctorOrder');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/POST/clinical_orders.php', formData)
+    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             console.log("admission_details.js: Order creation response:", response.data);
             if (response.data.success) {
@@ -589,7 +594,7 @@ window.administerOrder = function(requestId) {
     formData.append('operation', 'administerOrder');
     formData.append('json', JSON.stringify({ request_id: requestId }));
 
-    axios.post('../api/POST/clinical_orders.php', formData)
+    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             console.log("admission_details.js: Administer response:", response.data);
             if (response.data.success) {
@@ -619,7 +624,7 @@ window.cancelOrder = function(requestId) {
     formData.append('operation', 'cancelOrder');
     formData.append('json', JSON.stringify({ request_id: requestId }));
 
-    axios.post('../api/POST/clinical_orders.php', formData)
+    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             if (response.data.success) {
                 alert(response.data.message);
@@ -642,7 +647,7 @@ function loadRounds() {
     formData.append('operation', 'getDoctorRounds');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/GET/clinical_orders.php', formData)
+    axios.post(`${getApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             console.log("admission_details.js: Rounds received:", response.data);
             renderRoundsTable(response.data);
@@ -711,7 +716,7 @@ function submitDoctorRound() {
     formData.append('operation', 'logDoctorRound');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/POST/clinical_orders.php', formData)
+    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
         .then(response => {
             console.log("admission_details.js: Round logged response:", response.data);
             if (response.data.success) {
@@ -737,7 +742,7 @@ function loadTransfers() {
     formData.append('operation', 'getBedTransfers');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/GET/admissions.php', formData)
+    axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
             console.log("admission_details.js: Bed transfers received:", response.data);
             renderTransfersTable(response.data);
@@ -800,7 +805,7 @@ function loadAvailableBeds() {
     const formData = new FormData();
     formData.append('operation', 'getAvailableBeds');
 
-    axios.post('../api/GET/admissions.php', formData)
+    axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
             availableBedsList = response.data || [];
             filterAvailableBeds();
@@ -866,7 +871,7 @@ function submitBedTransfer() {
     formData.append('operation', 'transferBed');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/POST/admissions.php', formData)
+    axios.post(`${postApiUrl}/admissions.php`, formData)
         .then(response => {
             console.log("admission_details.js: Bed transfer response:", response.data);
             if (response.data.success) {
@@ -897,7 +902,7 @@ function loadLedger() {
     formData.append('operation', 'getAdmissionLedger');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/GET/ledger.php', formData)
+    axios.post(`${getApiUrl}/ledger.php`, formData)
         .then(response => {
             console.log("admission_details.js: Ledger rows received:", response.data);
             renderLedgerTable(response.data);
@@ -961,7 +966,7 @@ function loadLedgerSummary() {
     formData.append('operation', 'getLedgerSummary');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/GET/ledger.php', formData)
+    axios.post(`${getApiUrl}/ledger.php`, formData)
         .then(response => {
             console.log("admission_details.js: Financial summary received:", response.data);
             latestSummary = response.data;
@@ -1010,7 +1015,7 @@ function loadDispensedMedicines() {
     formData.append('operation', 'getDispensedMedicines');
     formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post('../api/GET/ledger.php', formData)
+    axios.post(`${getApiUrl}/ledger.php`, formData)
         .then(response => {
             console.log("admission_details.js: Dispensed medicines received:", response.data);
             dispensedMedicinesList = response.data || [];
@@ -1095,7 +1100,7 @@ function submitMedicineReturn() {
     formData.append('operation', 'returnMedicine');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/POST/ledger.php', formData)
+    axios.post(`${postApiUrl}/ledger.php`, formData)
         .then(response => {
             console.log("admission_details.js: Return medicine response:", response.data);
             if (response.data.success) {
@@ -1124,7 +1129,7 @@ function loadDiscounts() {
     const formData = new FormData();
     formData.append('operation', 'getDiscountList');
 
-    axios.post('../api/GET/invoices.php', formData)
+    axios.post(`${getApiUrl}/invoices.php`, formData)
         .then(response => {
             console.log("admission_details.js: Discounts received:", response.data);
             discountList = response.data || [];
@@ -1245,7 +1250,7 @@ function submitSettlement() {
     formData.append('operation', 'settleInvoice');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/POST/invoices.php', formData)
+    axios.post(`${postApiUrl}/invoices.php`, formData)
         .then(response => {
             console.log("admission_details.js: Settlement response:", response.data);
             if (response.data.success) {

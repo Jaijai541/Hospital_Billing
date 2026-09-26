@@ -3,6 +3,9 @@
  * Milestone 3: Financial Settlement & Statements of Account (SOA)
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 window.addEventListener('DOMContentLoaded', () => {
     console.log("invoice_print.js: Initializing printable Statement of Account...");
 
@@ -37,7 +40,7 @@ function loadInvoiceData(invoiceId, admissionId) {
     formData.append('operation', 'getInvoiceById');
     formData.append('json', JSON.stringify(payload));
 
-    axios.post('../api/GET/invoices.php', formData)
+    axios.post(`${getApiUrl}/invoices.php`, formData)
         .then(response => {
             console.log("invoice_print.js: Invoice data received:", response.data);
             let inv = response.data;

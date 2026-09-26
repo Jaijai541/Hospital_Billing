@@ -1,3 +1,6 @@
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let currentArchivedRecords = [];
 
 document.addEventListener("DOMContentLoaded", () => {

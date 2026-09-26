@@ -4,6 +4,9 @@
  * Handles Room, Room_Bed, and Enum_Room_Type (with Daily_Rate)
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let allRooms = [];
 let allBeds = [];
 let roomTypes = [];

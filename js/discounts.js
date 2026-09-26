@@ -1,3 +1,6 @@
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let allDiscounts = []; // In-memory cache for fast search, filter, and sort
 let currentLoadedDiscount = null;
 

@@ -4,6 +4,9 @@
  * Handles Doctor, Doctor_Specialty, Enum_Doctor_Type, and Enum_Department_Station
  */
 
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
 let allDoctors = [];
 let allSpecialties = [];
 let currentLoadedDoctor = null;

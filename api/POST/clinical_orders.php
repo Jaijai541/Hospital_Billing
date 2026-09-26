@@ -51,7 +51,6 @@ class ClinicalOrderManager
         try {
             $conn->beginTransaction();
 
-            // 1. Fetch order details
             $orderSql = "SELECT 
                             dor.Request_ID,
                             dor.Admission_Doctor_ID,
@@ -81,14 +80,11 @@ class ClinicalOrderManager
                 return json_encode(['error' => "Cannot administer order with Status '{$order['Status']}'."]);
             }
 
-            // 2. Mark order as Administered
             $administerStmt = $conn->prepare("UPDATE Doctor_Order_Request 
                                               SET Status = 'Administered', Administered_Timestamp = NOW() 
                                               WHERE Request_ID = :rid");
             $administerStmt->execute([':rid' => $requestId]);
 
-            // 3. Determine Station_ID based on Category_Type
-            // 1 = Central Pharmacy, 2 = Radiology & Imaging, 5 = Nurse Station
             $stationId = 5;
             if ($order['Category_Type'] === 'Medicine') {
                 $stationId = 1;
@@ -100,7 +96,6 @@ class ClinicalOrderManager
             $unitPrice = floatval($order['Unit_Price']);
             $totalCharge = $qty * $unitPrice;
 
-            // 4. Auto-post charge to Billing_Ledger
             $ledgerSql = "INSERT INTO Billing_Ledger 
                             (Admission_ID, Station_ID, Request_ID, Catalog_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
                           VALUES 
@@ -179,7 +174,6 @@ class ClinicalOrderManager
         try {
             $conn->beginTransaction();
 
-            // 1. Fetch doctor details
             $docSql = "SELECT 
                         ad.Admission_ID,
                         ad.Doctor_ID,
@@ -201,7 +195,6 @@ class ClinicalOrderManager
 
             $fee = $customFee !== null ? $customFee : floatval($docInfo['Base_Round_Fee']);
 
-            // 2. Insert into Doctor_Round_Log
             $roundStmt = $conn->prepare("INSERT INTO Doctor_Round_Log (Admission_Doctor_ID, Round_Timestamp, Charged_Fee)
                                         VALUES (:adid, NOW(), :fee)");
             $roundStmt->execute([
@@ -210,7 +203,6 @@ class ClinicalOrderManager
             ]);
             $roundId = $conn->lastInsertId();
 
-            // 3. Auto-post professional fee to Billing_Ledger
             $ledgerSql = "INSERT INTO Billing_Ledger 
                             (Admission_ID, Station_ID, Round_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
                           VALUES 

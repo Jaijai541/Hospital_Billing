@@ -24,7 +24,6 @@ class RoomMaster
 
         $roomId = $conn->lastInsertId();
 
-        // Auto-provision Room_Bed records
         $stmtType = $conn->prepare("SELECT Code_Prefix FROM Enum_Room_Type WHERE Room_Type_ID = ?");
         $stmtType->execute([$json['room_type_id']]);
         $prefix = $stmtType->fetch(PDO::FETCH_ASSOC)['Code_Prefix'] ?? 'BED';
@@ -78,7 +77,6 @@ class RoomMaster
         $stmt->bindParam(":id", $json['room_id']);
         $stmt->execute();
 
-        // Sync to Room_Bed
         $conn->prepare("UPDATE Room_Bed SET Is_Active = (SELECT Is_Active FROM Room WHERE Room_ID = :id) WHERE Room_ID = :id2")
              ->execute([':id' => $json['room_id'], ':id2' => $json['room_id']]);
 

@@ -10,10 +10,7 @@
 <body>
 
     <div class="app-wrapper">
-        <!-- Sidebar Navigation (Rendered from ../js/sidebar.js) -->
         <aside id="sidebar-container" class="sidebar"></aside>
-
-        <!-- Main Content Area -->
         <main class="main-content">
             <div class="topbar">
                 <div class="topbar-title">
@@ -27,7 +24,6 @@
             </div>
 
             <div class="content-body">
-                <!-- Patient & Admission Banner Card -->
                 <div class="card mb-4" id="patient-banner">
                     <div class="card-header">
                         <h2>Patient & Admission Summary</h2>
@@ -86,8 +82,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Clinical Navigation Tabs Header -->
                 <div class="clinical-tabs-nav" id="clinicalTabsNav">
                     <button type="button" class="tab-btn active" data-tab="tab-orders">
                         <span class="tab-title">1. Doctor Orders & Requests</span>
@@ -105,8 +99,6 @@
                         <span class="tab-title">5. Final Settlement & SOA</span>
                     </button>
                 </div>
-
-                <!-- Section 1: Doctor Orders & Requests -->
                 <div class="tab-content-panel active" id="tab-orders">
                     <div class="card mb-4">
                         <div class="card-header">
@@ -147,13 +139,10 @@
 
                             <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Clinical Orders History</h3>
                             <div class="table-responsive" id="orders-table-div">
-                                <!-- Table dynamically populated by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Section 2: Doctor Bedside Rounds -->
                 <div class="tab-content-panel" id="tab-rounds" style="display: none;">
                     <div class="card mb-4">
                         <div class="card-header">
@@ -186,13 +175,10 @@
 
                             <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bedside Visits Log</h3>
                             <div class="table-responsive" id="rounds-table-div">
-                                <!-- Table dynamically populated by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Section 3: Room & Bed Stays -->
                 <div class="tab-content-panel" id="tab-stays" style="display: none;">
                     <div class="card mb-4">
                         <div class="card-header">
@@ -220,13 +206,10 @@
 
                             <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bed Occupancy & Transfer History</h3>
                             <div class="table-responsive" id="transfers-table-div">
-                                <!-- Table dynamically populated by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Section 4: Live Itemized Billing Ledger & Medicine Returns -->
                 <div class="tab-content-panel" id="tab-charges" style="display: none;">
                     <div class="card mb-4">
                         <div class="card-header">
@@ -234,13 +217,8 @@
                         </div>
                         <div class="card-body">
                             <p class="text-muted mb-3">Real-time running statement of all accumulated room stays, physician fees, medications, and diagnostics.</p>
-
-                            <!-- Category Breakdown & Grand Total -->
                             <div id="ledger-summary-div" class="mb-4">
-                                <!-- Summary breakdown populated dynamically -->
                             </div>
-
-                            <!-- Medicine Return Form -->
                             <div id="return-form-container" class="card p-3 mb-4 clinical-return-card">
                                 <h3>Process Medicine Return (Negative Credit Adjustment)</h3>
                                 <p class="text-muted">If the patient did not consume dispensed medications, return them here to post an automated negative credit to the ledger.</p>
@@ -266,13 +244,10 @@
 
                             <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Itemized Charges Statement</h3>
                             <div class="table-responsive" id="ledger-table-div">
-                                <!-- Table dynamically populated by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Section 5: Final Settlement, Discounts & Invoicing -->
                 <div class="tab-content-panel" id="tab-settlement" style="display: none;">
                     <div class="card mb-4">
                         <div class="card-header">
@@ -282,7 +257,6 @@
                             <p class="text-muted mb-3">Finalize the in-patient account, apply statutory discounts (Senior Citizen, PWD, Government), discharge the bed, and generate the Official Statement of Account (SOA).</p>
 
                             <div id="settlement-container">
-                                <!-- Dynamically rendered based on admission status -->
                                 <p>Loading settlement section...</p>
                             </div>
                         </div>
@@ -291,8 +265,6 @@
             </div>
         </main>
     </div>
-
-    <!-- Diagnosis Update Pop-up Modal -->
     <div class="modal-overlay" id="diagnosisModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">

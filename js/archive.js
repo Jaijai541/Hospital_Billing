@@ -4,7 +4,6 @@ const postApiUrl = "../api/POST";
 let currentArchivedRecords = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Session Verification
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         window.location.href = "login.html";
@@ -27,17 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Category Change Listener
     document.getElementById("archive_category").addEventListener("change", loadArchivedRecords);
     document.getElementById("search_input").addEventListener("input", filterArchivedRecords);
 
-    // Initial Load
     loadArchivedRecords();
 });
 
-/**
- * Load archived records for selected entity
- */
 const loadArchivedRecords = async () => {
     const entity = document.getElementById("archive_category").value;
     const tableDiv = document.getElementById("table-div");
@@ -64,9 +58,6 @@ const loadArchivedRecords = async () => {
     }
 };
 
-/**
- * Filter archived records by search input
- */
 const filterArchivedRecords = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
 
@@ -81,9 +72,6 @@ const filterArchivedRecords = () => {
     displayArchiveTable(filtered);
 };
 
-/**
- * Render archive table
- */
 const displayArchiveTable = (records) => {
     const tableDiv = document.getElementById("table-div");
     const entity = document.getElementById("archive_category").value;
@@ -128,7 +116,6 @@ const displayArchiveTable = (records) => {
     table.appendChild(tbody);
     tableDiv.appendChild(table);
 
-    // Event delegation
     document.querySelectorAll(".btn-action-restore").forEach(btn => {
         btn.addEventListener("click", () => {
             restoreRecord(entity, btn.dataset.id, btn.dataset.name);
@@ -142,9 +129,6 @@ const displayArchiveTable = (records) => {
     });
 };
 
-/**
- * Restore an archived record (POST)
- */
 const restoreRecord = async (entity, id, name) => {
     if (!confirm(`Are you sure you want to RESTORE "${name}" back to active use?`)) {
         return;
@@ -175,9 +159,6 @@ const restoreRecord = async (entity, id, name) => {
     }
 };
 
-/**
- * Hard delete an archived record (POST)
- */
 const hardDeleteRecord = async (entity, id, name) => {
     if (!confirm(`WARNING: Are you sure you want to HARD DELETE (permanently erase) "${name}" from MySQL?\n\nThis action cannot be undone!`)) {
         return;

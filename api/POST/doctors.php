@@ -22,7 +22,6 @@ class DoctorMaster
 
         $doctorId = $conn->lastInsertId();
 
-        // Insert specialties
         if (!empty($json['specialty_ids']) && is_array($json['specialty_ids'])) {
             $stmtSpec = $conn->prepare("INSERT INTO Doctor_Specialty (Doctor_ID, Specialty_ID) VALUES (:doc_id, :spec_id)");
             foreach ($json['specialty_ids'] as $specId) {
@@ -59,7 +58,6 @@ class DoctorMaster
         $stmt->bindParam(":id", $doctorId);
         $stmt->execute();
 
-        // Reassign specialties
         $conn->prepare("DELETE FROM Doctor_Specialty WHERE Doctor_ID = ?")->execute([$doctorId]);
         if (!empty($json['specialty_ids']) && is_array($json['specialty_ids'])) {
             $stmtSpec = $conn->prepare("INSERT INTO Doctor_Specialty (Doctor_ID, Specialty_ID) VALUES (?, ?)");

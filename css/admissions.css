@@ -1,8 +1,3 @@
-/* ==========================================================================
-   In-Patient Admissions Page Specific Styles (Clinical Care M2)
-   ========================================================================== */
-
-/* ── Doctor Multi-Select Assignment Box ──────────────────────── */
 #doctors_container {
     max-height: 180px;
     overflow-y: auto;
@@ -34,7 +29,6 @@
     cursor: pointer;
 }
 
-/* ── Bed / Room Indicator in Admissions Log ──────────────────── */
 .admission-bed-info strong {
     color: var(--primary);
 }

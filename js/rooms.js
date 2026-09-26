@@ -1,9 +1,3 @@
-/**
- * Hospital Rooms & Beds Controller (Axios / Frontend)
- * Follows classroom pure HTML standard: dynamic table creation with border="1"
- * Handles Room, Room_Bed, and Enum_Room_Type (with Daily_Rate)
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
@@ -13,11 +7,9 @@ let roomTypes = [];
 let currentLoadedRoom = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial Data Load
     loadRoomTypes();
     displayRoomsAndBeds();
 
-    // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveRoom);
 
@@ -32,14 +24,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Auto-fill daily rate on room type selection
     document.getElementById("room_type_id").addEventListener("change", (e) => {
         const selectedId = e.target.value;
         const found = roomTypes.find(rt => rt.Room_Type_ID == selectedId);
         document.getElementById("daily_rate").value = found ? (found.Daily_Rate || "") : "";
     });
 
-    // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortRooms);
     document.getElementById("filter_status").addEventListener("change", filterAndSortRooms);
     const filterRoomType = document.getElementById("filter_room_type") || document.getElementById("filter_type");
@@ -49,9 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("sort_by").addEventListener("change", filterAndSortRooms);
 });
 
-/**
- * Load room types (Daily_Rate is in Enum_Room_Type)
- */
 const loadRoomTypes = async () => {
     try {
         console.log("[API] Loading room types...");
@@ -82,9 +69,6 @@ const loadRoomTypes = async () => {
     }
 };
 
-/**
- * Fetch both Rooms and Beds
- */
 const displayRoomsAndBeds = async () => {
     try {
         console.log("[API] Fetching rooms and beds...");
@@ -107,9 +91,6 @@ const displayRoomsAndBeds = async () => {
     }
 };
 
-/**
- * Filter & sort rooms
- */
 const filterAndSortRooms = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
@@ -130,7 +111,6 @@ const filterAndSortRooms = () => {
         return matchesSearch && matchesStatus && matchesType;
     });
 
-    // Sort
     filtered.sort((a, b) => {
         switch (sortBy) {
             case "name_asc":
@@ -151,9 +131,6 @@ const filterAndSortRooms = () => {
     displayRoomsTable(filtered);
 };
 
-/**
- * Render Rooms table
- */
 const displayRoomsTable = (rooms) => {
     const tableDiv = document.getElementById("table-div");
     tableDiv.innerHTML = "";
@@ -202,9 +179,6 @@ const displayRoomsTable = (rooms) => {
     tableDiv.appendChild(table);
 };
 
-/**
- * Populate form inputs from a room object
- */
 const populateRoomForm = (r) => {
     document.getElementById("room_id").value = r.Room_ID || "";
     document.getElementById("room_name").value = r.Room_Name || "";
@@ -214,9 +188,6 @@ const populateRoomForm = (r) => {
     document.getElementById("capacity").disabled = true;
 };
 
-/**
- * Render Beds table (Room_Bed)
- */
 const displayBedsTable = (beds) => {
     const bedsDiv = document.getElementById("beds-table-div");
     bedsDiv.innerHTML = "";
@@ -269,9 +240,6 @@ const displayBedsTable = (beds) => {
     bedsDiv.appendChild(table);
 };
 
-/**
- * Load room for edit
- */
 const loadRoomForEdit = async (roomId) => {
     try {
         console.log(`[API] Requesting room details for ID: ${roomId}`);
@@ -290,7 +258,6 @@ const loadRoomForEdit = async (roomId) => {
             document.getElementById("form-title").textContent = `Edit Room (${r.Room_Name})`;
             document.getElementById("btnSubmit").textContent = "Update Room";
 
-            // Configure In-Modal Archive / Restore Button
             const btnArchive = document.getElementById("btnArchive");
             if (btnArchive) {
                 btnArchive.style.display = "inline-flex";
@@ -312,9 +279,6 @@ const loadRoomForEdit = async (roomId) => {
     }
 };
 
-/**
- * Save Room (Insert or Update via POST)
- */
 const saveRoom = async () => {
     const roomId = document.getElementById("room_id").value;
     const roomName = document.getElementById("room_name").value.trim();
@@ -368,9 +332,6 @@ const saveRoom = async () => {
     }
 };
 
-/**
- * Reset form
- */
 const resetForm = () => {
     currentLoadedRoom = null;
 

@@ -1,14 +1,12 @@
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
-let allDiscounts = []; // In-memory cache for fast search, filter, and sort
+let allDiscounts = [];
 let currentLoadedDiscount = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial Data Load
     displayDiscounts();
 
-    // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
 
@@ -23,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
@@ -61,10 +58,8 @@ const filterAndSortDiscounts = () => {
         const itemCode = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`.toLowerCase();
         const discountName = disc.Discount_Name.toLowerCase();
 
-        // Search filter (by Discount Name OR Code e.g. "DISC-1")
         const matchesSearch = discountName.includes(searchTerm) || itemCode.includes(searchTerm);
 
-        // Status filter (All, Active, Soft-Deleted)
         let matchesStatus = true;
         if (filterStatus === "1") {
             matchesStatus = (disc.Is_Active == 1);
@@ -146,9 +141,6 @@ const displayDiscountsTable = (discounts) => {
     tableDiv.appendChild(table);
 };
 
-/**
- * Populate form inputs from a discount object
- */
 const populateDiscountForm = (disc) => {
     document.getElementById("discount_id").value = disc.Discount_ID || "";
     document.getElementById("discount_name").value = disc.Discount_Name || "";
@@ -173,7 +165,6 @@ const loadDiscountForEdit = async (discountId) => {
             document.getElementById("form-title").textContent = `Edit Discount (DISC-${disc.Discount_ID})`;
             document.getElementById("btnSubmit").textContent = "Update Discount";
 
-            // Configure In-Modal Archive / Restore Button
             const btnArchive = document.getElementById("btnArchive");
             if (btnArchive) {
                 btnArchive.style.display = "inline-flex";
@@ -268,5 +259,3 @@ const resetForm = () => {
     document.getElementById("btnSubmit").textContent = "Submit Discount";
     console.log("[UI] Form reset to Add mode.");
 };
-
-

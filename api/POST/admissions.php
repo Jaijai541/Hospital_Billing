@@ -22,7 +22,6 @@ class AdmissionManager
         try {
             $conn->beginTransaction();
 
-            // 1. Verify patient is not already actively admitted
             $checkPatient = $conn->prepare("SELECT Admission_ID FROM Admission WHERE Patient_ID = :pid AND Status = 'Admitted'");
             $checkPatient->execute([':pid' => $patientId]);
             if ($checkPatient->fetch()) {
@@ -30,7 +29,6 @@ class AdmissionManager
                 return json_encode(['error' => 'This patient already has an active admission.']);
             }
 
-            // 2. Check bed availability & fetch room rate
             $bedStmt = $conn->prepare("
                 SELECT rb.Bed_ID, rb.Is_Available, rb.Room_ID, r.Custom_Daily_Rate, rt.Daily_Rate
                 FROM Room_Bed rb
@@ -46,7 +44,6 @@ class AdmissionManager
                 return json_encode(['error' => 'The selected bed is no longer available.']);
             }
 
-            // 3. Insert Admission record
             $admStmt = $conn->prepare("
                 INSERT INTO Admission (Patient_ID, Admission_Date, Chief_Complaint, Diagnosis, Status)
                 VALUES (:pid, NOW(), :complaint, :diagnosis, 'Admitted')
@@ -58,7 +55,6 @@ class AdmissionManager
             ]);
             $admissionId = $conn->lastInsertId();
 
-            // 4. Create initial Room_Transfer_Log
             $transferStmt = $conn->prepare("
                 INSERT INTO Room_Transfer_Log (Admission_ID, Bed_ID, Date_In)
                 VALUES (:aid, :bid, NOW())
@@ -68,11 +64,9 @@ class AdmissionManager
                 ':bid' => $bedId
             ]);
 
-            // 5. Mark Bed as Occupied
             $updBed = $conn->prepare("UPDATE Room_Bed SET Is_Available = 0 WHERE Bed_ID = :bid");
             $updBed->execute([':bid' => $bedId]);
 
-            // 6. Assign Doctors
             if (!empty($doctorIds) && is_array($doctorIds)) {
                 $docStmt = $conn->prepare("INSERT INTO Admission_Doctor (Admission_ID, Doctor_ID) VALUES (:aid, :did)");
                 foreach ($doctorIds as $did) {
@@ -111,7 +105,6 @@ class AdmissionManager
         try {
             $conn->beginTransaction();
 
-            // 1. Check target bed availability
             $targetBedStmt = $conn->prepare("SELECT Is_Available FROM Room_Bed WHERE Bed_ID = :bid");
             $targetBedStmt->execute([':bid' => $newBedId]);
             $targetBed = $targetBedStmt->fetch(PDO::FETCH_ASSOC);
@@ -120,7 +113,6 @@ class AdmissionManager
                 return json_encode(['error' => 'The selected target bed is not available.']);
             }
 
-            // 2. Fetch current open bed stay
             $currStayStmt = $conn->prepare("
                 SELECT 
                     rtl.Transfer_ID,
@@ -148,7 +140,6 @@ class AdmissionManager
                 return json_encode(['error' => 'Patient is already assigned to this bed.']);
             }
 
-            // 3. Compute length of stay in previous bed
             $dateIn = new DateTime($currentStay['Date_In']);
             $now = new DateTime();
             $diffDays = $now->diff($dateIn)->days;
@@ -156,7 +147,6 @@ class AdmissionManager
             $dailyRate = floatval($currentStay['Daily_Rate']);
             $totalRoomFee = $totalDays * $dailyRate;
 
-            // 4. Close current transfer log
             $closeTransferStmt = $conn->prepare("
                 UPDATE Room_Transfer_Log 
                 SET Date_Out = NOW(), Total_Days = :days, Total_Room_Fee = :fee 
@@ -168,7 +158,6 @@ class AdmissionManager
                 ':tid' => $currentStay['Transfer_ID']
             ]);
 
-            // 5. Post Board & Lodging fee to Billing_Ledger (Station_ID = 5: Nurse Station)
             $ledgerStmt = $conn->prepare("
                 INSERT INTO Billing_Ledger 
                     (Admission_ID, Station_ID, Transfer_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
@@ -183,11 +172,9 @@ class AdmissionManager
                 ':total_charge' => $totalRoomFee
             ]);
 
-            // 6. Release old bed
             $releaseBedStmt = $conn->prepare("UPDATE Room_Bed SET Is_Available = 1 WHERE Bed_ID = :bid");
             $releaseBedStmt->execute([':bid' => $currentStay['Bed_ID']]);
 
-            // 7. Create new transfer log for new bed
             $newTransferStmt = $conn->prepare("
                 INSERT INTO Room_Transfer_Log (Admission_ID, Bed_ID, Date_In)
                 VALUES (:aid, :bid, NOW())
@@ -197,7 +184,6 @@ class AdmissionManager
                 ':bid' => $newBedId
             ]);
 
-            // 8. Occupy new bed
             $occupyBedStmt = $conn->prepare("UPDATE Room_Bed SET Is_Available = 0 WHERE Bed_ID = :bid");
             $occupyBedStmt->execute([':bid' => $newBedId]);
 
@@ -227,7 +213,6 @@ class AdmissionManager
         try {
             $conn->beginTransaction();
 
-            // 1. Fetch current open bed stay
             $currStayStmt = $conn->prepare("
                 SELECT 
                     rtl.Transfer_ID,
@@ -251,7 +236,6 @@ class AdmissionManager
                 $dailyRate = floatval($currentStay['Daily_Rate']);
                 $totalRoomFee = $totalDays * $dailyRate;
 
-                // Close transfer log
                 $closeStmt = $conn->prepare("
                     UPDATE Room_Transfer_Log 
                     SET Date_Out = NOW(), Total_Days = :days, Total_Room_Fee = :fee 
@@ -263,7 +247,6 @@ class AdmissionManager
                     ':tid' => $currentStay['Transfer_ID']
                 ]);
 
-                // Post final room charge to ledger (Station 5: Nurse Station)
                 $postLedger = $conn->prepare("
                     INSERT INTO Billing_Ledger 
                         (Admission_ID, Station_ID, Transfer_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
@@ -278,12 +261,10 @@ class AdmissionManager
                     ':total_charge' => $totalRoomFee
                 ]);
 
-                // Free bed
                 $freeBed = $conn->prepare("UPDATE Room_Bed SET Is_Available = 1 WHERE Bed_ID = :bid");
                 $freeBed->execute([':bid' => $currentStay['Bed_ID']]);
             }
 
-            // 2. Mark admission as Discharged
             $admStmt = $conn->prepare("UPDATE Admission SET Status = 'Discharged' WHERE Admission_ID = :aid");
             $admStmt->execute([':aid' => $admissionId]);
 
@@ -316,7 +297,6 @@ class AdmissionManager
         }
 
         try {
-            // Check status first - cannot edit if Billed
             $checkStmt = $conn->prepare("SELECT Status FROM Admission WHERE Admission_ID = :aid");
             $checkStmt->execute([':aid' => $admissionId]);
             $currentStatus = $checkStmt->fetchColumn();

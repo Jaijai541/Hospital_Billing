@@ -24,7 +24,6 @@ class InvoiceManager
         try {
             $conn->beginTransaction();
 
-            // 1. Check admission state
             $admCheck = $conn->prepare("SELECT Admission_ID, Status FROM Admission WHERE Admission_ID = :aid");
             $admCheck->execute([':aid' => $admissionId]);
             $admission = $admCheck->fetch(PDO::FETCH_ASSOC);
@@ -39,7 +38,6 @@ class InvoiceManager
                 return json_encode(['error' => 'This admission has already been settled and billed.']);
             }
 
-            // 2. If patient is currently in bed, close stay, post room fee, free bed
             $currStayStmt = $conn->prepare("
                 SELECT 
                     rtl.Transfer_ID,
@@ -63,7 +61,6 @@ class InvoiceManager
                 $dailyRate = floatval($currentStay['Daily_Rate']);
                 $totalRoomFee = $totalDays * $dailyRate;
 
-                // Close transfer log
                 $closeStmt = $conn->prepare("
                     UPDATE Room_Transfer_Log 
                     SET Date_Out = NOW(), Total_Days = :days, Total_Room_Fee = :fee 
@@ -75,7 +72,6 @@ class InvoiceManager
                     ':tid' => $currentStay['Transfer_ID']
                 ]);
 
-                // Post room charge to ledger (Station 5: Nurse Station)
                 $postLedger = $conn->prepare("
                     INSERT INTO Billing_Ledger 
                         (Admission_ID, Station_ID, Transfer_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
@@ -90,17 +86,14 @@ class InvoiceManager
                     ':total_charge' => $totalRoomFee
                 ]);
 
-                // Free bed
                 $freeBed = $conn->prepare("UPDATE Room_Bed SET Is_Available = 1 WHERE Bed_ID = :bid");
                 $freeBed->execute([':bid' => $currentStay['Bed_ID']]);
             }
 
-            // 3. Compute Gross Total from Billing_Ledger
             $sumStmt = $conn->prepare("SELECT COALESCE(SUM(Total_Charge), 0.00) AS Gross_Total FROM Billing_Ledger WHERE Admission_ID = :aid");
             $sumStmt->execute([':aid' => $admissionId]);
             $grossTotal = floatval($sumStmt->fetchColumn());
 
-            // 4. Calculate Discount
             $discountAmount = 0.00;
             if (!empty($discountId)) {
                 $discStmt = $conn->prepare("SELECT Discount_Percentage FROM Enum_Discount WHERE Discount_ID = :did AND Is_Active = 1");
@@ -109,13 +102,12 @@ class InvoiceManager
                 if ($pct !== false) {
                     $discountAmount = round($grossTotal * (floatval($pct) / 100.0), 2);
                 } else {
-                    $discountId = null; // invalid discount ID
+                    $discountId = null;
                 }
             }
 
             $netAmountDue = max(0.00, $grossTotal - $discountAmount);
 
-            // 5. Insert Final_Invoice
             $invSql = "INSERT INTO Final_Invoice 
                         (Admission_ID, Processed_By_User_ID, Discount_ID, Gross_Total, Discount_Amount, Net_Amount_Due, Settlement_Date)
                        VALUES 
@@ -131,7 +123,6 @@ class InvoiceManager
             ]);
             $invoiceId = $conn->lastInsertId();
 
-            // 6. Update Admission Status to 'Billed'
             $updAdm = $conn->prepare("UPDATE Admission SET Status = 'Billed' WHERE Admission_ID = :aid");
             $updAdm->execute([':aid' => $admissionId]);
 

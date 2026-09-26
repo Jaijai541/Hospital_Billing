@@ -1,15 +1,9 @@
-/**
- * Official Statement of Account / Invoice Print Controller
- * Milestone 3: Financial Settlement & Statements of Account (SOA)
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 window.addEventListener('DOMContentLoaded', () => {
     console.log("invoice_print.js: Initializing printable Statement of Account...");
 
-    // Session Verification
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         window.location.href = "login.html";
@@ -62,7 +56,6 @@ function loadInvoiceData(invoiceId, admissionId) {
 
             renderInvoice(inv);
 
-            // If ?print=true parameter was provided, automatically open print dialog
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('print') === 'true') {
                 setTimeout(() => {
@@ -77,7 +70,6 @@ function loadInvoiceData(invoiceId, admissionId) {
 }
 
 function renderInvoice(inv) {
-    // 1. Invoice & Case Record
     document.getElementById('inv-code').textContent = inv.Invoice_Code || 'N/A';
     document.getElementById('inv-settlement-date').textContent = inv.Settlement_Date || 'N/A';
     document.getElementById('inv-admission-code').textContent = inv.Admission_Code || 'N/A';
@@ -88,7 +80,6 @@ function renderInvoice(inv) {
     const cashierRole = inv.Cashier_Role ? ` (${inv.Cashier_Role})` : '';
     document.getElementById('inv-cashier').textContent = `${cashierName}${cashierRole}`;
 
-    // 2. Patient Demographics
     document.getElementById('patient-name').textContent = inv.Patient_Name || 'N/A';
     document.getElementById('patient-code').textContent = inv.Patient_Code || 'N/A';
     
@@ -115,7 +106,6 @@ function renderInvoice(inv) {
         diagEl.textContent = inv.Diagnosis || 'None Recorded';
     }
 
-    // Assigned Physicians
     const doctors = inv.Attending_Doctors || [];
     if (doctors.length > 0) {
         const docText = doctors.map(d => `${d.Doctor_Name || 'Doctor'} (${d.Doctor_Type || 'Attending'}${d.Specialties ? ' - ' + d.Specialties : ''})`).join('; ');
@@ -126,10 +116,8 @@ function renderInvoice(inv) {
         document.getElementById('sig-doctor').textContent = 'Attending Physician';
     }
 
-    // 3. Itemized Charges Table
     renderItemizedTable(inv.Ledger_Items || []);
 
-    // 4. Financial Summary
     const sum = inv.Category_Summary || {};
     document.getElementById('summary-room').textContent = `₱${parseFloat(sum.room_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
     document.getElementById('summary-doctor').textContent = `₱${parseFloat(sum.doctor_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
@@ -152,7 +140,6 @@ function renderInvoice(inv) {
     document.getElementById('summary-discount').textContent = `-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
     document.getElementById('summary-net').textContent = `₱${net.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
-    // 5. Signatures
     document.getElementById('sig-cashier').textContent = inv.Cashier_Name || 'Billing Officer';
     document.getElementById('sig-patient').textContent = inv.Patient_Name || 'Patient / Authorized Representative';
 }

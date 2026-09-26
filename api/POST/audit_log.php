@@ -159,7 +159,6 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
             $stmt = $conn->prepare("INSERT INTO Audit_Log (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([$userId, $admissionId, $actionType, $module, $ref, $desc, $by]);
         } catch (Exception $e) {
-            // Ignore audit logging errors
         }
     });
 }

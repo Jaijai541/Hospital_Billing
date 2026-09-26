@@ -1,44 +1,14 @@
-/**
- * Hospital Billing & Patient Information System
- * Core Shared Frontend Utilities (js/common.js)
- * 
- * Centralized helpers for:
- * 1. Preload & Sidebar Slide-out Controls
- * 2. User Session Verification & Display
- * 3. Modal Dialog Open/Close/Cancel Helpers
- * 4. Standardized Table Status Badges
- * 5. Compact Action Icon Buttons (Edit ✏️ & Archive/Restore 🗑️/🔄)
- * 6. Generic Record Status Toggle API Handler
- */
-
-// ── 1. Immediate Preload State (Prevents layout shift) ─────────────
-(function() {
+(() => {
     try {
         if (localStorage.getItem("hospital_sidebar_collapsed") === "true") {
             document.documentElement.classList.add("sidebar-collapsed-preload");
         }
-    } catch (e) {
-        console.warn("[Common] LocalStorage unavailable:", e);
-    }
+    } catch (e) {}
 })();
 
-// ── 2. Global Initialization on DOM Ready ──────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-    if (typeof renderSidebar === "function") {
-        renderSidebar();
-    }
-    initAppSession();
-    initSidebarControls();
-});
-
-/**
- * Verifies active session from sessionStorage, populates #user-display,
- * and attaches logout listener to #btn-logout.
- */
-function initAppSession() {
+const initAppSession = () => {
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
-        // Only redirect if not already on login page
         if (!window.location.pathname.endsWith("login.html")) {
             window.location.href = "login.html";
         }
@@ -51,9 +21,7 @@ function initAppSession() {
         if (userDisplay) {
             userDisplay.textContent = `${user.full_name} (${user.role_name})`;
         }
-    } catch (e) {
-        console.error("[Session] Invalid user data:", e);
-    }
+    } catch (e) {}
 
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn && !logoutBtn.dataset.wired) {
@@ -65,12 +33,9 @@ function initAppSession() {
             }
         });
     }
-}
+};
 
-/**
- * Handles sidebar collapse, reopening, and Alt + S keyboard shortcut.
- */
-function initSidebarControls() {
+const initSidebarControls = () => {
     const appWrapper = document.querySelector(".app-wrapper");
     const btnClose = document.getElementById("btn-sidebar-close");
     const btnOpen = document.getElementById("btn-sidebar-open");
@@ -100,7 +65,6 @@ function initSidebarControls() {
         });
     }
 
-    // Keyboard shortcut: Alt + S
     document.addEventListener("keydown", (e) => {
         if (e.altKey && e.key.toLowerCase() === "s") {
             e.preventDefault();
@@ -110,14 +74,9 @@ function initSidebarControls() {
             }
         }
     });
-}
+};
 
-// ── 3. Modal Dialog Helpers ─────────────────────────────────────────
-
-/**
- * Open a pop-up modal and focus its first input
- */
-function openModal(modalId = "formModal") {
+const openModal = (modalId = "formModal") => {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add("active");
@@ -125,36 +84,24 @@ function openModal(modalId = "formModal") {
         const firstInput = modal.querySelector("input:not([type=hidden]):not([readonly]), select, textarea");
         if (firstInput) firstInput.focus();
     }
-}
+};
 
-/**
- * Close a pop-up modal
- */
-function closeModal(modalId = "formModal") {
+const closeModal = (modalId = "formModal") => {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove("active");
         modal.style.display = "none";
     }
-}
+};
 
-// ── 3.5 Custom System Pop-up Message Modal & Global alert() Override ──
-
-/**
- * Custom System Pop-up Message Modal
- * Replaces browser native alert() with a themed hospital dialog.
- * Can be called explicitly as showPopupAlert(message, type, title, callback)
- * or automatically whenever alert(...) is called.
- */
-function showPopupAlert(message, type = null, title = null, callback = null) {
-    if (typeof type === "function") {
+const showPopupAlert = (message, type = null, title = null, callback = null) => {
+    if (callback === null && typeof type === "function") {
         callback = type;
         type = null;
     }
 
     const strMsg = String(message || "");
 
-    // Smart automatic detection of message intent
     if (!type) {
         if (/successfully|registered|updated|admitted|discharged|settled|restored|transferred|created|recorded/i.test(strMsg)) {
             type = "success";
@@ -167,7 +114,6 @@ function showPopupAlert(message, type = null, title = null, callback = null) {
         }
     }
 
-    // Contextual Title
     if (!title) {
         switch (type) {
             case "success": title = "Success"; break;
@@ -223,7 +169,7 @@ function showPopupAlert(message, type = null, title = null, callback = null) {
     const closeModalHandler = () => {
         modal.style.display = "none";
         document.removeEventListener("keydown", keyHandler);
-        if (typeof callback === "function") {
+        if (callback) {
             callback();
         }
     };
@@ -245,19 +191,13 @@ function showPopupAlert(message, type = null, title = null, callback = null) {
 
     modal.style.display = "flex";
     okBtn.focus();
-}
+};
 
-// Override native window.alert globally across all pages that include common.js
-window.alert = function(msg, callback) {
+window.alert = (msg, callback) => {
     showPopupAlert(msg, null, null, callback);
 };
 
-
-/**
- * Automatically wires modal open button, close button, cancel button,
- * backdrop click, and Escape key listeners.
- */
-function initModalControls(modalId = "formModal", openBtnId = "btnOpenAddModal", closeBtnId = "btnCloseModal", cancelBtnId = "btnCancel", onReset) {
+const initModalControls = (modalId = "formModal", openBtnId = "btnOpenAddModal", closeBtnId = "btnCloseModal", cancelBtnId = "btnCancel", onReset = null) => {
     const btnOpen = document.getElementById(openBtnId);
     if (btnOpen) {
         btnOpen.addEventListener("click", () => {
@@ -293,25 +233,15 @@ function initModalControls(modalId = "formModal", openBtnId = "btnOpenAddModal",
             closeModal(modalId);
         }
     });
-}
+};
 
-// ── 4. Standardized Table UI Generators ─────────────────────────────
-
-/**
- * Generates an active or archived status badge HTML
- */
-function getStatusBadge(isActive) {
+const getStatusBadge = (isActive) => {
     return (isActive == 1 || isActive === true)
         ? '<span class="badge badge-success">Active</span>'
         : '<span class="badge badge-danger">Archived</span>';
-}
+};
 
-/**
- * Generates standardized action icon buttons:
- * - ✏️ Edit (.btn-secondary)
- * - 🗑️ Send to Archive (.btn-warning) or 🔄 Restore (.btn-success)
- */
-function getActionButtons(id, isActive, name, editTitle = "Edit Record") {
+const getActionButtons = (id, isActive, name, editTitle = "Edit Record") => {
     const isAct = (isActive == 1 || isActive === true);
     const toggleIcon = isAct ? "🗑️" : "🔄";
     const toggleCls = isAct ? "btn-action-archive" : "btn-action-restore";
@@ -323,14 +253,9 @@ function getActionButtons(id, isActive, name, editTitle = "Edit Record") {
             <button type="button" class="btn btn-sm btn-icon btn-action-icon ${toggleCls} btn-action-soft-delete" data-id="${id}" data-status="${isAct ? 1 : 0}" data-name="${name}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>
         </div>
     `;
-}
+};
 
-// ── 5. Standardized Record Status Toggle (Archive / Restore) ────────
-
-/**
- * Generic API handler for soft-deleting (archiving) or restoring records
- */
-async function toggleRecordStatus(apiFile, idKey, idVal, currentStatus, recordName, onDone) {
+const toggleRecordStatus = async (apiFile, idKey, idVal, currentStatus, recordName, onDone) => {
     const isArchiving = (currentStatus == 1);
     const actionText = isArchiving ? "send to the System Archive" : "restore from the System Archive";
     const note = isArchiving ? "\n\n(Archived records are kept safe so existing clinical logs and invoices remain intact)" : "";
@@ -347,16 +272,21 @@ async function toggleRecordStatus(apiFile, idKey, idVal, currentStatus, recordNa
         const postUrl = (typeof postApiUrl !== "undefined") ? postApiUrl : "../api/POST";
         const response = await axios.post(`${postUrl}/${apiFile}`, formData);
         if (response.data == 1) {
-            console.log(`[API] Status toggled successfully for ${idKey}: ${idVal}`);
-            if (typeof onDone === "function") {
+            if (onDone) {
                 onDone();
             }
         } else {
-            console.warn("[API] Status toggle returned non-success:", response.data);
             alert("Error updating record status.");
         }
     } catch (err) {
-        console.error("[API] Status toggle failed:", err);
         alert("Server error during status update.");
     }
-}
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof renderSidebar !== "undefined") {
+        renderSidebar();
+    }
+    initAppSession();
+    initSidebarControls();
+});

@@ -1,18 +1,11 @@
-/**
- * In-Patient Admissions & Bed Occupancy Controller
- * Milestone 2: Transaction & Clinical Charging
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
-// Global State
 let allAdmissions = [];
 let availableBeds = [];
 let activePatients = [];
 let activeDoctors = [];
 
-// 1. Authentication & Initialization
 window.addEventListener('DOMContentLoaded', () => {
     console.log("admissions.js: Initializing In-Patient Admissions view...");
 
@@ -29,7 +22,6 @@ window.addEventListener('DOMContentLoaded', () => {
         userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
     }
 
-    // Attach Logout
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -39,7 +31,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners & Modal Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById('btnSubmitAdmit').addEventListener('click', submitAdmission);
     document.getElementById('btnRefresh').addEventListener('click', () => {
@@ -71,14 +62,12 @@ window.addEventListener('DOMContentLoaded', () => {
         docSearch.addEventListener('input', filterDoctorsCheckboxes);
     }
 
-    // Initial Data Fetch
     loadPatients();
     loadBeds();
     loadDoctors();
     loadAdmissions();
 });
 
-// 2. Fetch Reference Master Lists
 function loadPatients() {
     console.log("admissions.js: Fetching active patients...");
     const formData = new FormData();
@@ -234,7 +223,6 @@ function filterDoctorsCheckboxes() {
     });
 }
 
-// 3. Fetch & Render Admissions
 function loadAdmissions() {
     console.log("admissions.js: Loading admissions list...");
     const status = document.getElementById('filter_status').value;
@@ -330,7 +318,6 @@ function renderAdmissionsTable(admissions) {
     tableDiv.innerHTML = html;
 }
 
-// 4. Submit New Admission
 function submitAdmission() {
     console.log("admissions.js: Processing admission submission...");
 
@@ -386,7 +373,6 @@ function submitAdmission() {
                 loadBeds();
                 loadPatients();
                 loadAdmissions();
-                // Optionally navigate directly to the patient's new chart
                 if (confirm("Patient admitted! Would you like to open their clinical chart and ledger now?")) {
                     openChart(response.data.admission_id);
                 }
@@ -417,13 +403,11 @@ function resetForm() {
     filterDoctorsCheckboxes();
 }
 
-// 5. Open Clinical Chart & Ledger Hub
 window.openChart = function(admissionId) {
     console.log("admissions.js: Navigating to admission chart ID:", admissionId);
     window.location.href = `admission_details.html?id=${admissionId}`;
 };
 
-// 6. Discharge Patient
 window.dischargePatient = function(admissionId, patientName) {
     console.log("admissions.js: Initiating discharge for admission ID:", admissionId);
 

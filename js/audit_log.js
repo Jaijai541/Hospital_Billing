@@ -1,8 +1,3 @@
-/**
- * System Audit Log Controller (js/audit_log.js)
- * Displays and filters chronological activity records from api/GET/audit_log.php
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 

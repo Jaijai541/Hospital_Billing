@@ -82,7 +82,6 @@ class InvoiceManager
             return json_encode(['error' => 'Invoice ID or Admission ID is required.']);
         }
 
-        // 1. Fetch Invoice, Patient & Admission details
         $sql = "SELECT 
                     fi.Invoice_ID,
                     CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
@@ -137,7 +136,6 @@ class InvoiceManager
 
         $aid = $invoice['Admission_ID'];
 
-        // 2. Fetch assigned physicians
         $docSql = "SELECT 
                     CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
                     dt.Type_Name AS Doctor_Type,
@@ -155,7 +153,6 @@ class InvoiceManager
         $docStmt->execute([':aid' => $aid]);
         $invoice['Attending_Doctors'] = $docStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3. Fetch itemized charges from Billing_Ledger
         $invoice['Ledger_Items'] = $this->fetchLedgerItems($conn, $aid);
         $invoice['Category_Summary'] = $this->fetchLedgerSummary($conn, $aid);
 

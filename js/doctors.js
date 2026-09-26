@@ -1,9 +1,3 @@
-/**
- * Medical Doctors & Professional Fees Controller (Axios / Frontend)
- * Follows classroom pure HTML standard: dynamic table creation with border="1"
- * Handles Doctor, Doctor_Specialty, Enum_Doctor_Type, and Enum_Department_Station
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
@@ -12,11 +6,9 @@ let allSpecialties = [];
 let currentLoadedDoctor = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial Data Load
     loadDoctorLookups();
     displayDoctors();
 
-    // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDoctor);
 
@@ -31,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Specialty Instant Search in Modal
     const specSearch = document.getElementById("specialty_search");
     if (specSearch) {
         specSearch.addEventListener("input", () => {
@@ -44,7 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortDoctors);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDoctors);
     document.getElementById("filter_type").addEventListener("change", filterAndSortDoctors);
@@ -56,9 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("sort_by").addEventListener("change", filterAndSortDoctors);
 });
 
-/**
- * Load Doctor Types, Stations, and Specialties
- */
 const loadDoctorLookups = async () => {
     try {
         console.log("[API] Loading doctor lookups...");
@@ -75,7 +62,6 @@ const loadDoctorLookups = async () => {
             const specContainer = document.getElementById("specialties-checkboxes");
             const filterSpec = document.getElementById("filter_specialty");
 
-            // 1. Types
             typeSelect.innerHTML = `<option value="">Select Classification...</option>`;
             data.types.forEach(t => {
                 const opt = document.createElement("option");
@@ -89,7 +75,6 @@ const loadDoctorLookups = async () => {
                 filterType.appendChild(filterOpt);
             });
 
-            // 2. Stations
             stationSelect.innerHTML = `<option value="">Select Department Station...</option>`;
             data.stations.forEach(st => {
                 const opt = document.createElement("option");
@@ -103,7 +88,6 @@ const loadDoctorLookups = async () => {
                 filterStation.appendChild(filterOpt);
             });
 
-            // 3. Specialties
             allSpecialties = data.specialties;
             specContainer.innerHTML = "";
             allSpecialties.forEach(s => {
@@ -129,9 +113,6 @@ const loadDoctorLookups = async () => {
     }
 };
 
-/**
- * Fetch all doctors
- */
 const displayDoctors = async () => {
     const tableDiv = document.getElementById("table-div");
 
@@ -154,9 +135,6 @@ const displayDoctors = async () => {
     }
 };
 
-/**
- * Filter & sort doctors
- */
 const filterAndSortDoctors = () => {
     const searchInput = document.getElementById("search_input");
     const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
@@ -196,7 +174,6 @@ const filterAndSortDoctors = () => {
         return matchesSearch && matchesStatus && matchesType && matchesStation && matchesSpec;
     });
 
-    // Sort
     filtered.sort((a, b) => {
         switch (sortBy) {
             case "code_asc":
@@ -221,9 +198,6 @@ const filterAndSortDoctors = () => {
     displayDoctorsTable(filtered);
 };
 
-/**
- * Render pure HTML table
- */
 const displayDoctorsTable = (doctors) => {
     const tableDiv = document.getElementById("table-div");
     tableDiv.innerHTML = "";
@@ -274,9 +248,6 @@ const displayDoctorsTable = (doctors) => {
     tableDiv.appendChild(table);
 };
 
-/**
- * Populate form inputs from a doctor object
- */
 const populateDoctorForm = (doc) => {
     document.getElementById("doctor_id").value = doc.Doctor_ID || "";
     document.getElementById("first_name").value = doc.First_Name || "";
@@ -285,16 +256,12 @@ const populateDoctorForm = (doc) => {
     document.getElementById("station_id").value = doc.Station_ID || "";
     document.getElementById("base_round_fee").value = doc.Base_Round_Fee || "";
 
-    // Check checkboxes for specialties
     const assignedSpecs = doc.specialty_ids_array || [];
     document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
         cb.checked = assignedSpecs.includes(cb.value);
     });
 };
 
-/**
- * Load doctor for edit
- */
 const loadDoctorForEdit = async (doctorId) => {
     try {
         console.log(`[API] Requesting doctor details for ID: ${doctorId}`);
@@ -313,7 +280,6 @@ const loadDoctorForEdit = async (doctorId) => {
             document.getElementById("form-title").textContent = `Edit Doctor (DOC-${String(doc.Doctor_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Doctor";
 
-            // Configure In-Modal Archive / Restore Button
             const btnArchive = document.getElementById("btnArchive");
             if (btnArchive) {
                 btnArchive.style.display = "inline-flex";
@@ -337,9 +303,6 @@ const loadDoctorForEdit = async (doctorId) => {
     }
 };
 
-/**
- * Save Doctor (Insert or Update via POST)
- */
 const saveDoctor = async () => {
     const doctorId = document.getElementById("doctor_id").value;
     const firstName = document.getElementById("first_name").value.trim();
@@ -353,7 +316,6 @@ const saveDoctor = async () => {
         return;
     }
 
-    // Collect selected specialties
     const selectedSpecialties = [];
     document.querySelectorAll('input[name="specialty_checkbox"]:checked').forEach(cb => {
         selectedSpecialties.push(cb.value);
@@ -402,9 +364,6 @@ const saveDoctor = async () => {
     }
 };
 
-/**
- * Reset form
- */
 const resetForm = () => {
     currentLoadedDoctor = null;
 

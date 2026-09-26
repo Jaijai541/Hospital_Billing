@@ -1,55 +1,44 @@
-/* ==========================================================================
-   St. Jude Hospital Billing & Patient Information System
-   Common Core Stylesheet (Tokens, Layout, Sidebar, Components)
-   Light Blue Medical Aesthetic & Balanced 8px Spacing Grid
-   ========================================================================== */
-
 :root {
-    /* ── Light Blue Medical Color Palette ────────────────────────── */
-    --primary: #0284c7;             /* Main Sky Blue */
-    --primary-hover: #0369a1;       /* Darker Sky for hover */
-    --primary-light: #e0f2fe;       /* Soft sky pill / badge */
-    --primary-subtle: #f0f9ff;      /* Very light blue row hover / card header */
+    
+    --primary: #0284c7;             
+    --primary-hover: #0369a1;       
+    --primary-light: #e0f2fe;       
+    --primary-subtle: #f0f9ff;      
     --primary-glow: rgba(2, 132, 199, 0.2);
 
-    /* ── Supporting Action Colors ────────────────────────────────── */
-    --success: #10b981;             /* Emerald for Restore / Confirm */
+--success: #10b981;             
     --success-hover: #059669;
     --success-light: #dcfce7;
-    --warning: #f59e0b;             /* Amber for Send to Archive */
+    --warning: #f59e0b;             
     --warning-hover: #d97706;
     --warning-light: #fef3c7;
-    --danger: #ef4444;              /* Crimson for Hard Delete / Cancel */
+    --danger: #ef4444;              
     --danger-hover: #dc2626;
     --danger-light: #fee2e2;
 
-    /* ── Neutral & Surface Colors ────────────────────────────────── */
-    --body-bg: #f8fafc;             /* Fresh clinical slate tint */
+--body-bg: #f8fafc;             
     --card-bg: #ffffff;
     --border-color: #e2e8f0;
-    --text-main: #1e293b;           /* Deep readable charcoal */
-    --text-muted: #64748b;          /* Secondary gray */
+    --text-main: #1e293b;           
+    --text-muted: #64748b;          
 
-    /* ── Sidebar (Modernized Light Blue Aesthetic) ─────────────────── */
-    --sidebar-bg: #edf5fb;          /* Calming soft medical light blue */
-    --sidebar-border: #d2e4f3;      /* Subtle dividing line */
-    --sidebar-text: #1e3a5f;        /* Deep slate navy, pleasing and legible */
-    --sidebar-text-muted: #0284c7;  /* Sky 600 for sharp, modern section headers */
-    --sidebar-hover-bg: #ffffff;    /* Pure white elevated card pill */
-    --sidebar-hover-text: #0284c7;  /* Vibrant sky blue on hover */
-    --sidebar-active-bg: #0284c7;   /* Sky 600 active pill */
-    --sidebar-active-text: #ffffff; /* Clear white active text */
+--sidebar-bg: #edf5fb;          
+    --sidebar-border: #d2e4f3;      
+    --sidebar-text: #1e3a5f;        
+    --sidebar-text-muted: #0284c7;  
+    --sidebar-hover-bg: #ffffff;    
+    --sidebar-hover-text: #0284c7;  
+    --sidebar-active-bg: #0284c7;   
+    --sidebar-active-text: #ffffff; 
 
-    /* ── Spacing Tokens (8px Rhythm) ─────────────────────────────── */
-    --space-1: 4px;
+--space-1: 4px;
     --space-2: 8px;
     --space-3: 16px;
     --space-4: 24px;
     --space-5: 32px;
     --space-6: 40px;
 
-    /* ── Typography & Radius ─────────────────────────────────────── */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --radius-sm: 6px;
     --radius-md: 8px;
     --radius-lg: 10px;
@@ -57,7 +46,6 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
-/* ── Global Reset & Base Typography ──────────────────────────── */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -73,7 +61,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* ── App Layout & Sidebar ────────────────────────────────────── */
 .app-wrapper {
     display: flex;
     min-height: 100vh;
@@ -156,7 +143,6 @@ body {
     transform: scale(1.06);
 }
 
-/* ── Floating Sidebar Re-Open Button ──────────────────────────── */
 .sidebar-open-btn {
     position: fixed;
     top: 20px;
@@ -318,7 +304,6 @@ body {
     transform: none;
 }
 
-/* ── Main Content Area ────────────────────────────────────────── */
 .main-content {
     flex: 1;
     padding: 32px 40px;
@@ -327,7 +312,6 @@ body {
     transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Collapsed Sidebar State (Slide Out & UI Expansion) ──────── */
 .app-wrapper.sidebar-collapsed .sidebar {
     margin-left: -260px;
 }
@@ -342,7 +326,6 @@ body {
     padding-left: 72px;
 }
 
-/* ── Instant Preload State (Prevents layout flash on page load) ─ */
 html.sidebar-collapsed-preload .app-wrapper .sidebar {
     margin-left: -260px !important;
     transition: none !important;
@@ -383,7 +366,6 @@ html.sidebar-collapsed-preload .app-wrapper .main-content {
     margin-top: 5px;
 }
 
-/* ── Card Component with Balanced Margining ───────────────────── */
 .card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -413,7 +395,6 @@ html.sidebar-collapsed-preload .app-wrapper .main-content {
     padding: 24px;
 }
 
-/* ── Form Components & Spacing Grid ───────────────────────────── */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -480,7 +461,6 @@ textarea.form-control {
     margin-top: 24px;
 }
 
-/* ── Filter Bar & Toolbar with Baseline Alignment ─────────────── */
 .filter-bar,
 .filter-toolbar {
     display: flex;
@@ -507,7 +487,6 @@ textarea.form-control {
     width: 100%;
 }
 
-/* ── Standardized Button System ──────────────────────────────── */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -538,14 +517,12 @@ textarea.form-control {
     transform: none !important;
 }
 
-/* Small Button (Used in table action rows) */
 .btn-sm {
     padding: 6px 13px;
     font-size: 13px;
     border-radius: 5px;
 }
 
-/* Icon Button (Square action icon for table rows) */
 .btn-icon {
     width: 32px;
     height: 32px;
@@ -571,7 +548,6 @@ textarea.form-control {
     vertical-align: middle;
 }
 
-/* White background specifically for table action icon buttons */
 .table-actions .btn-icon,
 .table-actions .btn,
 .btn-action-icon {
@@ -588,7 +564,6 @@ textarea.form-control {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Subtle contextual hover accents on white action icon buttons */
 .table-actions .btn-action-edit:hover:not(:disabled) {
     background-color: #f0f9ff !important;
     border-color: #0284c7 !important;
@@ -610,14 +585,12 @@ textarea.form-control {
     box-shadow: 0 3px 8px rgba(22, 163, 74, 0.18);
 }
 
-/* Large Button (Used in final settlement & primary modals) */
 .btn-lg {
     padding: 12px 24px;
     font-size: 15.5px;
     border-radius: var(--radius-md);
 }
 
-/* Primary Button (Light Blue) */
 .btn-primary {
     background-color: var(--primary);
     color: #ffffff;
@@ -629,7 +602,6 @@ textarea.form-control {
     box-shadow: 0 2px 4px var(--primary-glow);
 }
 
-/* Secondary Button (Slate Neutral / Modal Cancel / Refresh) */
 .btn-secondary {
     background-color: #64748b;
     border: 1px solid #475569;
@@ -642,7 +614,6 @@ textarea.form-control {
     color: #ffffff;
 }
 
-/* Success Button (Restore / Positive Confirmation) */
 .btn-success, .btn-restore {
     background-color: var(--success);
     color: #ffffff;
@@ -653,7 +624,6 @@ textarea.form-control {
     color: #ffffff;
 }
 
-/* Warning / Archive Button (Soft Delete -> Send to Archive) */
 .btn-warning, .btn-archive {
     background-color: var(--warning);
     border: 1px solid #d97706;
@@ -666,7 +636,6 @@ textarea.form-control {
     color: #ffffff !important;
 }
 
-/* Danger / Delete Button (Hard Delete / Cancel / Discharge) */
 .btn-danger, .btn-delete {
     background-color: var(--danger);
     color: #ffffff;
@@ -677,7 +646,6 @@ textarea.form-control {
     color: #ffffff;
 }
 
-/* Outline Button (Clinical Slate / Light Theme Default) */
 .btn-outline {
     background-color: #ffffff;
     border: 1px solid var(--border-color, #cbd5e1);
@@ -692,7 +660,6 @@ textarea.form-control {
     box-shadow: 0 2px 4px rgba(2, 132, 199, 0.12);
 }
 
-/* ── Data Tables with Spacious Cells & Hover ─────────────────── */
 .table-responsive {
     width: 100%;
     overflow-x: auto;
@@ -744,7 +711,6 @@ textarea.form-control {
     background-color: #e0f2fe !important;
 }
 
-/* ── Badges & Status Indicators ──────────────────────────────── */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -786,7 +752,6 @@ textarea.form-control {
     color: #475569;
 }
 
-/* ── Utility Classes ─────────────────────────────────────────── */
 .mb-1 { margin-bottom: 4px; }
 .mb-2 { margin-bottom: 8px; }
 .mb-3 { margin-bottom: 16px; }
@@ -804,7 +769,6 @@ textarea.form-control {
 .text-center { text-align: center; }
 .w-100 { width: 100%; }
 
-/* ── Pop-Up Modal Window System ──────────────────────────────── */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -939,7 +903,6 @@ textarea.form-control {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* ── Custom Pop-up Alert Modal Dialog ────────────────────────── */
 .custom-alert-overlay {
     position: fixed;
     top: 0;
@@ -1141,4 +1104,3 @@ textarea.form-control {
     from { opacity: 0; transform: scale(0.94); }
     to { opacity: 1; transform: scale(1); }
 }
-

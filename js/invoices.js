@@ -1,8 +1,3 @@
-/**
- * Invoices & Settled Accounts Directory Controller
- * Milestone 3: Financial Settlement & Statements of Account (SOA)
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
@@ -11,7 +6,6 @@ let allInvoices = [];
 window.addEventListener('DOMContentLoaded', () => {
     console.log("invoices.js: Initializing Invoices view...");
 
-    // Authentication Verification
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         console.warn("invoices.js: Unauthenticated session. Redirecting to login.");
@@ -25,7 +19,6 @@ window.addEventListener('DOMContentLoaded', () => {
         userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
     }
 
-    // Attach Logout
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -35,11 +28,9 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Attach Event Listeners
     document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
     document.getElementById('btnRefresh').addEventListener('click', loadInvoices);
 
-    // Initial Load
     loadInvoices();
 });
 

@@ -1,14 +1,6 @@
-/**
- * In-Patient Clinical Chart & Live Billing Ledger Controller
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
-/*
- * Milestone 2: Transaction & Clinical Workflow
- */
 
-// Global State
 let admissionId = null;
 let admissionData = null;
 let catalogItems = [];
@@ -19,11 +11,9 @@ let currentUser = null;
 let discountList = [];
 let latestSummary = null;
 
-// 1. Initialization
 window.addEventListener('DOMContentLoaded', () => {
     console.log("admission_details.js: Initializing Patient Chart...");
 
-    // Check Authentication
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         console.warn("admission_details.js: Unauthenticated session. Redirecting to login.");
@@ -37,7 +27,6 @@ window.addEventListener('DOMContentLoaded', () => {
         userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
     }
 
-    // Attach Logout
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -47,7 +36,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Parse Admission ID from URL query string
     const urlParams = new URLSearchParams(window.location.search);
     const idParam = urlParams.get('id');
 
@@ -61,17 +49,14 @@ window.addEventListener('DOMContentLoaded', () => {
     admissionId = parseInt(idParam, 10);
     console.log("admission_details.js: Loaded Admission ID:", admissionId);
 
-    // Setup Clinical Navigation Tabs
     initClinicalTabs();
 
-    // Attach Event Listeners
     document.getElementById('btnSubmitOrder').addEventListener('click', submitDoctorOrder);
     document.getElementById('btnLogRound').addEventListener('click', submitDoctorRound);
     document.getElementById('btnTransferBed').addEventListener('click', submitBedTransfer);
     document.getElementById('btnReturnMedicine').addEventListener('click', submitMedicineReturn);
     initDiagnosisModal();
 
-    // Attach Live Quick Search Filters for Selectors
     const orderDocSearch = document.getElementById('order_doctor_search');
     if (orderDocSearch) orderDocSearch.addEventListener('input', filterOrderDoctors);
 
@@ -87,7 +72,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const returnCatSearch = document.getElementById('return_catalog_search');
     if (returnCatSearch) returnCatSearch.addEventListener('input', filterDispensedMedicines);
 
-    // Auto-fill round fee when doctor changes
     document.getElementById('round_doctor_id').addEventListener('change', (e) => {
         const selectedDocId = e.target.value;
         const doc = assignedDoctors.find(d => String(d.Admission_Doctor_ID) === String(selectedDocId));
@@ -98,7 +82,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial Load Sequence
     loadAdmissionDetails();
     loadCatalogItems();
     loadOrders();
@@ -111,7 +94,6 @@ window.addEventListener('DOMContentLoaded', () => {
     loadDiscounts();
 });
 
-// Tab Controller
 function initClinicalTabs() {
     const tabBtns = document.querySelectorAll('.clinical-tabs-nav .tab-btn');
     const tabPanels = document.querySelectorAll('.tab-content-panel');
@@ -150,7 +132,6 @@ function initClinicalTabs() {
     }
 }
 
-// Diagnosis Modal Controller
 function initDiagnosisModal() {
     const btnEdit = document.getElementById('btnEditDiagnosis');
     const modal = document.getElementById('diagnosisModal');
@@ -238,7 +219,6 @@ function saveDiagnosis() {
         });
 }
 
-// 2. Load Patient & Admission Profile Banner
 function loadAdmissionDetails() {
     console.log("admission_details.js: Fetching admission profile for ID:", admissionId);
 
@@ -259,7 +239,6 @@ function loadAdmissionDetails() {
             admissionData = response.data;
             assignedDoctors = admissionData.Assigned_Doctors || [];
 
-            // Populate Banner
             document.getElementById('banner-patient-name').textContent = admissionData.Full_Name;
             document.getElementById('banner-patient-code').textContent = admissionData.Patient_Code;
             document.getElementById('banner-patient-age').textContent = `${admissionData.Date_Of_Birth} (${admissionData.Age} yrs old)`;
@@ -281,7 +260,6 @@ function loadAdmissionDetails() {
                 }
             }
 
-            // Configure Edit Diagnosis button: Disabled when Billed/settled (editable on Admitted and Discharged)
             const btnEditDiag = document.getElementById('btnEditDiagnosis');
             if (btnEditDiag) {
                 if (admissionData.Status === 'Billed') {
@@ -298,10 +276,8 @@ function loadAdmissionDetails() {
             const docNames = assignedDoctors.map(d => `${d.Doctor_Name} (${d.Doctor_Type})`).join(', ');
             document.getElementById('banner-doctors').textContent = docNames || 'None assigned';
 
-            // Populate Doctors in Order and Round forms
             populateAssignedDoctorDropdowns();
 
-            // Configure Discharge Patient button in Chart Topbar
             const btnDischarge = document.getElementById('btnChartDischarge');
             if (btnDischarge) {
                 if (admissionData.Status === 'Admitted') {
@@ -312,7 +288,6 @@ function loadAdmissionDetails() {
                 }
             }
 
-            // Disable transactional actions if not admitted
             if (admissionData.Status !== 'Admitted') {
                 document.getElementById('order-form-container').innerHTML = '<p><em>Orders disabled: Patient is already discharged or billed.</em></p>';
                 document.getElementById('round-form-container').innerHTML = '<p><em>Rounds disabled: Patient is already discharged or billed.</em></p>';
@@ -410,7 +385,6 @@ function filterRoundDoctors() {
     });
 }
 
-// 3. Load Catalog Items for Ordering
 function loadCatalogItems() {
     console.log("admission_details.js: Fetching charge catalog items...");
 
@@ -456,7 +430,6 @@ function filterCatalogItems() {
     });
 }
 
-// 4. Section 1: Orders (Medicines, Scans, Procedures)
 function loadOrders() {
     console.log("admission_details.js: Loading orders for admission ID:", admissionId);
 
@@ -641,7 +614,6 @@ window.cancelOrder = function(requestId) {
         });
 };
 
-// 5. Section 2: Bedside Rounds
 function loadRounds() {
     console.log("admission_details.js: Loading rounds for admission ID:", admissionId);
 
@@ -736,7 +708,6 @@ function submitDoctorRound() {
         });
 }
 
-// 6. Section 3: Room Transfers
 function loadTransfers() {
     console.log("admission_details.js: Loading bed transfer history...");
 
@@ -896,7 +867,6 @@ function submitBedTransfer() {
         });
 }
 
-// 7. Section 4: Live Itemized Billing Ledger
 function loadLedger() {
     console.log("admission_details.js: Loading billing ledger for admission ID:", admissionId);
 
@@ -1009,7 +979,6 @@ function renderSummaryBox(summary) {
     container.innerHTML = html;
 }
 
-// 8. Medicine Returns
 function loadDispensedMedicines() {
     console.log("admission_details.js: Loading dispensed medicines for returns...");
 
@@ -1124,7 +1093,6 @@ function submitMedicineReturn() {
         });
 }
 
-// 9. Section 5: Billing Settlement & Discounts
 function loadDiscounts() {
     console.log("admission_details.js: Fetching discount options...");
 
@@ -1208,7 +1176,6 @@ function renderSettlementSection() {
 
     container.innerHTML = html;
 
-    // Attach Discount recalculation listener
     const discountSelect = document.getElementById('settle_discount_id');
     if (discountSelect) {
         discountSelect.addEventListener('change', () => {
@@ -1223,7 +1190,6 @@ function renderSettlementSection() {
         });
     }
 
-    // Attach Settle button listener
     const btnSettle = document.getElementById('btnSettleBill');
     if (btnSettle) {
         btnSettle.addEventListener('click', submitSettlement);
@@ -1257,7 +1223,6 @@ function submitSettlement() {
             console.log("admission_details.js: Settlement response:", response.data);
             if (response.data.success) {
                 alert(response.data.message, () => {
-                    // Redirect to the official printable invoice
                     window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
                 });
             } else {
@@ -1269,4 +1234,3 @@ function submitSettlement() {
             alert("Network error processing settlement.");
         });
 }
-

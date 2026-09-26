@@ -1,13 +1,7 @@
-/**
- * Reusable Sidebar Navigation Component (js/sidebar.js)
- * Centralizes the <aside class="sidebar"> markup across all pages.
- */
-
-function renderSidebar() {
+const renderSidebar = () => {
     const sidebarEl = document.getElementById("sidebar-container") || document.querySelector("aside.sidebar");
     if (!sidebarEl) return;
 
-    // Ensure the floating re-open button exists inside .app-wrapper before the sidebar
     const appWrapper = sidebarEl.closest(".app-wrapper");
     if (appWrapper && !document.getElementById("btn-sidebar-open")) {
         const openBtn = document.createElement("button");
@@ -20,7 +14,6 @@ function renderSidebar() {
         appWrapper.insertBefore(openBtn, sidebarEl);
     }
 
-    // Determine current active page from URL
     const currentPath = window.location.pathname.split("/").pop() || "index.html";
     const activePage = (currentPath === "admission_details.html") ? "admissions.html" : currentPath;
 
@@ -76,8 +69,7 @@ function renderSidebar() {
             </ul>
         </div>
     `;
-}
+};
 
-// Render immediately if DOM element is already present, otherwise on DOMContentLoaded
 renderSidebar();
 document.addEventListener("DOMContentLoaded", renderSidebar);

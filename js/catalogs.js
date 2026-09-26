@@ -1,9 +1,3 @@
-/**
- * Unified Charge Catalogs Controller (Axios / Frontend)
- * Follows classroom pure HTML standard: dynamic table creation with border="1"
- * Handles Charge_Catalogs: Catalog_ID, Item_Name, Category_Type, Code_Prefix, Unit_Price
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
@@ -11,10 +5,8 @@ let allCatalogs = [];
 let currentLoadedCatalog = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial Data Load
     displayCatalogs();
 
-    // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveCatalogItem);
 
@@ -29,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Auto-fill prefix on category selection
     document.getElementById("category_type").addEventListener("change", (e) => {
         const val = e.target.value;
         const prefixInput = document.getElementById("code_prefix");
@@ -39,16 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
         else prefixInput.value = "";
     });
 
-    // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortCatalogs);
     document.getElementById("filter_category").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("filter_status").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("sort_by").addEventListener("change", filterAndSortCatalogs);
 });
 
-/**
- * Fetch all catalog items from API
- */
 const displayCatalogs = async () => {
     const tableDiv = document.getElementById("table-div");
 
@@ -71,9 +58,6 @@ const displayCatalogs = async () => {
     }
 };
 
-/**
- * Filter and sort catalog items
- */
 const filterAndSortCatalogs = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterCategory = document.getElementById("filter_category").value;
@@ -96,7 +80,6 @@ const filterAndSortCatalogs = () => {
         return matchesSearch && matchesCat && matchesStatus;
     });
 
-    // Sort
     filtered.sort((a, b) => {
         switch (sortBy) {
             case "code_asc":
@@ -122,9 +105,6 @@ const filterAndSortCatalogs = () => {
     displayCatalogsTable(filtered);
 };
 
-/**
- * Render dynamic pure HTML table
- */
 const displayCatalogsTable = (items) => {
     const tableDiv = document.getElementById("table-div");
     tableDiv.innerHTML = "";
@@ -173,9 +153,6 @@ const displayCatalogsTable = (items) => {
     tableDiv.appendChild(table);
 };
 
-/**
- * Populate form inputs from a catalog item object
- */
 const populateCatalogForm = (item) => {
     document.getElementById("catalog_id").value = item.Catalog_ID || "";
     document.getElementById("item_name").value = item.Item_Name || "";
@@ -184,9 +161,6 @@ const populateCatalogForm = (item) => {
     document.getElementById("unit_price").value = item.Unit_Price || "";
 };
 
-/**
- * Load catalog item for edit
- */
 const loadCatalogForEdit = async (catalogId) => {
     try {
         console.log(`[API] Requesting item details for ID: ${catalogId}`);
@@ -205,7 +179,6 @@ const loadCatalogForEdit = async (catalogId) => {
             document.getElementById("form-title").textContent = `Edit Catalog Item (${item.Code_Prefix}-${String(item.Catalog_ID).padStart(3, '0')})`;
             document.getElementById("btnSubmit").textContent = "Update Item";
 
-            // Configure In-Modal Archive / Restore Button
             const btnArchive = document.getElementById("btnArchive");
             if (btnArchive) {
                 btnArchive.style.display = "inline-flex";
@@ -228,9 +201,6 @@ const loadCatalogForEdit = async (catalogId) => {
     }
 };
 
-/**
- * Save Catalog Item (Insert or Update via POST)
- */
 const saveCatalogItem = async () => {
     const catalogId = document.getElementById("catalog_id").value;
     const itemName = document.getElementById("item_name").value.trim();
@@ -284,9 +254,6 @@ const saveCatalogItem = async () => {
     }
 };
 
-/**
- * Reset form back to Add mode
- */
 const resetForm = () => {
     currentLoadedCatalog = null;
 
@@ -302,5 +269,3 @@ const resetForm = () => {
     document.getElementById("form-title").textContent = "Add New Charge Catalog Item";
     document.getElementById("btnSubmit").textContent = "Submit Item";
 };
-
-

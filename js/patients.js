@@ -1,9 +1,3 @@
-/**
- * Patient Master Directory Controller (Axios / Frontend)
- * Follows classroom pure HTML standard: dynamic table creation with border="1"
- * Includes Multi-Filter, Search, Sort, Soft/Hard Delete, and Console Logging
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
@@ -11,11 +5,9 @@ let allPatients = [];
 let currentLoadedPatient = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial Data Load
     loadPatientEnums();
     displayPatients();
 
-    // Modal & Form Controls
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", savePatient);
 
@@ -30,7 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Gender 'Other' dynamic specification input
     const genderSelect = document.getElementById("gender_id");
     if (genderSelect) {
         genderSelect.addEventListener("change", () => {
@@ -50,16 +41,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Search, Filter, and Sort Listeners
     document.getElementById("search_input").addEventListener("input", filterAndSortPatients);
     document.getElementById("filter_status").addEventListener("change", filterAndSortPatients);
     document.getElementById("filter_blood").addEventListener("change", filterAndSortPatients);
     document.getElementById("sort_by").addEventListener("change", filterAndSortPatients);
 });
 
-/**
- * Fetch lookup enums (Genders and Blood Types)
- */
 const loadPatientEnums = async () => {
     try {
         console.log("[API] Requesting: getPatientEnums");
@@ -100,9 +87,6 @@ const loadPatientEnums = async () => {
     }
 };
 
-/**
- * Fetch all patients from API
- */
 const displayPatients = async () => {
     const tableDiv = document.getElementById("table-div");
 
@@ -126,9 +110,6 @@ const displayPatients = async () => {
     }
 };
 
-/**
- * Search, Filter, and Sort patients
- */
 const filterAndSortPatients = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
@@ -158,7 +139,6 @@ const filterAndSortPatients = () => {
         return matchesSearch && matchesStatus && matchesBlood;
     });
 
-    // Sort logic
     filtered.sort((a, b) => {
         switch (sortBy) {
             case "code_asc":
@@ -184,9 +164,6 @@ const filterAndSortPatients = () => {
     displayPatientsTable(filtered);
 };
 
-/**
- * Render dynamic pure HTML table
- */
 const displayPatientsTable = (patients) => {
     const tableDiv = document.getElementById("table-div");
     tableDiv.innerHTML = "";
@@ -220,7 +197,6 @@ const displayPatientsTable = (patients) => {
         const fullName = `${pat.Last_Name}, ${pat.First_Name}`;
         const emContact = pat.Emergency_Contact_Name ? `${pat.Emergency_Contact_Name} (${pat.Emergency_Contact_Number || 'N/A'})` : 'None';
 
-        // Clinical Status Badge
         let statusBadge = "";
         if (!isActive) {
             statusBadge = '<span class="badge badge-danger">Archived</span>';
@@ -232,7 +208,6 @@ const displayPatientsTable = (patients) => {
             statusBadge = '<span class="badge badge-success">Active</span>';
         }
 
-        // Gender Display with specification
         let genderDisplay = pat.Gender_Name;
         if (pat.Gender_Specification) {
             genderDisplay += `<br><small class="text-muted">(${pat.Gender_Specification})</small>`;
@@ -259,9 +234,6 @@ const displayPatientsTable = (patients) => {
     tableDiv.appendChild(table);
 };
 
-/**
- * Populate form inputs from a patient object
- */
 const populatePatientForm = (p) => {
     document.getElementById("patient_id").value = p.Patient_ID || "";
     document.getElementById("first_name").value = p.First_Name || "";
@@ -274,7 +246,6 @@ const populatePatientForm = (p) => {
     document.getElementById("emergency_contact_name").value = p.Emergency_Contact_Name || "";
     document.getElementById("emergency_contact_number").value = p.Emergency_Contact_Number || "";
 
-    // Gender 'Other' handling
     const isOther = (p.Gender_ID == 3);
     const otherGroup = document.getElementById("gender_other_group");
     const specInput = document.getElementById("gender_specification");
@@ -282,9 +253,6 @@ const populatePatientForm = (p) => {
     if (specInput) specInput.value = p.Gender_Specification || "";
 };
 
-/**
- * Load patient for editing
- */
 const loadPatientForEdit = async (patientId) => {
     try {
         console.log(`[API] Requesting patient details for ID: ${patientId}`);
@@ -303,7 +271,6 @@ const loadPatientForEdit = async (patientId) => {
             document.getElementById("form-title").textContent = `Edit Patient (${p.Patient_Code})`;
             document.getElementById("btnSubmit").textContent = "Update Patient";
 
-            // Configure In-Modal Archive / Restore Button
             const btnArchive = document.getElementById("btnArchive");
             if (btnArchive) {
                 btnArchive.style.display = "inline-flex";
@@ -327,9 +294,6 @@ const loadPatientForEdit = async (patientId) => {
     }
 };
 
-/**
- * Save Patient (Insert or Update via POST)
- */
 const savePatient = async () => {
     const patientId = document.getElementById("patient_id").value;
     const firstName = document.getElementById("first_name").value.trim();
@@ -404,9 +368,6 @@ const savePatient = async () => {
     }
 };
 
-/**
- * Reset form back to register mode
- */
 const resetForm = () => {
     currentLoadedPatient = null;
 

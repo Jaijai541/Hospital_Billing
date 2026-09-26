@@ -10,10 +10,7 @@
 <body>
 
     <div class="app-wrapper">
-        <!-- Sidebar Navigation (Rendered from ../js/sidebar.js) -->
         <aside id="sidebar-container" class="sidebar"></aside>
-
-        <!-- Main Content -->
         <main class="main-content">
             <div class="page-header">
                 <div class="page-title">
@@ -22,8 +19,6 @@
                 </div>
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Room</button>
             </div>
-
-            <!-- Pop-Up Modal Window for Add / Edit Room -->
             <div id="formModal" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -67,14 +62,11 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Rooms Master List Card -->
             <div class="card">
                 <div class="card-header">
                     <h3>1. Hospital Rooms & Board Rates</h3>
                 </div>
                 <div class="card-body">
-                    <!-- Filter Toolbar -->
                     <div class="filter-bar">
                         <div class="form-group" style="min-width: 260px; max-width: 320px;">
                             <label class="form-label" for="search_input">Search Rooms</label>
@@ -108,8 +100,6 @@
                             </select>
                         </div>
                     </div>
-
-                    <!-- Table Container -->
                     <div class="table-responsive">
                         <div id="table-div">
                             <p style="padding: 20px;">Loading rooms...</p>
@@ -117,8 +107,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Individual Beds Inventory Card -->
             <div class="card">
                 <div class="card-header">
                     <h3>2. Real-Time Bed Availability & Inventory</h3>

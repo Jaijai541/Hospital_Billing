@@ -1,8 +1,3 @@
-/* ==========================================================================
-   Patients Page Specific Styles (Master File)
-   ========================================================================== */
-
-/* ── Patient Form Specifics ───────────────────────────────────── */
 #patient-form .form-grid {
     grid-template-columns: repeat(3, 1fr);
 }
@@ -19,7 +14,6 @@
     }
 }
 
-/* ── Emergency Contact Sub-section ───────────────────────────── */
 .emergency-contact-box {
     background-color: var(--primary-subtle);
     border: 1px dashed #bae6fd;

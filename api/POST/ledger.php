@@ -20,7 +20,6 @@ class LedgerManager
         try {
             $conn->beginTransaction();
 
-            // 1. Verify item is Medicine and get price
             $itemStmt = $conn->prepare("SELECT Item_Name, Unit_Price, Category_Type FROM Charge_Catalogs WHERE Catalog_ID = :cid");
             $itemStmt->execute([':cid' => $catalogId]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
@@ -30,7 +29,6 @@ class LedgerManager
                 return json_encode(['error' => 'Only medicines are eligible for return credits.']);
             }
 
-            // 2. Compute net dispensed quantity
             $qtyCheck = $conn->prepare("
                 SELECT 
                     COALESCE(SUM(CASE WHEN Transaction_Type = 'Charge' THEN Quantity ELSE 0 END), 0) AS Dispensed,
@@ -50,12 +48,10 @@ class LedgerManager
                 ]);
             }
 
-            // 3. Calculate negative credit
             $unitPrice = floatval($item['Unit_Price']);
             $negativeQty = -1.0 * $returnQty;
             $negativeCredit = -1.0 * ($returnQty * $unitPrice);
 
-            // 4. Post negative entry to Billing_Ledger (Station_ID = 1: Central Pharmacy)
             $postSql = "INSERT INTO Billing_Ledger 
                             (Admission_ID, Station_ID, Catalog_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
                         VALUES 

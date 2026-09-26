@@ -1,13 +1,7 @@
-/**
- * Hospital Dashboard Controller
- * Loads KPI metrics, active admissions snapshot, and handles session/logout
- */
-
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Session Verification
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
         window.location.href = "login.html";
@@ -20,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
         userDisplay.textContent = `${user.full_name || user.username} (${user.role_name || 'Staff'})`;
     }
     
-    // 2. Attach Logout
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
@@ -31,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 3. Load Dashboard Data & KPIs
     loadDashboardMetrics();
 });
 
@@ -39,30 +31,25 @@ async function loadDashboardMetrics() {
     console.log("dashboard.js: Fetching dashboard KPI metrics...");
 
     try {
-        // Fetch Active Admissions
         const admForm = new FormData();
         admForm.append('operation', 'getAllAdmissions');
         admForm.append('json', JSON.stringify({ status: 'Admitted' }));
         const admPromise = axios.post(`${getApiUrl}/admissions.php`, admForm);
 
-        // Fetch Vacant Beds
         const bedForm = new FormData();
         bedForm.append('operation', 'getAvailableBeds');
         const bedPromise = axios.post(`${getApiUrl}/admissions.php`, bedForm);
 
-        // Fetch Patients
         const patForm = new FormData();
         patForm.append('operation', 'getAllPatients');
         const patPromise = axios.post(`${getApiUrl}/patients.php`, patForm);
 
-        // Fetch Invoices
         const invForm = new FormData();
         invForm.append('operation', 'getAllInvoices');
         const invPromise = axios.post(`${getApiUrl}/invoices.php`, invForm);
 
         const [admRes, bedRes, patRes, invRes] = await Promise.all([admPromise, bedPromise, patPromise, invPromise]);
 
-        // Update Stat Cards
         const activeAdmissions = admRes.data || [];
         const availableBeds = bedRes.data || [];
         const patients = patRes.data || [];
@@ -73,7 +60,6 @@ async function loadDashboardMetrics() {
         document.getElementById('stat-total-patients').textContent = patients.length;
         document.getElementById('stat-total-invoices').textContent = invoices.length;
 
-        // Render Recent Active Admissions Table
         renderRecentAdmissions(activeAdmissions);
 
     } catch (err) {

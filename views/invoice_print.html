@@ -8,8 +8,6 @@
     <link rel="stylesheet" href="../css/invoice_print.css">
 </head>
 <body class="print-body">
-
-    <!-- Print and Navigation Toolbar (Hidden during printing) -->
     <div class="no-print print-toolbar">
         <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Official Invoice / SOA</button>
         <div class="print-toolbar-actions">
@@ -18,18 +16,13 @@
             <a href="index.html" class="btn btn-secondary btn-sm">Dashboard</a>
         </div>
     </div>
-
-    <!-- Printable Invoice Sheet -->
     <div class="invoice-sheet">
-        <!-- Official Hospital Letterhead -->
         <div class="hospital-header">
             <h2>METROPOLITAN GENERAL HOSPITAL & MEDICAL CENTER</h2>
             <p>123 Healthcare Avenue, Medical District, Metro Manila, Philippines</p>
             <p>Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
             <div class="doc-title">Official Statement of Account & In-Patient Billing Invoice</div>
         </div>
-
-        <!-- Invoice & Settlement Metadata Table -->
         <table class="soa-table">
             <thead>
                 <tr class="header-row">
@@ -57,8 +50,6 @@
                 </tr>
             </tbody>
         </table>
-
-        <!-- Patient Demographics Table -->
         <table class="soa-table">
             <thead>
                 <tr class="header-row">
@@ -98,16 +89,11 @@
                 </tr>
             </tbody>
         </table>
-
-        <!-- Itemized Statement of Charges (Categorized) -->
         <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--text-main); font-size: 15px; font-weight: 700;">ITEMIZED STATEMENT OF CHARGES & SERVICES</h4>
 
         <div id="itemized-charges-container">
-            <!-- Tables dynamically populated by JavaScript -->
             <p style="color: var(--text-muted); font-style: italic;">Loading itemized statement...</p>
         </div>
-
-        <!-- Financial Summary & Statutory Discount Table -->
         <table class="soa-summary-table" style="margin-top: 24px;">
             <thead>
                 <tr class="header-row" style="background-color: #f1f5f9;">
@@ -149,8 +135,6 @@
                 </tr>
             </tbody>
         </table>
-
-        <!-- Official Certification & Signatures Table -->
         <table class="signatures-table">
             <tr>
                 <td width="33%">

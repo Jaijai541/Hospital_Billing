@@ -27,10 +27,14 @@ const initAppSession = () => {
     if (logoutBtn && !logoutBtn.dataset.wired) {
         logoutBtn.dataset.wired = "true";
         logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to log out?")) {
+            showPopupConfirm("Are you sure you want to log out of your active session?", () => {
                 sessionStorage.removeItem("hospital_user");
                 window.location.href = "login.html";
-            }
+            }, null, {
+                title: "Confirm Logout",
+                confirmText: "Logout",
+                type: "warning"
+            });
         });
     }
 };
@@ -197,6 +201,110 @@ window.alert = (msg, callback) => {
     showPopupAlert(msg, null, null, callback);
 };
 
+const showPopupConfirm = (message, onConfirm = null, onCancel = null, options = {}) => {
+    if (typeof onConfirm === "object" && onConfirm !== null) {
+        options = onConfirm;
+        onConfirm = null;
+    }
+
+    return new Promise((resolve) => {
+        let type = options.type || "warning";
+        let title = options.title || "Confirmation";
+        let confirmText = options.confirmText || "Confirm";
+        let cancelText = options.cancelText || "Cancel";
+
+        let modal = document.getElementById("system-custom-confirm-modal");
+        if (!modal) {
+            modal = document.createElement("div");
+            modal.id = "system-custom-confirm-modal";
+            modal.className = "custom-alert-overlay";
+            modal.innerHTML = `
+                <div class="custom-alert-box">
+                    <div class="custom-alert-stripe"></div>
+                    <div class="custom-alert-header">
+                        <div class="custom-alert-title-group">
+                            <span class="custom-alert-icon"></span>
+                            <h3 class="custom-alert-title"></h3>
+                        </div>
+                        <button type="button" class="custom-alert-close" aria-label="Close dialog">&times;</button>
+                    </div>
+                    <div class="custom-alert-body">
+                        <p class="custom-alert-message"></p>
+                    </div>
+                    <div class="custom-alert-footer">
+                        <button type="button" class="btn btn-secondary custom-confirm-btn btn-confirm-cancel"></button>
+                        <button type="button" class="btn btn-primary custom-confirm-btn btn-confirm-ok"></button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        const box = modal.querySelector(".custom-alert-box");
+        const titleEl = modal.querySelector(".custom-alert-title");
+        const msgEl = modal.querySelector(".custom-alert-message");
+        const iconEl = modal.querySelector(".custom-alert-icon");
+        const closeBtn = modal.querySelector(".custom-alert-close");
+        const okBtn = modal.querySelector(".btn-confirm-ok");
+        const cancelBtn = modal.querySelector(".btn-confirm-cancel");
+
+        box.className = `custom-alert-box alert-type-${type}`;
+        titleEl.textContent = title;
+        msgEl.textContent = String(message || "");
+        okBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+
+        if (type === "danger") {
+            okBtn.className = "btn btn-danger custom-confirm-btn btn-confirm-ok";
+        } else if (type === "warning") {
+            okBtn.className = "btn btn-warning custom-confirm-btn btn-confirm-ok";
+        } else if (type === "success") {
+            okBtn.className = "btn btn-success custom-confirm-btn btn-confirm-ok";
+        } else {
+            okBtn.className = "btn btn-primary custom-confirm-btn btn-confirm-ok";
+        }
+
+        let iconText = "?";
+        if (type === "danger") iconText = "✕";
+        else if (type === "warning") iconText = "!";
+        else if (type === "success") iconText = "✓";
+        else if (type === "info") iconText = "ℹ";
+        iconEl.textContent = iconText;
+
+        const closeConfirmHandler = (confirmed) => {
+            modal.style.display = "none";
+            document.removeEventListener("keydown", keyHandler);
+            if (confirmed) {
+                if (onConfirm) onConfirm();
+                resolve(true);
+            } else {
+                if (onCancel) onCancel();
+                resolve(false);
+            }
+        };
+
+        const keyHandler = (e) => {
+            if (e.key === "Escape") {
+                e.preventDefault();
+                closeConfirmHandler(false);
+            }
+        };
+
+        closeBtn.onclick = () => closeConfirmHandler(false);
+        cancelBtn.onclick = () => closeConfirmHandler(false);
+        okBtn.onclick = () => closeConfirmHandler(true);
+        modal.onclick = (e) => {
+            if (e.target === modal) closeConfirmHandler(false);
+        };
+
+        document.addEventListener("keydown", keyHandler);
+        modal.style.display = "flex";
+        okBtn.focus();
+    });
+};
+
+window.showPopupConfirm = showPopupConfirm;
+
 const initModalControls = (modalId = "formModal", openBtnId = "btnOpenAddModal", closeBtnId = "btnCloseModal", cancelBtnId = "btnCancel", onReset = null) => {
     const btnOpen = document.getElementById(openBtnId);
     if (btnOpen) {
@@ -255,32 +363,37 @@ const getActionButtons = (id, isActive, name, editTitle = "Edit Record") => {
     `;
 };
 
-const toggleRecordStatus = async (apiFile, idKey, idVal, currentStatus, recordName, onDone) => {
+const toggleRecordStatus = (apiFile, idKey, idVal, currentStatus, recordName, onDone) => {
     const isArchiving = (currentStatus == 1);
     const actionText = isArchiving ? "send to the System Archive" : "restore from the System Archive";
     const note = isArchiving ? "\n\n(Archived records are kept safe so existing clinical logs and invoices remain intact)" : "";
 
-    if (!confirm(`Are you sure you want to ${actionText} "${recordName}"?${note}`)) {
-        return;
-    }
+    showPopupConfirm(`Are you sure you want to ${actionText} "${recordName}"?${note}`, async () => {
+        const formData = new FormData();
+        formData.append("operation", "toggleStatus");
+        formData.append("json", JSON.stringify({ [idKey]: idVal }));
 
-    const formData = new FormData();
-    formData.append("operation", "toggleStatus");
-    formData.append("json", JSON.stringify({ [idKey]: idVal }));
-
-    try {
-        const postUrl = (typeof postApiUrl !== "undefined") ? postApiUrl : "../api/POST";
-        const response = await axios.post(`${postUrl}/${apiFile}`, formData);
-        if (response.data == 1) {
-            if (onDone) {
-                onDone();
+        try {
+            const postUrl = (typeof postApiUrl !== "undefined") ? postApiUrl : "../api/POST";
+            const response = await axios.post(`${postUrl}/${apiFile}`, formData);
+            if (response.data == 1) {
+                const pastAction = isArchiving ? "sent to the System Archive" : "restored from the System Archive";
+                alert(`"${recordName}" was successfully ${pastAction}.`, () => {
+                    if (onDone) {
+                        onDone();
+                    }
+                });
+            } else {
+                alert("Error updating record status.");
             }
-        } else {
-            alert("Error updating record status.");
+        } catch (err) {
+            alert("Server error during status update.");
         }
-    } catch (err) {
-        alert("Server error during status update.");
-    }
+    }, null, {
+        title: isArchiving ? "Archive Record" : "Restore Record",
+        type: isArchiving ? "warning" : "info",
+        confirmText: isArchiving ? "Send to Archive" : "Restore"
+    });
 };
 
 document.addEventListener("DOMContentLoaded", () => {

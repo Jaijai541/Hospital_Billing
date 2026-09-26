@@ -16,31 +16,32 @@ window.openChart = openChart;
 const dischargePatient = (admissionId, patientName) => {
     console.log("admissions.js: Initiating discharge for admission ID:", admissionId);
 
-    const confirmed = confirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`);
-    if (!confirmed) {
-        return;
-    }
+    showPopupConfirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`, () => {
+        const formData = new FormData();
+        formData.append('operation', 'dischargePatient');
+        formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    const formData = new FormData();
-    formData.append('operation', 'dischargePatient');
-    formData.append('json', JSON.stringify({ admission_id: admissionId }));
-
-    axios.post(`${postApiUrl}/admissions.php`, formData)
-        .then(response => {
-            console.log("admissions.js: Discharge response:", response.data);
-            if (response.data.success) {
-                alert(response.data.message);
-                loadBeds();
-                loadPatients();
-                loadAdmissions();
-            } else {
-                alert("Discharge Error: " + (response.data.error || "Unknown error"));
-            }
-        })
-        .catch(err => {
-            console.error("admissions.js: Error discharging patient:", err);
-            alert("Network error discharging patient.");
-        });
+        axios.post(`${postApiUrl}/admissions.php`, formData)
+            .then(response => {
+                console.log("admissions.js: Discharge response:", response.data);
+                if (response.data.success) {
+                    alert(response.data.message);
+                    loadBeds();
+                    loadPatients();
+                    loadAdmissions();
+                } else {
+                    alert("Discharge Error: " + (response.data.error || "Unknown error"));
+                }
+            })
+            .catch(err => {
+                console.error("admissions.js: Error discharging patient:", err);
+                alert("Network error discharging patient.");
+            });
+    }, null, {
+        title: "Confirm Clinical Discharge",
+        confirmText: "Discharge Patient",
+        type: "warning"
+    });
 };
 
 window.dischargePatient = dischargePatient;
@@ -367,9 +368,14 @@ const submitAdmission = () => {
                 loadBeds();
                 loadPatients();
                 loadAdmissions();
-                if (confirm("Patient admitted! Would you like to open their clinical chart and ledger now?")) {
+                showPopupConfirm("Patient admitted! Would you like to open their clinical chart and ledger now?", () => {
                     openChart(response.data.admission_id);
-                }
+                }, null, {
+                    title: "Admission Confirmed",
+                    confirmText: "Open Chart",
+                    cancelText: "Stay Here",
+                    type: "success"
+                });
             } else {
                 alert("Admission Error: " + (response.data.error || "Unknown error occurred."));
             }

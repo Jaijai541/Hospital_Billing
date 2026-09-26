@@ -301,30 +301,33 @@ const loadAdmissionDetails = () => {
 }
 
 const dischargePatientFromChart = (admId, patientName) => {
-    const confirmed = confirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`);
-    if (!confirmed) return;
+    showPopupConfirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`, () => {
+        const formData = new FormData();
+        formData.append('operation', 'dischargePatient');
+        formData.append('json', JSON.stringify({ admission_id: admId }));
 
-    const formData = new FormData();
-    formData.append('operation', 'dischargePatient');
-    formData.append('json', JSON.stringify({ admission_id: admId }));
-
-    axios.post(`${postApiUrl}/admissions.php`, formData)
-        .then(response => {
-            if (response.data.success) {
-                alert(response.data.message);
-                loadAdmissionDetails();
-                loadBedHistory();
-                loadLedger();
-                loadLedgerSummary();
-            } else {
-                alert("Discharge Error: " + (response.data.error || "Unknown error"));
-            }
-        })
-        .catch(err => {
-            console.error("admission_details.js: Error discharging patient:", err);
-            alert("Network error discharging patient.");
-        });
-}
+        axios.post(`${postApiUrl}/admissions.php`, formData)
+            .then(response => {
+                if (response.data.success) {
+                    alert(response.data.message);
+                    loadAdmissionDetails();
+                    loadBedHistory();
+                    loadLedger();
+                    loadLedgerSummary();
+                } else {
+                    alert("Discharge Error: " + (response.data.error || "Unknown error"));
+                }
+            })
+            .catch(err => {
+                console.error("admission_details.js: Error discharging patient:", err);
+                alert("Network error discharging patient.");
+            });
+    }, null, {
+        title: "Confirm Clinical Discharge",
+        confirmText: "Discharge Patient",
+        type: "warning"
+    });
+};
 
 const populateAssignedDoctorDropdowns = () => {
     filterOrderDoctors();
@@ -561,57 +564,61 @@ const submitDoctorOrder = () => {
 window.administerOrder = (requestId) => {
     console.log("admission_details.js: Administering order ID:", requestId);
 
-    if (!confirm("Confirm administration / dispensation of this order?\n\nThis will mark the order as 'Administered' and automatically post the charge to the Live Billing Ledger.")) {
-        return;
-    }
+    showPopupConfirm("Confirm administration / dispensation of this order?\n\nThis will mark the order as 'Administered' and automatically post the charge to the Live Billing Ledger.", () => {
+        const formData = new FormData();
+        formData.append('operation', 'administerOrder');
+        formData.append('json', JSON.stringify({ request_id: requestId }));
 
-    const formData = new FormData();
-    formData.append('operation', 'administerOrder');
-    formData.append('json', JSON.stringify({ request_id: requestId }));
-
-    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
-        .then(response => {
-            console.log("admission_details.js: Administer response:", response.data);
-            if (response.data.success) {
-                alert(response.data.message);
-                loadOrders();
-                loadLedger();
-                loadLedgerSummary();
-                loadDispensedMedicines();
-            } else {
-                alert("Administer Error: " + (response.data.error || "Unknown error."));
-            }
-        })
-        .catch(err => {
-            console.error("admission_details.js: Error administering order:", err);
-            alert("Network error administering order.");
-        });
+        axios.post(`${postApiUrl}/clinical_orders.php`, formData)
+            .then(response => {
+                console.log("admission_details.js: Administer response:", response.data);
+                if (response.data.success) {
+                    alert(response.data.message);
+                    loadOrders();
+                    loadLedger();
+                    loadLedgerSummary();
+                    loadDispensedMedicines();
+                } else {
+                    alert("Administer Error: " + (response.data.error || "Unknown error."));
+                }
+            })
+            .catch(err => {
+                console.error("admission_details.js: Error administering order:", err);
+                alert("Network error administering order.");
+            });
+    }, null, {
+        title: "Confirm Administration",
+        confirmText: "Administer",
+        type: "info"
+    });
 };
 
 window.cancelOrder = (requestId) => {
     console.log("admission_details.js: Cancelling order ID:", requestId);
 
-    if (!confirm("Are you sure you want to cancel this pending order?")) {
-        return;
-    }
+    showPopupConfirm("Are you sure you want to cancel this pending order?", () => {
+        const formData = new FormData();
+        formData.append('operation', 'cancelOrder');
+        formData.append('json', JSON.stringify({ request_id: requestId }));
 
-    const formData = new FormData();
-    formData.append('operation', 'cancelOrder');
-    formData.append('json', JSON.stringify({ request_id: requestId }));
-
-    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
-        .then(response => {
-            if (response.data.success) {
-                alert(response.data.message);
-                loadOrders();
-            } else {
-                alert("Cancel Error: " + (response.data.error || "Unknown error."));
-            }
-        })
-        .catch(err => {
-            console.error("admission_details.js: Error cancelling order:", err);
-            alert("Network error cancelling order.");
-        });
+        axios.post(`${postApiUrl}/clinical_orders.php`, formData)
+            .then(response => {
+                if (response.data.success) {
+                    alert(response.data.message);
+                    loadOrders();
+                } else {
+                    alert("Cancel Error: " + (response.data.error || "Unknown error."));
+                }
+            })
+            .catch(err => {
+                console.error("admission_details.js: Error cancelling order:", err);
+                alert("Network error cancelling order.");
+            });
+    }, null, {
+        title: "Cancel Order",
+        confirmText: "Cancel Order",
+        type: "warning"
+    });
 };
 
 const loadRounds = () => {
@@ -831,41 +838,43 @@ const submitBedTransfer = () => {
         return;
     }
 
-    if (!confirm("Are you sure you want to transfer this patient to the selected bed?\n\nThis will automatically calculate the prior bed stay, post the room fee to the Live Billing Ledger, free the old bed, and occupy the new bed.")) {
-        return;
-    }
+    showPopupConfirm("Are you sure you want to transfer this patient to the selected bed?\n\nThis will automatically calculate the prior bed stay, post the room fee to the Live Billing Ledger, free the old bed, and occupy the new bed.", () => {
+        const payload = {
+            admission_id: admissionId,
+            new_bed_id: newBedId
+        };
 
-    const payload = {
-        admission_id: admissionId,
-        new_bed_id: newBedId
-    };
+        const formData = new FormData();
+        formData.append('operation', 'transferBed');
+        formData.append('json', JSON.stringify(payload));
 
-    const formData = new FormData();
-    formData.append('operation', 'transferBed');
-    formData.append('json', JSON.stringify(payload));
-
-    axios.post(`${postApiUrl}/admissions.php`, formData)
-        .then(response => {
-            console.log("admission_details.js: Bed transfer response:", response.data);
-            if (response.data.success) {
-                alert(response.data.message);
-                if (document.getElementById('transfer_bed_search')) {
-                    document.getElementById('transfer_bed_search').value = '';
+        axios.post(`${postApiUrl}/admissions.php`, formData)
+            .then(response => {
+                console.log("admission_details.js: Bed transfer response:", response.data);
+                if (response.data.success) {
+                    alert(response.data.message);
+                    if (document.getElementById('transfer_bed_search')) {
+                        document.getElementById('transfer_bed_search').value = '';
+                    }
+                    loadAdmissionDetails();
+                    loadTransfers();
+                    loadAvailableBeds();
+                    loadLedger();
+                    loadLedgerSummary();
+                } else {
+                    alert("Transfer Error: " + (response.data.error || "Failed to transfer bed."));
                 }
-                loadAdmissionDetails();
-                loadTransfers();
-                loadAvailableBeds();
-                loadLedger();
-                loadLedgerSummary();
-            } else {
-                alert("Transfer Error: " + (response.data.error || "Failed to transfer bed."));
-            }
-        })
-        .catch(err => {
-            console.error("admission_details.js: Error transferring bed:", err);
-            alert("Network error transferring bed.");
-        });
-}
+            })
+            .catch(err => {
+                console.error("admission_details.js: Error transferring bed:", err);
+                alert("Network error transferring bed.");
+            });
+    }, null, {
+        title: "Confirm Bed Transfer",
+        confirmText: "Transfer Bed",
+        type: "warning"
+    });
+};
 
 const loadLedger = () => {
     console.log("admission_details.js: Loading billing ledger for admission ID:", admissionId);
@@ -1057,41 +1066,40 @@ const submitMedicineReturn = () => {
         return;
     }
 
-    if (!confirm(`Confirm return of ${qty} unit(s)?\n\nThis will post a negative credit adjustment to the Live Billing Ledger.`)) {
-        return;
-    }
+    const returnMsg = `Confirm return of ${qty} unit(s)?\n\nThis will post a negative credit adjustment to the Live Billing Ledger.`;
+    showPopupConfirm(returnMsg, () => {
+        const payload = {
+            admission_id: admissionId,
+            catalog_id: catalogId,
+            quantity: qty
+        };
 
-    const payload = {
-        admission_id: admissionId,
-        catalog_id: catalogId,
-        quantity: qty
-    };
+        const formData = new FormData();
+        formData.append('operation', 'returnMedicine');
+        formData.append('json', JSON.stringify(payload));
 
-    const formData = new FormData();
-    formData.append('operation', 'returnMedicine');
-    formData.append('json', JSON.stringify(payload));
-
-    axios.post(`${postApiUrl}/ledger.php`, formData)
-        .then(response => {
-            console.log("admission_details.js: Return medicine response:", response.data);
-            if (response.data.success) {
-                alert(response.data.message);
-                if (document.getElementById('return_catalog_search')) {
-                    document.getElementById('return_catalog_search').value = '';
+        axios.post(`${postApiUrl}/ledger.php`, formData)
+            .then(response => {
+                console.log("admission_details.js: Return medicine response:", response.data);
+                if (response.data.success) {
+                    alert(response.data.message);
+                    if (document.getElementById('return_catalog_search')) {
+                        document.getElementById('return_catalog_search').value = '';
+                    }
+                    loadLedger();
+                    loadLedgerSummary();
+                    loadDispensedMedicines();
+                    document.getElementById('return_qty').value = '1';
+                } else {
+                    alert("Return Error: " + (response.data.error || "Failed to process return."));
                 }
-                loadLedger();
-                loadLedgerSummary();
-                loadDispensedMedicines();
-                document.getElementById('return_qty').value = '1';
-            } else {
-                alert("Return Error: " + (response.data.error || "Failed to process return."));
-            }
-        })
-        .catch(err => {
-            console.error("admission_details.js: Error processing return:", err);
-            alert("Network error processing medicine return.");
-        });
-}
+            })
+            .catch(err => {
+                console.error("admission_details.js: Error processing return:", err);
+                alert("Network error processing medicine return.");
+            });
+    }, null, { title: 'Confirm Medicine Return', confirmText: 'Process Return', type: 'warning' });
+};
 
 const loadDiscounts = () => {
     console.log("admission_details.js: Fetching discount options...");
@@ -1202,35 +1210,34 @@ const submitSettlement = () => {
     const discountSelect = document.getElementById('settle_discount_id');
     const discountId = discountSelect ? discountSelect.value : null;
 
-    if (!confirm("Are you sure you want to finalize this billing settlement?\n\nThis will record the official Final Invoice, calculate statutory discounts, release the bed (if active), and mark the admission as 'Billed'.")) {
-        return;
-    }
+    const settlementMsg = "Are you sure you want to finalize this billing settlement?\n\nThis will record the official Final Invoice, calculate statutory discounts, release the bed (if active), and mark the admission as 'Billed'.";
+    showPopupConfirm(settlementMsg, () => {
+        const payload = {
+            admission_id: admissionId,
+            user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 1) : 1,
+            discount_id: discountId
+        };
 
-    const payload = {
-        admission_id: admissionId,
-        user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 1) : 1,
-        discount_id: discountId
-    };
+        console.log("admission_details.js: Settlement payload:", payload);
 
-    console.log("admission_details.js: Settlement payload:", payload);
+        const formData = new FormData();
+        formData.append('operation', 'settleInvoice');
+        formData.append('json', JSON.stringify(payload));
 
-    const formData = new FormData();
-    formData.append('operation', 'settleInvoice');
-    formData.append('json', JSON.stringify(payload));
-
-    axios.post(`${postApiUrl}/invoices.php`, formData)
-        .then(response => {
-            console.log("admission_details.js: Settlement response:", response.data);
-            if (response.data.success) {
-                alert(response.data.message, () => {
-                    window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
-                });
-            } else {
-                alert("Settlement Error: " + (response.data.error || "Failed to settle bill."));
-            }
-        })
-        .catch(err => {
-            console.error("admission_details.js: Error during settlement:", err);
-            alert("Network error processing settlement.");
-        });
-}
+        axios.post(`${postApiUrl}/invoices.php`, formData)
+            .then(response => {
+                console.log("admission_details.js: Settlement response:", response.data);
+                if (response.data.success) {
+                    alert(response.data.message, () => {
+                        window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
+                    });
+                } else {
+                    alert("Settlement Error: " + (response.data.error || "Failed to settle bill."));
+                }
+            })
+            .catch(err => {
+                console.error("admission_details.js: Error during settlement:", err);
+                alert("Network error processing settlement.");
+            });
+    }, null, { title: 'Finalize Billing Settlement', confirmText: 'Finalize & Settle', type: 'warning' });
+};

@@ -99,10 +99,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to log out?")) {
+            showPopupConfirm("Are you sure you want to log out of your active session?", () => {
                 sessionStorage.removeItem("hospital_user");
                 window.location.href = "login.html";
-            }
+            }, null, {
+                title: "Confirm Logout",
+                confirmText: "Logout",
+                type: "warning"
+            });
         });
     }
 

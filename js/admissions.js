@@ -6,86 +6,46 @@ let availableBeds = [];
 let activePatients = [];
 let activeDoctors = [];
 
-window.addEventListener('DOMContentLoaded', () => {
-    console.log("admissions.js: Initializing In-Patient Admissions view...");
+const openChart = (admissionId) => {
+    console.log("admissions.js: Navigating to admission chart ID:", admissionId);
+    window.location.href = `admission_details.html?id=${admissionId}`;
+};
 
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        console.warn("admissions.js: Unauthenticated session. Redirecting to login.");
-        window.location.href = "login.html";
+window.openChart = openChart;
+
+const dischargePatient = (admissionId, patientName) => {
+    console.log("admissions.js: Initiating discharge for admission ID:", admissionId);
+
+    const confirmed = confirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`);
+    if (!confirmed) {
         return;
     }
 
-    const currentUser = JSON.parse(userJson);
-    const userDisplay = document.getElementById('user-display');
-    if (userDisplay) {
-        userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
-    }
-
-    const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            console.log("admissions.js: Logging out...");
-            sessionStorage.removeItem("hospital_user");
-            window.location.href = "login.html";
-        });
-    }
-
-    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
-    document.getElementById('btnSubmitAdmit').addEventListener('click', submitAdmission);
-    document.getElementById('btnRefresh').addEventListener('click', () => {
-        loadBeds();
-        loadPatients();
-        loadAdmissions();
-    });
-
-    document.getElementById('search_input').addEventListener('input', () => {
-        filterAndRenderTable();
-    });
-
-    document.getElementById('filter_status').addEventListener('change', () => {
-        loadAdmissions();
-    });
-
-    const patSearch = document.getElementById('patient_search_input');
-    if (patSearch) {
-        patSearch.addEventListener('input', populatePatientDropdown);
-    }
-
-    const bedSearch = document.getElementById('bed_search_input');
-    if (bedSearch) {
-        bedSearch.addEventListener('input', populateBedDropdown);
-    }
-
-    const docSearch = document.getElementById('doctor_search_input');
-    if (docSearch) {
-        docSearch.addEventListener('input', filterDoctorsCheckboxes);
-    }
-
-    loadPatients();
-    loadBeds();
-    loadDoctors();
-    loadAdmissions();
-});
-
-function loadPatients() {
-    console.log("admissions.js: Fetching active patients...");
     const formData = new FormData();
-    formData.append('operation', 'getActivePatients');
+    formData.append('operation', 'dischargePatient');
+    formData.append('json', JSON.stringify({ admission_id: admissionId }));
 
-    axios.post(`${getApiUrl}/admissions.php`, formData)
+    axios.post(`${postApiUrl}/admissions.php`, formData)
         .then(response => {
-            console.log("admissions.js: Active patients received:", response.data);
-            activePatients = response.data;
-            populatePatientDropdown();
+            console.log("admissions.js: Discharge response:", response.data);
+            if (response.data.success) {
+                alert(response.data.message);
+                loadBeds();
+                loadPatients();
+                loadAdmissions();
+            } else {
+                alert("Discharge Error: " + (response.data.error || "Unknown error"));
+            }
         })
         .catch(err => {
-            console.error("admissions.js: Error fetching active patients:", err);
-            alert("Failed to load active patients list.");
+            console.error("admissions.js: Error discharging patient:", err);
+            alert("Network error discharging patient.");
         });
-}
+};
 
-function populatePatientDropdown() {
+window.dischargePatient = dischargePatient;
+
+const populatePatientDropdown = () => {
     const select = document.getElementById('patient_id');
     const query = (document.getElementById('patient_search_input')?.value || '').toLowerCase().trim();
     select.innerHTML = '<option value="">-- Select Patient --</option>';
@@ -115,26 +75,26 @@ function populatePatientDropdown() {
         option.textContent = `${p.Patient_Code} — ${p.Full_Name} (${p.Gender_Name || 'N/A'}, Blood: ${p.Blood_Type_Name || 'N/A'})${note}`;
         select.appendChild(option);
     });
-}
+};
 
-function loadBeds() {
-    console.log("admissions.js: Fetching vacant beds...");
+const loadPatients = () => {
+    console.log("admissions.js: Fetching active patients...");
     const formData = new FormData();
-    formData.append('operation', 'getAvailableBeds');
+    formData.append('operation', 'getActivePatients');
 
     axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
-            console.log("admissions.js: Vacant beds received:", response.data);
-            availableBeds = response.data;
-            populateBedDropdown();
+            console.log("admissions.js: Active patients received:", response.data);
+            activePatients = response.data;
+            populatePatientDropdown();
         })
         .catch(err => {
-            console.error("admissions.js: Error fetching vacant beds:", err);
-            alert("Failed to load vacant beds.");
+            console.error("admissions.js: Error fetching active patients:", err);
+            alert("Failed to load active patients list.");
         });
-}
+};
 
-function populateBedDropdown() {
+const populateBedDropdown = () => {
     const select = document.getElementById('bed_id');
     const query = (document.getElementById('bed_search_input')?.value || '').toLowerCase().trim();
     select.innerHTML = '<option value="">-- Select Vacant Bed --</option>';
@@ -161,26 +121,35 @@ function populateBedDropdown() {
         option.textContent = `Bed: ${b.Bed_Code} | Room: ${b.Room_Name} (${b.Room_Type}) — ₱${parseFloat(b.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day`;
         select.appendChild(option);
     });
-}
+};
 
-function loadDoctors() {
-    console.log("admissions.js: Fetching active physicians...");
+const loadBeds = () => {
+    console.log("admissions.js: Fetching vacant beds...");
     const formData = new FormData();
-    formData.append('operation', 'getActiveDoctors');
+    formData.append('operation', 'getAvailableBeds');
 
     axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
-            console.log("admissions.js: Active physicians received:", response.data);
-            activeDoctors = response.data;
-            populateDoctorsCheckboxes();
+            console.log("admissions.js: Vacant beds received:", response.data);
+            availableBeds = response.data;
+            populateBedDropdown();
         })
         .catch(err => {
-            console.error("admissions.js: Error fetching active doctors:", err);
-            alert("Failed to load physicians.");
+            console.error("admissions.js: Error fetching vacant beds:", err);
+            alert("Failed to load vacant beds.");
         });
-}
+};
 
-function populateDoctorsCheckboxes() {
+const filterDoctorsCheckboxes = () => {
+    const query = (document.getElementById('doctor_search_input')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#doctors_container .doctor-row');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!query || text.includes(query)) ? '' : 'none';
+    });
+};
+
+const populateDoctorsCheckboxes = () => {
     const container = document.getElementById('doctors_container');
     container.innerHTML = '';
 
@@ -212,58 +181,26 @@ function populateDoctorsCheckboxes() {
     });
 
     filterDoctorsCheckboxes();
-}
+};
 
-function filterDoctorsCheckboxes() {
-    const query = (document.getElementById('doctor_search_input')?.value || '').toLowerCase().trim();
-    const rows = document.querySelectorAll('#doctors_container .doctor-row');
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = (!query || text.includes(query)) ? '' : 'none';
-    });
-}
-
-function loadAdmissions() {
-    console.log("admissions.js: Loading admissions list...");
-    const status = document.getElementById('filter_status').value;
-    const search = document.getElementById('search_input').value;
-
+const loadDoctors = () => {
+    console.log("admissions.js: Fetching active physicians...");
     const formData = new FormData();
-    formData.append('operation', 'getAllAdmissions');
-    formData.append('json', JSON.stringify({ status: status, search: search }));
+    formData.append('operation', 'getActiveDoctors');
 
     axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
-            console.log("admissions.js: Admissions received:", response.data);
-            allAdmissions = response.data;
-            renderAdmissionsTable(allAdmissions);
+            console.log("admissions.js: Active physicians received:", response.data);
+            activeDoctors = response.data;
+            populateDoctorsCheckboxes();
         })
         .catch(err => {
-            console.error("admissions.js: Error fetching admissions:", err);
-            alert("Failed to load admissions.");
+            console.error("admissions.js: Error fetching active doctors:", err);
+            alert("Failed to load physicians.");
         });
-}
+};
 
-function filterAndRenderTable() {
-    const query = document.getElementById('search_input').value.toLowerCase().trim();
-    if (!query) {
-        renderAdmissionsTable(allAdmissions);
-        return;
-    }
-
-    const filtered = allAdmissions.filter(a => {
-        return (a.Patient_Name && a.Patient_Name.toLowerCase().includes(query)) ||
-               (a.Patient_Code && a.Patient_Code.toLowerCase().includes(query)) ||
-               (a.Bed_Code && a.Bed_Code.toLowerCase().includes(query)) ||
-               (a.Chief_Complaint && a.Chief_Complaint.toLowerCase().includes(query)) ||
-               (a.Diagnosis && a.Diagnosis.toLowerCase().includes(query)) ||
-               (a.Admission_ID && a.Admission_ID.toString().includes(query));
-    });
-
-    renderAdmissionsTable(filtered);
-}
-
-function renderAdmissionsTable(admissions) {
+const renderAdmissionsTable = (admissions) => {
     const tableDiv = document.getElementById('table-div');
 
     if (!admissions || admissions.length === 0) {
@@ -316,9 +253,66 @@ function renderAdmissionsTable(admissions) {
 
     html += '</tbody></table>';
     tableDiv.innerHTML = html;
-}
+};
 
-function submitAdmission() {
+const filterAndRenderTable = () => {
+    const query = document.getElementById('search_input').value.toLowerCase().trim();
+    if (!query) {
+        renderAdmissionsTable(allAdmissions);
+        return;
+    }
+
+    const filtered = allAdmissions.filter(a => {
+        return (a.Patient_Name && a.Patient_Name.toLowerCase().includes(query)) ||
+               (a.Patient_Code && a.Patient_Code.toLowerCase().includes(query)) ||
+               (a.Bed_Code && a.Bed_Code.toLowerCase().includes(query)) ||
+               (a.Chief_Complaint && a.Chief_Complaint.toLowerCase().includes(query)) ||
+               (a.Diagnosis && a.Diagnosis.toLowerCase().includes(query)) ||
+               (a.Admission_ID && a.Admission_ID.toString().includes(query));
+    });
+
+    renderAdmissionsTable(filtered);
+};
+
+const loadAdmissions = () => {
+    console.log("admissions.js: Loading admissions list...");
+    const status = document.getElementById('filter_status').value;
+    const search = document.getElementById('search_input').value;
+
+    const formData = new FormData();
+    formData.append('operation', 'getAllAdmissions');
+    formData.append('json', JSON.stringify({ status: status, search: search }));
+
+    axios.post(`${getApiUrl}/admissions.php`, formData)
+        .then(response => {
+            console.log("admissions.js: Admissions received:", response.data);
+            allAdmissions = response.data;
+            renderAdmissionsTable(allAdmissions);
+        })
+        .catch(err => {
+            console.error("admissions.js: Error fetching admissions:", err);
+            alert("Failed to load admissions.");
+        });
+};
+
+const resetForm = () => {
+    if (document.getElementById('patient_search_input')) document.getElementById('patient_search_input').value = '';
+    if (document.getElementById('bed_search_input')) document.getElementById('bed_search_input').value = '';
+    if (document.getElementById('doctor_search_input')) document.getElementById('doctor_search_input').value = '';
+
+    document.getElementById('patient_id').value = '';
+    document.getElementById('chief_complaint').value = '';
+    if (document.getElementById('diagnosis')) document.getElementById('diagnosis').value = '';
+    document.getElementById('bed_id').value = '';
+    const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
+    checkedBoxes.forEach(cb => cb.checked = false);
+
+    populatePatientDropdown();
+    populateBedDropdown();
+    filterDoctorsCheckboxes();
+};
+
+const submitAdmission = () => {
     console.log("admissions.js: Processing admission submission...");
 
     const patientId = document.getElementById('patient_id').value;
@@ -384,56 +378,66 @@ function submitAdmission() {
             console.error("admissions.js: Error admitting patient:", err);
             alert("Network or server error while admitting patient.");
         });
-}
-
-function resetForm() {
-    if (document.getElementById('patient_search_input')) document.getElementById('patient_search_input').value = '';
-    if (document.getElementById('bed_search_input')) document.getElementById('bed_search_input').value = '';
-    if (document.getElementById('doctor_search_input')) document.getElementById('doctor_search_input').value = '';
-
-    document.getElementById('patient_id').value = '';
-    document.getElementById('chief_complaint').value = '';
-    if (document.getElementById('diagnosis')) document.getElementById('diagnosis').value = '';
-    document.getElementById('bed_id').value = '';
-    const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
-    checkedBoxes.forEach(cb => cb.checked = false);
-
-    populatePatientDropdown();
-    populateBedDropdown();
-    filterDoctorsCheckboxes();
-}
-
-window.openChart = function(admissionId) {
-    console.log("admissions.js: Navigating to admission chart ID:", admissionId);
-    window.location.href = `admission_details.html?id=${admissionId}`;
 };
 
-window.dischargePatient = function(admissionId, patientName) {
-    console.log("admissions.js: Initiating discharge for admission ID:", admissionId);
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("admissions.js: Initializing In-Patient Admissions view...");
 
-    const confirmed = confirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`);
-    if (!confirmed) {
+    const userJson = sessionStorage.getItem("hospital_user");
+    if (!userJson) {
+        console.warn("admissions.js: Unauthenticated session. Redirecting to login.");
+        window.location.href = "login.html";
         return;
     }
 
-    const formData = new FormData();
-    formData.append('operation', 'dischargePatient');
-    formData.append('json', JSON.stringify({ admission_id: admissionId }));
+    const currentUser = JSON.parse(userJson);
+    const userDisplay = document.getElementById('user-display');
+    if (userDisplay) {
+        userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
+    }
 
-    axios.post(`${postApiUrl}/admissions.php`, formData)
-        .then(response => {
-            console.log("admissions.js: Discharge response:", response.data);
-            if (response.data.success) {
-                alert(response.data.message);
-                loadBeds();
-                loadPatients();
-                loadAdmissions();
-            } else {
-                alert("Discharge Error: " + (response.data.error || "Unknown error"));
-            }
-        })
-        .catch(err => {
-            console.error("admissions.js: Error discharging patient:", err);
-            alert("Network error discharging patient.");
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            console.log("admissions.js: Logging out...");
+            sessionStorage.removeItem("hospital_user");
+            window.location.href = "login.html";
         });
-};
+    }
+
+    initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
+    document.getElementById('btnSubmitAdmit').addEventListener('click', submitAdmission);
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+        loadBeds();
+        loadPatients();
+        loadAdmissions();
+    });
+
+    document.getElementById('search_input').addEventListener('input', () => {
+        filterAndRenderTable();
+    });
+
+    document.getElementById('filter_status').addEventListener('change', () => {
+        loadAdmissions();
+    });
+
+    const patSearch = document.getElementById('patient_search_input');
+    if (patSearch) {
+        patSearch.addEventListener('input', populatePatientDropdown);
+    }
+
+    const bedSearch = document.getElementById('bed_search_input');
+    if (bedSearch) {
+        bedSearch.addEventListener('input', populateBedDropdown);
+    }
+
+    const docSearch = document.getElementById('doctor_search_input');
+    if (docSearch) {
+        docSearch.addEventListener('input', filterDoctorsCheckboxes);
+    }
+
+    loadPatients();
+    loadBeds();
+    loadDoctors();
+    loadAdmissions();
+});

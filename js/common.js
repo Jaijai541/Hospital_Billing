@@ -95,7 +95,7 @@ const closeModal = (modalId = "formModal") => {
 };
 
 const showPopupAlert = (message, type = null, title = null, callback = null) => {
-    if (callback === null && typeof type === "function") {
+    if (callback === null && type instanceof Function) {
         callback = type;
         type = null;
     }

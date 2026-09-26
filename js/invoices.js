@@ -3,74 +3,7 @@ const postApiUrl = "../api/POST";
 
 let allInvoices = [];
 
-window.addEventListener('DOMContentLoaded', () => {
-    console.log("invoices.js: Initializing Invoices view...");
-
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        console.warn("invoices.js: Unauthenticated session. Redirecting to login.");
-        window.location.href = "login.html";
-        return;
-    }
-
-    const currentUser = JSON.parse(userJson);
-    const userDisplay = document.getElementById('user-display');
-    if (userDisplay) {
-        userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
-    }
-
-    const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            console.log("invoices.js: Logging out...");
-            sessionStorage.removeItem("hospital_user");
-            window.location.href = "login.html";
-        });
-    }
-
-    document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
-    document.getElementById('btnRefresh').addEventListener('click', loadInvoices);
-
-    loadInvoices();
-});
-
-function loadInvoices() {
-    console.log("invoices.js: Fetching all settled invoices...");
-
-    const formData = new FormData();
-    formData.append('operation', 'getAllInvoices');
-
-    axios.post(`${getApiUrl}/invoices.php`, formData)
-        .then(response => {
-            console.log("invoices.js: Invoices received:", response.data);
-            allInvoices = response.data || [];
-            filterAndRenderInvoices();
-        })
-        .catch(err => {
-            console.error("invoices.js: Error fetching invoices:", err);
-            alert("Failed to load invoices.");
-        });
-}
-
-function filterAndRenderInvoices() {
-    const query = document.getElementById('search_input').value.toLowerCase().trim();
-
-    if (!query) {
-        renderInvoicesTable(allInvoices);
-        return;
-    }
-
-    const filtered = allInvoices.filter(inv => {
-        return (inv.Patient_Name && inv.Patient_Name.toLowerCase().includes(query)) ||
-               (inv.Invoice_Code && inv.Invoice_Code.toLowerCase().includes(query)) ||
-               (inv.Admission_Code && inv.Admission_Code.toLowerCase().includes(query)) ||
-               (inv.Cashier_Name && inv.Cashier_Name.toLowerCase().includes(query));
-    });
-
-    renderInvoicesTable(filtered);
-}
-
-function renderInvoicesTable(invoices) {
+const renderInvoicesTable = (invoices) => {
     const tableDiv = document.getElementById('table-div');
 
     if (!invoices || invoices.length === 0) {
@@ -119,9 +52,78 @@ function renderInvoicesTable(invoices) {
 
     html += '</tbody></table>';
     tableDiv.innerHTML = html;
-}
+};
 
-window.viewPrintInvoice = function(invoiceId) {
+const filterAndRenderInvoices = () => {
+    const query = document.getElementById('search_input').value.toLowerCase().trim();
+
+    if (!query) {
+        renderInvoicesTable(allInvoices);
+        return;
+    }
+
+    const filtered = allInvoices.filter(inv => {
+        return (inv.Patient_Name && inv.Patient_Name.toLowerCase().includes(query)) ||
+               (inv.Invoice_Code && inv.Invoice_Code.toLowerCase().includes(query)) ||
+               (inv.Admission_Code && inv.Admission_Code.toLowerCase().includes(query)) ||
+               (inv.Cashier_Name && inv.Cashier_Name.toLowerCase().includes(query));
+    });
+
+    renderInvoicesTable(filtered);
+};
+
+const loadInvoices = () => {
+    console.log("invoices.js: Fetching all settled invoices...");
+
+    const formData = new FormData();
+    formData.append('operation', 'getAllInvoices');
+
+    axios.post(`${getApiUrl}/invoices.php`, formData)
+        .then(response => {
+            console.log("invoices.js: Invoices received:", response.data);
+            allInvoices = response.data || [];
+            filterAndRenderInvoices();
+        })
+        .catch(err => {
+            console.error("invoices.js: Error fetching invoices:", err);
+            alert("Failed to load invoices.");
+        });
+};
+
+const viewPrintInvoice = (invoiceId) => {
     console.log("invoices.js: Navigating to print view for Invoice ID:", invoiceId);
     window.location.href = `invoice_print.html?id=${invoiceId}`;
 };
+
+window.viewPrintInvoice = viewPrintInvoice;
+
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("invoices.js: Initializing Invoices view...");
+
+    const userJson = sessionStorage.getItem("hospital_user");
+    if (!userJson) {
+        console.warn("invoices.js: Unauthenticated session. Redirecting to login.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const currentUser = JSON.parse(userJson);
+    const userDisplay = document.getElementById('user-display');
+    if (userDisplay) {
+        userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
+    }
+
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            console.log("invoices.js: Logging out...");
+            sessionStorage.removeItem("hospital_user");
+            window.location.href = "login.html";
+        });
+    }
+
+    document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
+    document.getElementById('btnRefresh').addEventListener('click', loadInvoices);
+
+    loadInvoices();
+});

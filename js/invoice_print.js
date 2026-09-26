@@ -1,75 +1,47 @@
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
-window.addEventListener('DOMContentLoaded', () => {
-    console.log("invoice_print.js: Initializing printable Statement of Account...");
+const renderItemizedTable = (items) => {
+    const container = document.getElementById('itemized-charges-container');
 
-    const userJson = sessionStorage.getItem("hospital_user");
-    if (!userJson) {
-        window.location.href = "login.html";
+    if (!items || items.length === 0) {
+        container.innerHTML = '<p><em>No charges were accumulated in this admission.</em></p>';
         return;
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const invoiceId = urlParams.get('id');
-    const admissionId = urlParams.get('admission_id');
+    let html = '<table class="soa-table" style="margin-top: 6px;">';
+    html += '<thead><tr class="header-row" style="background-color: #f1f5f9;">';
+    html += '<th width="8%" style="text-align: center;">Item #</th>';
+    html += '<th width="20%">Classification / Station</th>';
+    html += '<th width="40%">Particulars & Description</th>';
+    html += '<th width="8%" style="text-align: center;">Qty</th>';
+    html += '<th width="12%" style="text-align: right;">Unit Price</th>';
+    html += '<th width="12%" style="text-align: right;">Amount (₱)</th>';
+    html += '</tr></thead><tbody>';
 
-    if (!invoiceId && !admissionId) {
-        alert("Invoice ID or Admission ID is missing.", () => {
-            window.location.href = "invoices.html";
-        });
-        return;
-    }
+    items.forEach((row, idx) => {
+        const isReturn = row.Transaction_Type === 'Return' || parseFloat(row.Total_Charge || 0) < 0;
+        const total = Math.abs(parseFloat(row.Total_Charge || 0)).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const unit = parseFloat(row.Unit_Price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-    loadInvoiceData(invoiceId, admissionId);
-});
+        const sign = isReturn ? '- ' : '';
+        const rowStyle = isReturn ? 'style="background-color: #f0fdf4;"' : '';
 
-function loadInvoiceData(invoiceId, admissionId) {
-    console.log("invoice_print.js: Fetching invoice data...", { invoiceId, admissionId });
+        html += `<tr ${rowStyle}>`;
+        html += `<td align="center">${idx + 1}</td>`;
+        html += `<td><strong>${row.Category || 'Charge'}</strong><br><small style="color: #64748b;">${row.Station_Name || ''}</small></td>`;
+        html += `<td>${row.Description || 'Item'}</td>`;
+        html += `<td align="center">${parseFloat(row.Quantity || 1)}</td>`;
+        html += `<td align="right">₱${unit}</td>`;
+        html += `<td align="right"><strong>${sign}₱${total}</strong></td>`;
+        html += '</tr>';
+    });
 
-    const payload = {};
-    if (invoiceId) payload.invoice_id = invoiceId;
-    if (admissionId) payload.admission_id = admissionId;
+    html += '</tbody></table>';
+    container.innerHTML = html;
+};
 
-    const formData = new FormData();
-    formData.append('operation', 'getInvoiceById');
-    formData.append('json', JSON.stringify(payload));
-
-    axios.post(`${getApiUrl}/invoices.php`, formData)
-        .then(response => {
-            console.log("invoice_print.js: Invoice data received:", response.data);
-            let inv = response.data;
-            if (typeof inv === 'string') {
-                try {
-                    inv = JSON.parse(inv);
-                } catch (e) {
-                    console.error("invoice_print.js: Failed to parse invoice JSON:", e);
-                }
-            }
-
-            if (!inv || inv.error) {
-                alert("Error loading invoice: " + (inv ? inv.error : "Empty response"), () => {
-                    window.location.href = "invoices.html";
-                });
-                return;
-            }
-
-            renderInvoice(inv);
-
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('print') === 'true') {
-                setTimeout(() => {
-                    window.print();
-                }, 500);
-            }
-        })
-        .catch(err => {
-            console.error("invoice_print.js: Network error fetching invoice:", err);
-            alert("Network error fetching official statement.");
-        });
-}
-
-function renderInvoice(inv) {
+const renderInvoice = (inv) => {
     document.getElementById('inv-code').textContent = inv.Invoice_Code || 'N/A';
     document.getElementById('inv-settlement-date').textContent = inv.Settlement_Date || 'N/A';
     document.getElementById('inv-admission-code').textContent = inv.Admission_Code || 'N/A';
@@ -142,44 +114,72 @@ function renderInvoice(inv) {
 
     document.getElementById('sig-cashier').textContent = inv.Cashier_Name || 'Billing Officer';
     document.getElementById('sig-patient').textContent = inv.Patient_Name || 'Patient / Authorized Representative';
-}
+};
 
-function renderItemizedTable(items) {
-    const container = document.getElementById('itemized-charges-container');
+const loadInvoiceData = (invoiceId, admissionId) => {
+    console.log("invoice_print.js: Fetching invoice data...", { invoiceId, admissionId });
 
-    if (!items || items.length === 0) {
-        container.innerHTML = '<p><em>No charges were accumulated in this admission.</em></p>';
+    const payload = {};
+    if (invoiceId) payload.invoice_id = invoiceId;
+    if (admissionId) payload.admission_id = admissionId;
+
+    const formData = new FormData();
+    formData.append('operation', 'getInvoiceById');
+    formData.append('json', JSON.stringify(payload));
+
+    axios.post(`${getApiUrl}/invoices.php`, formData)
+        .then(response => {
+            console.log("invoice_print.js: Invoice data received:", response.data);
+            let inv = response.data;
+            if (typeof inv === 'string') {
+                try {
+                    inv = JSON.parse(inv);
+                } catch (e) {
+                    console.error("invoice_print.js: Failed to parse invoice JSON:", e);
+                }
+            }
+
+            if (!inv || inv.error) {
+                alert("Error loading invoice: " + (inv ? inv.error : "Empty response"), () => {
+                    window.location.href = "invoices.html";
+                });
+                return;
+            }
+
+            renderInvoice(inv);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('print') === 'true') {
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            }
+        })
+        .catch(err => {
+            console.error("invoice_print.js: Network error fetching invoice:", err);
+            alert("Network error fetching official statement.");
+        });
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("invoice_print.js: Initializing printable Statement of Account...");
+
+    const userJson = sessionStorage.getItem("hospital_user");
+    if (!userJson) {
+        window.location.href = "login.html";
         return;
     }
 
-    let html = '<table class="soa-table" style="margin-top: 6px;">';
-    html += '<thead><tr class="header-row" style="background-color: #f1f5f9;">';
-    html += '<th width="8%" style="text-align: center;">Item #</th>';
-    html += '<th width="20%">Classification / Station</th>';
-    html += '<th width="40%">Particulars & Description</th>';
-    html += '<th width="8%" style="text-align: center;">Qty</th>';
-    html += '<th width="12%" style="text-align: right;">Unit Price</th>';
-    html += '<th width="12%" style="text-align: right;">Amount (₱)</th>';
-    html += '</tr></thead><tbody>';
+    const urlParams = new URLSearchParams(window.location.search);
+    const invoiceId = urlParams.get('id');
+    const admissionId = urlParams.get('admission_id');
 
-    items.forEach((row, idx) => {
-        const isReturn = row.Transaction_Type === 'Return' || parseFloat(row.Total_Charge || 0) < 0;
-        const total = Math.abs(parseFloat(row.Total_Charge || 0)).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const unit = parseFloat(row.Unit_Price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    if (!invoiceId && !admissionId) {
+        alert("Invoice ID or Admission ID is missing.", () => {
+            window.location.href = "invoices.html";
+        });
+        return;
+    }
 
-        const sign = isReturn ? '- ' : '';
-        const rowStyle = isReturn ? 'style="background-color: #f0fdf4;"' : '';
-
-        html += `<tr ${rowStyle}>`;
-        html += `<td align="center">${idx + 1}</td>`;
-        html += `<td><strong>${row.Category || 'Charge'}</strong><br><small style="color: #64748b;">${row.Station_Name || ''}</small></td>`;
-        html += `<td>${row.Description || 'Item'}</td>`;
-        html += `<td align="center">${parseFloat(row.Quantity || 1)}</td>`;
-        html += `<td align="right">₱${unit}</td>`;
-        html += `<td align="right"><strong>${sign}₱${total}</strong></td>`;
-        html += '</tr>';
-    });
-
-    html += '</tbody></table>';
-    container.innerHTML = html;
-}
+    loadInvoiceData(invoiceId, admissionId);
+});

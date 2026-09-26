@@ -94,11 +94,11 @@ window.addEventListener('DOMContentLoaded', () => {
     loadDiscounts();
 });
 
-function initClinicalTabs() {
+const initClinicalTabs = () => {
     const tabBtns = document.querySelectorAll('.clinical-tabs-nav .tab-btn');
     const tabPanels = document.querySelectorAll('.tab-content-panel');
 
-    function activateTab(tabId) {
+    const activateTab = (tabId) => {
         tabBtns.forEach(btn => {
             if (btn.getAttribute('data-tab') === tabId) {
                 btn.classList.add('active');
@@ -132,7 +132,7 @@ function initClinicalTabs() {
     }
 }
 
-function initDiagnosisModal() {
+const initDiagnosisModal = () => {
     const btnEdit = document.getElementById('btnEditDiagnosis');
     const modal = document.getElementById('diagnosisModal');
     const btnClose = document.getElementById('btnCloseDiagnosisModal');
@@ -141,7 +141,7 @@ function initDiagnosisModal() {
 
     if (!btnEdit || !modal) return;
 
-    function openDiagnosisModal() {
+    const openDiagnosisModal = () => {
         if (!admissionData) return;
         if (admissionData.Status === 'Billed') {
             alert("Diagnosis cannot be modified because this admission is already billed and settled.");
@@ -154,7 +154,7 @@ function initDiagnosisModal() {
         setTimeout(() => document.getElementById('diag_input').focus(), 100);
     }
 
-    function closeDiagnosisModal() {
+    const closeDiagnosisModal = () => {
         modal.style.display = 'none';
     }
 
@@ -175,7 +175,7 @@ function initDiagnosisModal() {
     }
 }
 
-function saveDiagnosis() {
+const saveDiagnosis = () => {
     if (admissionData && admissionData.Status === 'Billed') {
         alert("Diagnosis cannot be modified because this admission is already billed and settled.");
         return;
@@ -219,7 +219,7 @@ function saveDiagnosis() {
         });
 }
 
-function loadAdmissionDetails() {
+const loadAdmissionDetails = () => {
     console.log("admission_details.js: Fetching admission profile for ID:", admissionId);
 
     const formData = new FormData();
@@ -300,7 +300,7 @@ function loadAdmissionDetails() {
         });
 }
 
-function dischargePatientFromChart(admId, patientName) {
+const dischargePatientFromChart = (admId, patientName) => {
     const confirmed = confirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`);
     if (!confirmed) return;
 
@@ -326,12 +326,12 @@ function dischargePatientFromChart(admId, patientName) {
         });
 }
 
-function populateAssignedDoctorDropdowns() {
+const populateAssignedDoctorDropdowns = () => {
     filterOrderDoctors();
     filterRoundDoctors();
 }
 
-function filterOrderDoctors() {
+const filterOrderDoctors = () => {
     const select = document.getElementById('order_doctor_id');
     if (!select) return;
     const query = (document.getElementById('order_doctor_search')?.value || '').toLowerCase().trim();
@@ -358,7 +358,7 @@ function filterOrderDoctors() {
     });
 }
 
-function filterRoundDoctors() {
+const filterRoundDoctors = () => {
     const select = document.getElementById('round_doctor_id');
     if (!select) return;
     const query = (document.getElementById('round_doctor_search')?.value || '').toLowerCase().trim();
@@ -385,7 +385,7 @@ function filterRoundDoctors() {
     });
 }
 
-function loadCatalogItems() {
+const loadCatalogItems = () => {
     console.log("admission_details.js: Fetching charge catalog items...");
 
     const formData = new FormData();
@@ -402,7 +402,7 @@ function loadCatalogItems() {
         });
 }
 
-function filterCatalogItems() {
+const filterCatalogItems = () => {
     const select = document.getElementById('order_catalog_id');
     if (!select) return;
     const query = (document.getElementById('order_catalog_search')?.value || '').toLowerCase().trim();
@@ -430,7 +430,7 @@ function filterCatalogItems() {
     });
 }
 
-function loadOrders() {
+const loadOrders = () => {
     console.log("admission_details.js: Loading orders for admission ID:", admissionId);
 
     const formData = new FormData();
@@ -447,7 +447,7 @@ function loadOrders() {
         });
 }
 
-function renderOrdersTable(orders) {
+const renderOrdersTable = (orders) => {
     const container = document.getElementById('orders-table-div');
 
     if (!orders || orders.length === 0) {
@@ -508,7 +508,7 @@ function renderOrdersTable(orders) {
     container.innerHTML = html;
 }
 
-function submitDoctorOrder() {
+const submitDoctorOrder = () => {
     console.log("admission_details.js: Submitting new doctor order...");
 
     const doctorId = document.getElementById('order_doctor_id').value;
@@ -558,7 +558,7 @@ function submitDoctorOrder() {
         });
 }
 
-window.administerOrder = function(requestId) {
+window.administerOrder = (requestId) => {
     console.log("admission_details.js: Administering order ID:", requestId);
 
     if (!confirm("Confirm administration / dispensation of this order?\n\nThis will mark the order as 'Administered' and automatically post the charge to the Live Billing Ledger.")) {
@@ -588,7 +588,7 @@ window.administerOrder = function(requestId) {
         });
 };
 
-window.cancelOrder = function(requestId) {
+window.cancelOrder = (requestId) => {
     console.log("admission_details.js: Cancelling order ID:", requestId);
 
     if (!confirm("Are you sure you want to cancel this pending order?")) {
@@ -614,7 +614,7 @@ window.cancelOrder = function(requestId) {
         });
 };
 
-function loadRounds() {
+const loadRounds = () => {
     console.log("admission_details.js: Loading rounds for admission ID:", admissionId);
 
     const formData = new FormData();
@@ -631,7 +631,7 @@ function loadRounds() {
         });
 }
 
-function renderRoundsTable(rounds) {
+const renderRoundsTable = (rounds) => {
     const container = document.getElementById('rounds-table-div');
 
     if (!rounds || rounds.length === 0) {
@@ -665,7 +665,7 @@ function renderRoundsTable(rounds) {
     container.innerHTML = html;
 }
 
-function submitDoctorRound() {
+const submitDoctorRound = () => {
     console.log("admission_details.js: Submitting doctor bedside round...");
 
     const doctorId = document.getElementById('round_doctor_id').value;
@@ -708,7 +708,7 @@ function submitDoctorRound() {
         });
 }
 
-function loadTransfers() {
+const loadTransfers = () => {
     console.log("admission_details.js: Loading bed transfer history...");
 
     const formData = new FormData();
@@ -725,7 +725,7 @@ function loadTransfers() {
         });
 }
 
-function renderTransfersTable(transfers) {
+const renderTransfersTable = (transfers) => {
     const container = document.getElementById('transfers-table-div');
 
     if (!transfers || transfers.length === 0) {
@@ -772,7 +772,7 @@ function renderTransfersTable(transfers) {
     container.innerHTML = html;
 }
 
-function loadAvailableBeds() {
+const loadAvailableBeds = () => {
     console.log("admission_details.js: Fetching vacant beds for transfer...");
 
     const formData = new FormData();
@@ -788,7 +788,7 @@ function loadAvailableBeds() {
         });
 }
 
-function filterAvailableBeds() {
+const filterAvailableBeds = () => {
     const select = document.getElementById('transfer_bed_id');
     if (!select) return;
     const query = (document.getElementById('transfer_bed_search')?.value || '').toLowerCase().trim();
@@ -821,7 +821,7 @@ function filterAvailableBeds() {
     });
 }
 
-function submitBedTransfer() {
+const submitBedTransfer = () => {
     console.log("admission_details.js: Submitting bed transfer...");
 
     const newBedId = document.getElementById('transfer_bed_id').value;
@@ -867,7 +867,7 @@ function submitBedTransfer() {
         });
 }
 
-function loadLedger() {
+const loadLedger = () => {
     console.log("admission_details.js: Loading billing ledger for admission ID:", admissionId);
 
     const formData = new FormData();
@@ -884,7 +884,7 @@ function loadLedger() {
         });
 }
 
-function renderLedgerTable(ledger) {
+const renderLedgerTable = (ledger) => {
     const container = document.getElementById('ledger-table-div');
 
     if (!ledger || ledger.length === 0) {
@@ -931,7 +931,7 @@ function renderLedgerTable(ledger) {
     container.innerHTML = html;
 }
 
-function loadLedgerSummary() {
+const loadLedgerSummary = () => {
     console.log("admission_details.js: Loading ledger financial summary...");
 
     const formData = new FormData();
@@ -950,7 +950,7 @@ function loadLedgerSummary() {
         });
 }
 
-function renderSummaryBox(summary) {
+const renderSummaryBox = (summary) => {
     const container = document.getElementById('ledger-summary-div');
 
     const room = parseFloat(summary.room_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
@@ -979,7 +979,7 @@ function renderSummaryBox(summary) {
     container.innerHTML = html;
 }
 
-function loadDispensedMedicines() {
+const loadDispensedMedicines = () => {
     console.log("admission_details.js: Loading dispensed medicines for returns...");
 
     const formData = new FormData();
@@ -997,7 +997,7 @@ function loadDispensedMedicines() {
         });
 }
 
-function filterDispensedMedicines() {
+const filterDispensedMedicines = () => {
     const select = document.getElementById('return_catalog_id');
     if (!select) return;
     const query = (document.getElementById('return_catalog_search')?.value || '').toLowerCase().trim();
@@ -1032,7 +1032,7 @@ function filterDispensedMedicines() {
     });
 }
 
-function submitMedicineReturn() {
+const submitMedicineReturn = () => {
     console.log("admission_details.js: Processing medicine return submission...");
 
     const select = document.getElementById('return_catalog_id');
@@ -1093,7 +1093,7 @@ function submitMedicineReturn() {
         });
 }
 
-function loadDiscounts() {
+const loadDiscounts = () => {
     console.log("admission_details.js: Fetching discount options...");
 
     const formData = new FormData();
@@ -1110,7 +1110,7 @@ function loadDiscounts() {
         });
 }
 
-function renderSettlementSection() {
+const renderSettlementSection = () => {
     const container = document.getElementById('settlement-container');
     if (!container) return;
 
@@ -1196,7 +1196,7 @@ function renderSettlementSection() {
     }
 }
 
-function submitSettlement() {
+const submitSettlement = () => {
     console.log("admission_details.js: Submitting final billing settlement...");
 
     const discountSelect = document.getElementById('settle_discount_id');

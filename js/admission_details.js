@@ -52,8 +52,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const idParam = urlParams.get('id');
 
     if (!idParam || isNaN(idParam)) {
-        alert("Invalid or missing Admission ID.");
-        window.location.href = "admissions.html";
+        alert("Invalid or missing Admission ID.", () => {
+            window.location.href = "admissions.html";
+        });
         return;
     }
 
@@ -249,8 +250,9 @@ function loadAdmissionDetails() {
         .then(response => {
             console.log("admission_details.js: Admission profile received:", response.data);
             if (response.data.error) {
-                alert("Error: " + response.data.error);
-                window.location.href = "admissions.html";
+                alert("Error: " + response.data.error, () => {
+                    window.location.href = "admissions.html";
+                });
                 return;
             }
 
@@ -1254,9 +1256,10 @@ function submitSettlement() {
         .then(response => {
             console.log("admission_details.js: Settlement response:", response.data);
             if (response.data.success) {
-                alert(response.data.message);
-                // Redirect immediately to the official printable invoice
-                window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
+                alert(response.data.message, () => {
+                    // Redirect to the official printable invoice
+                    window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
+                });
             } else {
                 alert("Settlement Error: " + (response.data.error || "Failed to settle bill."));
             }

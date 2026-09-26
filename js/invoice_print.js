@@ -21,8 +21,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const admissionId = urlParams.get('admission_id');
 
     if (!invoiceId && !admissionId) {
-        alert("Invoice ID or Admission ID is missing.");
-        window.location.href = "invoices.html";
+        alert("Invoice ID or Admission ID is missing.", () => {
+            window.location.href = "invoices.html";
+        });
         return;
     }
 
@@ -53,8 +54,9 @@ function loadInvoiceData(invoiceId, admissionId) {
             }
 
             if (!inv || inv.error) {
-                alert("Error loading invoice: " + (inv ? inv.error : "Empty response"));
-                window.location.href = "invoices.html";
+                alert("Error loading invoice: " + (inv ? inv.error : "Empty response"), () => {
+                    window.location.href = "invoices.html";
+                });
                 return;
             }
 

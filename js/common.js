@@ -11,7 +11,6 @@
  * 6. Generic Record Status Toggle API Handler
  */
 
-const baseApiUrl = "../api";
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 

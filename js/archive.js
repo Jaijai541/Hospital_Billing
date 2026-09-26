@@ -1,10 +1,3 @@
-/**
- * Archive / Recycle Bin Controller (Axios / Frontend)
- * Follows classroom pure HTML standard: dynamic table creation with border="1"
- * Allows viewing, restoring, and hard deleting soft-deleted items across all entities
- */
-
-const baseApiUrl = "../api";
 let currentArchivedRecords = [];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -48,7 +41,7 @@ const loadArchivedRecords = async () => {
 
     try {
         console.log(`[API] Requesting archived records for entity: ${entity}`);
-        const response = await axios.get("../api/GET/archive.php", {
+        const response = await axios.get(`${getApiUrl}/archive.php`, {
             params: {
                 operation: "getArchivedRecords",
                 json: JSON.stringify({ entity: entity })
@@ -162,7 +155,7 @@ const restoreRecord = async (entity, id, name) => {
 
     try {
         const response = await axios({
-            url: "../api/POST/archive.php",
+            url: `${postApiUrl}/archive.php`,
             method: "POST",
             data: formData
         });
@@ -195,7 +188,7 @@ const hardDeleteRecord = async (entity, id, name) => {
 
     try {
         const response = await axios({
-            url: "../api/POST/archive.php",
+            url: `${postApiUrl}/archive.php`,
             method: "POST",
             data: formData
         });

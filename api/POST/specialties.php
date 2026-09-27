@@ -26,13 +26,24 @@ class SpecialtyMaster
             if ($existing['Is_Active'] == 0) {
                 $updStmt = $conn->prepare("UPDATE Enum_Specialty SET Is_Active = 1 WHERE Specialty_ID = :id");
                 $updStmt->execute([':id' => $existing['Specialty_ID']]);
+
+                return json_encode([
+                    "success" => true,
+                    "specialty_id" => intval($existing['Specialty_ID']),
+                    "specialty_name" => $existing['Specialty_Name'],
+                    "already_existed" => true,
+                    "reactivated" => true,
+                    "message" => "Specialty '" . $existing['Specialty_Name'] . "' was previously archived and is now reactivated."
+                ]);
             }
+
             return json_encode([
-                "success" => true,
+                "success" => false,
                 "specialty_id" => intval($existing['Specialty_ID']),
                 "specialty_name" => $existing['Specialty_Name'],
                 "already_existed" => true,
-                "message" => "Specialty '" . $existing['Specialty_Name'] . "' is already registered and ready for selection."
+                "reactivated" => false,
+                "message" => "Specialty '" . $existing['Specialty_Name'] . "' already exists in the system."
             ]);
         }
 
@@ -48,8 +59,51 @@ class SpecialtyMaster
             "specialty_id" => intval($newId),
             "specialty_name" => $specialtyName,
             "already_existed" => false,
+            "reactivated" => false,
             "message" => "Specialty '" . $specialtyName . "' added successfully."
         ]);
+    }
+
+    function removeSpecialty($json)
+    {
+        include "connection.php";
+
+        $json = json_decode($json, true);
+        $specialtyId = intval($json['specialty_id'] ?? 0);
+
+        if ($specialtyId <= 0) {
+            return json_encode([
+                "success" => false,
+                "message" => "Invalid specialty ID."
+            ]);
+        }
+
+        $checkStmt = $conn->prepare("SELECT COUNT(*) AS total FROM Doctor_Specialty WHERE Specialty_ID = :id");
+        $checkStmt->execute([':id' => $specialtyId]);
+        $row = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        $count = $row ? intval($row['total']) : 0;
+
+        if ($count > 0) {
+            $stmt = $conn->prepare("UPDATE Enum_Specialty SET Is_Active = 0 WHERE Specialty_ID = :id");
+            $stmt->execute([':id' => $specialtyId]);
+
+            return json_encode([
+                "success" => true,
+                "mode" => "deactivated",
+                "specialty_id" => $specialtyId,
+                "message" => "Specialty deactivated from new selections. Existing doctor profile records were safely preserved."
+            ]);
+        } else {
+            $stmt = $conn->prepare("DELETE FROM Enum_Specialty WHERE Specialty_ID = :id");
+            $stmt->execute([':id' => $specialtyId]);
+
+            return json_encode([
+                "success" => true,
+                "mode" => "deleted",
+                "specialty_id" => $specialtyId,
+                "message" => "Specialty removed successfully from the system."
+            ]);
+        }
     }
 
     function getAllSpecialties()
@@ -75,6 +129,9 @@ $specialty = new SpecialtyMaster();
 switch ($operation) {
     case "insertSpecialty":
         echo $specialty->insertSpecialty($json);
+        break;
+    case "removeSpecialty":
+        echo $specialty->removeSpecialty($json);
         break;
     case "getAllSpecialties":
         echo $specialty->getAllSpecialties();

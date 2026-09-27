@@ -78,20 +78,28 @@
                 </div>
             </div>
             <div id="specialtyModal" class="modal-overlay" style="z-index: 1050;">
-                <div class="modal-container" style="max-width: 440px;">
+                <div class="modal-container" style="max-width: 460px;">
                     <div class="modal-header">
-                        <h3 id="specialty-modal-title">Add New Medical Specialty</h3>
+                        <h3 id="specialty-modal-title">Medical Specialties Management</h3>
                         <button type="button" class="modal-close" id="btnCloseSpecialtyModal" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <label class="form-label" for="new_specialty_name">Specialty Name *</label>
-                            <input type="text" id="new_specialty_name" class="form-control" placeholder="e.g. Dermatology, Oncology, Neurology" required>
+                            <label class="form-label" for="new_specialty_name">Add New Medical Specialty</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="new_specialty_name" class="form-control" placeholder="e.g. Dermatology, Oncology" required>
+                                <button type="button" id="btnSubmitSpecialty" class="btn btn-primary" style="white-space: nowrap;">Add Specialty</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 18px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+                            <label class="form-label" style="margin-bottom: 8px; font-weight: 600;">Active Specialties (Click 🗑️ to remove):</label>
+                            <div id="specialties-manage-list" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" id="btnCancelSpecialty" class="btn btn-secondary">Cancel</button>
-                        <button type="button" id="btnSubmitSpecialty" class="btn btn-primary">Save Specialty</button>
+                        <button type="button" id="btnCancelSpecialty" class="btn btn-secondary">Close</button>
                     </div>
                 </div>
             </div>

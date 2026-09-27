@@ -116,7 +116,6 @@ const displayDepartmentsTable = (departments) => {
             <th>Code Prefix</th>
             <th>Department / Station Name</th>
             <th>Status</th>
-            <th style="text-align: center; width: 110px;">Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -132,28 +131,8 @@ const displayDepartmentsTable = (departments) => {
             <td><span class="dept-code-pill">${dept.Code_Prefix || 'N/A'}</span></td>
             <td><strong>${dept.Station_Name}</strong></td>
             <td>${getStatusBadge(dept.Is_Active)}</td>
-            <td style="text-align: center;" onclick="event.stopPropagation();">
-                ${getActionButtons(dept.Station_ID, dept.Is_Active, dept.Station_Name, "Edit Department")}
-            </td>
         `;
         row.addEventListener("click", () => loadDepartmentForEdit(dept.Station_ID));
-
-        const editBtn = row.querySelector(".btn-action-edit");
-        if (editBtn) {
-            editBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                loadDepartmentForEdit(dept.Station_ID);
-            });
-        }
-
-        const softDeleteBtn = row.querySelector(".btn-action-soft-delete");
-        if (softDeleteBtn) {
-            softDeleteBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                toggleRecordStatus("departments.php", "station_id", dept.Station_ID, dept.Is_Active, dept.Station_Name, displayDepartments);
-            });
-        }
-
         tbody.appendChild(row);
     });
 

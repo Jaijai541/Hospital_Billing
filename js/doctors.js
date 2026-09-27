@@ -437,6 +437,7 @@ const openSpecialtyModal = () => {
     const specModal = document.getElementById("specialtyModal");
     if (specModal) {
         document.getElementById("new_specialty_name").value = "";
+        renderSpecialtiesManageList();
         specModal.style.display = "flex";
         document.getElementById("new_specialty_name").focus();
     }
@@ -447,6 +448,79 @@ const closeSpecialtyModal = () => {
     if (specModal) {
         specModal.style.display = "none";
     }
+};
+
+const renderSpecialtiesManageList = () => {
+    const listContainer = document.getElementById("specialties-manage-list");
+    if (!listContainer) return;
+    listContainer.innerHTML = "";
+
+    if (!allSpecialties || allSpecialties.length === 0) {
+        listContainer.innerHTML = `<span style="font-size: 13px; color: var(--text-muted);">No active specialties.</span>`;
+        return;
+    }
+
+    allSpecialties.forEach(s => {
+        const item = document.createElement("div");
+        item.style.display = "flex";
+        item.style.justifyContent = "space-between";
+        item.style.alignItems = "center";
+        item.style.padding = "6px 10px";
+        item.style.background = "#ffffff";
+        item.style.border = "1px solid var(--border-color)";
+        item.style.borderRadius = "var(--radius-sm)";
+        item.innerHTML = `
+            <span style="font-size: 13.5px; font-weight: 500;">${s.Specialty_Name}</span>
+            <button type="button" class="btn btn-sm btn-outline btn-remove-spec" style="padding: 2px 7px; font-size: 12px; color: var(--danger);" title="Remove Specialty">&times; Remove</button>
+        `;
+
+        const btnRemove = item.querySelector(".btn-remove-spec");
+        btnRemove.addEventListener("click", () => {
+            promptRemoveSpecialty(s.Specialty_ID, s.Specialty_Name);
+        });
+
+        listContainer.appendChild(item);
+    });
+};
+
+const promptRemoveSpecialty = (specialtyId, specialtyName) => {
+    showPopupConfirm(`Are you sure you want to remove the medical specialty "${specialtyName}"?\n\nIf any physicians currently hold this specialty, it will be safely deactivated so their profiles remain accurate.`, async () => {
+        try {
+            const formData = new FormData();
+            formData.append("operation", "removeSpecialty");
+            formData.append("json", JSON.stringify({ specialty_id: specialtyId }));
+
+            const response = await axios.post(`${postApiUrl}/specialties.php`, formData);
+            if (response.data && response.data.success) {
+                allSpecialties = allSpecialties.filter(s => parseInt(s.Specialty_ID) !== parseInt(specialtyId));
+
+                const specContainer = document.getElementById("specialties-checkboxes");
+                const checkbox = specContainer.querySelector(`input[value="${specialtyId}"]`);
+                if (checkbox) {
+                    const label = checkbox.closest("label");
+                    if (label) label.remove();
+                }
+
+                const filterSpec = document.getElementById("filter_specialty");
+                if (filterSpec) {
+                    const filterOpt = filterSpec.querySelector(`option[value="${specialtyId}"]`);
+                    if (filterOpt) filterOpt.remove();
+                }
+
+                renderSpecialtiesManageList();
+                alert(response.data.message);
+            } else {
+                alert(response.data?.message || "Failed to remove specialty.");
+            }
+        } catch (error) {
+            console.error("[API] Error removing specialty:", error);
+            alert("Server error while removing specialty.");
+        }
+    }, null, {
+        title: "Remove Specialty",
+        confirmText: "Remove Specialty",
+        type: "warning"
+    });
 };
 
 const submitNewSpecialty = async () => {
@@ -465,43 +539,64 @@ const submitNewSpecialty = async () => {
 
         const response = await axios.post(`${postApiUrl}/specialties.php`, formData);
 
-        if (response.data && response.data.success) {
+        if (response.data) {
             const specId = response.data.specialty_id;
             const specName = response.data.specialty_name;
 
-            const exists = allSpecialties.some(s => parseInt(s.Specialty_ID) === parseInt(specId));
-            if (!exists) {
-                allSpecialties.push({ Specialty_ID: specId, Specialty_Name: specName, Is_Active: 1 });
+            if (response.data.already_existed && !response.data.reactivated) {
+                const specContainer = document.getElementById("specialties-checkboxes");
+                const existingCheckbox = specContainer.querySelector(`input[value="${specId}"]`);
+                if (existingCheckbox) {
+                    existingCheckbox.checked = true;
+                    existingCheckbox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    const parentLabel = existingCheckbox.closest("label");
+                    if (parentLabel) {
+                        parentLabel.style.backgroundColor = "#fef08a";
+                        setTimeout(() => { parentLabel.style.backgroundColor = ""; }, 2500);
+                    }
+                }
+                closeSpecialtyModal();
+                alert(response.data.message);
+                return;
             }
 
-            const specContainer = document.getElementById("specialties-checkboxes");
-            let existingCheckbox = specContainer.querySelector(`input[value="${specId}"]`);
+            if (response.data.success) {
+                const exists = allSpecialties.some(s => parseInt(s.Specialty_ID) === parseInt(specId));
+                if (!exists) {
+                    allSpecialties.push({ Specialty_ID: specId, Specialty_Name: specName, Is_Active: 1 });
+                    allSpecialties.sort((a, b) => a.Specialty_Name.localeCompare(b.Specialty_Name));
+                }
 
-            if (!existingCheckbox) {
-                const label = document.createElement("label");
-                label.style.marginRight = "15px";
-                label.style.display = "inline-block";
-                label.innerHTML = `
-                    <input type="checkbox" name="specialty_checkbox" value="${specId}" checked>
-                    ${specName}
-                `;
-                specContainer.appendChild(label);
+                const specContainer = document.getElementById("specialties-checkboxes");
+                let existingCheckbox = specContainer.querySelector(`input[value="${specId}"]`);
+
+                if (!existingCheckbox) {
+                    const label = document.createElement("label");
+                    label.style.marginRight = "15px";
+                    label.style.display = "inline-block";
+                    label.innerHTML = `
+                        <input type="checkbox" name="specialty_checkbox" value="${specId}" checked>
+                        ${specName}
+                    `;
+                    specContainer.appendChild(label);
+                } else {
+                    existingCheckbox.checked = true;
+                }
+
+                const filterSpec = document.getElementById("filter_specialty");
+                if (filterSpec && !filterSpec.querySelector(`option[value="${specId}"]`)) {
+                    const opt = document.createElement("option");
+                    opt.value = specId;
+                    opt.textContent = specName;
+                    filterSpec.appendChild(opt);
+                }
+
+                renderSpecialtiesManageList();
+                closeSpecialtyModal();
+                alert(response.data.message);
             } else {
-                existingCheckbox.checked = true;
+                alert(response.data.error || response.data.message || "Failed to add specialty.");
             }
-
-            const filterSpec = document.getElementById("filter_specialty");
-            if (filterSpec && !filterSpec.querySelector(`option[value="${specId}"]`)) {
-                const opt = document.createElement("option");
-                opt.value = specId;
-                opt.textContent = specName;
-                filterSpec.appendChild(opt);
-            }
-
-            closeSpecialtyModal();
-            alert(response.data.message);
-        } else {
-            alert(response.data.error || "Failed to add specialty.");
         }
     } catch (error) {
         console.error("[API] Error adding specialty:", error);

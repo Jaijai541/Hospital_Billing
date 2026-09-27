@@ -29,6 +29,9 @@ class ArchiveManager
             case 'discounts':
                 $sql = "UPDATE Enum_Discount SET Is_Active = 1 WHERE Discount_ID = :id";
                 break;
+            case 'departments':
+                $sql = "UPDATE Enum_Department_Station SET Is_Active = 1 WHERE Station_ID = :id";
+                break;
             default:
                 return json_encode(0);
         }
@@ -64,6 +67,9 @@ class ArchiveManager
                     break;
                 case 'discounts':
                     $sql = "DELETE FROM Enum_Discount WHERE Discount_ID = :id";
+                    break;
+                case 'departments':
+                    $sql = "DELETE FROM Enum_Department_Station WHERE Station_ID = :id";
                     break;
                 default:
                     return json_encode(0);

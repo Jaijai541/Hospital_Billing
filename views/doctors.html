@@ -59,7 +59,10 @@
                             </div>
 
                             <div class="form-group col-full">
-                                <label class="form-label">Medical Specialties (Check all that apply):</label>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <label class="form-label" style="margin-bottom: 0;">Medical Specialties (Check all that apply):</label>
+                                    <button type="button" id="btnOpenAddSpecialtyModal" class="btn btn-sm btn-outline" style="padding: 3px 10px; font-size: 12.5px; font-weight: 600;">+ Add Specialty</button>
+                                </div>
                                 <input type="text" id="specialty_search" class="form-control form-control-sm mb-2" placeholder="🔍 Search medical specialty...">
                                 <div id="specialties-checkboxes" style="max-height: 160px; overflow-y: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #f8fafc;">
                                 </div>
@@ -71,6 +74,24 @@
                         <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
                         <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
                         <button type="button" id="btnSubmit" class="btn btn-primary">Submit Doctor</button>
+                    </div>
+                </div>
+            </div>
+            <div id="specialtyModal" class="modal-overlay" style="z-index: 1050;">
+                <div class="modal-container" style="max-width: 440px;">
+                    <div class="modal-header">
+                        <h3 id="specialty-modal-title">Add New Medical Specialty</h3>
+                        <button type="button" class="modal-close" id="btnCloseSpecialtyModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label" for="new_specialty_name">Specialty Name *</label>
+                            <input type="text" id="new_specialty_name" class="form-control" placeholder="e.g. Dermatology, Oncology, Neurology" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCancelSpecialty" class="btn btn-secondary">Cancel</button>
+                        <button type="button" id="btnSubmitSpecialty" class="btn btn-primary">Save Specialty</button>
                     </div>
                 </div>
             </div>

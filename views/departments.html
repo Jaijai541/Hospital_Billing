@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments & Stations — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/departments.css">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside id="sidebar-container" class="sidebar"></aside>
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Hospital Departments & Stations</h1>
+                    <span class="subtitle">Clinical Stations, Pharmacy, Laboratories, Imaging & Service Units</span>
+                </div>
+                <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Department</button>
+            </div>
+            <div id="formModal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3 id="form-title">Add New Department / Station</h3>
+                        <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="station_id" value="">
+
+                        <div class="form-grid">
+                            <div class="form-group span-2">
+                                <label class="form-label" for="station_name">Department / Station Name *</label>
+                                <input type="text" id="station_name" class="form-control" placeholder="e.g. Neurology Department, Intensive Care Unit (ICU)" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="code_prefix">Code Prefix *</label>
+                                <input type="text" id="code_prefix" class="form-control" placeholder="e.g. NEURO, ICU, PHARM" maxlength="10" style="text-transform: uppercase;" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnArchive" class="btn btn-warning btn-archive" style="display: none;">Send to Archive</button>
+                        <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
+                        <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
+                        <button type="button" id="btnSubmit" class="btn btn-primary">Submit Department</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Departments & Stations Directory</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="form-group" style="min-width: 260px;">
+                                <label class="form-label" for="search_input">Search Department</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search by department name or prefix...">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="filter_status">Status</label>
+                                <select id="filter_status" class="form-select">
+                                    <option value="all">All Statuses</option>
+                                    <option value="1" selected>Active Only</option>
+                                    <option value="0">Soft-Deleted Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="sort_by">Sort By</label>
+                                <select id="sort_by" class="form-select">
+                                    <option value="name_asc">Name (A to Z)</option>
+                                    <option value="name_desc">Name (Z to A)</option>
+                                    <option value="code_asc">Code Prefix (A to Z)</option>
+                                    <option value="code_desc">Code Prefix (Z to A)</option>
+                                    <option value="id_desc">Newest First (ID)</option>
+                                    <option value="id_asc">Oldest First (ID)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" id="table-div">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/departments.js"></script>
+</body>
+</html>

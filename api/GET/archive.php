@@ -65,6 +65,16 @@ class ArchiveManager
                         ORDER BY d.Discount_Name ASC";
                 break;
 
+            case 'departments':
+                $sql = "SELECT d.Station_ID AS ID,
+                               CONCAT(d.Code_Prefix, '-', LPAD(d.Station_ID, 3, '0')) AS Code,
+                               d.Station_Name AS Name,
+                               CONCAT('Department Station | Prefix: ', d.Code_Prefix) AS Details
+                        FROM Enum_Department_Station d
+                        WHERE d.Is_Active = 0
+                        ORDER BY d.Station_Name ASC";
+                break;
+
             default:
                 return json_encode([]);
         }

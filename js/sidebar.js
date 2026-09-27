@@ -43,26 +43,27 @@ const renderSidebar = () => {
                 <li><a href="index.html"${isActive("index.html")}>Dashboard</a></li>
             </ul>
 
-            <div class="nav-section-title">Master Files (M1)</div>
+            <div class="nav-section-title">Master Files</div>
             <ul class="sidebar-nav">
                 <li><a href="patients.html"${isActive("patients.html")}>Patients Directory</a></li>
                 <li><a href="doctors.html"${isActive("doctors.html")}>Doctors & Fees</a></li>
+                <li><a href="departments.html"${isActive("departments.html")}>Departments & Stations</a></li>
                 <li><a href="rooms.html"${isActive("rooms.html")}>Rooms & Beds</a></li>
                 <li><a href="catalogs.html"${isActive("catalogs.html")}>Charge Catalogs</a></li>
                 <li><a href="discounts.html"${isActive("discounts.html")}>Billing Discounts</a></li>
             </ul>
 
-            <div class="nav-section-title">Clinical Care (M2)</div>
+            <div class="nav-section-title">Clinical Care</div>
             <ul class="sidebar-nav">
                 <li><a href="admissions.html"${isActive("admissions.html")}>Admissions & Beds</a></li>
             </ul>
 
-            <div class="nav-section-title">Billing & Settlement (M3)</div>
+            <div class="nav-section-title">Billing & Settlement</div>
             <ul class="sidebar-nav">
                 <li><a href="invoices.html"${isActive("invoices.html")}>Settled Invoices</a></li>
             </ul>
 
-            <div class="nav-section-title">System & Tools (M3)</div>
+            <div class="nav-section-title">System & Tools</div>
             <ul class="sidebar-nav">
                 <li><a href="audit_log.html"${isActive("audit_log.html")}>Audit Log</a></li>
                 <li><a href="archive.html"${isActive("archive.html")}>System Archive</a></li>

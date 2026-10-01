@@ -116,21 +116,103 @@ const openBedPicker = async () => {
     if (!availableBeds || availableBeds.length === 0) {
         await loadBeds();
     }
+
+    const classifications = [...new Set(availableBeds.map(b => b.Room_Type).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+    const sortOptions = [
+        { value: "classification_asc", label: "Classification (A–Z)" },
+        { value: "classification_desc", label: "Classification (Z–A)" },
+        { value: "rate_asc", label: "Rate (Low to High)" },
+        { value: "rate_desc", label: "Rate (High to Low)" },
+        { value: "bed_asc", label: "Bed Code (A–Z)" },
+        { value: "bed_desc", label: "Bed Code (Z–A)" },
+        { value: "selected_first", label: "Selected First" }
+    ];
+
+    const filterOptions = [
+        { value: "all", label: "All Classifications" },
+        ...classifications.map(c => ({ value: `type_${c}`, label: c })),
+        { value: "selected", label: "Selected Bed" }
+    ];
+
+    const customFilter = (item, filterVal, selectedId) => {
+        if (filterVal === "all") return true;
+        if (filterVal === "selected") return String(item.id) === String(selectedId);
+        if (filterVal.startsWith("type_")) {
+            const targetType = filterVal.replace("type_", "");
+            return item.classification === targetType;
+        }
+        return true;
+    };
+
+    const customSort = (list, sortVal, selectedId) => {
+        const arr = [...list];
+        if (sortVal === "classification_asc") {
+            arr.sort((a, b) => {
+                const comp = (a.classification || "").localeCompare(b.classification || "");
+                if (comp !== 0) return comp;
+                return (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" });
+            });
+        } else if (sortVal === "classification_desc") {
+            arr.sort((a, b) => {
+                const comp = (b.classification || "").localeCompare(a.classification || "");
+                if (comp !== 0) return comp;
+                return (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" });
+            });
+        } else if (sortVal === "rate_asc") {
+            arr.sort((a, b) => {
+                const diff = (a.dailyRate || 0) - (b.dailyRate || 0);
+                if (diff !== 0) return diff;
+                return (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" });
+            });
+        } else if (sortVal === "rate_desc") {
+            arr.sort((a, b) => {
+                const diff = (b.dailyRate || 0) - (a.dailyRate || 0);
+                if (diff !== 0) return diff;
+                return (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" });
+            });
+        } else if (sortVal === "bed_asc") {
+            arr.sort((a, b) => (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" }));
+        } else if (sortVal === "bed_desc") {
+            arr.sort((a, b) => (b.bedCode || "").localeCompare(a.bedCode || "", undefined, { numeric: true, sensitivity: "base" }));
+        } else if (sortVal === "selected_first") {
+            arr.sort((a, b) => {
+                const aSel = String(a.id) === String(selectedId) ? 1 : 0;
+                const bSel = String(b.id) === String(selectedId) ? 1 : 0;
+                if (aSel !== bSel) return bSel - aSel;
+                const comp = (a.classification || "").localeCompare(b.classification || "");
+                if (comp !== 0) return comp;
+                return (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" });
+            });
+        }
+        return arr;
+    };
+
     openGenericLookupPicker({
         title: "Assign Vacant Bed",
         items: availableBeds.map(b => ({
             id: b.Bed_ID,
-            text: `Bed ${b.Bed_Code} — ${b.Room_Name} (${b.Room_Type})`,
-            subtext: `Daily Board & Lodging Rate: ₱${parseFloat(b.Daily_Rate).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`,
-            badge: "Vacant",
-            badgeClass: "badge-success"
+            text: `Bed ${b.Bed_Code} — ${b.Room_Name}`,
+            subtext: `Classification: ${b.Room_Type} | Board & Lodging: ₱${parseFloat(b.Daily_Rate || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`,
+            classification: b.Room_Type,
+            bedCode: b.Bed_Code,
+            roomName: b.Room_Name,
+            dailyRate: parseFloat(b.Daily_Rate || 0),
+            badge: b.Room_Type,
+            badgeClass: "badge-info"
         })),
+        sortOptions: sortOptions,
+        filterOptions: filterOptions,
+        defaultSort: "classification_asc",
+        defaultFilter: "all",
+        customSort: customSort,
+        customFilter: customFilter,
         selectedId: document.getElementById("bed_id") ? document.getElementById("bed_id").value : "",
         onSelect: (item) => {
             const bId = document.getElementById("bed_id");
             if (bId) bId.value = item.id;
             const bText = document.getElementById("bed_id_text");
-            if (bText) bText.value = item.text;
+            if (bText) bText.value = `${item.text} (${item.classification}) — ₱${item.dailyRate.toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`;
         }
     });
 };

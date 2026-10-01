@@ -400,7 +400,9 @@ let genericLookupPickerState = {
     items: [],
     selectedId: null,
     onSelect: null,
-    title: "Select Item"
+    title: "Select Item",
+    customSort: null,
+    customFilter: null
 };
 
 const openGenericLookupPicker = (options) => {
@@ -410,20 +412,20 @@ const openGenericLookupPicker = (options) => {
         modal.id = "system-generic-lookup-modal";
         modal.className = "modal-overlay picker-modal-overlay";
         modal.innerHTML = `
-            <div class="modal-container" style="max-width: 540px;">
+            <div class="modal-container" style="max-width: 580px;">
                 <div class="modal-header">
                     <h3 id="generic_lookup_title">Select Item</h3>
                     <button type="button" class="modal-close" id="btnCloseGenericLookup" aria-label="Close modal">&times;</button>
                 </div>
                 <div class="modal-body" style="padding: 16px 20px;">
                     <div class="lookup-picker-controls" style="display: flex; gap: 8px; margin-bottom: 12px;">
-                        <input type="text" id="generic_lookup_search" class="form-control lookup-picker-search-input" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 8px 12px; font-size: 0.9rem;">
-                        <select id="generic_lookup_filter" class="form-select lookup-picker-select" style="width: auto; min-width: 110px; font-size: 0.85rem; padding: 8px 10px;">
+                        <input type="text" id="generic_lookup_search" class="form-control lookup-picker-search-input" placeholder="Search..." autocomplete="off" style="flex: 1 1 180px; padding: 8px 12px; font-size: 0.9rem;">
+                        <select id="generic_lookup_filter" class="form-select lookup-picker-select" style="width: auto; min-width: 120px; font-size: 0.85rem; padding: 8px 10px;">
                             <option value="all">All</option>
                             <option value="selected">Selected</option>
                             <option value="unselected">Unselected</option>
                         </select>
-                        <select id="generic_lookup_sort" class="form-select lookup-picker-select" style="width: auto; min-width: 120px; font-size: 0.85rem; padding: 8px 10px;">
+                        <select id="generic_lookup_sort" class="form-select lookup-picker-select" style="width: auto; min-width: 130px; font-size: 0.85rem; padding: 8px 10px;">
                             <option value="name_asc">Name (A-Z)</option>
                             <option value="name_desc">Name (Z-A)</option>
                             <option value="selected_first">Selected First</option>
@@ -471,11 +473,39 @@ const openGenericLookupPicker = (options) => {
     genericLookupPickerState.items = options.items || [];
     genericLookupPickerState.selectedId = (options.selectedId !== undefined && options.selectedId !== null) ? String(options.selectedId) : "";
     genericLookupPickerState.onSelect = options.onSelect;
+    genericLookupPickerState.customFilter = options.customFilter || null;
+    genericLookupPickerState.customSort = options.customSort || null;
 
     document.getElementById("generic_lookup_title").textContent = genericLookupPickerState.title;
     document.getElementById("generic_lookup_search").value = "";
-    document.getElementById("generic_lookup_filter").value = "all";
-    document.getElementById("generic_lookup_sort").value = "name_asc";
+
+    const filterSelect = document.getElementById("generic_lookup_filter");
+    if (filterSelect) {
+        if (options.filterOptions && Array.isArray(options.filterOptions)) {
+            filterSelect.innerHTML = options.filterOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("");
+        } else {
+            filterSelect.innerHTML = `
+                <option value="all">All</option>
+                <option value="selected">Selected</option>
+                <option value="unselected">Unselected</option>
+            `;
+        }
+        filterSelect.value = options.defaultFilter || (options.filterOptions && options.filterOptions.length > 0 ? options.filterOptions[0].value : "all");
+    }
+
+    const sortSelect = document.getElementById("generic_lookup_sort");
+    if (sortSelect) {
+        if (options.sortOptions && Array.isArray(options.sortOptions)) {
+            sortSelect.innerHTML = options.sortOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("");
+        } else {
+            sortSelect.innerHTML = `
+                <option value="name_asc">Name (A-Z)</option>
+                <option value="name_desc">Name (Z-A)</option>
+                <option value="selected_first">Selected First</option>
+            `;
+        }
+        sortSelect.value = options.defaultSort || (options.sortOptions && options.sortOptions.length > 0 ? options.sortOptions[0].value : "name_asc");
+    }
 
     const selectedItem = genericLookupPickerState.items.find(item => String(item.id) === genericLookupPickerState.selectedId);
     const statusEl = document.getElementById("generic_lookup_status");
@@ -505,9 +535,14 @@ const renderGenericLookupList = () => {
     let filtered = genericLookupPickerState.items.filter(item => {
         const matchesSearch = !searchStr || 
             (item.text && item.text.toLowerCase().includes(searchStr)) || 
-            (item.subtext && item.subtext.toLowerCase().includes(searchStr));
+            (item.subtext && item.subtext.toLowerCase().includes(searchStr)) ||
+            (item.classification && item.classification.toLowerCase().includes(searchStr));
 
         if (!matchesSearch) return false;
+
+        if (genericLookupPickerState.customFilter) {
+            return genericLookupPickerState.customFilter(item, filterVal, genericLookupPickerState.selectedId);
+        }
 
         const isSelected = String(item.id) === String(genericLookupPickerState.selectedId);
         if (filterVal === "selected") return isSelected;
@@ -515,17 +550,24 @@ const renderGenericLookupList = () => {
         return true;
     });
 
-    if (sortVal === "name_asc") {
-        filtered.sort((a, b) => (a.text || "").localeCompare(b.text || ""));
-    } else if (sortVal === "name_desc") {
-        filtered.sort((a, b) => (b.text || "").localeCompare(a.text || ""));
-    } else if (sortVal === "selected_first") {
-        filtered.sort((a, b) => {
-            const aSel = String(a.id) === String(genericLookupPickerState.selectedId) ? 1 : 0;
-            const bSel = String(b.id) === String(genericLookupPickerState.selectedId) ? 1 : 0;
-            if (aSel !== bSel) return bSel - aSel;
-            return (a.text || "").localeCompare(b.text || "");
-        });
+    if (genericLookupPickerState.customSort) {
+        const sorted = genericLookupPickerState.customSort(filtered, sortVal, genericLookupPickerState.selectedId);
+        if (Array.isArray(sorted)) {
+            filtered = sorted;
+        }
+    } else {
+        if (sortVal === "name_asc") {
+            filtered.sort((a, b) => (a.text || "").localeCompare(b.text || ""));
+        } else if (sortVal === "name_desc") {
+            filtered.sort((a, b) => (b.text || "").localeCompare(a.text || ""));
+        } else if (sortVal === "selected_first") {
+            filtered.sort((a, b) => {
+                const aSel = String(a.id) === String(genericLookupPickerState.selectedId) ? 1 : 0;
+                const bSel = String(b.id) === String(genericLookupPickerState.selectedId) ? 1 : 0;
+                if (aSel !== bSel) return bSel - aSel;
+                return (a.text || "").localeCompare(b.text || "");
+            });
+        }
     }
 
     listContainer.innerHTML = "";

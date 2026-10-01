@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let admissionId = null;
@@ -737,6 +737,8 @@ const wireLookupPickers = () => {
                 categoryFilterFn: (b, val) => b.Room_Type === val,
                 sortOptions: [
                     { label: 'Default Order', value: 'default' },
+                    { label: 'Classification (A to Z)', value: 'type_asc' },
+                    { label: 'Classification (Z to A)', value: 'type_desc' },
                     { label: 'Bed Code (A to Z)', value: 'code_asc' },
                     { label: 'Bed Code (Z to A)', value: 'code_desc' },
                     { label: 'Rate (Low to High)', value: 'rate_asc' },
@@ -744,7 +746,19 @@ const wireLookupPickers = () => {
                 ],
                 sortFn: (list, val) => {
                     const arr = [...list];
-                    if (val === 'code_asc') {
+                    if (val === 'type_asc') {
+                        arr.sort((a, b) => {
+                            const comp = (a.Room_Type || '').localeCompare(b.Room_Type || '');
+                            if (comp !== 0) return comp;
+                            return (a.Bed_Code || '').localeCompare(b.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' });
+                        });
+                    } else if (val === 'type_desc') {
+                        arr.sort((a, b) => {
+                            const comp = (b.Room_Type || '').localeCompare(a.Room_Type || '');
+                            if (comp !== 0) return comp;
+                            return (a.Bed_Code || '').localeCompare(b.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' });
+                        });
+                    } else if (val === 'code_asc') {
                         arr.sort((a, b) => (a.Bed_Code || '').localeCompare(b.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' }));
                     } else if (val === 'code_desc') {
                         arr.sort((a, b) => (b.Bed_Code || '').localeCompare(a.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' }));

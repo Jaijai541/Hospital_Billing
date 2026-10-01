@@ -9,15 +9,17 @@ class InvoiceManager
         include "connection.php";
 
         $sql = "SELECT 
-                    Discount_ID,
-                    Discount_Name,
-                    Discount_Type,
-                    Discount_Percentage,
-                    Fixed_Amount,
-                    Is_Vat_Exempt
-                FROM Enum_Discount
-                WHERE Is_Active = 1
-                ORDER BY Discount_Type ASC, Discount_Percentage DESC, Fixed_Amount DESC, Discount_Name ASC";
+                    d.Discount_ID,
+                    d.Discount_Name,
+                    d.Discount_Type_ID,
+                    COALESCE(edt.Type_Name, d.Discount_Type) AS Discount_Type,
+                    d.Discount_Percentage,
+                    d.Fixed_Amount,
+                    d.Is_Vat_Exempt
+                FROM Enum_Discount d
+                LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
+                WHERE d.Is_Active = 1
+                ORDER BY d.Discount_Type_ID ASC, d.Discount_Percentage DESC, d.Fixed_Amount DESC, d.Discount_Name ASC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -156,15 +158,17 @@ class InvoiceManager
         }
 
         $appDiscSql = "SELECT 
-                        Applied_Discount_ID,
-                        Discount_ID,
-                        Discount_Name,
-                        Discount_Type,
-                        Discount_Value,
-                        Calculated_Deduction
-                       FROM Invoice_Applied_Discount
-                       WHERE Invoice_ID = :iid
-                       ORDER BY Applied_Discount_ID ASC";
+                        iad.Applied_Discount_ID,
+                        iad.Discount_ID,
+                        iad.Discount_Name,
+                        iad.Discount_Type_ID,
+                        COALESCE(edt.Type_Name, iad.Discount_Type) AS Discount_Type,
+                        iad.Discount_Value,
+                        iad.Calculated_Deduction
+                       FROM Invoice_Applied_Discount iad
+                       LEFT JOIN Enum_Discount_Type edt ON iad.Discount_Type_ID = edt.Discount_Type_ID
+                       WHERE iad.Invoice_ID = :iid
+                       ORDER BY iad.Applied_Discount_ID ASC";
         $appDiscStmt = $conn->prepare($appDiscSql);
         $appDiscStmt->execute([':iid' => $invoice['Invoice_ID']]);
         $invoice['Applied_Discounts'] = $appDiscStmt->fetchAll(PDO::FETCH_ASSOC);

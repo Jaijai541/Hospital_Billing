@@ -291,6 +291,7 @@ const saveDiscount = async () => {
 
     const jsonData = {
         discount_name: discountName,
+        discount_type_id: discountType === "Fixed" ? 2 : 1,
         discount_type: discountType,
         discount_percentage: pct,
         fixed_amount: fixed,

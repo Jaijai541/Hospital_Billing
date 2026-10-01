@@ -8,9 +8,10 @@ class Discount
     {
         include "connection.php";
 
-        $sql = "SELECT Discount_ID, Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active, 'DISC' AS Code_Prefix 
-                FROM Enum_Discount 
-                ORDER BY Is_Active DESC, Discount_Name ASC";
+        $sql = "SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, d.Discount_Type) AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt, d.Is_Active, COALESCE(edt.Code_Prefix, 'DISC') AS Code_Prefix 
+                FROM Enum_Discount d
+                LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
+                ORDER BY d.Is_Active DESC, d.Discount_Name ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -23,15 +24,31 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT Discount_ID, Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active, 'DISC' AS Code_Prefix 
-                FROM Enum_Discount 
-                WHERE Discount_ID = :id";
+        $sql = "SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, d.Discount_Type) AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt, d.Is_Active, COALESCE(edt.Code_Prefix, 'DISC') AS Code_Prefix 
+                FROM Enum_Discount d
+                LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
+                WHERE d.Discount_ID = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":id", $json['discount_id']);
         $stmt->execute();
         $rs = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return json_encode($rs ?: []);
+    }
+
+    function getAllDiscountTypes()
+    {
+        include "connection.php";
+
+        $sql = "SELECT Discount_Type_ID, Type_Name, Code_Prefix, Is_Active 
+                FROM Enum_Discount_Type 
+                WHERE Is_Active = 1 
+                ORDER BY Discount_Type_ID ASC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode($rs);
     }
 }
 
@@ -50,6 +67,9 @@ switch ($operation) {
         break;
     case "getDiscountById":
         echo $discount->getDiscountById($json);
+        break;
+    case "getAllDiscountTypes":
+        echo $discount->getAllDiscountTypes();
         break;
 }
 ?>

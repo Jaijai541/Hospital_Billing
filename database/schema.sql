@@ -46,14 +46,23 @@ CREATE TABLE IF NOT EXISTS Enum_Department_Station (
     Is_Active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS Enum_Discount_Type (
+    Discount_Type_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Type_Name VARCHAR(50) NOT NULL,
+    Code_Prefix VARCHAR(10) NOT NULL DEFAULT 'DISC',
+    Is_Active BOOLEAN DEFAULT TRUE
+);
+
 CREATE TABLE IF NOT EXISTS Enum_Discount (
     Discount_ID INT AUTO_INCREMENT PRIMARY KEY,
     Discount_Name VARCHAR(50) NOT NULL,
+    Discount_Type_ID INT NOT NULL DEFAULT 1,
     Discount_Type ENUM('Percentage', 'Fixed') DEFAULT 'Percentage',
     Discount_Percentage DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
     Fixed_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     Is_Vat_Exempt BOOLEAN DEFAULT FALSE,
-    Is_Active BOOLEAN DEFAULT TRUE
+    Is_Active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (Discount_Type_ID) REFERENCES Enum_Discount_Type(Discount_Type_ID)
 );
 
 CREATE TABLE IF NOT EXISTS Enum_User_Role (
@@ -276,12 +285,14 @@ CREATE TABLE IF NOT EXISTS Invoice_Applied_Discount (
     Invoice_ID INT NOT NULL,
     Discount_ID INT NULL,
     Discount_Name VARCHAR(100) NOT NULL,
+    Discount_Type_ID INT NOT NULL DEFAULT 1,
     Discount_Type ENUM('Percentage', 'Fixed') DEFAULT 'Percentage',
     Discount_Value DECIMAL(12, 2) NOT NULL,
     Calculated_Deduction DECIMAL(12, 2) NOT NULL,
     Applied_At DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
-    FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID) ON DELETE SET NULL
+    FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID) ON DELETE SET NULL,
+    FOREIGN KEY (Discount_Type_ID) REFERENCES Enum_Discount_Type(Discount_Type_ID)
 );
 
 CREATE TABLE IF NOT EXISTS Invoice_Payment (

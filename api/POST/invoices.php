@@ -249,15 +249,17 @@ class InvoiceManager
             if (!empty($appliedItems)) {
                 $insAppDisc = $conn->prepare("
                     INSERT INTO Invoice_Applied_Discount 
-                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Type, Discount_Value, Calculated_Deduction)
+                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Type_ID, Discount_Type, Discount_Value, Calculated_Deduction)
                     VALUES 
-                        (:iid, :did, :dname, :dtype, :dval, :dded)
+                        (:iid, :did, :dname, :dtypeid, :dtype, :dval, :dded)
                 ");
                 foreach ($appliedItems as $ai) {
+                    $typeId = ($ai['type'] === 'Fixed') ? 2 : 1;
                     $insAppDisc->execute([
                         ':iid' => $invoiceId,
                         ':did' => $ai['discount_id'],
                         ':dname' => $ai['name'],
+                        ':dtypeid' => $typeId,
                         ':dtype' => $ai['type'],
                         ':dval' => $ai['value'],
                         ':dded' => $ai['deduction']

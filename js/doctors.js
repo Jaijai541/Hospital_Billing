@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allDoctors = [];
@@ -436,7 +436,10 @@ const loadDoctorLookups = async () => {
     }
 };
 
-const openDoctorTypePicker = () => {
+const openDoctorTypePicker = async () => {
+    if (!allDoctorTypes || allDoctorTypes.length === 0) {
+        await loadDoctorLookups();
+    }
     openGenericLookupPicker({
         title: "Select Doctor Classification",
         items: allDoctorTypes.map(t => ({
@@ -451,7 +454,10 @@ const openDoctorTypePicker = () => {
     });
 };
 
-const openStationPicker = () => {
+const openStationPicker = async () => {
+    if (!allStations || allStations.length === 0) {
+        await loadDoctorLookups();
+    }
     openGenericLookupPicker({
         title: "Select Department / Station",
         items: allStations.map(st => ({

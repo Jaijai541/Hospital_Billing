@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allAdmissions = [];
@@ -139,6 +139,54 @@ const loadBeds = () => {
             console.error("admissions.js: Error fetching vacant beds:", err);
             alert("Failed to load vacant beds.");
         });
+};
+
+const openPatientPicker = async () => {
+    if (!activePatients || activePatients.length === 0) {
+        loadPatients();
+    }
+    openGenericLookupPicker({
+        title: "Select Registered Patient",
+        items: activePatients.map(p => {
+            const isAdmitted = (p.Active_Admission_ID !== null || p.Latest_Admission_Status === "Admitted");
+            return {
+                id: p.Patient_ID,
+                text: `${p.Patient_Code} — ${p.Full_Name}`,
+                subtext: `Gender: ${p.Gender_Name || "N/A"} | Blood: ${p.Blood_Type_Name || "N/A"}${isAdmitted ? " (Currently Admitted)" : ""}`,
+                disabled: isAdmitted,
+                badge: isAdmitted ? "Admitted" : "Available",
+                badgeClass: isAdmitted ? "badge-danger" : "badge-success"
+            };
+        }),
+        selectedId: document.getElementById("patient_id") ? document.getElementById("patient_id").value : "",
+        onSelect: (item) => {
+            const pId = document.getElementById("patient_id");
+            if (pId) pId.value = item.id;
+            const pText = document.getElementById("patient_id_text");
+            if (pText) pText.value = item.text;
+        }
+    });
+};
+
+const openBedPicker = async () => {
+    if (!availableBeds || availableBeds.length === 0) {
+        loadBeds();
+    }
+    openGenericLookupPicker({
+        title: "Select Vacant Bed",
+        items: availableBeds.map(b => ({
+            id: b.Bed_ID,
+            text: `Bed ${b.Bed_Code} — ${b.Room_Name} (${b.Room_Type})`,
+            subtext: `Daily Rate: ₱${parseFloat(b.Daily_Rate).toFixed(2)}/day`
+        })),
+        selectedId: document.getElementById("bed_id") ? document.getElementById("bed_id").value : "",
+        onSelect: (item) => {
+            const bId = document.getElementById("bed_id");
+            if (bId) bId.value = item.id;
+            const bText = document.getElementById("bed_id_text");
+            if (bText) bText.value = item.text;
+        }
+    });
 };
 
 const filterDoctorsCheckboxes = () => {

@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allRooms = [];
@@ -106,7 +106,10 @@ const loadRoomTypes = async () => {
     }
 };
 
-const openRoomTypePicker = () => {
+const openRoomTypePicker = async () => {
+    if (!roomTypes || roomTypes.length === 0) {
+        await loadRoomTypes();
+    }
     openGenericLookupPicker({
         title: "Select Room Classification",
         items: roomTypes.map(rt => ({

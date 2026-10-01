@@ -443,6 +443,7 @@ const openGenericLookupPicker = (options) => {
 
         const closePicker = () => {
             modal.style.display = "none";
+            modal.classList.remove("active");
         };
 
         document.getElementById("btnCloseGenericLookup").addEventListener("click", closePicker);
@@ -455,7 +456,8 @@ const openGenericLookupPicker = (options) => {
         });
 
         document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && modal.style.display === "flex") {
+            if (e.key === "Escape" && (modal.classList.contains("active") || modal.style.display === "flex")) {
+                e.stopImmediatePropagation();
                 closePicker();
             }
         });
@@ -483,9 +485,16 @@ const openGenericLookupPicker = (options) => {
 
     renderGenericLookupList();
 
+    modal.classList.add("active");
     modal.style.display = "flex";
-    document.getElementById("generic_lookup_search").focus();
+    modal.style.zIndex = "1300";
+    setTimeout(() => {
+        const searchInput = document.getElementById("generic_lookup_search");
+        if (searchInput) searchInput.focus();
+    }, 50);
 };
+
+window.openGenericLookupPicker = openGenericLookupPicker;
 
 const renderGenericLookupList = () => {
     const listContainer = document.getElementById("generic_lookup_list");
@@ -556,7 +565,10 @@ const renderGenericLookupList = () => {
                     genericLookupPickerState.onSelect(item);
                 }
                 const modal = document.getElementById("system-generic-lookup-modal");
-                if (modal) modal.style.display = "none";
+                if (modal) {
+                    modal.style.display = "none";
+                    modal.classList.remove("active");
+                }
             });
         }
 

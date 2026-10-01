@@ -8,7 +8,7 @@ class Discount
     {
         include "connection.php";
 
-        $sql = "SELECT Discount_ID, Discount_Name, Discount_Percentage, Is_Active, 'DISC' AS Code_Prefix 
+        $sql = "SELECT Discount_ID, Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active, 'DISC' AS Code_Prefix 
                 FROM Enum_Discount 
                 ORDER BY Is_Active DESC, Discount_Name ASC";
         $stmt = $conn->prepare($sql);
@@ -23,7 +23,7 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT Discount_ID, Discount_Name, Discount_Percentage, Is_Active, 'DISC' AS Code_Prefix 
+        $sql = "SELECT Discount_ID, Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active, 'DISC' AS Code_Prefix 
                 FROM Enum_Discount 
                 WHERE Discount_ID = :id";
         $stmt = $conn->prepare($sql);

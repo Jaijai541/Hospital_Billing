@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Invoices & Settled Accounts — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=6.0">
-    <link rel="stylesheet" href="../css/invoices.css?v=2.0">
+    <link rel="stylesheet" href="../css/common.css?v=6.4">
+    <link rel="stylesheet" href="../css/invoices.css?v=6.4">
 </head>
 <body>
 
@@ -121,6 +121,9 @@
                         <div><strong style="color: #64748b;">Invoice Code:</strong><br><span id="hist_invoice_code" style="font-weight: 700;"></span></div>
                         <div><strong style="color: #64748b;">Admission Code:</strong><br><span id="hist_admission_code" style="font-weight: 700;"></span></div>
                         <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient:</strong><br><span id="hist_patient_name" style="font-weight: 700;"></span></div>
+                        <div><strong style="color: #64748b;">Gross Charges:</strong><br><strong>₱<span id="hist_gross_total">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">12% VAT:</strong><br><strong id="hist_vat_amount_wrap">₱<span id="hist_vat_amount">0.00</span></strong></div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Discounts Applied:</strong><br><span id="hist_discounts_summary" style="font-weight: 600; color: #166534;">None</span></div>
                         <div><strong style="color: #64748b;">Net Amount Due:</strong><br><strong style="color: var(--primary);">₱<span id="hist_net_due">0.00</span></strong></div>
                         <div><strong style="color: #64748b;">Total Amount Paid:</strong><br><strong style="color: #16a34a;">₱<span id="hist_amount_paid">0.00</span></strong></div>
                         <div style="grid-column: span 2;"><strong style="color: #64748b;">Remaining Balance:</strong><br><strong id="hist_remaining_balance_wrap" style="font-size: 15px;">₱<span id="hist_remaining_balance">0.00</span></strong></div>
@@ -142,9 +145,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=6.0"></script>
-    <script src="../js/common.js?v=6.0"></script>
-    <script src="../js/invoices.js?v=6.0"></script>
+    <script src="../js/sidebar.js?v=6.4"></script>
+    <script src="../js/common.js?v=6.4"></script>
+    <script src="../js/invoices.js?v=6.4"></script>
 </body>
 </html>
 

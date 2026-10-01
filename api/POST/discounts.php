@@ -9,12 +9,19 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
+        $type = in_array($json['discount_type'] ?? '', ['Fixed', 'Percentage']) ? $json['discount_type'] : 'Percentage';
+        $pct = floatval($json['discount_percentage'] ?? 0);
+        $fixed = floatval($json['fixed_amount'] ?? 0);
+        $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
 
-        $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Percentage, Is_Active) 
-                VALUES (:name, :percentage, 1)";
+        $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active) 
+                VALUES (:name, :type, :percentage, :fixed, :exempt, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['discount_name']);
-        $stmt->bindParam(":percentage", $json['discount_percentage']);
+        $stmt->bindParam(":type", $type);
+        $stmt->bindParam(":percentage", $pct);
+        $stmt->bindParam(":fixed", $fixed);
+        $stmt->bindParam(":exempt", $isVatExempt);
         $stmt->execute();
 
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
@@ -25,14 +32,24 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
+        $type = in_array($json['discount_type'] ?? '', ['Fixed', 'Percentage']) ? $json['discount_type'] : 'Percentage';
+        $pct = floatval($json['discount_percentage'] ?? 0);
+        $fixed = floatval($json['fixed_amount'] ?? 0);
+        $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
 
         $sql = "UPDATE Enum_Discount 
                 SET Discount_Name = :name, 
-                    Discount_Percentage = :percentage 
+                    Discount_Type = :type,
+                    Discount_Percentage = :percentage,
+                    Fixed_Amount = :fixed,
+                    Is_Vat_Exempt = :exempt
                 WHERE Discount_ID = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['discount_name']);
-        $stmt->bindParam(":percentage", $json['discount_percentage']);
+        $stmt->bindParam(":type", $type);
+        $stmt->bindParam(":percentage", $pct);
+        $stmt->bindParam(":fixed", $fixed);
+        $stmt->bindParam(":exempt", $isVatExempt);
         $stmt->bindParam(":id", $json['discount_id']);
         $stmt->execute();
 

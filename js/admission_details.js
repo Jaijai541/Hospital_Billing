@@ -11,6 +11,7 @@ let currentUser = null;
 let discountList = [];
 let paymentMethodsList = [];
 let latestSummary = null;
+let customVouchersList = [];
 let switchClinicalTab = null;
 let currentPickerConfig = null;
 let currentPickerSelectedItem = null;
@@ -1977,6 +1978,34 @@ const renderBilledSettlementCard = (inv) => {
     const discountAmt = parseFloat(inv.Discount_Amount || 0);
     const changeAmt = parseFloat(inv.Change_Amount || 0);
 
+    const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);
+    const vatAmt = parseFloat(inv.VAT_Amount || 0);
+    const vatableAmt = parseFloat(inv.VATable_Amount || 0);
+    const vatExemptAmt = parseFloat(inv.VAT_Exempt_Amount || 0);
+
+    let discountDetailsHtml = 'None (₱0.00)';
+    if (inv.Applied_Discounts && Array.isArray(inv.Applied_Discounts) && inv.Applied_Discounts.length > 0) {
+        discountDetailsHtml = inv.Applied_Discounts.map(ad => {
+            const valStr = ad.Discount_Type === 'Fixed' 
+                ? `Fixed: ₱${parseFloat(ad.Discount_Value || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}` 
+                : `${parseFloat(ad.Discount_Value || 0).toFixed(2)}%`;
+            return `<div>• <strong>${ad.Discount_Name}</strong> (${valStr}) — <span style="color: #166534; font-weight: 600;">-₱${parseFloat(ad.Calculated_Deduction || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span></div>`;
+        }).join('');
+    } else if (inv.Discount_Summary) {
+        discountDetailsHtml = `${inv.Discount_Summary} — <span style="color: #166534; font-weight: 600;">-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
+    } else if (discountAmt > 0) {
+        discountDetailsHtml = `${inv.Discount_Name || 'Statutory Discount'} (${parseFloat(inv.Discount_Percentage || 0).toFixed(2)}%) — <span style="color: #166534; font-weight: 600;">-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
+    }
+
+    let vatDetailsHtml = '';
+    if (vatRate === 0 || vatExemptAmt > 0) {
+        vatDetailsHtml = '<span class="badge badge-success" style="font-size: 13px;">₱0.00 (12% VAT-Exempt — Senior/PWD)</span>';
+    } else {
+        vatDetailsHtml = `+₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 13px;">(12% VAT on ₱${vatableAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+    }
+
+    const netBeforeTax = (vatableAmt > 0 ? vatableAmt : (vatExemptAmt > 0 ? vatExemptAmt : Math.max(0, grossTotal - discountAmt)));
+
     updateWorkflowStepper('Billed', remainingBal);
 
     if (remainingBal <= 0) {
@@ -1990,7 +2019,9 @@ const renderBilledSettlementCard = (inv) => {
                     <tbody>
                         <tr><td width="40%">Official Invoice Number:</td><td><strong>${inv.Invoice_Code}</strong></td></tr>
                         <tr><td>Gross Charges Assessed:</td><td>₱${grossTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
-                        <tr><td>Statutory Discount Applied:</td><td>${inv.Discount_Name || 'None'} (${parseFloat(inv.Discount_Percentage || 0).toFixed(2)}%) - ₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                        <tr><td>Cumulative Discounts Applied:</td><td>${discountDetailsHtml}</td></tr>
+                        <tr><td>Net Billable (Before Tax):</td><td>₱${netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                        <tr><td>Value-Added Tax (12% VAT):</td><td>${vatDetailsHtml}</td></tr>
                         <tr><td>Net Amount Assessed:</td><td><strong>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
                         <tr><td>Total Payments Received:</td><td><strong style="color: #16a34a;">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
                         ${changeAmt > 0 ? `<tr><td>Customer Change Given:</td><td>₱${changeAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>` : ''}
@@ -2032,7 +2063,11 @@ const renderBilledSettlementCard = (inv) => {
             <table class="data-table mb-3">
                 <tbody>
                     <tr><td width="40%">Official Invoice Number:</td><td><strong>${inv.Invoice_Code}</strong></td></tr>
-                    <tr><td>Net Amount Due:</td><td>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                    <tr><td>Gross Charges Assessed:</td><td>₱${grossTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                    <tr><td>Cumulative Discounts Applied:</td><td>${discountDetailsHtml}</td></tr>
+                    <tr><td>Net Billable (Before Tax):</td><td>₱${netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                    <tr><td>Value-Added Tax (12% VAT):</td><td>${vatDetailsHtml}</td></tr>
+                    <tr><td>Net Amount Due:</td><td><strong>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
                     <tr><td>Total Amount Paid So Far:</td><td><strong style="color: #16a34a;">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
                     <tr style="background-color: #fef2f2;">
                         <td><strong style="color: #dc2626;">REMAINING BALANCE DUE:</strong></td>
@@ -2190,7 +2225,6 @@ const renderBilledSettlementCard = (inv) => {
     });
 };
 
-
 const renderSettlementSection = () => {
     const container = document.getElementById('settlement-container');
     if (!container) return;
@@ -2249,12 +2283,30 @@ const renderSettlementSection = () => {
     const scanTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.scan_total || 0)) : 0;
     const srvTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.service_total || 0)) : 0;
 
-    let discountOptionsHtml = '<option value="" data-pct="0">None (0.00%)</option>';
-    discountList.forEach(d => {
-        discountOptionsHtml += `<option value="${d.Discount_ID}" data-pct="${d.Discount_Percentage}">${d.Discount_Name} (${parseFloat(d.Discount_Percentage).toFixed(2)}%)</option>`;
-    });
-
     const isOccupyingBed = admissionData.Bed_Code ? `<p style="color: #856404; background-color: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;"><strong>Note:</strong> The patient is currently assigned to Bed <strong>${admissionData.Bed_Code}</strong>. Processing settlement will automatically calculate final board & lodging, release the bed as available, and finalize the account.</p>` : '';
+
+    let discountCheckboxesHtml = '';
+    discountList.forEach(d => {
+        const isFixed = (d.Discount_Type === 'Fixed');
+        const badgeColor = isFixed ? 'background: #e0f2fe; color: #0369a1;' : 'background: #fef3c7; color: #92400e;';
+        const valText = isFixed 
+            ? `Fixed: ₱${parseFloat(d.Fixed_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}` 
+            : `${parseFloat(d.Discount_Percentage || 0).toFixed(2)}%`;
+        const vatBadge = (d.Is_Vat_Exempt == 1) ? `<span class="badge badge-success" style="font-size: 11px; padding: 2px 7px;">12% VAT EXEMPT</span>` : '';
+
+        discountCheckboxesHtml += `
+            <label style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="${d.Discount_Type}" data-pct="${d.Discount_Percentage}" data-fixed="${d.Fixed_Amount}" data-vat-exempt="${d.Is_Vat_Exempt}" style="width: 17px; height: 17px; cursor: pointer;">
+                    <span style="font-weight: 600; font-size: 13.5px; color: #1e293b;">${d.Discount_Name}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="badge" style="${badgeColor} font-size: 11.5px; padding: 3px 8px;">${valText}</span>
+                    ${vatBadge}
+                </div>
+            </label>
+        `;
+    });
 
     let html = `
         ${isOccupyingBed}
@@ -2312,26 +2364,57 @@ const renderSettlementSection = () => {
             </div>
         </div>
 
+        <div class="card p-3 mb-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <label class="form-label" style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0;">
+                    Discounts, Deductions & Vouchers (Cumulative / Stacking Enabled):
+                </label>
+                <span class="text-muted" style="font-size: 12.5px;">Fixed vouchers deduct first, then percentage discounts apply to remaining subtotal</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-bottom: 12px;">
+                ${discountCheckboxesHtml || '<p class="text-muted">No institutional discounts configured.</p>'}
+            </div>
+
+            <div style="background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 6px; padding: 10px 14px;">
+                <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">+ Add Custom Fixed Voucher / Courtesy Deduction:</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="custom_voucher_name_input" class="form-control" style="max-width: 250px; font-size: 13px;" placeholder="e.g. Hospital Voucher, LGU Subsidy">
+                    <input type="number" id="custom_voucher_val_input" class="form-control" style="max-width: 160px; font-size: 13px;" step="0.01" min="0.01" placeholder="Amount (₱)">
+                    <button type="button" id="btnAddCustomVoucher" class="btn btn-outline btn-sm" style="font-weight: 600;">+ Add Voucher</button>
+                </div>
+                <div id="custom-vouchers-tags" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+            </div>
+        </div>
+
         <table class="data-table mb-3">
             <thead>
-                <tr><th colspan="2">Billing Settlement & Statutory Discount Breakdown</th></tr>
+                <tr><th colspan="2">Billing Settlement &amp; 12% VAT Breakdown</th></tr>
             </thead>
             <tbody>
             <tr>
-                <td width="40%"><strong>Select Statutory / Institutional Discount:</strong></td>
-                <td width="60%">
-                    <select id="settle_discount_id" class="form-select">
-                        ${discountOptionsHtml}
-                    </select>
-                </td>
+                <td width="45%">Gross Total Accumulated Charges:</td>
+                <td width="55%" align="right"><strong>₱<span id="settle-gross-display">${formattedGross}</span></strong></td>
             </tr>
             <tr>
-                <td>Gross Total Accumulated Charges:</td>
-                <td align="right"><strong>₱<span id="settle-gross-display">${formattedGross}</span></strong></td>
+                <td>Less: Fixed Vouchers &amp; Deductions:</td>
+                <td align="right" style="color: #276749;"><strong>-<span id="settle-fixed-deductions-display">₱0.00</span></strong></td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+                <td>Subtotal After Fixed Deductions:</td>
+                <td align="right"><strong>₱<span id="settle-subtotal-after-fixed-display">${formattedGross}</span></strong></td>
             </tr>
             <tr>
-                <td>Applied Discount (<span id="settle-discount-pct-label">0.00%</span>):</td>
-                <td align="right" style="color: #276749;"><strong>-<span id="settle-discount-amount-display">₱0.00</span></strong></td>
+                <td>Less: Percentage Discount (<span id="settle-discount-pct-label">0.00%</span>):</td>
+                <td align="right" style="color: #276749;"><strong>-<span id="settle-pct-discount-display">₱0.00</span></strong></td>
+            </tr>
+            <tr style="background-color: #f1f5f9;">
+                <td><strong>Net Billable Amount (Before Tax):</strong></td>
+                <td align="right"><strong id="settle-net-before-tax-display">₱${formattedGross}</strong></td>
+            </tr>
+            <tr id="settle-vat-row">
+                <td>Value-Added Tax (12% VAT):</td>
+                <td align="right"><strong id="settle-vat-display" style="color: #0369a1;">+₱0.00 (12% VAT)</strong></td>
             </tr>
             <tr style="background-color: #edf2f7;">
                 <td><h3 style="margin: 5px 0;">NET AMOUNT ASSESSED:</h3></td>
@@ -2368,78 +2451,222 @@ const renderSettlementSection = () => {
 
     container.innerHTML = html;
 
-    const discountSelect = document.getElementById('settle_discount_id');
     const cashInput = document.getElementById('settle_amount_paid');
     const catCheckboxes = container.querySelectorAll('.cat-checkbox');
     const catButtons = container.querySelectorAll('.cat-quick-btn');
     const noticeEl = document.getElementById('cat-scope-notice');
 
-    const computeCurrentNet = () => {
-        const selectedOpt = discountSelect ? discountSelect.options[discountSelect.selectedIndex] : null;
-        const pct = selectedOpt ? parseFloat(selectedOpt.dataset.pct || 0) : 0;
-        const discountAmt = Math.round((gross * (pct / 100)) * 100) / 100;
-        const netAmt = Math.max(0, Math.round((gross - discountAmt) * 100) / 100);
-        return { pct, discountAmt, netAmt };
+    const computeSettlementMath = () => {
+        let selectedBase = gross;
+        let checkedCount = 0;
+        let totalCount = 0;
+        catCheckboxes.forEach(cb => {
+            totalCount++;
+            if (cb.checked) checkedCount++;
+        });
+
+        if (checkedCount > 0 && checkedCount < totalCount) {
+            selectedBase = 0;
+            catCheckboxes.forEach(cb => {
+                if (cb.checked) {
+                    selectedBase += parseFloat(cb.dataset.amount || 0);
+                }
+            });
+        }
+
+        const selectedDiscounts = [];
+        const checkedBoxes = container.querySelectorAll('.discount-checkbox:checked');
+        let isVatExempt = false;
+
+        checkedBoxes.forEach(cb => {
+            const did = parseInt(cb.dataset.id, 10);
+            const dtype = cb.dataset.type;
+            const dpct = parseFloat(cb.dataset.pct || 0);
+            const dfixed = parseFloat(cb.dataset.fixed || 0);
+            const dname = cb.dataset.name || '';
+            const dvatExempt = parseInt(cb.dataset.vatExempt || '0', 10) === 1 || dname.toLowerCase().includes('senior') || dname.toLowerCase().includes('pwd');
+
+            if (dvatExempt) isVatExempt = true;
+
+            selectedDiscounts.push({
+                id: did,
+                name: dname,
+                type: dtype,
+                pct: dpct,
+                fixed: dfixed,
+                isVatExempt: dvatExempt
+            });
+        });
+
+        customVouchersList.forEach(cv => {
+            selectedDiscounts.push({
+                id: null,
+                name: cv.name,
+                type: 'Fixed',
+                pct: 0,
+                fixed: cv.amount,
+                isVatExempt: false
+            });
+        });
+
+        let running = selectedBase;
+        let totalFixedDeduction = 0;
+
+        selectedDiscounts.filter(d => d.type === 'Fixed').forEach(fd => {
+            const ded = Math.min(running, fd.fixed);
+            running = Math.max(0, Math.round((running - ded) * 100) / 100);
+            totalFixedDeduction = Math.round((totalFixedDeduction + ded) * 100) / 100;
+        });
+
+        const subtotalAfterFixed = running;
+
+        let totalPctRate = 0;
+        selectedDiscounts.filter(d => d.type === 'Percentage').forEach(pd => {
+            totalPctRate += pd.pct;
+        });
+
+        const pctDeduction = Math.round((subtotalAfterFixed * (totalPctRate / 100)) * 100) / 100;
+        const netBeforeTax = Math.max(0, Math.round((subtotalAfterFixed - pctDeduction) * 100) / 100);
+        const totalDiscountDeduction = Math.round((totalFixedDeduction + pctDeduction) * 100) / 100;
+
+        let vatRate = 0;
+        let vatAmount = 0;
+        let vatableAmount = 0;
+        let vatExemptAmount = 0;
+        let netAmountDue = netBeforeTax;
+
+        if (isVatExempt) {
+            vatRate = 0;
+            vatAmount = 0;
+            vatExemptAmount = netBeforeTax;
+            vatableAmount = 0;
+            netAmountDue = netBeforeTax;
+        } else {
+            vatRate = 12.00;
+            vatableAmount = netBeforeTax;
+            vatAmount = Math.round((netBeforeTax * 0.12) * 100) / 100;
+            vatExemptAmount = 0;
+            netAmountDue = Math.round((netBeforeTax + vatAmount) * 100) / 100;
+        }
+
+        return {
+            selectedBase,
+            totalFixedDeduction,
+            subtotalAfterFixed,
+            totalPctRate,
+            pctDeduction,
+            netBeforeTax,
+            totalDiscountDeduction,
+            isVatExempt,
+            vatRate,
+            vatAmount,
+            vatableAmount,
+            vatExemptAmount,
+            netAmountDue,
+            selectedDiscounts
+        };
     };
 
     const updateSettlementTotals = () => {
-        const { pct, discountAmt, netAmt } = computeCurrentNet();
+        const math = computeSettlementMath();
 
-        const lblPct = document.getElementById('settle-discount-pct-label');
-        const lblDisc = document.getElementById('settle-discount-amount-display');
+        const lblGross = document.getElementById('settle-gross-display');
+        const lblFixed = document.getElementById('settle-fixed-deductions-display');
+        const lblSubAfter = document.getElementById('settle-subtotal-after-fixed-display');
+        const lblPctLabel = document.getElementById('settle-discount-pct-label');
+        const lblPctAmt = document.getElementById('settle-pct-discount-display');
+        const lblNetBeforeTax = document.getElementById('settle-net-before-tax-display');
+        const lblVat = document.getElementById('settle-vat-display');
         const lblNet = document.getElementById('settle-net-display');
         const lblChange = document.getElementById('settle-change-display');
 
-        if (lblPct) lblPct.textContent = `${pct.toFixed(2)}%`;
-        if (lblDisc) lblDisc.textContent = `₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
-        if (lblNet) lblNet.textContent = `₱${netAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblGross) lblGross.textContent = math.selectedBase.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        if (lblFixed) lblFixed.textContent = `₱${math.totalFixedDeduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblSubAfter) lblSubAfter.textContent = math.subtotalAfterFixed.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        if (lblPctLabel) lblPctLabel.textContent = `${math.totalPctRate.toFixed(2)}%`;
+        if (lblPctAmt) lblPctAmt.textContent = `₱${math.pctDeduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblNetBeforeTax) lblNetBeforeTax.textContent = `₱${math.netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+        if (lblVat) {
+            if (math.isVatExempt) {
+                lblVat.innerHTML = '<span class="badge badge-success" style="font-size: 12px;">₱0.00 (12% VAT-Exempt — Senior/PWD)</span>';
+            } else {
+                lblVat.innerHTML = `+₱${math.vatAmount.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 12.5px;">(12% on ₱${math.vatableAmount.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+            }
+        }
+
+        if (lblNet) lblNet.textContent = `₱${math.netAmountDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
         const paid = cashInput ? parseFloat(cashInput.value || 0) : 0;
         if (lblChange) {
-            if (paid >= netAmt) {
-                const change = Math.round((paid - netAmt) * 100) / 100;
+            if (paid >= math.netAmountDue) {
+                const change = Math.round((paid - math.netAmountDue) * 100) / 100;
                 lblChange.textContent = `Change: ₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
                 lblChange.style.color = '#16a34a';
             } else {
-                const bal = Math.round((netAmt - paid) * 100) / 100;
+                const bal = Math.round((math.netAmountDue - paid) * 100) / 100;
                 lblChange.textContent = `Remaining Balance: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
                 lblChange.style.color = '#dc2626';
             }
         }
     };
 
+    const renderCustomVoucherTags = () => {
+        const tagsContainer = document.getElementById('custom-vouchers-tags');
+        if (!tagsContainer) return;
+
+        if (customVouchersList.length === 0) {
+            tagsContainer.innerHTML = '';
+            return;
+        }
+
+        tagsContainer.innerHTML = customVouchersList.map((cv, idx) => `
+            <span class="badge" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-size: 12px; padding: 5px 10px; display: inline-flex; align-items: center; gap: 6px;">
+                🎟️ <strong>${cv.name}</strong> (-₱${cv.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})})
+                <button type="button" class="btn-remove-cv" data-index="${idx}" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; padding: 0 2px;">&times;</button>
+            </span>
+        `).join('');
+
+        tagsContainer.querySelectorAll('.btn-remove-cv').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.index, 10);
+                customVouchersList.splice(idx, 1);
+                renderCustomVoucherTags();
+                const math = computeSettlementMath();
+                if (cashInput) cashInput.value = math.netAmountDue.toFixed(2);
+                updateSettlementTotals();
+            });
+        });
+    };
+
     const applyCategorySelection = () => {
-        const { pct, netAmt } = computeCurrentNet();
-        let selectedSum = 0;
-        const selectedNames = [];
+        const math = computeSettlementMath();
         let totalCount = 0;
         let checkedCount = 0;
+        const selectedNames = [];
 
         catCheckboxes.forEach(cb => {
             totalCount++;
             if (cb.checked) {
                 checkedCount++;
-                selectedSum += parseFloat(cb.dataset.amount || 0);
                 selectedNames.push(cb.dataset.name);
             }
         });
 
         if (checkedCount === totalCount || checkedCount === 0) {
             if (cashInput) {
-                cashInput.value = netAmt.toFixed(2);
+                cashInput.value = math.netAmountDue.toFixed(2);
             }
             if (noticeEl) {
                 noticeEl.textContent = 'Paying for: All charges (Full bill)';
                 noticeEl.style.color = '#0369a1';
             }
         } else {
-            const netSelected = Math.max(0, Math.round(selectedSum * (1 - pct / 100) * 100) / 100);
             if (cashInput) {
-                cashInput.value = netSelected.toFixed(2);
+                cashInput.value = math.netAmountDue.toFixed(2);
             }
-            const rem = Math.max(0, Math.round((netAmt - netSelected) * 100) / 100);
             if (noticeEl) {
-                noticeEl.textContent = `Patient is paying for: ${selectedNames.join(', ')} (₱${netSelected.toLocaleString('en-PH', {minimumFractionDigits: 2})}). Balance of ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})} will remain pending.`;
+                noticeEl.textContent = `Patient is paying for: ${selectedNames.join(', ')} (₱${math.netAmountDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}). Balance will remain pending.`;
                 noticeEl.style.color = '#d97706';
             }
         }
@@ -2479,20 +2706,49 @@ const renderSettlementSection = () => {
         });
     });
 
-    if (discountSelect) {
-        discountSelect.addEventListener('change', () => {
-            applyCategorySelection();
+    container.querySelectorAll('.discount-checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+            const math = computeSettlementMath();
+            if (cashInput) cashInput.value = math.netAmountDue.toFixed(2);
+            updateSettlementTotals();
         });
-    }
+    });
+
+    document.getElementById('btnAddCustomVoucher')?.addEventListener('click', () => {
+        const nameInput = document.getElementById('custom_voucher_name_input');
+        const valInput = document.getElementById('custom_voucher_val_input');
+
+        const vName = nameInput ? nameInput.value.trim() : '';
+        const vAmt = valInput ? parseFloat(valInput.value) : 0;
+
+        if (!vName) {
+            showPopupAlert('Please enter a voucher or deduction name.', 'warning');
+            return;
+        }
+
+        if (isNaN(vAmt) || vAmt <= 0) {
+            showPopupAlert('Please enter a valid voucher amount greater than 0.', 'warning');
+            return;
+        }
+
+        customVouchersList.push({ name: vName, amount: vAmt });
+        if (nameInput) nameInput.value = '';
+        if (valInput) valInput.value = '';
+
+        renderCustomVoucherTags();
+        const math = computeSettlementMath();
+        if (cashInput) cashInput.value = math.netAmountDue.toFixed(2);
+        updateSettlementTotals();
+    });
 
     if (cashInput) {
         cashInput.addEventListener('input', updateSettlementTotals);
     }
 
     document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
-        const { netAmt } = computeCurrentNet();
+        const math = computeSettlementMath();
         if (cashInput) {
-            cashInput.value = netAmt.toFixed(2);
+            cashInput.value = math.netAmountDue.toFixed(2);
         }
         updateSettlementTotals();
     });
@@ -2506,11 +2762,25 @@ const renderSettlementSection = () => {
             submitSettlement();
         }
     });
+
+    renderCustomVoucherTags();
+    const initialMath = computeSettlementMath();
+    if (cashInput) cashInput.value = initialMath.netAmountDue.toFixed(2);
+    updateSettlementTotals();
 };
 
 const submitSettlement = () => {
-    const discountSelect = document.getElementById('settle_discount_id');
-    const discountId = discountSelect && discountSelect.value ? parseInt(discountSelect.value, 10) : null;
+    const container = document.getElementById('settlement-container');
+    const checkedBoxes = container ? container.querySelectorAll('.discount-checkbox:checked') : [];
+    const discountIds = Array.from(checkedBoxes).map(cb => parseInt(cb.dataset.id, 10));
+
+    const customDiscounts = customVouchersList.map(cv => ({
+        name: cv.name,
+        type: 'Fixed',
+        value: cv.amount,
+        is_vat_exempt: 0
+    }));
+
     const cashInput = document.getElementById('settle_amount_paid');
     const amountPaid = cashInput ? parseFloat(cashInput.value || 0) : 0;
     const payMethodSelect = document.getElementById('settle_payment_method_id');
@@ -2522,10 +2792,29 @@ const submitSettlement = () => {
     }
 
     const gross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
-    const selectedOpt = discountSelect ? discountSelect.options[discountSelect.selectedIndex] : null;
-    const pct = selectedOpt ? parseFloat(selectedOpt.dataset.pct || 0) : 0;
-    const discountAmt = Math.round((gross * (pct / 100)) * 100) / 100;
-    const netAmt = Math.max(0, Math.round((gross - discountAmt) * 100) / 100);
+
+    let totalFixed = 0;
+    checkedBoxes.forEach(cb => {
+        if (cb.dataset.type === 'Fixed') totalFixed += parseFloat(cb.dataset.fixed || 0);
+    });
+    customVouchersList.forEach(cv => { totalFixed += cv.amount; });
+
+    const afterFixed = Math.max(0, gross - totalFixed);
+
+    let totalPct = 0;
+    let isExempt = false;
+    checkedBoxes.forEach(cb => {
+        if (cb.dataset.type === 'Percentage') totalPct += parseFloat(cb.dataset.pct || 0);
+        const dname = cb.dataset.name || '';
+        if (parseInt(cb.dataset.vatExempt || '0', 10) === 1 || dname.toLowerCase().includes('senior') || dname.toLowerCase().includes('pwd')) {
+            isExempt = true;
+        }
+    });
+
+    const pctDed = Math.round(afterFixed * (totalPct / 100) * 100) / 100;
+    const netBeforeTax = Math.max(0, Math.round((afterFixed - pctDed) * 100) / 100);
+    const vatAmt = isExempt ? 0 : Math.round(netBeforeTax * 0.12 * 100) / 100;
+    const netAmt = Math.round((netBeforeTax + vatAmt) * 100) / 100;
 
     let confirmMsg = '';
     if (amountPaid < netAmt) {
@@ -2543,7 +2832,8 @@ const submitSettlement = () => {
         const payload = {
             admission_id: admissionId,
             user_id: uid,
-            discount_id: discountId,
+            discount_ids: discountIds,
+            custom_discounts: customDiscounts,
             amount_paid: amountPaid,
             payment_method_id: paymentMethodId
         };

@@ -48,8 +48,11 @@ CREATE TABLE IF NOT EXISTS Enum_Department_Station (
 
 CREATE TABLE IF NOT EXISTS Enum_Discount (
     Discount_ID INT AUTO_INCREMENT PRIMARY KEY,
-    Discount_Name VARCHAR(50) NOT NULL, -- 'Senior Citizen', 'PWD', etc.
-    Discount_Percentage DECIMAL(5, 2) NOT NULL,
+    Discount_Name VARCHAR(50) NOT NULL,
+    Discount_Type ENUM('Percentage', 'Fixed') DEFAULT 'Percentage',
+    Discount_Percentage DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
+    Fixed_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    Is_Vat_Exempt BOOLEAN DEFAULT FALSE,
     Is_Active BOOLEAN DEFAULT TRUE
 );
 
@@ -253,6 +256,11 @@ CREATE TABLE IF NOT EXISTS Final_Invoice (
     Discount_ID INT NULL,
     Gross_Total DECIMAL(12, 2) NOT NULL,
     Discount_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    VAT_Rate DECIMAL(5, 2) DEFAULT 12.00,
+    VATable_Amount DECIMAL(12, 2) DEFAULT 0.00,
+    VAT_Amount DECIMAL(12, 2) DEFAULT 0.00,
+    VAT_Exempt_Amount DECIMAL(12, 2) DEFAULT 0.00,
+    Discount_Summary VARCHAR(255) NULL,
     Net_Amount_Due DECIMAL(12, 2) NOT NULL,
     Amount_Paid DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     Change_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
@@ -261,6 +269,19 @@ CREATE TABLE IF NOT EXISTS Final_Invoice (
     FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
     FOREIGN KEY (Processed_By_User_ID) REFERENCES System_User(User_ID),
     FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID)
+);
+
+CREATE TABLE IF NOT EXISTS Invoice_Applied_Discount (
+    Applied_Discount_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Invoice_ID INT NOT NULL,
+    Discount_ID INT NULL,
+    Discount_Name VARCHAR(100) NOT NULL,
+    Discount_Type ENUM('Percentage', 'Fixed') DEFAULT 'Percentage',
+    Discount_Value DECIMAL(12, 2) NOT NULL,
+    Calculated_Deduction DECIMAL(12, 2) NOT NULL,
+    Applied_At DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
+    FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS Invoice_Payment (

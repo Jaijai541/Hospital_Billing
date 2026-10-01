@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allInvoices = [];
@@ -48,7 +48,8 @@ const renderInvoicesTable = (invoices) => {
     html += '<th>Admission #</th>';
     html += '<th>Patient Code & Name</th>';
     html += '<th>Gross Charges</th>';
-    html += '<th>Applied Discount</th>';
+    html += '<th>Applied Discounts</th>';
+    html += '<th>12% VAT</th>';
     html += '<th>Net Amount Due</th>';
     html += '<th>Amount Paid</th>';
     html += '<th>Balance Due</th>';
@@ -65,9 +66,22 @@ const renderInvoicesTable = (invoices) => {
         const bal = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
         const paidVal = parseFloat(inv.Amount_Paid || 0);
 
-        const discBadge = inv.Discount_Name && inv.Discount_Name !== 'None' 
-            ? `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage).toFixed(0)}%)</span>` 
-            : '<span class="text-muted">None</span>';
+        let discBadge = '<span class="text-muted">None</span>';
+        if (inv.Discount_Summary) {
+            discBadge = `<span class="badge badge-info" style="font-size: 11px; max-width: 200px; white-space: normal; display: inline-block; text-align: left;">${inv.Discount_Summary}</span>`;
+        } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
+            discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
+        }
+
+        const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);
+        const vatAmt = parseFloat(inv.VAT_Amount || 0);
+        const vatExemptAmt = parseFloat(inv.VAT_Exempt_Amount || 0);
+        let vatBadge = '';
+        if (vatRate === 0 || vatExemptAmt > 0) {
+            vatBadge = '<span class="badge badge-success" style="font-size: 11px;">0% (Exempt)</span>';
+        } else {
+            vatBadge = `₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        }
 
         let statusBadge = '';
         if (balVal <= 0) {
@@ -84,6 +98,7 @@ const renderInvoicesTable = (invoices) => {
         html += `<td><strong>${inv.Patient_Code}</strong><br>${inv.Patient_Name}</td>`;
         html += `<td>₱${gross}</td>`;
         html += `<td>${discBadge}</td>`;
+        html += `<td>${vatBadge}</td>`;
         html += `<td><strong style="color: var(--primary);">₱${net}</strong></td>`;
         html += `<td>₱${paid}</td>`;
         html += `<td><strong style="color: ${balVal > 0 ? '#dc2626' : '#16a34a'};">₱${bal}</strong></td>`;
@@ -217,6 +232,35 @@ const openPaymentHistoryModal = (invoiceId) => {
     document.getElementById('hist_invoice_code').textContent = inv.Invoice_Code;
     document.getElementById('hist_admission_code').textContent = inv.Admission_Code;
     document.getElementById('hist_patient_name').textContent = `${inv.Patient_Code} - ${inv.Patient_Name}`;
+
+    const gross = parseFloat(inv.Gross_Total || 0);
+    const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);
+    const vatAmt = parseFloat(inv.VAT_Amount || 0);
+    const vatExemptAmt = parseFloat(inv.VAT_Exempt_Amount || 0);
+    const isExempt = (vatRate === 0 || vatExemptAmt > 0);
+
+    const elGross = document.getElementById('hist_gross_total');
+    if (elGross) elGross.textContent = gross.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    const elVatWrap = document.getElementById('hist_vat_amount_wrap');
+    if (elVatWrap) {
+        if (isExempt) {
+            elVatWrap.innerHTML = '<span class="badge badge-success" style="font-size: 11px;">0% (VAT-Exempt)</span>';
+        } else {
+            elVatWrap.innerHTML = `+₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 11px;">(12%)</span>`;
+        }
+    }
+
+    const elDiscSumm = document.getElementById('hist_discounts_summary');
+    if (elDiscSumm) {
+        if (inv.Discount_Summary) {
+            elDiscSumm.textContent = inv.Discount_Summary;
+        } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
+            elDiscSumm.textContent = `${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        } else {
+            elDiscSumm.textContent = 'None';
+        }
+    }
 
     const elNet = document.getElementById('hist_net_due');
     if (elNet) elNet.textContent = net.toLocaleString('en-PH', {minimumFractionDigits: 2});

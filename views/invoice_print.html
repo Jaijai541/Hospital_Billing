@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official Statement of Account — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=6.0">
-    <link rel="stylesheet" href="../css/invoice_print.css">
+    <link rel="stylesheet" href="../css/common.css?v=6.4">
+    <link rel="stylesheet" href="../css/invoice_print.css?v=6.4">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
@@ -158,12 +158,29 @@
                         <td><strong>Gross Accumulated Charges:</strong></td>
                         <td align="right"><strong id="summary-gross-total">₱0.00</strong></td>
                     </tr>
-                    <tr class="summary-discount-line">
-                        <td>Less: Statutory / Institutional Discount (<span id="summary-discount-label">None</span>):</td>
+                    <tr class="summary-discount-line" id="row-summary-discounts">
+                        <td>Less: Statutory / Institutional Discounts (<span id="summary-discount-label">None</span>):</td>
                         <td align="right"><strong id="summary-discount-total">-₱0.00</strong></td>
                     </tr>
+                    <tbody id="applied-discounts-itemized-tbody"></tbody>
+                    <tr class="summary-subtotal-line" style="background-color: #f8fafc;">
+                        <td><strong>Net Amount Before Tax:</strong></td>
+                        <td align="right"><strong id="summary-net-before-tax">₱0.00</strong></td>
+                    </tr>
+                    <tr id="row-vatable-sales">
+                        <td>VATable Sales (12%):</td>
+                        <td align="right" id="summary-vatable-amount">₱0.00</td>
+                    </tr>
+                    <tr id="row-vat-exempt-sales" style="display: none;">
+                        <td>VAT-Exempt Sales:</td>
+                        <td align="right" id="summary-vat-exempt-amount">₱0.00</td>
+                    </tr>
+                    <tr id="row-vat-line" style="background-color: #f1f5f9;">
+                        <td>Value-Added Tax (12% VAT):</td>
+                        <td align="right"><strong id="summary-vat-amount" style="color: #0369a1;">+₱0.00</strong></td>
+                    </tr>
                     <tr class="summary-net-line">
-                        <td><strong>Net Amount Assessed:</strong></td>
+                        <td><strong>Net Amount Due (Total Amount Payable):</strong></td>
                         <td align="right"><strong id="summary-net-total">₱0.00</strong></td>
                     </tr>
                     <tr class="summary-payment-line">
@@ -239,7 +256,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=6.0"></script>
-    <script src="../js/invoice_print.js?v=6.0"></script>
+    <script src="../js/common.js?v=6.4"></script>
+    <script src="../js/invoice_print.js?v=6.4"></script>
 </body>
 </html>

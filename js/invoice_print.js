@@ -129,11 +129,25 @@ const renderDoctorFeesTable = (docRows) => {
 };
 
 const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, discAmt, net, amountPaid, changeAmt, remainingBalance) => {
+    const inv = currentInvoice || {};
+    const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);
+    const vatAmt = parseFloat(inv.VAT_Amount || 0);
+    const vatableAmt = parseFloat(inv.VATable_Amount || 0);
+    const vatExemptAmt = parseFloat(inv.VAT_Exempt_Amount || 0);
+    const isExempt = (vatRate === 0 || vatExemptAmt > 0);
+
     const elHosp = document.getElementById("summary-hosp-total");
     const elDoc = document.getElementById("summary-doc-total");
     const elGross = document.getElementById("summary-gross-total");
     const elDiscLabel = document.getElementById("summary-discount-label");
     const elDiscTotal = document.getElementById("summary-discount-total");
+    const tbodyAppDiscounts = document.getElementById("applied-discounts-itemized-tbody");
+    const elNetBeforeTax = document.getElementById("summary-net-before-tax");
+    const elRowVatable = document.getElementById("row-vatable-sales");
+    const elVatableAmt = document.getElementById("summary-vatable-amount");
+    const elRowExempt = document.getElementById("row-vat-exempt-sales");
+    const elExemptAmt = document.getElementById("summary-vat-exempt-amount");
+    const elVatAmt = document.getElementById("summary-vat-amount");
     const elNetTotal = document.getElementById("summary-net-total");
     const elPayTotal = document.getElementById("summary-payment-total");
     const elChangeRow = document.getElementById("row-change-line");
@@ -146,8 +160,23 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
     if (elDoc) elDoc.textContent = `₱${formatMoney(docTotal)}`;
     if (elGross) elGross.textContent = `₱${formatMoney(gross)}`;
 
+    if (tbodyAppDiscounts) {
+        if (inv.Applied_Discounts && Array.isArray(inv.Applied_Discounts) && inv.Applied_Discounts.length > 0) {
+            tbodyAppDiscounts.innerHTML = inv.Applied_Discounts.map(ad => {
+                const valStr = ad.Discount_Type === 'Fixed' 
+                    ? `Fixed Voucher: ₱${formatMoney(parseFloat(ad.Discount_Value || 0))}` 
+                    : `${parseFloat(ad.Discount_Value || 0).toFixed(2)}%`;
+                return `<tr style="font-size: 13px; color: #166534;"><td style="padding-left: 20px;">• ${ad.Discount_Name} (${valStr}):</td><td align="right">-₱${formatMoney(parseFloat(ad.Calculated_Deduction || 0))}</td></tr>`;
+            }).join('');
+        } else {
+            tbodyAppDiscounts.innerHTML = '';
+        }
+    }
+
     if (elDiscLabel) {
-        if (discName && discName !== "None" && discPct > 0) {
+        if (inv.Discount_Summary) {
+            elDiscLabel.textContent = inv.Discount_Summary;
+        } else if (discName && discName !== "None" && discPct > 0) {
             elDiscLabel.textContent = `${discName} - ${discPct.toFixed(2)}%`;
         } else {
             elDiscLabel.textContent = "None (0.00%)";
@@ -155,6 +184,26 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
     }
 
     if (elDiscTotal) elDiscTotal.textContent = `-₱${formatMoney(discAmt)}`;
+
+    const netBefore = (vatableAmt > 0 ? vatableAmt : (vatExemptAmt > 0 ? vatExemptAmt : Math.max(0, gross - discAmt)));
+    if (elNetBeforeTax) elNetBeforeTax.textContent = `₱${formatMoney(netBefore)}`;
+
+    if (isExempt) {
+        if (elRowVatable) elRowVatable.style.display = "none";
+        if (elRowExempt) {
+            elRowExempt.style.display = "";
+            if (elExemptAmt) elExemptAmt.textContent = `₱${formatMoney(vatExemptAmt > 0 ? vatExemptAmt : netBefore)}`;
+        }
+        if (elVatAmt) elVatAmt.textContent = "₱0.00 (12% VAT-Exempt)";
+    } else {
+        if (elRowVatable) {
+            elRowVatable.style.display = "";
+            if (elVatableAmt) elVatableAmt.textContent = `₱${formatMoney(vatableAmt > 0 ? vatableAmt : netBefore)}`;
+        }
+        if (elRowExempt) elRowExempt.style.display = "none";
+        if (elVatAmt) elVatAmt.textContent = `+₱${formatMoney(vatAmt)}`;
+    }
+
     if (elNetTotal) elNetTotal.textContent = `₱${formatMoney(net)}`;
     if (elPayTotal) elPayTotal.textContent = `-₱${formatMoney(amountPaid)}`;
 
@@ -251,8 +300,8 @@ const renderInvoice = (inv) => {
     const hospRows = particularsList.map(name => {
         const catData = hospMap[name] || { total: 0, items: [] };
         const total = catData.total;
-        const discount = total > 0 && discPct > 0 
-            ? Math.round(total * (discPct / 100) * 100) / 100 
+        const discount = total > 0 && gross > 0 && discountAmt > 0 
+            ? Math.round(total * (discountAmt / gross) * 100) / 100 
             : 0;
 
         let cash = 0;
@@ -340,8 +389,8 @@ const renderInvoice = (inv) => {
 
     const docRows = doctors.map(doc => {
         const total = parseFloat(doc.Charges || 0);
-        const discount = total > 0 && discPct > 0 
-            ? Math.round(total * (discPct / 100) * 100) / 100 
+        const discount = total > 0 && gross > 0 && discountAmt > 0 
+            ? Math.round(total * (discountAmt / gross) * 100) / 100 
             : 0;
         const netDoc = Math.max(0, Math.round((total - discount) * 100) / 100);
         const balance = isPaidInFull ? 0 : netDoc;

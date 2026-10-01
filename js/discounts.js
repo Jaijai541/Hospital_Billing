@@ -4,11 +4,23 @@ const postApiUrl = "../api/POST";
 let allDiscounts = [];
 let currentLoadedDiscount = null;
 
+const formatMoney = (amount) => {
+    return parseFloat(amount || 0).toLocaleString("en-PH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     displayDiscounts();
 
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDiscount);
+
+    const typeSelect = document.getElementById("discount_type");
+    if (typeSelect) {
+        typeSelect.addEventListener("change", handleTypeChange);
+    }
 
     const btnReset = document.getElementById("btnReset");
     if (btnReset) {
@@ -22,9 +34,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
+    const filterType = document.getElementById("filter_type");
+    if (filterType) filterType.addEventListener("change", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
 });
+
+const handleTypeChange = () => {
+    const typeSelect = document.getElementById("discount_type");
+    const val = typeSelect ? typeSelect.value : "Percentage";
+    const grpPct = document.getElementById("group_percentage");
+    const grpFixed = document.getElementById("group_fixed");
+
+    if (val === "Fixed") {
+        if (grpPct) grpPct.style.display = "none";
+        if (grpFixed) grpFixed.style.display = "block";
+    } else {
+        if (grpPct) grpPct.style.display = "block";
+        if (grpFixed) grpFixed.style.display = "none";
+    }
+};
 
 const displayDiscounts = async () => {
     const tableDiv = document.getElementById("table-div");
@@ -51,14 +80,21 @@ const displayDiscounts = async () => {
 
 const filterAndSortDiscounts = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
+    const filterTypeEl = document.getElementById("filter_type");
+    const filterType = filterTypeEl ? filterTypeEl.value : "all";
     const filterStatus = document.getElementById("filter_status").value;
     const sortBy = document.getElementById("sort_by").value;
 
     let filtered = allDiscounts.filter(disc => {
         const itemCode = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`.toLowerCase();
-        const discountName = disc.Discount_Name.toLowerCase();
+        const discountName = (disc.Discount_Name || "").toLowerCase();
 
         const matchesSearch = discountName.includes(searchTerm) || itemCode.includes(searchTerm);
+
+        let matchesType = true;
+        if (filterType !== "all") {
+            matchesType = (disc.Discount_Type === filterType);
+        }
 
         let matchesStatus = true;
         if (filterStatus === "1") {
@@ -67,12 +103,15 @@ const filterAndSortDiscounts = () => {
             matchesStatus = (disc.Is_Active == 0);
         }
 
-        return matchesSearch && matchesStatus;
+        return matchesSearch && matchesType && matchesStatus;
     });
 
     filtered.sort((a, b) => {
         const codeA = `${a.Code_Prefix || 'DISC'}-${a.Discount_ID}`;
         const codeB = `${b.Code_Prefix || 'DISC'}-${b.Discount_ID}`;
+
+        const valA = (a.Discount_Type === 'Fixed') ? parseFloat(a.Fixed_Amount || 0) : parseFloat(a.Discount_Percentage || 0);
+        const valB = (b.Discount_Type === 'Fixed') ? parseFloat(b.Fixed_Amount || 0) : parseFloat(b.Discount_Percentage || 0);
 
         switch (sortBy) {
             case "code_asc":
@@ -80,13 +119,13 @@ const filterAndSortDiscounts = () => {
             case "code_desc":
                 return codeB.localeCompare(codeA, undefined, { numeric: true });
             case "name_asc":
-                return a.Discount_Name.localeCompare(b.Discount_Name);
+                return (a.Discount_Name || "").localeCompare(b.Discount_Name || "");
             case "name_desc":
-                return b.Discount_Name.localeCompare(a.Discount_Name);
-            case "percent_asc":
-                return parseFloat(a.Discount_Percentage) - parseFloat(b.Discount_Percentage);
-            case "percent_desc":
-                return parseFloat(b.Discount_Percentage) - parseFloat(a.Discount_Percentage);
+                return (b.Discount_Name || "").localeCompare(a.Discount_Name || "");
+            case "val_asc":
+                return valA - valB;
+            case "val_desc":
+                return valB - valA;
             case "id_desc":
                 return parseInt(b.Discount_ID) - parseInt(a.Discount_ID);
             default:
@@ -94,7 +133,7 @@ const filterAndSortDiscounts = () => {
         }
     });
 
-    console.log(`[UI] Filtered & Sorted: Displaying ${filtered.length} of ${allDiscounts.length} discounts (Search: "${searchTerm}", Status: ${filterStatus}, Sort: ${sortBy})`);
+    console.log(`[UI] Filtered & Sorted: Displaying ${filtered.length} of ${allDiscounts.length} discounts`);
     displayDiscountsTable(filtered);
 };
 
@@ -115,7 +154,9 @@ const displayDiscountsTable = (discounts) => {
         <tr>
             <th>Code</th>
             <th>Discount Policy</th>
-            <th>Deduction Percentage</th>
+            <th>Scheme Type</th>
+            <th>Deduction Value</th>
+            <th>VAT Status</th>
             <th>Status</th>
         </tr>
     `;
@@ -124,13 +165,28 @@ const displayDiscountsTable = (discounts) => {
     const tbody = document.createElement("tbody");
     discounts.forEach(disc => {
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
+        const isFixed = (disc.Discount_Type === "Fixed");
+        const typeBadge = isFixed 
+            ? '<span class="badge badge-primary">Fixed Voucher</span>' 
+            : '<span class="badge badge-info">Percentage</span>';
+
+        const deductionVal = isFixed 
+            ? `<strong>₱${formatMoney(disc.Fixed_Amount)}</strong>` 
+            : `<span class="badge badge-info">${parseFloat(disc.Discount_Percentage).toFixed(2)}%</span>`;
+
+        const vatBadge = (disc.Is_Vat_Exempt == 1)
+            ? '<span class="badge badge-success">VAT-Exempt</span>'
+            : '<span class="badge badge-secondary" style="opacity: 0.85;">12% VAT Applied</span>';
+
         const row = document.createElement("tr");
         row.className = "clickable-row";
         row.title = "Click to view / edit discount scheme";
         row.innerHTML = `
             <td><strong>${code}</strong></td>
             <td><strong>${disc.Discount_Name}</strong></td>
-            <td><span class="badge badge-info">${parseFloat(disc.Discount_Percentage).toFixed(2)}%</span></td>
+            <td>${typeBadge}</td>
+            <td>${deductionVal}</td>
+            <td>${vatBadge}</td>
             <td>${getStatusBadge(disc.Is_Active)}</td>
         `;
         row.addEventListener("click", () => loadDiscountForEdit(disc.Discount_ID));
@@ -144,7 +200,21 @@ const displayDiscountsTable = (discounts) => {
 const populateDiscountForm = (disc) => {
     document.getElementById("discount_id").value = disc.Discount_ID || "";
     document.getElementById("discount_name").value = disc.Discount_Name || "";
+
+    const typeSelect = document.getElementById("discount_type");
+    if (typeSelect) {
+        typeSelect.value = disc.Discount_Type || "Percentage";
+    }
+
     document.getElementById("discount_percentage").value = disc.Discount_Percentage || "";
+    document.getElementById("fixed_amount").value = disc.Fixed_Amount || "";
+
+    const vatCb = document.getElementById("is_vat_exempt");
+    if (vatCb) {
+        vatCb.checked = (disc.Is_Vat_Exempt == 1);
+    }
+
+    handleTypeChange();
 };
 
 const loadDiscountForEdit = async (discountId) => {
@@ -191,22 +261,40 @@ const loadDiscountForEdit = async (discountId) => {
 const saveDiscount = async () => {
     const discountId = document.getElementById("discount_id").value;
     const discountName = document.getElementById("discount_name").value.trim();
+    const discountType = document.getElementById("discount_type") ? document.getElementById("discount_type").value : "Percentage";
     const discountPercentage = document.getElementById("discount_percentage").value;
+    const fixedAmount = document.getElementById("fixed_amount").value;
+    const vatCb = document.getElementById("is_vat_exempt");
+    const isVatExempt = vatCb && vatCb.checked ? 1 : 0;
 
-    if (!discountName || discountPercentage === "") {
-        alert("Please fill in all fields.");
+    if (!discountName) {
+        alert("Please enter the discount policy name.");
         return;
     }
 
-    const percentage = parseFloat(discountPercentage);
-    if (isNaN(percentage) || percentage < 0 || percentage > 100) {
-        alert("Please enter a valid percentage between 0 and 100.");
-        return;
+    let pct = 0;
+    let fixed = 0;
+
+    if (discountType === "Fixed") {
+        fixed = parseFloat(fixedAmount);
+        if (isNaN(fixed) || fixed <= 0) {
+            alert("Please enter a valid fixed voucher amount greater than 0.");
+            return;
+        }
+    } else {
+        pct = parseFloat(discountPercentage);
+        if (isNaN(pct) || pct < 0 || pct > 100) {
+            alert("Please enter a valid percentage between 0 and 100.");
+            return;
+        }
     }
 
     const jsonData = {
         discount_name: discountName,
-        discount_percentage: percentage
+        discount_type: discountType,
+        discount_percentage: pct,
+        fixed_amount: fixed,
+        is_vat_exempt: isVatExempt
     };
 
     const isEdit = (discountId !== "");
@@ -250,7 +338,14 @@ const resetForm = () => {
 
     document.getElementById("discount_id").value = "";
     document.getElementById("discount_name").value = "";
+    const typeSelect = document.getElementById("discount_type");
+    if (typeSelect) typeSelect.value = "Percentage";
     document.getElementById("discount_percentage").value = "";
+    document.getElementById("fixed_amount").value = "";
+    const vatCb = document.getElementById("is_vat_exempt");
+    if (vatCb) vatCb.checked = false;
+
+    handleTypeChange();
 
     const btnArchive = document.getElementById("btnArchive");
     if (btnArchive) btnArchive.style.display = "none";

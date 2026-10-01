@@ -11,10 +11,13 @@ class InvoiceManager
         $sql = "SELECT 
                     Discount_ID,
                     Discount_Name,
-                    Discount_Percentage
+                    Discount_Type,
+                    Discount_Percentage,
+                    Fixed_Amount,
+                    Is_Vat_Exempt
                 FROM Enum_Discount
                 WHERE Is_Active = 1
-                ORDER BY Discount_Percentage DESC, Discount_Name ASC";
+                ORDER BY Discount_Type ASC, Discount_Percentage DESC, Fixed_Amount DESC, Discount_Name ASC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -41,6 +44,11 @@ class InvoiceManager
                     COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
                     fi.Gross_Total,
                     fi.Discount_Amount,
+                    fi.VAT_Rate,
+                    fi.VATable_Amount,
+                    fi.VAT_Amount,
+                    fi.VAT_Exempt_Amount,
+                    fi.Discount_Summary,
                     fi.Net_Amount_Due,
                     COALESCE(fi.Amount_Paid, fi.Net_Amount_Due) AS Amount_Paid,
                     COALESCE(fi.Change_Amount, 0.00) AS Change_Amount,
@@ -90,6 +98,11 @@ class InvoiceManager
                     CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
                     fi.Gross_Total,
                     fi.Discount_Amount,
+                    fi.VAT_Rate,
+                    fi.VATable_Amount,
+                    fi.VAT_Amount,
+                    fi.VAT_Exempt_Amount,
+                    fi.Discount_Summary,
                     fi.Net_Amount_Due,
                     COALESCE(fi.Amount_Paid, fi.Net_Amount_Due) AS Amount_Paid,
                     COALESCE(fi.Change_Amount, 0.00) AS Change_Amount,
@@ -97,6 +110,8 @@ class InvoiceManager
                     DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Settlement_Date,
                     COALESCE(d.Discount_Name, 'None') AS Discount_Name,
                     COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
+                    COALESCE(d.Fixed_Amount, 0.00) AS Fixed_Amount,
+                    COALESCE(d.Discount_Type, 'Percentage') AS Discount_Type,
                     u.User_ID AS Cashier_User_ID,
                     CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
                     ur.Role_Name AS Cashier_Role,
@@ -139,6 +154,20 @@ class InvoiceManager
         if (!$invoice) {
             return json_encode(['error' => 'Invoice not found.']);
         }
+
+        $appDiscSql = "SELECT 
+                        Applied_Discount_ID,
+                        Discount_ID,
+                        Discount_Name,
+                        Discount_Type,
+                        Discount_Value,
+                        Calculated_Deduction
+                       FROM Invoice_Applied_Discount
+                       WHERE Invoice_ID = :iid
+                       ORDER BY Applied_Discount_ID ASC";
+        $appDiscStmt = $conn->prepare($appDiscSql);
+        $appDiscStmt->execute([':iid' => $invoice['Invoice_ID']]);
+        $invoice['Applied_Discounts'] = $appDiscStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $aid = $invoice['Admission_ID'];
 

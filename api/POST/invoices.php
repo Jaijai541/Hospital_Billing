@@ -95,40 +95,175 @@ class InvoiceManager
             $sumStmt->execute([':aid' => $admissionId]);
             $grossTotal = floatval($sumStmt->fetchColumn());
 
-            $discountAmount = 0.00;
-            if (!empty($discountId)) {
-                $discStmt = $conn->prepare("SELECT Discount_Percentage FROM Enum_Discount WHERE Discount_ID = :did AND Is_Active = 1");
-                $discStmt->execute([':did' => $discountId]);
-                $pct = $discStmt->fetchColumn();
-                if ($pct !== false) {
-                    $discountAmount = round($grossTotal * (floatval($pct) / 100.0), 2);
-                } else {
-                    $discountId = null;
+            $discountIds = [];
+            if (!empty($json['discount_ids']) && is_array($json['discount_ids'])) {
+                $discountIds = array_map('intval', $json['discount_ids']);
+            } else if (!empty($discountId)) {
+                $discountIds = [$discountId];
+            }
+
+            $customDiscounts = [];
+            if (!empty($json['custom_discounts']) && is_array($json['custom_discounts'])) {
+                $customDiscounts = $json['custom_discounts'];
+            }
+
+            $allDiscountsToApply = [];
+            if (!empty($discountIds)) {
+                $placeholders = implode(',', array_fill(0, count($discountIds), '?'));
+                $dStmt = $conn->prepare("SELECT Discount_ID, Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt FROM Enum_Discount WHERE Discount_ID IN ($placeholders) AND Is_Active = 1");
+                $dStmt->execute($discountIds);
+                $fetchedDiscs = $dStmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($fetchedDiscs as $fd) {
+                    $allDiscountsToApply[] = [
+                        'discount_id' => intval($fd['Discount_ID']),
+                        'name' => $fd['Discount_Name'],
+                        'type' => $fd['Discount_Type'],
+                        'pct' => floatval($fd['Discount_Percentage']),
+                        'fixed' => floatval($fd['Fixed_Amount']),
+                        'is_vat_exempt' => intval($fd['Is_Vat_Exempt'])
+                    ];
                 }
             }
 
-            $netAmountDue = max(0.00, $grossTotal - $discountAmount);
+            foreach ($customDiscounts as $cd) {
+                $cName = trim($cd['name'] ?? 'Custom Deduction');
+                $cType = ($cd['type'] ?? 'Fixed') === 'Percentage' ? 'Percentage' : 'Fixed';
+                $cVal = floatval($cd['value'] ?? 0);
+                if ($cVal > 0) {
+                    $allDiscountsToApply[] = [
+                        'discount_id' => null,
+                        'name' => $cName,
+                        'type' => $cType,
+                        'pct' => ($cType === 'Percentage') ? $cVal : 0,
+                        'fixed' => ($cType === 'Fixed') ? $cVal : 0,
+                        'is_vat_exempt' => !empty($cd['is_vat_exempt']) ? 1 : 0
+                    ];
+                }
+            }
+
+            $fixedDiscounts = [];
+            $pctDiscounts = [];
+            $isVatExempt = false;
+
+            foreach ($allDiscountsToApply as $d) {
+                if ($d['is_vat_exempt'] == 1 || stripos($d['name'], 'Senior') !== false || stripos($d['name'], 'PWD') !== false) {
+                    $isVatExempt = true;
+                }
+                if ($d['type'] === 'Fixed') {
+                    $fixedDiscounts[] = $d;
+                } else {
+                    $pctDiscounts[] = $d;
+                }
+            }
+
+            $runningSubtotal = $grossTotal;
+            $appliedItems = [];
+
+            foreach ($fixedDiscounts as $fd) {
+                $ded = min($runningSubtotal, floatval($fd['fixed']));
+                $runningSubtotal = max(0.00, $runningSubtotal - $ded);
+                $appliedItems[] = [
+                    'discount_id' => $fd['discount_id'],
+                    'name' => $fd['name'],
+                    'type' => 'Fixed',
+                    'value' => $fd['fixed'],
+                    'deduction' => $ded
+                ];
+            }
+
+            foreach ($pctDiscounts as $pd) {
+                $ded = round($runningSubtotal * (floatval($pd['pct']) / 100.0), 2);
+                $runningSubtotal = max(0.00, $runningSubtotal - $ded);
+                $appliedItems[] = [
+                    'discount_id' => $pd['discount_id'],
+                    'name' => $pd['name'],
+                    'type' => 'Percentage',
+                    'value' => $pd['pct'],
+                    'deduction' => $ded
+                ];
+            }
+
+            $discountAmount = round($grossTotal - $runningSubtotal, 2);
+            $netAfterDiscounts = $runningSubtotal;
+
+            $primaryDiscountId = null;
+            if (!empty($appliedItems)) {
+                foreach ($appliedItems as $ai) {
+                    if (!empty($ai['discount_id'])) {
+                        $primaryDiscountId = $ai['discount_id'];
+                        break;
+                    }
+                }
+            }
+
+            $summaryParts = [];
+            foreach ($appliedItems as $ai) {
+                if ($ai['type'] === 'Fixed') {
+                    $summaryParts[] = $ai['name'] . ' (-₱' . number_format($ai['deduction'], 2) . ')';
+                } else {
+                    $summaryParts[] = $ai['name'] . ' ' . number_format($ai['value'], 2) . '% (-₱' . number_format($ai['deduction'], 2) . ')';
+                }
+            }
+            $discountSummary = !empty($summaryParts) ? implode('; ', $summaryParts) : null;
+
+            if ($isVatExempt) {
+                $vatRate = 0.00;
+                $vatableAmount = 0.00;
+                $vatAmount = 0.00;
+                $vatExemptAmount = $netAfterDiscounts;
+                $netAmountDue = $netAfterDiscounts;
+            } else {
+                $vatRate = 12.00;
+                $vatableAmount = $netAfterDiscounts;
+                $vatAmount = round($netAfterDiscounts * 0.12, 2);
+                $vatExemptAmount = 0.00;
+                $netAmountDue = round($netAfterDiscounts + $vatAmount, 2);
+            }
 
             $amountPaidInput = isset($json['amount_paid']) ? floatval($json['amount_paid']) : null;
             $amountPaid = ($amountPaidInput !== null && $amountPaidInput >= 0) ? round($amountPaidInput, 2) : $netAmountDue;
             $changeAmount = max(0.00, round($amountPaid - $netAmountDue, 2));
 
             $invSql = "INSERT INTO Final_Invoice 
-                        (Admission_ID, Processed_By_User_ID, Discount_ID, Gross_Total, Discount_Amount, Net_Amount_Due, Amount_Paid, Change_Amount, Settlement_Date)
+                        (Admission_ID, Processed_By_User_ID, Discount_ID, Gross_Total, Discount_Amount, VAT_Rate, VATable_Amount, VAT_Amount, VAT_Exempt_Amount, Discount_Summary, Net_Amount_Due, Amount_Paid, Change_Amount, Settlement_Date)
                        VALUES 
-                        (:aid, :uid, :did, :gross, :disc, :net, :paid, :change, NOW())";
+                        (:aid, :uid, :did, :gross, :disc, :vrate, :vatable, :vatamt, :vatexempt, :dsum, :net, :paid, :change, NOW())";
             $invStmt = $conn->prepare($invSql);
             $invStmt->execute([
                 ':aid' => $admissionId,
                 ':uid' => $userId,
-                ':did' => $discountId,
+                ':did' => $primaryDiscountId,
                 ':gross' => $grossTotal,
                 ':disc' => $discountAmount,
+                ':vrate' => $vatRate,
+                ':vatable' => $vatableAmount,
+                ':vatamt' => $vatAmount,
+                ':vatexempt' => $vatExemptAmount,
+                ':dsum' => $discountSummary,
                 ':net' => $netAmountDue,
                 ':paid' => $amountPaid,
                 ':change' => $changeAmount
             ]);
             $invoiceId = $conn->lastInsertId();
+
+            if (!empty($appliedItems)) {
+                $insAppDisc = $conn->prepare("
+                    INSERT INTO Invoice_Applied_Discount 
+                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Type, Discount_Value, Calculated_Deduction)
+                    VALUES 
+                        (:iid, :did, :dname, :dtype, :dval, :dded)
+                ");
+                foreach ($appliedItems as $ai) {
+                    $insAppDisc->execute([
+                        ':iid' => $invoiceId,
+                        ':did' => $ai['discount_id'],
+                        ':dname' => $ai['name'],
+                        ':dtype' => $ai['type'],
+                        ':dval' => $ai['value'],
+                        ':dded' => $ai['deduction']
+                    ]);
+                }
+            }
 
             $updAdm = $conn->prepare("UPDATE Admission SET Status = 'Billed' WHERE Admission_ID = :aid");
             $updAdm->execute([':aid' => $admissionId]);

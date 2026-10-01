@@ -42,6 +42,9 @@ class InvoiceManager
                     fi.Gross_Total,
                     fi.Discount_Amount,
                     fi.Net_Amount_Due,
+                    COALESCE(fi.Amount_Paid, fi.Net_Amount_Due) AS Amount_Paid,
+                    COALESCE(fi.Change_Amount, 0.00) AS Change_Amount,
+                    GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) AS Remaining_Balance,
                     DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Settlement_Date
                 FROM Final_Invoice fi
                 INNER JOIN Admission a ON fi.Admission_ID = a.Admission_ID
@@ -88,6 +91,9 @@ class InvoiceManager
                     fi.Gross_Total,
                     fi.Discount_Amount,
                     fi.Net_Amount_Due,
+                    COALESCE(fi.Amount_Paid, fi.Net_Amount_Due) AS Amount_Paid,
+                    COALESCE(fi.Change_Amount, 0.00) AS Change_Amount,
+                    GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) AS Remaining_Balance,
                     DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Settlement_Date,
                     COALESCE(d.Discount_Name, 'None') AS Discount_Name,
                     COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
@@ -137,18 +143,26 @@ class InvoiceManager
         $aid = $invoice['Admission_ID'];
 
         $docSql = "SELECT 
+                    ad.Admission_Doctor_ID,
+                    d.Doctor_ID,
                     CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                    CONCAT(UPPER(d.Last_Name), ', ', UPPER(d.First_Name)) AS Doctor_Formal_Name,
                     dt.Type_Name AS Doctor_Type,
                     (
                         SELECT GROUP_CONCAT(s.Specialty_Name SEPARATOR ', ')
                         FROM Doctor_Specialty ds
                         INNER JOIN Enum_Specialty s ON ds.Specialty_ID = s.Specialty_ID
                         WHERE ds.Doctor_ID = d.Doctor_ID
-                    ) AS Specialties
+                    ) AS Specialties,
+                    COALESCE(SUM(drl.Charged_Fee), 0.00) AS Charges,
+                    COUNT(drl.Round_ID) AS Round_Count
                    FROM Admission_Doctor ad
                    INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
                    INNER JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
-                   WHERE ad.Admission_ID = :aid";
+                   LEFT JOIN Doctor_Round_Log drl ON ad.Admission_Doctor_ID = drl.Admission_Doctor_ID
+                   WHERE ad.Admission_ID = :aid
+                   GROUP BY ad.Admission_Doctor_ID, d.Doctor_ID, d.First_Name, d.Last_Name, dt.Type_Name
+                   ORDER BY Charges DESC, d.Last_Name ASC";
         $docStmt = $conn->prepare($docSql);
         $docStmt->execute([':aid' => $aid]);
         $invoice['Attending_Doctors'] = $docStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -313,6 +327,137 @@ class InvoiceManager
             'total_items' => count($rows)
         ];
     }
+    function getPaymentMethods()
+    {
+        include "connection.php";
+        $sql = "SELECT Payment_Method_ID, Method_Name, Category_Type, Code_Prefix, Description FROM Enum_Payment_Method WHERE Is_Active = 1 ORDER BY Payment_Method_ID ASC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    function getPaymentHistory($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $invoiceId = intval($json['invoice_id'] ?? 0);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        if (empty($invoiceId) && empty($admissionId)) {
+            return json_encode([]);
+        }
+
+        $sql = "SELECT 
+                    ip.Payment_ID,
+                    ip.Invoice_ID,
+                    ip.Admission_ID,
+                    ip.Receipt_Number,
+                    ip.Amount_Paid,
+                    ip.Balance_Before,
+                    ip.Balance_After,
+                    ip.Payment_Method_ID,
+                    epm.Method_Name AS Payment_Method,
+                    epm.Category_Type,
+                    COALESCE(ip.Notes, '') AS Notes,
+                    DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Payment_Date,
+                    u.User_ID AS Cashier_User_ID,
+                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
+                    fi.Net_Amount_Due,
+                    fi.Gross_Total,
+                    CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code
+                FROM Invoice_Payment ip
+                INNER JOIN Final_Invoice fi ON ip.Invoice_ID = fi.Invoice_ID
+                INNER JOIN Admission a ON ip.Admission_ID = a.Admission_ID
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
+                INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
+                WHERE " . (!empty($invoiceId) ? "ip.Invoice_ID = :iid" : "ip.Admission_ID = :aid") . "
+                ORDER BY ip.Payment_ID ASC";
+
+        $stmt = $conn->prepare($sql);
+        if (!empty($invoiceId)) {
+            $stmt->execute([':iid' => $invoiceId]);
+        } else {
+            $stmt->execute([':aid' => $admissionId]);
+        }
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    function getPaymentReceipt($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $paymentId = intval($json['payment_id'] ?? 0);
+        $receiptNumber = trim($json['receipt_number'] ?? '');
+
+        if (empty($paymentId) && empty($receiptNumber)) {
+            return json_encode(['error' => 'Payment ID or Receipt Number is required.']);
+        }
+
+        $sql = "SELECT 
+                    ip.Payment_ID,
+                    ip.Invoice_ID,
+                    ip.Admission_ID,
+                    ip.Receipt_Number,
+                    ip.Amount_Paid,
+                    ip.Balance_Before,
+                    ip.Balance_After,
+                    ip.Payment_Method_ID,
+                    epm.Method_Name AS Payment_Method,
+                    epm.Category_Type,
+                    COALESCE(ip.Notes, '') AS Notes,
+                    DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Payment_Date,
+                    u.User_ID AS Cashier_User_ID,
+                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
+                    ur.Role_Name AS Cashier_Role,
+                    fi.Net_Amount_Due,
+                    fi.Gross_Total,
+                    fi.Discount_Amount,
+                    COALESCE(d.Discount_Name, 'None') AS Discount_Name,
+                    COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
+                    CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    a.Chief_Complaint,
+                    a.Diagnosis,
+                    DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
+                    p.Patient_ID,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                    CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
+                    p.Date_Of_Birth,
+                    TIMESTAMPDIFF(YEAR, p.Date_Of_Birth, CURDATE()) AS Age,
+                    g.Gender_Name,
+                    p.Contact_Number,
+                    p.Address
+                FROM Invoice_Payment ip
+                INNER JOIN Final_Invoice fi ON ip.Invoice_ID = fi.Invoice_ID
+                INNER JOIN Admission a ON ip.Admission_ID = a.Admission_ID
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
+                INNER JOIN Enum_User_Role ur ON u.Role_ID = ur.Role_ID
+                INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
+                LEFT JOIN Enum_Discount d ON fi.Discount_ID = d.Discount_ID
+                LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
+                WHERE " . (!empty($paymentId) ? "ip.Payment_ID = :pid" : "ip.Receipt_Number = :rnum");
+
+        $stmt = $conn->prepare($sql);
+        if (!empty($paymentId)) {
+            $stmt->execute([':pid' => $paymentId]);
+        } else {
+            $stmt->execute([':rnum' => $receiptNumber]);
+        }
+        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$receipt) {
+            return json_encode(['error' => 'Payment receipt not found.']);
+        }
+
+        return json_encode($receipt);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -325,6 +470,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 $invoice = new InvoiceManager();
 switch ($operation) {
+    case 'getPaymentMethods':
+        echo $invoice->getPaymentMethods();
+        break;
     case 'getDiscountList':
         echo $invoice->getDiscountList();
         break;
@@ -334,5 +482,12 @@ switch ($operation) {
     case 'getInvoiceById':
         echo $invoice->getInvoiceById($json);
         break;
+    case 'getPaymentHistory':
+        echo $invoice->getPaymentHistory($json);
+        break;
+    case 'getPaymentReceipt':
+        echo $invoice->getPaymentReceipt($json);
+        break;
 }
+
 ?>

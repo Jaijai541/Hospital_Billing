@@ -55,7 +55,16 @@ CREATE TABLE IF NOT EXISTS Enum_Discount (
 
 CREATE TABLE IF NOT EXISTS Enum_User_Role (
     Role_ID INT AUTO_INCREMENT PRIMARY KEY,
-    Role_Name VARCHAR(50) NOT NULL -- 'Admin', 'Finance Staff', 'Nurse'
+    Role_Name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Enum_Payment_Method (
+    Payment_Method_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Method_Name VARCHAR(100) NOT NULL,
+    Category_Type VARCHAR(50) NOT NULL DEFAULT 'Standard',
+    Code_Prefix VARCHAR(10) NOT NULL DEFAULT 'PM',
+    Description VARCHAR(255) NULL,
+    Is_Active BOOLEAN DEFAULT TRUE
 );
 
 
@@ -245,11 +254,32 @@ CREATE TABLE IF NOT EXISTS Final_Invoice (
     Gross_Total DECIMAL(12, 2) NOT NULL,
     Discount_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     Net_Amount_Due DECIMAL(12, 2) NOT NULL,
+    Amount_Paid DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    Change_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     Settlement_Date DATETIME DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
     FOREIGN KEY (Processed_By_User_ID) REFERENCES System_User(User_ID),
     FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID)
+);
+
+CREATE TABLE IF NOT EXISTS Invoice_Payment (
+    Payment_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Invoice_ID INT NOT NULL,
+    Admission_ID INT NOT NULL,
+    Cashier_User_ID INT NOT NULL,
+    Receipt_Number VARCHAR(30) NOT NULL,
+    Amount_Paid DECIMAL(12, 2) NOT NULL,
+    Balance_Before DECIMAL(12, 2) NOT NULL,
+    Balance_After DECIMAL(12, 2) NOT NULL,
+    Payment_Method_ID INT NOT NULL DEFAULT 1,
+    Notes VARCHAR(255) NULL,
+    Payment_Date DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
+    FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
+    FOREIGN KEY (Cashier_User_ID) REFERENCES System_User(User_ID),
+    FOREIGN KEY (Payment_Method_ID) REFERENCES Enum_Payment_Method(Payment_Method_ID)
 );
 
 -- ============================================================

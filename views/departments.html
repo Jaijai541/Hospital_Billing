@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Departments & Stations — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/common.css?v=5.1">
     <link rel="stylesheet" href="../css/departments.css">
 </head>
 <body>
@@ -19,8 +22,75 @@
                 </div>
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Department</button>
             </div>
+            <div id="viewDepartmentModal" class="modal-overlay">
+                <div class="modal-container" style="max-width: 680px;">
+                    <div class="modal-header">
+                        <h3 id="view-dept-title">Department Details</h3>
+                        <button type="button" class="modal-close" id="btnCloseViewDeptModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="view_dept_banner" style="margin-bottom: 18px; padding: 14px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div>
+                                    <h4 id="view_dept_name" style="margin: 0; font-size: 17px; color: var(--text-main); font-weight: 700;">Department Name</h4>
+                                    <span id="view_dept_code" style="font-size: 13px; color: var(--text-muted);">Station Code: DEPT-001</span>
+                                </div>
+                                <span id="view_dept_status_badge" class="badge badge-success">Active</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Assigned Doctors</label>
+                                <span id="view_dept_doctors_count" class="badge badge-info" style="font-size: 12px;">0 Doctors</span>
+                            </div>
+                            <div style="max-height: 170px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Doctor Name</th>
+                                            <th>Classification</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_dept_doctors_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="view_dept_doctors_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No doctors assigned to this station.</div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Assigned Staff / Users</label>
+                                <span id="view_dept_users_count" class="badge badge-info" style="font-size: 12px;">0 Staff</span>
+                            </div>
+                            <div style="max-height: 170px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Full Name</th>
+                                            <th>Username</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_dept_users_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="view_dept_users_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No system users assigned to this station.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCloseViewDeptBtn" class="btn btn-secondary">Close</button>
+                        <button type="button" id="btnOpenEditFromView" class="btn btn-primary">Edit Department</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="formModal" class="modal-overlay">
-                <div class="modal-container">
+                <div class="modal-container" style="max-width: 600px;">
                     <div class="modal-header">
                         <h3 id="form-title">Add New Department / Station</h3>
                         <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
@@ -94,6 +164,6 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/departments.js"></script>
+    <script src="../js/departments.js?v=5.1"></script>
 </body>
 </html>

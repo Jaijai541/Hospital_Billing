@@ -1,4 +1,4 @@
-const getApiUrl = "../api/GET";
+﻿const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allCatalogs = [];
@@ -21,14 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    document.getElementById("category_type").addEventListener("change", (e) => {
-        const val = e.target.value;
-        const prefixInput = document.getElementById("code_prefix");
-        if (val === "Medicine") prefixInput.value = "MED";
-        else if (val === "Equipment Scan") prefixInput.value = "RAD";
-        else if (val === "Service") prefixInput.value = "SRV";
-        else prefixInput.value = "";
-    });
+    const catInput = document.getElementById("category_type_text");
+    if (catInput) catInput.addEventListener("click", openCategoryPicker);
+    const btnBrowseCat = document.getElementById("btnBrowse_category_type");
+    if (btnBrowseCat) btnBrowseCat.addEventListener("click", openCategoryPicker);
 
     document.getElementById("search_input").addEventListener("input", filterAndSortCatalogs);
     document.getElementById("filter_category").addEventListener("change", filterAndSortCatalogs);
@@ -157,6 +153,7 @@ const populateCatalogForm = (item) => {
     document.getElementById("catalog_id").value = item.Catalog_ID || "";
     document.getElementById("item_name").value = item.Item_Name || "";
     document.getElementById("category_type").value = item.Category_Type || "";
+    document.getElementById("category_type_text").value = item.Category_Type || "";
     document.getElementById("code_prefix").value = item.Code_Prefix || "";
     document.getElementById("unit_price").value = item.Unit_Price || "";
 };
@@ -254,12 +251,36 @@ const saveCatalogItem = async () => {
     }
 };
 
+
+const openCategoryPicker = () => {
+    openGenericLookupPicker({
+        title: "Select Catalog Category",
+        items: [
+            { id: "Medicine", text: "Medicine", subtext: "Code Prefix: MED", badge: "MED", badgeClass: "badge-primary" },
+            { id: "Equipment Scan", text: "Equipment Scan", subtext: "Code Prefix: RAD", badge: "RAD", badgeClass: "badge-warning" },
+            { id: "Service", text: "Service / Procedure", subtext: "Code Prefix: SRV", badge: "SRV", badgeClass: "badge-info" }
+        ],
+        selectedId: document.getElementById("category_type").value,
+        onSelect: (item) => {
+            document.getElementById("category_type").value = item.id;
+            document.getElementById("category_type_text").value = item.text;
+            const prefixInput = document.getElementById("code_prefix");
+            if (prefixInput) {
+                if (item.id === "Medicine") prefixInput.value = "MED";
+                else if (item.id === "Equipment Scan") prefixInput.value = "RAD";
+                else if (item.id === "Service") prefixInput.value = "SRV";
+            }
+        }
+    });
+};
+
 const resetForm = () => {
     currentLoadedCatalog = null;
 
     document.getElementById("catalog_id").value = "";
     document.getElementById("item_name").value = "";
     document.getElementById("category_type").value = "";
+    document.getElementById("category_type_text").value = "";
     document.getElementById("code_prefix").value = "";
     document.getElementById("unit_price").value = "";
 
@@ -269,3 +290,4 @@ const resetForm = () => {
     document.getElementById("form-title").textContent = "Add New Charge Catalog Item";
     document.getElementById("btnSubmit").textContent = "Submit Item";
 };
+

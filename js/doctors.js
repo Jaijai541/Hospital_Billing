@@ -1,9 +1,14 @@
-const getApiUrl = "../api/GET";
+﻿const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allDoctors = [];
+let allDoctorTypes = [];
+let allStations = [];
 let allSpecialties = [];
 let currentLoadedDoctor = null;
+let selectedDoctorSpecialties = [];
+let tempSelectedSpecialties = [];
+let currentFilteredSpecialties = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDoctorLookups();
@@ -11,6 +16,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDoctor);
+
+    const docTypeInput = document.getElementById("doctor_type_id_text");
+    if (docTypeInput) docTypeInput.addEventListener("click", openDoctorTypePicker);
+    const btnBrowseDocType = document.getElementById("btnBrowse_doctor_type_id");
+    if (btnBrowseDocType) btnBrowseDocType.addEventListener("click", openDoctorTypePicker);
+
+    const stationInput = document.getElementById("station_id_text");
+    if (stationInput) stationInput.addEventListener("click", openStationPicker);
+    const btnBrowseStation = document.getElementById("btnBrowse_station_id");
+    if (btnBrowseStation) btnBrowseStation.addEventListener("click", openStationPicker);
 
     const btnReset = document.getElementById("btnReset");
     if (btnReset) {
@@ -23,17 +38,89 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const specSearch = document.getElementById("specialty_search");
-    if (specSearch) {
-        specSearch.addEventListener("input", () => {
-            const query = specSearch.value.trim().toLowerCase();
-            const labels = document.querySelectorAll("#specialties-checkboxes label");
-            labels.forEach(lbl => {
-                const text = lbl.textContent.toLowerCase();
-                lbl.style.display = text.includes(query) ? "inline-block" : "none";
-            });
+    const btnBrowse = document.getElementById("btnBrowseSpecialties");
+    if (btnBrowse) {
+        btnBrowse.addEventListener("click", openSpecialtyPicker);
+    }
+    const txtSpecialties = document.getElementById("selected_specialties_text");
+    if (txtSpecialties) {
+        txtSpecialties.addEventListener("click", openSpecialtyPicker);
+    }
+
+    const btnClosePicker = document.getElementById("btnCloseSpecialtyPicker");
+    if (btnClosePicker) {
+        btnClosePicker.addEventListener("click", closeSpecialtyPicker);
+    }
+    const btnCancelPicker = document.getElementById("btnCancelSpecialtyPicker");
+    if (btnCancelPicker) {
+        btnCancelPicker.addEventListener("click", closeSpecialtyPicker);
+    }
+    const btnDonePicker = document.getElementById("btnDoneSpecialtyPicker");
+    if (btnDonePicker) {
+        btnDonePicker.addEventListener("click", confirmSpecialtyPicker);
+    }
+
+    const pickerSearch = document.getElementById("specialty_picker_search");
+    if (pickerSearch) {
+        pickerSearch.addEventListener("input", renderSpecialtyPickerRows);
+    }
+    const pickerFilter = document.getElementById("specialty_picker_filter");
+    if (pickerFilter) {
+        pickerFilter.addEventListener("change", renderSpecialtyPickerRows);
+    }
+    const pickerSort = document.getElementById("specialty_picker_sort");
+    if (pickerSort) {
+        pickerSort.addEventListener("change", renderSpecialtyPickerRows);
+    }
+    const selectAllCb = document.getElementById("specialty_picker_select_all");
+    if (selectAllCb) {
+        selectAllCb.addEventListener("change", (e) => {
+            toggleSelectAllPickerSpecialties(e.target.checked);
         });
     }
+
+    const pickerModal = document.getElementById("specialtyPickerModal");
+    if (pickerModal) {
+        pickerModal.addEventListener("click", (e) => {
+            if (e.target === pickerModal) {
+                closeSpecialtyPicker();
+            }
+        });
+    }
+
+    const btnCloseView = document.getElementById("btnCloseViewDoctorModal");
+    if (btnCloseView) btnCloseView.addEventListener("click", closeViewDoctorModal);
+    const btnCloseViewBtn = document.getElementById("btnCloseViewDoctorBtn");
+    if (btnCloseViewBtn) btnCloseViewBtn.addEventListener("click", closeViewDoctorModal);
+    const viewModal = document.getElementById("viewDoctorModal");
+    if (viewModal) {
+        viewModal.addEventListener("click", (e) => {
+            if (e.target === viewModal) closeViewDoctorModal();
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const pickerModal = document.getElementById("specialtyPickerModal");
+            if (pickerModal && pickerModal.style.display === "flex") {
+                e.stopPropagation();
+                closeSpecialtyPicker();
+                return;
+            }
+            const specModal = document.getElementById("specialtyModal");
+            if (specModal && specModal.style.display === "flex") {
+                e.stopPropagation();
+                closeSpecialtyModal();
+                return;
+            }
+            const viewDocModal = document.getElementById("viewDoctorModal");
+            if (viewDocModal && viewDocModal.style.display === "flex") {
+                e.stopPropagation();
+                closeViewDoctorModal();
+                return;
+            }
+        }
+    });
 
     document.getElementById("search_input").addEventListener("input", filterAndSortDoctors);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDoctors);
@@ -80,13 +167,223 @@ document.addEventListener("DOMContentLoaded", () => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 submitNewSpecialty();
-            } else if (e.key === "Escape") {
-                e.preventDefault();
-                closeSpecialtyModal();
             }
         });
     }
 });
+
+const updateSpecialtiesText = () => {
+    const txt = document.getElementById("selected_specialties_text");
+    if (!txt) return;
+
+    if (!selectedDoctorSpecialties || selectedDoctorSpecialties.length === 0) {
+        txt.value = "";
+        return;
+    }
+
+    const names = [];
+    selectedDoctorSpecialties.forEach(id => {
+        const found = allSpecialties.find(s => String(s.Specialty_ID) === String(id));
+        if (found) {
+            names.push(found.Specialty_Name);
+        }
+    });
+
+    txt.value = names.join(", ");
+};
+
+const openSpecialtyPicker = () => {
+    tempSelectedSpecialties = [...selectedDoctorSpecialties];
+
+    const searchInput = document.getElementById("specialty_picker_search");
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    const filterSelect = document.getElementById("specialty_picker_filter");
+    if (filterSelect) {
+        filterSelect.value = "all";
+    }
+
+    const sortSelect = document.getElementById("specialty_picker_sort");
+    if (sortSelect) {
+        sortSelect.value = "name_asc";
+    }
+
+    renderSpecialtyPickerRows();
+
+    const pickerModal = document.getElementById("specialtyPickerModal");
+    if (pickerModal) {
+        pickerModal.style.display = "flex";
+        setTimeout(() => {
+            if (searchInput) searchInput.focus();
+        }, 50);
+    }
+};
+
+const closeSpecialtyPicker = () => {
+    const pickerModal = document.getElementById("specialtyPickerModal");
+    if (pickerModal) {
+        pickerModal.style.display = "none";
+    }
+    tempSelectedSpecialties = [];
+};
+
+const confirmSpecialtyPicker = () => {
+    selectedDoctorSpecialties = [...tempSelectedSpecialties];
+    updateSpecialtiesText();
+    closeSpecialtyPicker();
+};
+
+const renderSpecialtyPickerRows = () => {
+    const searchInput = document.getElementById("specialty_picker_search");
+    const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+    const filterSelect = document.getElementById("specialty_picker_filter");
+    const filterVal = filterSelect ? filterSelect.value : "all";
+    const sortSelect = document.getElementById("specialty_picker_sort");
+    const sortBy = sortSelect ? sortSelect.value : "name_asc";
+
+    const tbody = document.getElementById("specialty_picker_tbody");
+    const emptyMsg = document.getElementById("specialty_picker_empty");
+    const statusMsg = document.getElementById("specialty_picker_status");
+    const selectAllCb = document.getElementById("specialty_picker_select_all");
+
+    let list = allSpecialties.filter(s => {
+        const sid = String(s.Specialty_ID);
+        const isSelected = tempSelectedSpecialties.includes(sid);
+        const matchesQuery = s.Specialty_Name.toLowerCase().includes(query);
+        const isActiveOrSelected = (s.Is_Active == 1) || isSelected;
+
+        let matchesFilter = true;
+        if (filterVal === "selected") {
+            matchesFilter = isSelected;
+        } else if (filterVal === "unselected") {
+            matchesFilter = !isSelected;
+        }
+
+        return matchesQuery && isActiveOrSelected && matchesFilter;
+    });
+
+    list.sort((a, b) => {
+        const aSelected = tempSelectedSpecialties.includes(String(a.Specialty_ID));
+        const bSelected = tempSelectedSpecialties.includes(String(b.Specialty_ID));
+
+        if (sortBy === "selected_first") {
+            if (aSelected && !bSelected) return -1;
+            if (!aSelected && bSelected) return 1;
+            return a.Specialty_Name.localeCompare(b.Specialty_Name);
+        } else if (sortBy === "name_desc") {
+            return b.Specialty_Name.localeCompare(a.Specialty_Name);
+        } else {
+            return a.Specialty_Name.localeCompare(b.Specialty_Name);
+        }
+    });
+
+    currentFilteredSpecialties = list;
+    tbody.innerHTML = "";
+
+    if (list.length === 0) {
+        if (emptyMsg) emptyMsg.style.display = "block";
+        if (selectAllCb) {
+            selectAllCb.checked = false;
+            selectAllCb.indeterminate = false;
+            selectAllCb.disabled = true;
+        }
+    } else {
+        if (emptyMsg) emptyMsg.style.display = "none";
+        if (selectAllCb) selectAllCb.disabled = false;
+
+        list.forEach(s => {
+            const sid = String(s.Specialty_ID);
+            const isSelected = tempSelectedSpecialties.includes(sid);
+
+            const row = document.createElement("tr");
+            row.className = `picker-row ${isSelected ? "selected-row" : ""}`;
+            row.setAttribute("data-id", sid);
+
+            const statusBadge = (s.Is_Active == 1)
+                ? `<span class="badge badge-success" style="font-size: 11.5px; padding: 2px 8px;">Active</span>`
+                : `<span class="badge badge-secondary" style="font-size: 11.5px; padding: 2px 8px;">Inactive</span>`;
+
+            row.innerHTML = `
+                <td style="text-align: center;">
+                    <input type="checkbox" class="specialty-picker-cb" value="${sid}" ${isSelected ? "checked" : ""} style="cursor: pointer; pointer-events: none;">
+                </td>
+                <td><strong>${s.Specialty_Name}</strong></td>
+                <td style="text-align: center;">${statusBadge}</td>
+            `;
+
+            row.addEventListener("click", () => {
+                togglePickerSpecialty(sid);
+            });
+
+            tbody.appendChild(row);
+        });
+
+        const allVisibleSelected = list.every(s => tempSelectedSpecialties.includes(String(s.Specialty_ID)));
+        const someVisibleSelected = list.some(s => tempSelectedSpecialties.includes(String(s.Specialty_ID)));
+
+        if (selectAllCb) {
+            selectAllCb.checked = allVisibleSelected;
+            selectAllCb.indeterminate = (!allVisibleSelected && someVisibleSelected);
+        }
+    }
+
+    if (statusMsg) {
+        const count = tempSelectedSpecialties.length;
+        statusMsg.textContent = count === 0 ? "No specialties selected" : `${count} specialt${count === 1 ? "y" : "ies"} selected`;
+    }
+};
+
+const togglePickerSpecialty = (sid) => {
+    sid = String(sid);
+    const index = tempSelectedSpecialties.indexOf(sid);
+    if (index > -1) {
+        tempSelectedSpecialties.splice(index, 1);
+    } else {
+        tempSelectedSpecialties.push(sid);
+    }
+
+    const row = document.querySelector(`#specialty_picker_tbody tr[data-id="${sid}"]`);
+    if (row) {
+        const isNowSelected = tempSelectedSpecialties.includes(sid);
+        const cb = row.querySelector(".specialty-picker-cb");
+        if (cb) cb.checked = isNowSelected;
+        if (isNowSelected) {
+            row.classList.add("selected-row");
+        } else {
+            row.classList.remove("selected-row");
+        }
+    }
+
+    const selectAllCb = document.getElementById("specialty_picker_select_all");
+    if (selectAllCb && currentFilteredSpecialties.length > 0) {
+        const allVisibleSelected = currentFilteredSpecialties.every(s => tempSelectedSpecialties.includes(String(s.Specialty_ID)));
+        const someVisibleSelected = currentFilteredSpecialties.some(s => tempSelectedSpecialties.includes(String(s.Specialty_ID)));
+        selectAllCb.checked = allVisibleSelected;
+        selectAllCb.indeterminate = (!allVisibleSelected && someVisibleSelected);
+    }
+
+    const statusMsg = document.getElementById("specialty_picker_status");
+    if (statusMsg) {
+        const count = tempSelectedSpecialties.length;
+        statusMsg.textContent = count === 0 ? "No specialties selected" : `${count} specialt${count === 1 ? "y" : "ies"} selected`;
+    }
+};
+
+const toggleSelectAllPickerSpecialties = (checked) => {
+    currentFilteredSpecialties.forEach(s => {
+        const sid = String(s.Specialty_ID);
+        const idx = tempSelectedSpecialties.indexOf(sid);
+        if (checked) {
+            if (idx === -1) tempSelectedSpecialties.push(sid);
+        } else {
+            if (idx > -1) tempSelectedSpecialties.splice(idx, 1);
+        }
+    });
+
+    renderSpecialtyPickerRows();
+};
 
 const loadDoctorLookups = async () => {
     try {
@@ -97,62 +394,77 @@ const loadDoctorLookups = async () => {
 
         if (response.status === 200 && response.data) {
             const data = response.data;
-            const typeSelect = document.getElementById("doctor_type_id");
+            allDoctorTypes = data.types || [];
+            allStations = data.stations || [];
+            allSpecialties = data.specialties || [];
+
             const filterType = document.getElementById("filter_type");
-            const stationSelect = document.getElementById("station_id");
+            if (filterType) {
+                filterType.innerHTML = `<option value="all">All Classifications</option>`;
+                allDoctorTypes.forEach(t => {
+                    const filterOpt = document.createElement("option");
+                    filterOpt.value = t.Doctor_Type_ID;
+                    filterOpt.textContent = t.Type_Name;
+                    filterType.appendChild(filterOpt);
+                });
+            }
+
             const filterStation = document.getElementById("filter_station");
-            const specContainer = document.getElementById("specialties-checkboxes");
+            if (filterStation) {
+                filterStation.innerHTML = `<option value="all">All Stations</option>`;
+                allStations.forEach(st => {
+                    const filterOpt = document.createElement("option");
+                    filterOpt.value = st.Station_ID;
+                    filterOpt.textContent = st.Station_Name;
+                    filterStation.appendChild(filterOpt);
+                });
+            }
+
             const filterSpec = document.getElementById("filter_specialty");
-
-            typeSelect.innerHTML = `<option value="">Select Classification...</option>`;
-            data.types.forEach(t => {
-                const opt = document.createElement("option");
-                opt.value = t.Doctor_Type_ID;
-                opt.textContent = t.Type_Name;
-                typeSelect.appendChild(opt);
-
-                const filterOpt = document.createElement("option");
-                filterOpt.value = t.Doctor_Type_ID;
-                filterOpt.textContent = t.Type_Name;
-                filterType.appendChild(filterOpt);
-            });
-
-            stationSelect.innerHTML = `<option value="">Select Department Station...</option>`;
-            data.stations.forEach(st => {
-                const opt = document.createElement("option");
-                opt.value = st.Station_ID;
-                opt.textContent = st.Station_Name;
-                stationSelect.appendChild(opt);
-
-                const filterOpt = document.createElement("option");
-                filterOpt.value = st.Station_ID;
-                filterOpt.textContent = st.Station_Name;
-                filterStation.appendChild(filterOpt);
-            });
-
-            allSpecialties = data.specialties;
-            specContainer.innerHTML = "";
-            allSpecialties.forEach(s => {
-                const label = document.createElement("label");
-                label.style.marginRight = "15px";
-                label.style.display = "inline-block";
-                label.innerHTML = `
-                    <input type="checkbox" name="specialty_checkbox" value="${s.Specialty_ID}">
-                    ${s.Specialty_Name}
-                `;
-                specContainer.appendChild(label);
-
-                if (filterSpec) {
+            if (filterSpec) {
+                filterSpec.innerHTML = `<option value="all">All Specialties</option>`;
+                allSpecialties.forEach(s => {
                     const filterOpt = document.createElement("option");
                     filterOpt.value = s.Specialty_ID;
                     filterOpt.textContent = s.Specialty_Name;
                     filterSpec.appendChild(filterOpt);
-                }
-            });
+                });
+            }
         }
     } catch (error) {
-        console.error("[API] Error loading lookups:", error);
+        console.error("[API] Error loading doctor lookups:", error);
     }
+};
+
+const openDoctorTypePicker = () => {
+    openGenericLookupPicker({
+        title: "Select Doctor Classification",
+        items: allDoctorTypes.map(t => ({
+            id: t.Doctor_Type_ID,
+            text: t.Type_Name
+        })),
+        selectedId: document.getElementById("doctor_type_id").value,
+        onSelect: (item) => {
+            document.getElementById("doctor_type_id").value = item.id;
+            document.getElementById("doctor_type_id_text").value = item.text;
+        }
+    });
+};
+
+const openStationPicker = () => {
+    openGenericLookupPicker({
+        title: "Select Department / Station",
+        items: allStations.map(st => ({
+            id: st.Station_ID,
+            text: st.Station_Name,
+            subtext: st.Code_Prefix ? `Code: ${st.Code_Prefix}` : ""
+        })),
+        selectedId: document.getElementById("station_id").value,
+        onSelect: (item) => {
+            document.getElementById("station_id").value = item.id;
+            document.getElementById("station_id_text").value = item.text;
+        }
+    });
 };
 
 const displayDoctors = async () => {
@@ -272,7 +584,7 @@ const displayDoctorsTable = (doctors) => {
 
         const row = document.createElement("tr");
         row.className = "clickable-row";
-        row.title = "Click to view / edit doctor details";
+        row.title = "Click to view doctor details & assigned patients";
         row.innerHTML = `
             <td><strong>${doc.Formatted_Code}</strong></td>
             <td><strong>${fullName}</strong></td>
@@ -282,7 +594,7 @@ const displayDoctorsTable = (doctors) => {
             <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
             <td>${getStatusBadge(doc.Is_Active)}</td>
         `;
-        row.addEventListener("click", () => loadDoctorForEdit(doc.Doctor_ID));
+        row.addEventListener("click", () => openViewDoctorModal(doc.Doctor_ID));
         tbody.appendChild(row);
     });
 
@@ -290,18 +602,127 @@ const displayDoctorsTable = (doctors) => {
     tableDiv.appendChild(table);
 };
 
+const openViewDoctorModal = async (doctorId) => {
+    try {
+        console.log(`[API] Fetching doctor details for ID: ${doctorId}`);
+        const response = await axios.get(`${getApiUrl}/doctors.php`, {
+            params: {
+                operation: "getDoctorById",
+                json: JSON.stringify({ doctor_id: doctorId })
+            }
+        });
+
+        if (response.status === 200 && response.data) {
+            const doc = response.data;
+            currentLoadedDoctor = doc;
+
+            const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
+            const codeFormatted = doc.Formatted_Code || `DOC-${String(doc.Doctor_ID).padStart(3, '0')}`;
+
+            document.getElementById("view-doc-title").textContent = `Doctor Details (${codeFormatted})`;
+            document.getElementById("view_doc_name").textContent = fullName;
+            document.getElementById("view_doc_code").textContent = `Code: ${codeFormatted}`;
+            document.getElementById("view_doc_type_badge").textContent = doc.Doctor_Type_Name || "Physician";
+            document.getElementById("view_doc_station").textContent = `Station: ${doc.Station_Name || "Unassigned"}`;
+            document.getElementById("view_doc_fee").textContent = `Fee: ₱ ${parseFloat(doc.Base_Round_Fee || 0).toFixed(2)} / round`;
+            document.getElementById("view_doc_specialties").textContent = doc.Specialties || "General Practice";
+
+            const badge = document.getElementById("view_doc_status_badge");
+            if (badge) {
+                const isActive = (doc.Is_Active == 1);
+                badge.className = isActive ? "badge badge-success" : "badge badge-danger";
+                badge.textContent = isActive ? "Active" : "Archived";
+            }
+
+            const assigned = doc.assigned_patients || [];
+            const activeCount = (doc.active_patients || []).length;
+            const countElem = document.getElementById("view_doc_patients_count");
+            const emptyElem = document.getElementById("view_doc_patients_empty");
+            const tbody = document.getElementById("view_doc_patients_tbody");
+
+            if (countElem) {
+                countElem.textContent = `${assigned.length} Assigned (${activeCount} Active)`;
+            }
+
+            if (tbody) {
+                tbody.innerHTML = "";
+                if (assigned.length === 0) {
+                    if (emptyElem) emptyElem.style.display = "block";
+                } else {
+                    if (emptyElem) emptyElem.style.display = "none";
+                    assigned.forEach(p => {
+                        const tr = document.createElement("tr");
+                        const isAdmitted = (p.Admission_Status === "Admitted");
+                        const statusBadge = isAdmitted
+                            ? '<span class="badge badge-success">Admitted</span>'
+                            : `<span class="badge badge-secondary">${p.Admission_Status || 'Discharged'}</span>`;
+
+                        const bedLocation = p.Bed_Code
+                            ? `${p.Bed_Code} (${p.Room_Name || ''})`
+                            : (isAdmitted ? "Bed Pending" : "Discharged");
+                        const bedBadgeClass = isAdmitted ? "badge badge-primary" : "badge badge-secondary";
+
+                        const patName = `${p.First_Name} ${p.Last_Name} <small style="color: var(--text-muted);">(${p.Patient_Code})</small>`;
+                        const admCode = `<strong>${p.Admission_Code || ('ADM-' + String(p.Admission_ID).padStart(3, '0'))}</strong>`;
+                        const diagnosis = p.Diagnosis || p.Chief_Complaint || "N/A";
+                        const admDate = p.Formatted_Admission_Date || "N/A";
+
+                        tr.innerHTML = `
+                            <td><strong>${patName}</strong></td>
+                            <td>${admCode}</td>
+                            <td><span class="${bedBadgeClass}">${bedLocation}</span></td>
+                            <td>${diagnosis}</td>
+                            <td>${admDate}</td>
+                            <td>${statusBadge}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+
+            const btnEdit = document.getElementById("btnOpenEditFromDoctorView");
+            if (btnEdit) {
+                btnEdit.onclick = () => {
+                    closeViewDoctorModal();
+                    loadDoctorForEdit(doctorId);
+                };
+            }
+
+            openModal("viewDoctorModal");
+        }
+    } catch (error) {
+        console.error("[API] Error fetching doctor details:", error);
+        alert("Failed to load doctor details.");
+    }
+};
+
+const closeViewDoctorModal = () => {
+    closeModal("viewDoctorModal");
+};
+
 const populateDoctorForm = (doc) => {
     document.getElementById("doctor_id").value = doc.Doctor_ID || "";
     document.getElementById("first_name").value = doc.First_Name || "";
     document.getElementById("last_name").value = doc.Last_Name || "";
     document.getElementById("doctor_type_id").value = doc.Doctor_Type_ID || "";
+    if (doc.Doctor_Type_ID) {
+        const t = allDoctorTypes.find(dt => String(dt.Doctor_Type_ID) === String(doc.Doctor_Type_ID));
+        document.getElementById("doctor_type_id_text").value = t ? t.Type_Name : "";
+    } else {
+        document.getElementById("doctor_type_id_text").value = "";
+    }
     document.getElementById("station_id").value = doc.Station_ID || "";
+    if (doc.Station_ID) {
+        const st = allStations.find(s => String(s.Station_ID) === String(doc.Station_ID));
+        document.getElementById("station_id_text").value = st ? st.Station_Name : "";
+    } else {
+        document.getElementById("station_id_text").value = "";
+    }
     document.getElementById("base_round_fee").value = doc.Base_Round_Fee || "";
 
     const assignedSpecs = doc.specialty_ids_array || [];
-    document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
-        cb.checked = assignedSpecs.includes(cb.value);
-    });
+    selectedDoctorSpecialties = assignedSpecs.map(id => String(id));
+    updateSpecialtiesText();
 };
 
 const loadDoctorForEdit = async (doctorId) => {
@@ -358,10 +779,10 @@ const saveDoctor = async () => {
         return;
     }
 
-    const selectedSpecialties = [];
-    document.querySelectorAll('input[name="specialty_checkbox"]:checked').forEach(cb => {
-        selectedSpecialties.push(cb.value);
-    });
+    if (!selectedDoctorSpecialties || selectedDoctorSpecialties.length === 0) {
+        alert("Please select at least one medical specialty.");
+        return;
+    }
 
     const jsonData = {
         first_name: firstName,
@@ -369,7 +790,7 @@ const saveDoctor = async () => {
         doctor_type_id: typeId,
         station_id: stationId,
         base_round_fee: parseFloat(fee),
-        specialty_ids: selectedSpecialties
+        specialty_ids: selectedDoctorSpecialties
     };
 
     const isEdit = (doctorId !== "");
@@ -413,18 +834,13 @@ const resetForm = () => {
     document.getElementById("first_name").value = "";
     document.getElementById("last_name").value = "";
     document.getElementById("doctor_type_id").value = "";
+    document.getElementById("doctor_type_id_text").value = "";
     document.getElementById("station_id").value = "";
+    document.getElementById("station_id_text").value = "";
     document.getElementById("base_round_fee").value = "";
 
-    const specSearch = document.getElementById("specialty_search");
-    if (specSearch) specSearch.value = "";
-    document.querySelectorAll('#specialties-checkboxes label').forEach(lbl => {
-        lbl.style.display = "inline-block";
-    });
-
-    document.querySelectorAll('input[name="specialty_checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
+    selectedDoctorSpecialties = [];
+    updateSpecialtiesText();
 
     const btnArchive = document.getElementById("btnArchive");
     if (btnArchive) btnArchive.style.display = "none";
@@ -494,12 +910,8 @@ const promptRemoveSpecialty = (specialtyId, specialtyName) => {
             if (response.data && response.data.success) {
                 allSpecialties = allSpecialties.filter(s => parseInt(s.Specialty_ID) !== parseInt(specialtyId));
 
-                const specContainer = document.getElementById("specialties-checkboxes");
-                const checkbox = specContainer.querySelector(`input[value="${specialtyId}"]`);
-                if (checkbox) {
-                    const label = checkbox.closest("label");
-                    if (label) label.remove();
-                }
+                selectedDoctorSpecialties = selectedDoctorSpecialties.filter(id => parseInt(id) !== parseInt(specialtyId));
+                updateSpecialtiesText();
 
                 const filterSpec = document.getElementById("filter_specialty");
                 if (filterSpec) {
@@ -544,16 +956,9 @@ const submitNewSpecialty = async () => {
             const specName = response.data.specialty_name;
 
             if (response.data.already_existed && !response.data.reactivated) {
-                const specContainer = document.getElementById("specialties-checkboxes");
-                const existingCheckbox = specContainer.querySelector(`input[value="${specId}"]`);
-                if (existingCheckbox) {
-                    existingCheckbox.checked = true;
-                    existingCheckbox.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                    const parentLabel = existingCheckbox.closest("label");
-                    if (parentLabel) {
-                        parentLabel.style.backgroundColor = "#fef08a";
-                        setTimeout(() => { parentLabel.style.backgroundColor = ""; }, 2500);
-                    }
+                if (!selectedDoctorSpecialties.includes(String(specId))) {
+                    selectedDoctorSpecialties.push(String(specId));
+                    updateSpecialtiesText();
                 }
                 closeSpecialtyModal();
                 alert(response.data.message);
@@ -567,20 +972,9 @@ const submitNewSpecialty = async () => {
                     allSpecialties.sort((a, b) => a.Specialty_Name.localeCompare(b.Specialty_Name));
                 }
 
-                const specContainer = document.getElementById("specialties-checkboxes");
-                let existingCheckbox = specContainer.querySelector(`input[value="${specId}"]`);
-
-                if (!existingCheckbox) {
-                    const label = document.createElement("label");
-                    label.style.marginRight = "15px";
-                    label.style.display = "inline-block";
-                    label.innerHTML = `
-                        <input type="checkbox" name="specialty_checkbox" value="${specId}" checked>
-                        ${specName}
-                    `;
-                    specContainer.appendChild(label);
-                } else {
-                    existingCheckbox.checked = true;
+                if (!selectedDoctorSpecialties.includes(String(specId))) {
+                    selectedDoctorSpecialties.push(String(specId));
+                    updateSpecialtiesText();
                 }
 
                 const filterSpec = document.getElementById("filter_specialty");
@@ -603,3 +997,4 @@ const submitNewSpecialty = async () => {
         alert("Server error adding specialty.");
     }
 };
+

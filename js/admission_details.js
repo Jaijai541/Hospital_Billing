@@ -1,4 +1,4 @@
-const getApiUrl = "../api/GET";
+﻿const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let admissionId = null;
@@ -9,7 +9,11 @@ let availableBedsList = [];
 let dispensedMedicinesList = [];
 let currentUser = null;
 let discountList = [];
+let paymentMethodsList = [];
 let latestSummary = null;
+let switchClinicalTab = null;
+let currentPickerConfig = null;
+let currentPickerSelectedItem = null;
 
 window.addEventListener('DOMContentLoaded', () => {
     console.log("admission_details.js: Initializing Patient Chart...");
@@ -55,32 +59,15 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnLogRound').addEventListener('click', submitDoctorRound);
     document.getElementById('btnTransferBed').addEventListener('click', submitBedTransfer);
     document.getElementById('btnReturnMedicine').addEventListener('click', submitMedicineReturn);
+
     initDiagnosisModal();
+    initClinicalModals();
 
-    const orderDocSearch = document.getElementById('order_doctor_search');
-    if (orderDocSearch) orderDocSearch.addEventListener('input', filterOrderDoctors);
-
-    const orderCatSearch = document.getElementById('order_catalog_search');
-    if (orderCatSearch) orderCatSearch.addEventListener('input', filterCatalogItems);
-
-    const roundDocSearch = document.getElementById('round_doctor_search');
-    if (roundDocSearch) roundDocSearch.addEventListener('input', filterRoundDoctors);
-
-    const transferBedSearch = document.getElementById('transfer_bed_search');
-    if (transferBedSearch) transferBedSearch.addEventListener('input', filterAvailableBeds);
+    initLookupPicker();
+    wireLookupPickers();
 
     const returnCatSearch = document.getElementById('return_catalog_search');
     if (returnCatSearch) returnCatSearch.addEventListener('input', filterDispensedMedicines);
-
-    document.getElementById('round_doctor_id').addEventListener('change', (e) => {
-        const selectedDocId = e.target.value;
-        const doc = assignedDoctors.find(d => String(d.Admission_Doctor_ID) === String(selectedDocId));
-        if (doc) {
-            document.getElementById('round_fee').value = parseFloat(doc.Base_Round_Fee || 0).toFixed(2);
-        } else {
-            document.getElementById('round_fee').value = '';
-        }
-    });
 
     loadAdmissionDetails();
     loadCatalogItems();
@@ -97,10 +84,50 @@ window.addEventListener('DOMContentLoaded', () => {
 const initClinicalTabs = () => {
     const tabBtns = document.querySelectorAll('.clinical-tabs-nav .tab-btn');
     const tabPanels = document.querySelectorAll('.tab-content-panel');
+    const glider = document.getElementById('subnavGlider');
+    const subnavItems = document.querySelectorAll('.clinical-slide-switcher .slide-tab-item, .clinical-subnav .subnav-btn');
+    const subPanels = document.querySelectorAll('#tab-clinical .sub-panel');
+
+    const activateSubtab = (subId) => {
+        let activeIdx = 0;
+        subnavItems.forEach((btn, idx) => {
+            if (btn.getAttribute('data-sub') === subId) {
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                activeIdx = idx;
+            } else {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            }
+        });
+
+        if (glider) {
+            glider.style.transform = `translateX(${activeIdx * 100}%)`;
+        }
+
+        subPanels.forEach(panel => {
+            if (panel.id === subId) {
+                panel.style.display = 'block';
+                panel.classList.remove('subpanel-slide-active');
+                void panel.offsetWidth;
+                panel.classList.add('subpanel-slide-active');
+            } else {
+                panel.style.display = 'none';
+                panel.classList.remove('subpanel-slide-active');
+            }
+        });
+    };
 
     const activateTab = (tabId) => {
+        let realTabId = tabId;
+        if (tabId === 'tab-orders' || tabId === 'tab-rounds' || tabId === 'tab-stays') {
+            realTabId = 'tab-clinical';
+        } else if (tabId === 'tab-charges') {
+            realTabId = 'tab-ledger';
+        }
+
         tabBtns.forEach(btn => {
-            if (btn.getAttribute('data-tab') === tabId) {
+            if (btn.getAttribute('data-tab') === realTabId) {
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
@@ -108,13 +135,23 @@ const initClinicalTabs = () => {
         });
 
         tabPanels.forEach(panel => {
-            if (panel.id === tabId) {
+            if (panel.id === realTabId) {
                 panel.style.display = 'block';
             } else {
                 panel.style.display = 'none';
             }
         });
-    }
+
+        if (tabId === 'tab-rounds') {
+            activateSubtab('sub-rounds');
+        } else if (tabId === 'tab-stays') {
+            activateSubtab('sub-stays');
+        } else if (tabId === 'tab-orders') {
+            activateSubtab('sub-orders');
+        }
+    };
+
+    switchClinicalTab = activateTab;
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -126,11 +163,634 @@ const initClinicalTabs = () => {
         });
     });
 
+    subnavItems.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-sub');
+            activateSubtab(target);
+        });
+    });
+
     const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById(hash)) {
+    if (hash) {
         activateTab(hash);
     }
-}
+};
+
+const updateWorkflowStepper = (status, remainingBalance) => {
+    const s1 = document.getElementById('step-admission');
+    const s2 = document.getElementById('step-charges');
+    const s3 = document.getElementById('step-discharge');
+    const s4 = document.getElementById('step-cashier');
+
+    const sub1 = document.getElementById('step-sub-admission');
+    const sub2 = document.getElementById('step-sub-charges');
+    const sub3 = document.getElementById('step-sub-discharge');
+    const sub4 = document.getElementById('step-sub-cashier');
+
+    const b1 = document.getElementById('badge-admission');
+    const b2 = document.getElementById('badge-charges');
+    const b3 = document.getElementById('badge-discharge');
+    const b4 = document.getElementById('badge-cashier');
+
+    if (!s1 || !s2 || !s3 || !s4) return;
+
+    [s1, s2, s3, s4].forEach(s => s.className = 'step-item');
+
+    if (status === 'Admitted') {
+        s1.classList.add('completed');
+        if (b1) b1.textContent = '✏“';
+        if (sub1) sub1.textContent = 'Bed Occupied';
+
+        s2.classList.add('active');
+        if (b2) b2.textContent = '2';
+        if (sub2) sub2.textContent = 'Partial Bill Available';
+
+        s3.classList.add('pending');
+        if (b3) b3.textContent = '3';
+        if (sub3) sub3.textContent = 'In Care (Not Discharged)';
+
+        s4.classList.add('pending');
+        if (b4) b4.textContent = '4';
+        if (sub4) sub4.textContent = 'Pending Settlement';
+    } else if (status === 'Discharged') {
+        s1.classList.add('completed');
+        if (b1) b1.textContent = '✏“';
+        if (sub1) sub1.textContent = 'Bed Released';
+
+        s2.classList.add('completed');
+        if (b2) b2.textContent = '✏“';
+        if (sub2) sub2.textContent = 'Charges Finalized';
+
+        s3.classList.add('active');
+        if (b3) b3.textContent = '3';
+        if (sub3) sub3.textContent = 'Finalize SOA & Discounts';
+
+        s4.classList.add('pending');
+        if (b4) b4.textContent = '4';
+        if (sub4) sub4.textContent = 'Pending Settlement';
+    } else if (status === 'Billed') {
+        s1.classList.add('completed');
+        if (b1) b1.textContent = '✏“';
+        if (sub1) sub1.textContent = 'Bed Released';
+
+        s2.classList.add('completed');
+        if (b2) b2.textContent = '✏“';
+        if (sub2) sub2.textContent = 'Charges Finalized';
+
+        s3.classList.add('completed');
+        if (b3) b3.textContent = '✏“';
+        if (sub3) sub3.textContent = 'SOA Finalized';
+
+        const rem = parseFloat(remainingBalance !== undefined && remainingBalance !== null ? remainingBalance : 0);
+        if (rem > 0) {
+            s4.classList.add('active');
+            if (b4) b4.textContent = '4';
+            if (sub4) sub4.textContent = `Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        } else {
+            s4.classList.add('completed');
+            if (b4) b4.textContent = '✏“';
+            if (sub4) sub4.textContent = 'Paid in Full';
+        }
+    }
+};
+
+const initClinicalModals = () => {
+    const btnOpenOrder = document.getElementById('btnOpenOrderModal');
+    const btnCloseOrder = document.getElementById('btnCloseOrderModal');
+    const btnCancelOrder = document.getElementById('btnCancelOrder');
+    const orderModal = document.getElementById('orderModal');
+
+    if (btnOpenOrder) {
+        btnOpenOrder.addEventListener('click', () => {
+            if (admissionData && admissionData.Status !== 'Admitted') {
+                alert("Cannot place orders: Patient is already discharged or billed.");
+                return;
+            }
+            const orderDocId = document.getElementById('order_doctor_id');
+            const orderDocName = document.getElementById('order_doctor_name');
+            const orderCatId = document.getElementById('order_catalog_id');
+            const orderCatName = document.getElementById('order_catalog_name');
+            const orderQty = document.getElementById('order_qty');
+            if (orderDocId) orderDocId.value = '';
+            if (orderDocName) orderDocName.value = '';
+            if (orderCatId) orderCatId.value = '';
+            if (orderCatName) orderCatName.value = '';
+            if (orderQty) orderQty.value = '1';
+            openModal('orderModal');
+        });
+    }
+    if (btnCloseOrder) btnCloseOrder.addEventListener('click', () => closeModal('orderModal'));
+    if (btnCancelOrder) btnCancelOrder.addEventListener('click', () => closeModal('orderModal'));
+
+    const btnOpenRound = document.getElementById('btnOpenRoundModal');
+    const btnCloseRound = document.getElementById('btnCloseRoundModal');
+    const btnCancelRound = document.getElementById('btnCancelRound');
+    const roundModal = document.getElementById('roundModal');
+
+    if (btnOpenRound) {
+        btnOpenRound.addEventListener('click', () => {
+            if (admissionData && admissionData.Status !== 'Admitted') {
+                alert("Cannot log bedside visits: Patient is already discharged or billed.");
+                return;
+            }
+            const roundDocId = document.getElementById('round_doctor_id');
+            const roundDocName = document.getElementById('round_doctor_name');
+            const roundFee = document.getElementById('round_fee');
+            if (roundDocId) roundDocId.value = '';
+            if (roundDocName) roundDocName.value = '';
+            if (roundFee) roundFee.value = '';
+            openModal('roundModal');
+        });
+    }
+    if (btnCloseRound) btnCloseRound.addEventListener('click', () => closeModal('roundModal'));
+    if (btnCancelRound) btnCancelRound.addEventListener('click', () => closeModal('roundModal'));
+
+    const btnOpenTransfer = document.getElementById('btnOpenTransferModal');
+    const btnCloseTransfer = document.getElementById('btnCloseTransferModal');
+    const btnCancelTransfer = document.getElementById('btnCancelTransfer');
+    const transferModal = document.getElementById('transferModal');
+
+    if (btnOpenTransfer) {
+        btnOpenTransfer.addEventListener('click', () => {
+            if (admissionData && admissionData.Status !== 'Admitted') {
+                alert("Cannot transfer bed: Patient is already discharged or billed.");
+                return;
+            }
+            const transBedId = document.getElementById('transfer_bed_id');
+            const transBedName = document.getElementById('transfer_bed_name');
+            if (transBedId) transBedId.value = '';
+            if (transBedName) transBedName.value = '';
+            loadAvailableBeds();
+            openModal('transferModal');
+        });
+    }
+    if (btnCloseTransfer) btnCloseTransfer.addEventListener('click', () => closeModal('transferModal'));
+    if (btnCancelTransfer) btnCancelTransfer.addEventListener('click', () => closeModal('transferModal'));
+
+    const btnOpenReturn = document.getElementById('btnOpenReturnModal');
+    const btnOpenReturnPharm = document.getElementById('btnOpenReturnModalPharmacy');
+    const btnCloseReturn = document.getElementById('btnCloseReturnModal');
+    const btnCancelReturn = document.getElementById('btnCancelReturn');
+    const returnModal = document.getElementById('returnModal');
+
+    const handleOpenReturnModal = () => {
+        if (admissionData && admissionData.Status !== 'Admitted') {
+            alert("Cannot process returns: Patient is already discharged or billed.");
+            return;
+        }
+        if (document.getElementById('return_catalog_search')) {
+            document.getElementById('return_catalog_search').value = '';
+        }
+        document.getElementById('return_qty').value = '1';
+        loadDispensedMedicines();
+        openModal('returnModal');
+    };
+
+    if (btnOpenReturn) btnOpenReturn.addEventListener('click', handleOpenReturnModal);
+    if (btnOpenReturnPharm) btnOpenReturnPharm.addEventListener('click', handleOpenReturnModal);
+    if (btnCloseReturn) btnCloseReturn.addEventListener('click', () => closeModal('returnModal'));
+    if (btnCancelReturn) btnCancelReturn.addEventListener('click', () => closeModal('returnModal'));
+
+    [orderModal, roundModal, transferModal, returnModal].forEach(m => {
+        if (m) {
+            m.addEventListener('click', (e) => {
+                if (e.target === m) closeModal(m.id);
+            });
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const pickerModal = document.getElementById('lookupPickerModal');
+            if (pickerModal && pickerModal.style.display === 'flex') {
+                closeLookupPicker();
+                return;
+            }
+            if (orderModal && orderModal.style.display === 'flex') closeModal('orderModal');
+            if (roundModal && roundModal.style.display === 'flex') closeModal('roundModal');
+            if (transferModal && transferModal.style.display === 'flex') closeModal('transferModal');
+            if (returnModal && returnModal.style.display === 'flex') closeModal('returnModal');
+        }
+    });
+};
+
+const openLookupPicker = (config) => {
+    currentPickerConfig = config;
+    currentPickerSelectedItem = null;
+
+    document.getElementById('lookup_picker_title').textContent = config.title;
+    const searchInput = document.getElementById('lookup_picker_search');
+    searchInput.placeholder = config.placeholder || 'Search...';
+    searchInput.value = '';
+
+    const filterSelect = document.getElementById('lookup_picker_filter');
+    if (filterSelect) {
+        if (config.filterOptions && config.filterOptions.length > 0) {
+            filterSelect.style.display = 'block';
+            filterSelect.innerHTML = config.filterOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
+            filterSelect.value = config.filterOptions[0].value;
+        } else {
+            filterSelect.style.display = 'none';
+        }
+    }
+
+    const sortSelect = document.getElementById('lookup_picker_sort');
+    if (sortSelect) {
+        if (config.sortOptions && config.sortOptions.length > 0) {
+            sortSelect.style.display = 'block';
+            sortSelect.innerHTML = config.sortOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
+            sortSelect.value = config.sortOptions[0].value;
+        } else {
+            sortSelect.style.display = 'none';
+        }
+    }
+
+    const btnDone = document.getElementById('btnDoneLookupPicker');
+    btnDone.disabled = true;
+    document.getElementById('lookup_picker_status').textContent = 'Click a row to select.';
+
+    let theadHtml = '<tr>';
+    config.columns.forEach(col => {
+        theadHtml += `<th>${col}</th>`;
+    });
+    theadHtml += '</tr>';
+    document.getElementById('lookup_picker_thead').innerHTML = theadHtml;
+
+    renderLookupPickerRows();
+
+    const pickerModal = document.getElementById('lookupPickerModal');
+    if (pickerModal) {
+        pickerModal.style.display = 'flex';
+        setTimeout(() => searchInput.focus(), 50);
+    }
+};
+
+const closeLookupPicker = () => {
+    const pickerModal = document.getElementById('lookupPickerModal');
+    if (pickerModal) pickerModal.style.display = 'none';
+    currentPickerConfig = null;
+    currentPickerSelectedItem = null;
+};
+
+const renderLookupPickerRows = () => {
+    if (!currentPickerConfig) return;
+    const query = (document.getElementById('lookup_picker_search').value || '').toLowerCase().trim();
+    const filterSelect = document.getElementById('lookup_picker_filter');
+    const filterVal = filterSelect ? filterSelect.value : 'all';
+    const sortSelect = document.getElementById('lookup_picker_sort');
+    const sortVal = sortSelect ? sortSelect.value : 'default';
+    const tbody = document.getElementById('lookup_picker_tbody');
+    const emptyDiv = document.getElementById('lookup_picker_empty');
+    const btnDone = document.getElementById('btnDoneLookupPicker');
+
+    let filtered = (currentPickerConfig.items || []).filter(item => {
+        if (query && currentPickerConfig.filterFn && !currentPickerConfig.filterFn(item, query)) {
+            return false;
+        }
+        if (filterVal && filterVal !== 'all' && currentPickerConfig.categoryFilterFn) {
+            return currentPickerConfig.categoryFilterFn(item, filterVal);
+        }
+        return true;
+    });
+
+    if (sortVal && sortVal !== 'default' && currentPickerConfig.sortFn) {
+        filtered = currentPickerConfig.sortFn(filtered, sortVal);
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyDiv.style.display = 'block';
+        btnDone.disabled = true;
+        currentPickerSelectedItem = null;
+        document.getElementById('lookup_picker_status').textContent = 'No matching records found.';
+        return;
+    }
+
+    emptyDiv.style.display = 'none';
+
+    if (currentPickerSelectedItem && !filtered.includes(currentPickerSelectedItem)) {
+        currentPickerSelectedItem = null;
+        btnDone.disabled = true;
+        document.getElementById('lookup_picker_status').textContent = 'Click a row to select.';
+    } else if (currentPickerSelectedItem && filtered.includes(currentPickerSelectedItem)) {
+        btnDone.disabled = false;
+        document.getElementById('lookup_picker_status').innerHTML = `Selected: <strong>${currentPickerConfig.getItemName(currentPickerSelectedItem)}</strong>`;
+    } else {
+        btnDone.disabled = true;
+        document.getElementById('lookup_picker_status').textContent = 'Click a row to select.';
+    }
+
+    let html = '';
+    filtered.forEach((item, index) => {
+        const isSelected = (currentPickerSelectedItem === item);
+        const selClass = isSelected ? 'picker-row clickable-row selected-row' : 'picker-row clickable-row';
+        html += `<tr class="${selClass}" data-index="${index}">${currentPickerConfig.renderRowFn(item)}</tr>`;
+    });
+    tbody.innerHTML = html;
+
+    const rows = tbody.querySelectorAll('tr.picker-row');
+    rows.forEach(row => {
+        const idx = parseInt(row.getAttribute('data-index'), 10);
+        const item = filtered[idx];
+
+        row.addEventListener('click', () => {
+            rows.forEach(r => r.classList.remove('selected-row'));
+            row.classList.add('selected-row');
+            currentPickerSelectedItem = item;
+            btnDone.disabled = false;
+            document.getElementById('lookup_picker_status').innerHTML = `Selected: <strong>${currentPickerConfig.getItemName(item)}</strong>`;
+        });
+
+        row.addEventListener('dblclick', () => {
+            currentPickerSelectedItem = item;
+            if (currentPickerConfig.onSelect) {
+                currentPickerConfig.onSelect(item);
+            }
+            closeLookupPicker();
+        });
+    });
+};
+
+const initLookupPicker = () => {
+    const pickerModal = document.getElementById('lookupPickerModal');
+    const btnClose = document.getElementById('btnCloseLookupPicker');
+    const btnCancel = document.getElementById('btnCancelLookupPicker');
+    const btnDone = document.getElementById('btnDoneLookupPicker');
+    const searchInput = document.getElementById('lookup_picker_search');
+    const filterSelect = document.getElementById('lookup_picker_filter');
+    const sortSelect = document.getElementById('lookup_picker_sort');
+
+    if (btnClose) btnClose.addEventListener('click', closeLookupPicker);
+    if (btnCancel) btnCancel.addEventListener('click', closeLookupPicker);
+
+    if (btnDone) {
+        btnDone.addEventListener('click', () => {
+            if (currentPickerConfig && currentPickerSelectedItem) {
+                currentPickerConfig.onSelect(currentPickerSelectedItem);
+                closeLookupPicker();
+            }
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', renderLookupPickerRows);
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentPickerConfig && currentPickerSelectedItem) {
+                    currentPickerConfig.onSelect(currentPickerSelectedItem);
+                    closeLookupPicker();
+                }
+            }
+        });
+    }
+
+    if (filterSelect) {
+        filterSelect.addEventListener('change', renderLookupPickerRows);
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', renderLookupPickerRows);
+    }
+
+    if (pickerModal) {
+        pickerModal.addEventListener('click', (e) => {
+            if (e.target === pickerModal) closeLookupPicker();
+        });
+    }
+};
+
+const wireLookupPickers = () => {
+    const btnBrowseOrderDoc = document.getElementById('btnBrowseOrderDoctor');
+    const orderDocName = document.getElementById('order_doctor_name');
+    const handleOpenOrderDocPicker = () => {
+        const docList = assignedDoctors || [];
+        const docTypes = [...new Set(docList.map(d => d.Doctor_Type).filter(Boolean))];
+        openLookupPicker({
+            title: 'Select Ordering Physician',
+            placeholder: 'Search physician name, classification, or specialty...',
+            columns: ['Physician Name', 'Type / Classification', 'Department / Specialty'],
+            items: docList,
+            filterOptions: [
+                { label: 'All Classifications', value: 'all' },
+                ...docTypes.map(t => ({ label: t, value: t }))
+            ],
+            categoryFilterFn: (d, val) => d.Doctor_Type === val,
+            sortOptions: [
+                { label: 'Default Order', value: 'default' },
+                { label: 'Name (A to Z)', value: 'name_asc' },
+                { label: 'Name (Z to A)', value: 'name_desc' }
+            ],
+            sortFn: (list, val) => {
+                const arr = [...list];
+                if (val === 'name_asc') {
+                    arr.sort((a, b) => (a.Doctor_Name || '').localeCompare(b.Doctor_Name || ''));
+                } else if (val === 'name_desc') {
+                    arr.sort((a, b) => (b.Doctor_Name || '').localeCompare(a.Doctor_Name || ''));
+                }
+                return arr;
+            },
+            filterFn: (d, q) => {
+                const str = `${d.Doctor_Name || ''} ${d.Doctor_Type || ''} ${d.Specialties || ''} ${d.Doctor_Code || ''}`.toLowerCase();
+                return str.includes(q);
+            },
+            renderRowFn: (d) => `
+                <td><strong>${d.Doctor_Name}</strong></td>
+                <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
+                <td>${d.Specialties || 'Attending Physician'}</td>
+            `,
+            getItemName: (d) => `${d.Doctor_Name} (${d.Doctor_Type})`,
+            onSelect: (d) => {
+                document.getElementById('order_doctor_id').value = d.Admission_Doctor_ID;
+                document.getElementById('order_doctor_name').value = `${d.Doctor_Name} (${d.Doctor_Type})`;
+            }
+        });
+    };
+    if (btnBrowseOrderDoc) btnBrowseOrderDoc.addEventListener('click', handleOpenOrderDocPicker);
+    if (orderDocName) orderDocName.addEventListener('click', handleOpenOrderDocPicker);
+
+    const btnBrowseCatalog = document.getElementById('btnBrowseOrderCatalog');
+    const orderCatalogName = document.getElementById('order_catalog_name');
+    const handleOpenCatalogPicker = () => {
+        const catList = catalogItems || [];
+        const categories = [...new Set(catList.map(it => it.Category_Type).filter(Boolean))];
+        openLookupPicker({
+            title: 'Select Catalog Item / Medication / Procedure',
+            placeholder: 'Search item code, medicine, lab test, service...',
+            columns: ['Item Code', 'Item Name / Description', 'Category', 'Unit Price'],
+            items: catList,
+            filterOptions: [
+                { label: 'All Categories', value: 'all' },
+                ...categories.map(c => ({ label: c, value: c }))
+            ],
+            categoryFilterFn: (it, val) => it.Category_Type === val,
+            sortOptions: [
+                { label: 'Default Order', value: 'default' },
+                { label: 'Name (A to Z)', value: 'name_asc' },
+                { label: 'Name (Z to A)', value: 'name_desc' },
+                { label: 'Price (Low to High)', value: 'price_asc' },
+                { label: 'Price (High to Low)', value: 'price_desc' }
+            ],
+            sortFn: (list, val) => {
+                const arr = [...list];
+                if (val === 'name_asc') {
+                    arr.sort((a, b) => (a.Item_Name || '').localeCompare(b.Item_Name || ''));
+                } else if (val === 'name_desc') {
+                    arr.sort((a, b) => (b.Item_Name || '').localeCompare(a.Item_Name || ''));
+                } else if (val === 'price_asc') {
+                    arr.sort((a, b) => parseFloat(a.Unit_Price || 0) - parseFloat(b.Unit_Price || 0));
+                } else if (val === 'price_desc') {
+                    arr.sort((a, b) => parseFloat(b.Unit_Price || 0) - parseFloat(a.Unit_Price || 0));
+                }
+                return arr;
+            },
+            filterFn: (it, q) => {
+                const str = `${it.Item_Code || ''} ${it.Item_Name || ''} ${it.Category_Type || ''}`.toLowerCase();
+                return str.includes(q);
+            },
+            renderRowFn: (it) => `
+                <td><strong>${it.Item_Code}</strong></td>
+                <td>${it.Item_Name}</td>
+                <td><span class="badge badge-secondary">${it.Category_Type}</span></td>
+                <td><strong>₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+            `,
+            getItemName: (it) => `[${it.Item_Code}] ${it.Item_Name}`,
+            onSelect: (it) => {
+                document.getElementById('order_catalog_id').value = it.Catalog_ID;
+                document.getElementById('order_catalog_name').value = `[${it.Item_Code}] ${it.Item_Name} — ₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            }
+        });
+    };
+    if (btnBrowseCatalog) btnBrowseCatalog.addEventListener('click', handleOpenCatalogPicker);
+    if (orderCatalogName) orderCatalogName.addEventListener('click', handleOpenCatalogPicker);
+
+    const btnBrowseRoundDoc = document.getElementById('btnBrowseRoundDoctor');
+    const roundDocName = document.getElementById('round_doctor_name');
+    const handleOpenRoundDocPicker = () => {
+        const roundList = assignedDoctors || [];
+        const roundDocTypes = [...new Set(roundList.map(d => d.Doctor_Type).filter(Boolean))];
+        openLookupPicker({
+            title: 'Select Visiting Physician',
+            placeholder: 'Search visiting physician...',
+            columns: ['Physician Name', 'Type', 'Standard Bedside Visit Fee'],
+            items: roundList,
+            filterOptions: [
+                { label: 'All Classifications', value: 'all' },
+                ...roundDocTypes.map(t => ({ label: t, value: t }))
+            ],
+            categoryFilterFn: (d, val) => d.Doctor_Type === val,
+            sortOptions: [
+                { label: 'Default Order', value: 'default' },
+                { label: 'Name (A to Z)', value: 'name_asc' },
+                { label: 'Name (Z to A)', value: 'name_desc' },
+                { label: 'Fee (Low to High)', value: 'fee_asc' },
+                { label: 'Fee (High to Low)', value: 'fee_desc' }
+            ],
+            sortFn: (list, val) => {
+                const arr = [...list];
+                if (val === 'name_asc') {
+                    arr.sort((a, b) => (a.Doctor_Name || '').localeCompare(b.Doctor_Name || ''));
+                } else if (val === 'name_desc') {
+                    arr.sort((a, b) => (b.Doctor_Name || '').localeCompare(a.Doctor_Name || ''));
+                } else if (val === 'fee_asc') {
+                    arr.sort((a, b) => parseFloat(a.Base_Round_Fee || 0) - parseFloat(b.Base_Round_Fee || 0));
+                } else if (val === 'fee_desc') {
+                    arr.sort((a, b) => parseFloat(b.Base_Round_Fee || 0) - parseFloat(a.Base_Round_Fee || 0));
+                }
+                return arr;
+            },
+            filterFn: (d, q) => {
+                const str = `${d.Doctor_Name || ''} ${d.Doctor_Type || ''} ${d.Doctor_Code || ''}`.toLowerCase();
+                return str.includes(q);
+            },
+            renderRowFn: (d) => `
+                <td><strong>${d.Doctor_Name}</strong></td>
+                <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
+                <td><strong style="color: #0284c7;">₱${parseFloat(d.Base_Round_Fee || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+            `,
+            getItemName: (d) => `${d.Doctor_Name} (${d.Doctor_Type})`,
+            onSelect: (d) => {
+                document.getElementById('round_doctor_id').value = d.Admission_Doctor_ID;
+                document.getElementById('round_doctor_name').value = `${d.Doctor_Name} (${d.Doctor_Type})`;
+                document.getElementById('round_fee').value = parseFloat(d.Base_Round_Fee || 0).toFixed(2);
+            }
+        });
+    };
+    if (btnBrowseRoundDoc) btnBrowseRoundDoc.addEventListener('click', handleOpenRoundDocPicker);
+    if (roundDocName) roundDocName.addEventListener('click', handleOpenRoundDocPicker);
+
+    const btnBrowseBed = document.getElementById('btnBrowseTransferBed');
+    const transferBedName = document.getElementById('transfer_bed_name');
+    const handleOpenBedPicker = () => {
+        const showBedPicker = () => {
+            const bedList = availableBedsList || [];
+            const bedTypes = [...new Set(bedList.map(b => b.Room_Type).filter(Boolean))];
+            openLookupPicker({
+                title: 'Select Target Vacant Bed',
+                placeholder: 'Search vacant bed by room, code, or type...',
+                columns: ['Bed Code', 'Room Name', 'Room Type', 'Daily Rate'],
+                items: bedList,
+                filterOptions: [
+                    { label: 'All Room Types', value: 'all' },
+                    ...bedTypes.map(t => ({ label: t, value: t }))
+                ],
+                categoryFilterFn: (b, val) => b.Room_Type === val,
+                sortOptions: [
+                    { label: 'Default Order', value: 'default' },
+                    { label: 'Bed Code (A to Z)', value: 'code_asc' },
+                    { label: 'Bed Code (Z to A)', value: 'code_desc' },
+                    { label: 'Rate (Low to High)', value: 'rate_asc' },
+                    { label: 'Rate (High to Low)', value: 'rate_desc' }
+                ],
+                sortFn: (list, val) => {
+                    const arr = [...list];
+                    if (val === 'code_asc') {
+                        arr.sort((a, b) => (a.Bed_Code || '').localeCompare(b.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' }));
+                    } else if (val === 'code_desc') {
+                        arr.sort((a, b) => (b.Bed_Code || '').localeCompare(a.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' }));
+                    } else if (val === 'rate_asc') {
+                        arr.sort((a, b) => parseFloat(a.Daily_Rate || 0) - parseFloat(b.Daily_Rate || 0));
+                    } else if (val === 'rate_desc') {
+                        arr.sort((a, b) => parseFloat(b.Daily_Rate || 0) - parseFloat(a.Daily_Rate || 0));
+                    }
+                    return arr;
+                },
+                filterFn: (b, q) => {
+                    const str = `${b.Bed_Code || ''} ${b.Room_Name || ''} ${b.Room_Type || ''}`.toLowerCase();
+                    return str.includes(q);
+                },
+                renderRowFn: (b) => `
+                    <td><strong>${b.Bed_Code}</strong></td>
+                    <td>${b.Room_Name}</td>
+                    <td><span class="badge badge-secondary">${b.Room_Type}</span></td>
+                    <td><strong>₱${parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</strong></td>
+                `,
+                getItemName: (b) => `Bed ${b.Bed_Code} (${b.Room_Name} - ${b.Room_Type})`,
+                onSelect: (b) => {
+                    document.getElementById('transfer_bed_id').value = b.Bed_ID;
+                    document.getElementById('transfer_bed_name').value = `${b.Bed_Code} (${b.Room_Name} - ${b.Room_Type}) — ₱${parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day`;
+                }
+            });
+        };
+
+        if (availableBedsList && availableBedsList.length > 0) {
+            showBedPicker();
+        } else {
+            const formData = new FormData();
+            formData.append('operation', 'getAvailableBeds');
+            axios.post(`${getApiUrl}/admissions.php`, formData)
+                .then(response => {
+                    availableBedsList = response.data || [];
+                    showBedPicker();
+                })
+                .catch(() => {
+                    showBedPicker();
+                });
+        }
+    };
+    if (btnBrowseBed) btnBrowseBed.addEventListener('click', handleOpenBedPicker);
+    if (transferBedName) transferBedName.addEventListener('click', handleOpenBedPicker);
+};
 
 const initDiagnosisModal = () => {
     const btnEdit = document.getElementById('btnEditDiagnosis');
@@ -247,7 +907,19 @@ const loadAdmissionDetails = () => {
             document.getElementById('banner-bed').textContent = admissionData.Bed_Code || 'Discharged / None';
             document.getElementById('banner-room').textContent = admissionData.Room_Name ? `${admissionData.Room_Name} (${admissionData.Room_Type})` : 'N/A';
             document.getElementById('banner-rate').textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
-            document.getElementById('banner-status').innerHTML = `<strong>${admissionData.Status}</strong> (Admitted: ${admissionData.Admission_Date})`;
+
+            const remBal = parseFloat(admissionData.Remaining_Balance !== undefined && admissionData.Remaining_Balance !== null ? admissionData.Remaining_Balance : 0);
+            let statusDisplay = `<span class="badge badge-primary" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600;">Admitted</span>`;
+            if (admissionData.Status === 'Discharged') {
+                statusDisplay = `<span class="badge badge-warning" style="font-weight: 600;">Discharged</span>`;
+            } else if (admissionData.Status === 'Billed') {
+                if (remBal > 0) {
+                    statusDisplay = `<span class="badge badge-warning" style="background: #f59e0b; color: #fff; font-weight: 600;">Billed (Balance: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                } else {
+                    statusDisplay = `<span class="badge badge-success" style="font-weight: 600;">Settled (Paid in Full)</span>`;
+                }
+            }
+            document.getElementById('banner-status').innerHTML = `${statusDisplay} <small class="text-muted" style="margin-left: 6px;">(Admitted: ${admissionData.Admission_Date})</small>`;
 
             document.getElementById('banner-complaint').textContent = admissionData.Chief_Complaint || 'None Recorded';
 
@@ -288,17 +960,96 @@ const loadAdmissionDetails = () => {
                 }
             }
 
-            if (admissionData.Status !== 'Admitted') {
-                document.getElementById('order-form-container').innerHTML = '<p><em>Orders disabled: Patient is already discharged or billed.</em></p>';
-                document.getElementById('round-form-container').innerHTML = '<p><em>Rounds disabled: Patient is already discharged or billed.</em></p>';
-                document.getElementById('transfer-form-container').innerHTML = '<p><em>Transfers disabled: Patient is already discharged or billed.</em></p>';
+            const btnTabPB = document.getElementById('btnTabLedgerPartialBill');
+            const btnTabSOA = document.getElementById('btnTabSettlementSOA');
+
+            if (admissionData.Status === 'Admitted') {
+                if (btnTabPB) {
+                    btnTabPB.disabled = false;
+                    btnTabPB.innerHTML = '🖨 Print Partial Bill (Interim)';
+                    btnTabPB.title = 'Print running interim statement of accumulated charges';
+                    btnTabPB.onclick = () => { window.location.href = `partial_bill.html?admission_id=${admissionId}`; };
+                }
+                if (btnTabSOA) {
+                    btnTabSOA.disabled = true;
+                    btnTabSOA.innerHTML = '📋 Final SOA (Disabled — Discharge Patient First)';
+                    btnTabSOA.title = 'Disabled: Patient is still admitted. Discharge patient first to generate Official Statement of Account.';
+                    btnTabSOA.onclick = null;
+                }
+            } else if (admissionData.Status === 'Discharged') {
+                if (btnTabPB) {
+                    btnTabPB.disabled = true;
+                    btnTabPB.innerHTML = '🖨 Partial Bill (Disabled — Patient Discharged)';
+                    btnTabPB.title = 'Disabled: Patient is already discharged.';
+                    btnTabPB.onclick = null;
+                }
+                if (btnTabSOA) {
+                    btnTabSOA.disabled = false;
+                    btnTabSOA.innerHTML = '📋 Finalize & Issue SOA';
+                    btnTabSOA.title = 'Proceed to finalize Statement of Account';
+                    btnTabSOA.onclick = () => {
+                        if (switchClinicalTab) switchClinicalTab('tab-settlement');
+                    };
+                }
+            } else if (admissionData.Status === 'Billed') {
+                if (btnTabPB) {
+                    btnTabPB.disabled = true;
+                    btnTabPB.innerHTML = '🖨 Partial Bill (Disabled — Account Billed)';
+                    btnTabPB.title = 'Disabled: Account is officially finalized and billed.';
+                    btnTabPB.onclick = null;
+                }
+                if (btnTabSOA) {
+                    btnTabSOA.disabled = false;
+                    btnTabSOA.innerHTML = '📋 View Final Statement of Account (SOA)';
+                    btnTabSOA.title = 'View and print the official Final Statement of Account';
+                    btnTabSOA.onclick = () => { window.location.href = `invoice_print.html?admission_id=${admissionId}`; };
+                }
             }
+
+            updateWorkflowStepper(admissionData.Status, remBal);
+
+            const btnOpenOrder = document.getElementById('btnOpenOrderModal');
+            const btnOpenRound = document.getElementById('btnOpenRoundModal');
+            const btnOpenTransfer = document.getElementById('btnOpenTransferModal');
+            const btnOpenReturn = document.getElementById('btnOpenReturnModal');
+            const btnOpenReturnPharm = document.getElementById('btnOpenReturnModalPharmacy');
+            const isAdmitted = admissionData.Status === 'Admitted';
+
+            if (btnOpenOrder) {
+                btnOpenOrder.disabled = !isAdmitted;
+                btnOpenOrder.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            }
+            if (btnOpenRound) {
+                btnOpenRound.disabled = !isAdmitted;
+                btnOpenRound.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            }
+            if (btnOpenTransfer) {
+                btnOpenTransfer.disabled = !isAdmitted;
+                btnOpenTransfer.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            }
+            if (btnOpenReturn) {
+                btnOpenReturn.disabled = !isAdmitted;
+                btnOpenReturn.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            }
+            if (btnOpenReturnPharm) {
+                btnOpenReturnPharm.disabled = !isAdmitted;
+                btnOpenReturnPharm.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            }
+
+            const btnSubOrder = document.getElementById('btnSubmitOrder');
+            const btnSubRound = document.getElementById('btnLogRound');
+            const btnSubTransfer = document.getElementById('btnTransferBed');
+            const btnSubReturn = document.getElementById('btnReturnMedicine');
+            if (btnSubOrder) btnSubOrder.disabled = !isAdmitted;
+            if (btnSubRound) btnSubRound.disabled = !isAdmitted;
+            if (btnSubTransfer) btnSubTransfer.disabled = !isAdmitted;
+            if (btnSubReturn) btnSubReturn.disabled = !isAdmitted;
         })
         .catch(err => {
             console.error("admission_details.js: Error loading admission details:", err);
             alert("Failed to load admission details.");
         });
-}
+};
 
 const dischargePatientFromChart = (admId, patientName) => {
     showPopupConfirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`, () => {
@@ -336,7 +1087,7 @@ const populateAssignedDoctorDropdowns = () => {
 
 const filterOrderDoctors = () => {
     const select = document.getElementById('order_doctor_id');
-    if (!select) return;
+    if (!select || select.tagName !== 'SELECT') return;
     const query = (document.getElementById('order_doctor_search')?.value || '').toLowerCase().trim();
     const currentVal = select.value;
     select.innerHTML = '<option value="">-- Select Prescribing Doctor --</option>';
@@ -363,7 +1114,7 @@ const filterOrderDoctors = () => {
 
 const filterRoundDoctors = () => {
     const select = document.getElementById('round_doctor_id');
-    if (!select) return;
+    if (!select || select.tagName !== 'SELECT') return;
     const query = (document.getElementById('round_doctor_search')?.value || '').toLowerCase().trim();
     const currentVal = select.value;
     select.innerHTML = '<option value="">-- Select Visiting Doctor --</option>';
@@ -407,7 +1158,7 @@ const loadCatalogItems = () => {
 
 const filterCatalogItems = () => {
     const select = document.getElementById('order_catalog_id');
-    if (!select) return;
+    if (!select || select.tagName !== 'SELECT') return;
     const query = (document.getElementById('order_catalog_search')?.value || '').toLowerCase().trim();
     const currentVal = select.value;
     select.innerHTML = '<option value="">-- Select Catalog Item / Medication / Service --</option>';
@@ -548,6 +1299,7 @@ const submitDoctorOrder = () => {
             console.log("admission_details.js: Order creation response:", response.data);
             if (response.data.success) {
                 alert(response.data.message);
+                closeModal('orderModal');
                 document.getElementById('order_catalog_id').value = '';
                 document.getElementById('order_qty').value = '1';
                 loadOrders();
@@ -702,6 +1454,7 @@ const submitDoctorRound = () => {
             console.log("admission_details.js: Round logged response:", response.data);
             if (response.data.success) {
                 alert(response.data.message);
+                closeModal('roundModal');
                 loadRounds();
                 loadLedger();
                 loadLedgerSummary();
@@ -797,7 +1550,7 @@ const loadAvailableBeds = () => {
 
 const filterAvailableBeds = () => {
     const select = document.getElementById('transfer_bed_id');
-    if (!select) return;
+    if (!select || select.tagName !== 'SELECT') return;
     const query = (document.getElementById('transfer_bed_search')?.value || '').toLowerCase().trim();
     const currentVal = select.value;
 
@@ -853,6 +1606,7 @@ const submitBedTransfer = () => {
                 console.log("admission_details.js: Bed transfer response:", response.data);
                 if (response.data.success) {
                     alert(response.data.message);
+                    closeModal('transferModal');
                     if (document.getElementById('transfer_bed_search')) {
                         document.getElementById('transfer_bed_search').value = '';
                     }
@@ -1006,46 +1760,34 @@ const loadDispensedMedicines = () => {
         });
 }
 
-const filterDispensedMedicines = () => {
-    const select = document.getElementById('return_catalog_id');
-    if (!select) return;
-    const query = (document.getElementById('return_catalog_search')?.value || '').toLowerCase().trim();
-    const currentVal = select.value;
-
-    if (!dispensedMedicinesList || dispensedMedicinesList.length === 0) {
-        select.innerHTML = '<option value="">No dispensed medicines eligible for return</option>';
-        return;
-    }
-
-    select.innerHTML = '<option value="">-- Select Dispensed Medicine to Return --</option>';
-
-    const filtered = dispensedMedicinesList.filter(m => {
-        if (!query) return true;
-        const text = `${m.Item_Code || ''} ${m.Item_Name || ''}`.toLowerCase();
-        return text.includes(query);
+const openReturnMedicinePicker = () => {
+    openGenericLookupPicker({
+        title: "Select Dispensed Medicine to Return",
+        items: dispensedMedicinesList.map(m => ({
+            id: m.Catalog_ID,
+            text: `[${m.Item_Code}] ${m.Item_Name}`,
+            subtext: `Available to return: ${m.Total_Dispensed} unit(s)`,
+            badge: `${m.Total_Dispensed} units`,
+            badgeClass: "badge-primary"
+        })),
+        selectedId: document.getElementById("return_catalog_id").value,
+        onSelect: (item) => {
+            document.getElementById("return_catalog_id").value = item.id;
+            document.getElementById("return_catalog_id_text").value = item.text;
+            const match = dispensedMedicinesList.find(x => String(x.Catalog_ID) === String(item.id));
+            if (match) {
+                document.getElementById("return_qty").value = match.Total_Dispensed;
+                document.getElementById("return_qty").setAttribute("max", match.Total_Dispensed);
+                document.getElementById("return_qty").dataset.max = match.Total_Dispensed;
+            }
+        }
     });
+};
 
-    if (filtered.length === 0) {
-        select.innerHTML = '<option value="">No matching dispensed medicines</option>';
-        return;
-    }
-
-    filtered.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.Catalog_ID;
-        const unitPrice = parseFloat(m.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        opt.textContent = `[${m.Item_Code}] ${m.Item_Name} — Available for return: ${parseFloat(m.Net_Remaining_Qty)} unit(s) (₱${unitPrice}/unit)`;
-        opt.dataset.max = m.Net_Remaining_Qty;
-        if (String(m.Catalog_ID) === String(currentVal)) opt.selected = true;
-        select.appendChild(opt);
-    });
-}
+const filterDispensedMedicines = () => {};
 
 const submitMedicineReturn = () => {
-    console.log("admission_details.js: Processing medicine return submission...");
-
-    const select = document.getElementById('return_catalog_id');
-    const catalogId = select.value;
+    const catalogId = document.getElementById('return_catalog_id').value;
     const qty = parseFloat(document.getElementById('return_qty').value);
 
     if (!catalogId) {
@@ -1058,8 +1800,8 @@ const submitMedicineReturn = () => {
         return;
     }
 
-    const selectedOption = select.options[select.selectedIndex];
-    const maxAvailable = parseFloat(selectedOption.dataset.max || 0);
+    const match = dispensedMedicinesList.find(x => String(x.Catalog_ID) === String(catalogId));
+    const maxAvailable = match ? parseFloat(match.Total_Dispensed) : parseFloat(document.getElementById('return_qty').dataset.max || 0);
 
     if (qty > maxAvailable) {
         alert(`Cannot return ${qty} unit(s). Only ${maxAvailable} unit(s) are eligible for return.`);
@@ -1080,8 +1822,8 @@ const submitMedicineReturn = () => {
 
         axios.post(`${postApiUrl}/ledger.php`, formData)
             .then(response => {
-                console.log("admission_details.js: Return medicine response:", response.data);
                 if (response.data.success) {
+                    closeModal('returnModal');
                     alert(response.data.message);
                     if (document.getElementById('return_catalog_search')) {
                         document.getElementById('return_catalog_search').value = '';
@@ -1094,29 +1836,346 @@ const submitMedicineReturn = () => {
                     alert("Return Error: " + (response.data.error || "Failed to process return."));
                 }
             })
-            .catch(err => {
-                console.error("admission_details.js: Error processing return:", err);
+            .catch(() => {
                 alert("Network error processing medicine return.");
             });
     }, null, { title: 'Confirm Medicine Return', confirmText: 'Process Return', type: 'warning' });
 };
 
-const loadDiscounts = () => {
-    console.log("admission_details.js: Fetching discount options...");
+const getPaymentMethodOptionsHtml = (selectedId = 1) => {
+    let opts = '';
+    if (!paymentMethodsList || paymentMethodsList.length === 0) {
+        opts = '<option value="1">Cash (Cash)</option>';
+        return opts;
+    }
+    paymentMethodsList.forEach(pm => {
+        const isSel = pm.Payment_Method_ID == selectedId ? 'selected' : '';
+        opts += `<option value="${pm.Payment_Method_ID}" ${isSel}>${pm.Method_Name} (${pm.Category_Type})</option>`;
+    });
+    return opts;
+};
 
+const renderPaymentHistoryTable = (invId, admId, targetEl) => {
     const formData = new FormData();
-    formData.append('operation', 'getDiscountList');
+    formData.append('operation', 'getPaymentHistory');
+    formData.append('json', JSON.stringify({ invoice_id: invId, admission_id: admId }));
 
     axios.post(`${getApiUrl}/invoices.php`, formData)
-        .then(response => {
-            console.log("admission_details.js: Discounts received:", response.data);
-            discountList = response.data || [];
+        .then(res => {
+            let list = res.data;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch (e) {}
+            }
+            if (!Array.isArray(list) || list.length === 0) {
+                targetEl.innerHTML = '<p class="text-muted" style="margin: 8px 0;"><em>No payment transactions recorded yet.</em></p>';
+                return;
+            }
+
+            let rows = '';
+            list.forEach(p => {
+                const amt = parseFloat(p.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+                const bal = parseFloat(p.Balance_After || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+                const isPaid = parseFloat(p.Balance_After || 0) <= 0;
+                const methodBadge = `<span class="badge badge-info">${p.Payment_Method || 'Cash'}</span>`;
+
+                rows += `
+                    <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click row to view / print Official Receipt voucher">
+                        <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
+                        <td>${p.Payment_Date}</td>
+                        <td>${methodBadge}</td>
+                        <td>${p.Cashier_Name}</td>
+                        <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
+                        <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>
+                        <td>${p.Notes || '-'}</td>
+                        <td align="center"><button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">🧾 Print OR</button></td>
+                    </tr>
+                `;
+            });
+
+            targetEl.innerHTML = `
+                <table class="data-table" style="font-size: 13.5px;">
+                    <thead>
+                        <tr>
+                            <th>Official Receipt #</th>
+                            <th>Date & Time</th>
+                            <th>Payment Method</th>
+                            <th>Cashier</th>
+                            <th style="text-align: right;">Amount Paid</th>
+                            <th style="text-align: right;">Remaining Bal</th>
+                            <th>Notes / Remarks</th>
+                            <th style="text-align: center;">Official Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            `;
+        })
+        .catch(() => {
+            targetEl.innerHTML = '<p class="text-danger">Failed to load payment transaction history.</p>';
+        });
+};
+
+const loadDiscounts = () => {
+    const p1 = axios.post(`${getApiUrl}/invoices.php`, (() => {
+        const fd = new FormData();
+        fd.append('operation', 'getDiscountList');
+        return fd;
+    })());
+
+    const p2 = axios.post(`${getApiUrl}/invoices.php`, (() => {
+        const fd = new FormData();
+        fd.append('operation', 'getPaymentMethods');
+        return fd;
+    })());
+
+    Promise.all([p1, p2])
+        .then(([resDisc, resPay]) => {
+            discountList = resDisc.data || [];
+            paymentMethodsList = resPay.data || [];
             renderSettlementSection();
         })
-        .catch(err => {
-            console.error("admission_details.js: Error loading discounts:", err);
+        .catch(() => {
+            renderSettlementSection();
         });
-}
+};
+
+const renderBilledSettlementCard = (inv) => {
+    const container = document.getElementById('settlement-container');
+    if (!container) return;
+
+    if (!inv || inv.error) {
+        container.innerHTML = `
+            <div class="card p-3" style="background-color: #f0fff4; border: 1px solid #48bb78; border-radius: 8px;">
+                <h3 style="margin-top:0; color: #276749;">✔ THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h3>
+                <p class="text-muted">The billing invoice and official Statement of Account (SOA) have been generated and finalized.</p>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'">🖨 View / Print Official Statement of Account (SOA)</button>
+            </div>
+        `;
+        return;
+    }
+
+    const netDue = parseFloat(inv.Net_Amount_Due || 0);
+    const amountPaid = parseFloat(inv.Amount_Paid || 0);
+    const remainingBal = parseFloat(inv.Remaining_Balance !== undefined && inv.Remaining_Balance !== null ? inv.Remaining_Balance : Math.max(0, netDue - amountPaid));
+    const grossTotal = parseFloat(inv.Gross_Total || 0);
+    const discountAmt = parseFloat(inv.Discount_Amount || 0);
+    const changeAmt = parseFloat(inv.Change_Amount || 0);
+
+    updateWorkflowStepper('Billed', remainingBal);
+
+    if (remainingBal <= 0) {
+        container.innerHTML = `
+            <div class="card p-4" style="background-color: #f0fff4; border: 1px solid #48bb78; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0; color: #276749;">✔ THIS ADMISSION HAS BEEN FULLY SETTLED & BILLED</h3>
+                    <span class="badge badge-success" style="font-size: 14px; padding: 6px 14px;">PAID IN FULL</span>
+                </div>
+                <table class="data-table mb-3">
+                    <tbody>
+                        <tr><td width="40%">Official Invoice Number:</td><td><strong>${inv.Invoice_Code}</strong></td></tr>
+                        <tr><td>Gross Charges Assessed:</td><td>₱${grossTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                        <tr><td>Statutory Discount Applied:</td><td>${inv.Discount_Name || 'None'} (${parseFloat(inv.Discount_Percentage || 0).toFixed(2)}%) - ₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                        <tr><td>Net Amount Assessed:</td><td><strong>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
+                        <tr><td>Total Payments Received:</td><td><strong style="color: #16a34a;">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
+                        ${changeAmt > 0 ? `<tr><td>Customer Change Given:</td><td>₱${changeAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>` : ''}
+                        <tr><td>Remaining Balance Due:</td><td><strong style="color: #16a34a;">₱0.00</strong></td></tr>
+                        <tr><td>Settled & Finalized On:</td><td>${inv.Settlement_Date} by ${inv.Cashier_Name}</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?id=${inv.Invoice_ID}'">🖨 View / Print Official Statement of Account (SOA)</button>
+                </div>
+
+                <div class="card p-3 mt-4" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                        <h4 style="margin: 0; color: #1e293b;">Cumulative Payment & Installment Transaction History</h4>
+                        <span class="text-muted" style="font-size: 13px;">Official cash vouchers & receipts issued for this admission</span>
+                    </div>
+                    <div id="payment-history-table-wrapper" class="table-responsive">
+                        <p class="text-muted">Loading payment transactions...</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const wrapper = document.getElementById('payment-history-table-wrapper');
+        if (wrapper) {
+            renderPaymentHistoryTable(inv.Invoice_ID, inv.Admission_ID, wrapper);
+        }
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="card p-4" style="background-color: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; color: #92400e;">⚠️ ADMISSION BILLED — OUTSTANDING BALANCE PENDING</h3>
+                <span class="badge badge-danger" style="font-size: 14px; padding: 6px 14px;">BALANCE DUE: ₱${remainingBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+            </div>
+            <p class="text-muted mb-3">This account was settled with a partial or specific-category payment. Follow-up payments can be posted below until the balance is cleared.</p>
+            
+            <table class="data-table mb-3">
+                <tbody>
+                    <tr><td width="40%">Official Invoice Number:</td><td><strong>${inv.Invoice_Code}</strong></td></tr>
+                    <tr><td>Net Amount Due:</td><td>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
+                    <tr><td>Total Amount Paid So Far:</td><td><strong style="color: #16a34a;">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
+                    <tr style="background-color: #fef2f2;">
+                        <td><strong style="color: #dc2626;">REMAINING BALANCE DUE:</strong></td>
+                        <td><strong style="color: #dc2626; font-size: 17px;">₱${remainingBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="card p-3 mb-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <h4 style="margin-top: 0; margin-bottom: 12px; color: #1e293b;">Record Additional Follow-Up Payment</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label class="form-label" for="tab5_additional_payment">Payment Tendered (₱) *</label>
+                        <input type="number" id="tab5_additional_payment" class="form-control" step="0.01" min="0.01" value="${remainingBal.toFixed(2)}" style="font-weight: 700; font-size: 16px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="tab5_payment_method_id">Payment Method *</label>
+                        <select id="tab5_payment_method_id" class="form-select">
+                            ${getPaymentMethodOptionsHtml(1)}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="tab5_payment_notes">Notes / Remarks</label>
+                        <input type="text" id="tab5_payment_notes" class="form-control" placeholder="e.g. 2nd Installment / Promissory Note">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary" id="btnTab5ExactBalance">Pay Full Balance</button>
+                    <button type="button" class="btn btn-primary" id="btnTab5SubmitPayment">Record Payment & Update Invoice</button>
+                </div>
+                <div id="tab5_payment_calc_row" style="margin-top: 10px; font-size: 13.5px; color: #475569; display: flex; justify-content: flex-end; gap: 20px;">
+                    <span>New Remaining Balance: <strong id="tab5_new_bal_display" style="color: #16a34a;">₱0.00</strong></span>
+                    <span>Customer Change Given: <strong id="tab5_change_display" style="color: #16a34a;">₱0.00</strong></span>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?id=${inv.Invoice_ID}'">🖨 View / Print Official Statement of Account (SOA)</button>
+            </div>
+
+            <div class="card p-3 mt-4" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="margin: 0; color: #1e293b;">Cumulative Payment & Installment Transaction History</h4>
+                    <span class="text-muted" style="font-size: 13px;">Official cash vouchers & receipts issued for this admission</span>
+                </div>
+                <div id="payment-history-table-wrapper" class="table-responsive">
+                    <p class="text-muted">Loading payment transactions...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const wrapper = document.getElementById('payment-history-table-wrapper');
+    if (wrapper) {
+        renderPaymentHistoryTable(inv.Invoice_ID, inv.Admission_ID, wrapper);
+    }
+
+    const payInput = document.getElementById('tab5_additional_payment');
+    const updateTab5PayCalc = () => {
+        const val = parseFloat(payInput.value || 0);
+        const lblBal = document.getElementById('tab5_new_bal_display');
+        const lblChg = document.getElementById('tab5_change_display');
+
+        if (val >= remainingBal) {
+            const chg = Math.round((val - remainingBal) * 100) / 100;
+            if (lblBal) {
+                lblBal.textContent = '₱0.00 (PAID IN FULL)';
+                lblBal.style.color = '#16a34a';
+            }
+            if (lblChg) {
+                lblChg.textContent = `₱${chg.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                lblChg.style.color = '#16a34a';
+            }
+        } else {
+            const newBal = Math.max(0, Math.round((remainingBal - val) * 100) / 100);
+            if (lblBal) {
+                lblBal.textContent = `₱${newBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                lblBal.style.color = '#dc2626';
+            }
+            if (lblChg) {
+                lblChg.textContent = '₱0.00';
+                lblChg.style.color = '#64748b';
+            }
+        }
+    };
+
+    if (payInput) {
+        payInput.addEventListener('input', updateTab5PayCalc);
+    }
+
+    document.getElementById('btnTab5ExactBalance')?.addEventListener('click', () => {
+        if (payInput) {
+            payInput.value = remainingBal.toFixed(2);
+            updateTab5PayCalc();
+        }
+    });
+
+    document.getElementById('btnTab5SubmitPayment')?.addEventListener('click', () => {
+        const amt = parseFloat(payInput ? payInput.value : 0);
+        if (isNaN(amt) || amt <= 0) {
+            showPopupAlert('Please enter a valid payment amount greater than zero.', 'warning');
+            return;
+        }
+
+        const methodSelect = document.getElementById('tab5_payment_method_id');
+        const pMethodId = methodSelect ? parseInt(methodSelect.value, 10) : 1;
+        const notesInput = document.getElementById('tab5_payment_notes');
+        const payNotes = notesInput ? notesInput.value.trim() : '';
+
+        showPopupConfirm(`Confirm payment of ₱${amt.toLocaleString('en-PH', {minimumFractionDigits: 2})} for ${inv.Invoice_Code}?`, () => {
+            const userJson = sessionStorage.getItem('hospital_user');
+            const user = userJson ? JSON.parse(userJson) : null;
+            const uid = user ? (user.user_id || user.User_ID || 1) : 1;
+
+            const payload = {
+                invoice_id: inv.Invoice_ID,
+                payment_amount: amt,
+                payment_method_id: pMethodId,
+                notes: payNotes,
+                user_id: uid
+            };
+
+            const formData = new FormData();
+            formData.append('operation', 'recordPayment');
+            formData.append('json', JSON.stringify(payload));
+
+            axios.post(`${postApiUrl}/invoices.php`, formData)
+                .then(res => {
+                    if (res.data.success) {
+                        const payId = res.data.payment_id;
+                        const rcptNum = res.data.receipt_number || '';
+                        let msg = res.data.message;
+                        if (rcptNum) {
+                            msg += `\nOfficial Receipt: ${rcptNum}`;
+                        }
+                        showPopupAlert(msg, 'success', 'Payment Recorded', () => {
+                            if (payId) {
+                                window.location.href = `payment_receipt.html?payment_id=${payId}`;
+                            } else {
+                                renderSettlementSection();
+                            }
+                        });
+                    } else {
+                        showPopupAlert(res.data.error || 'Failed to record payment.', 'danger');
+                    }
+                })
+                .catch(() => {
+                    showPopupAlert('Network error recording payment.', 'danger');
+                });
+        }, null, {
+            title: 'Confirm Payment',
+            confirmText: 'Post Payment',
+            type: 'info'
+        });
+    });
+};
+
 
 const renderSettlementSection = () => {
     const container = document.getElementById('settlement-container');
@@ -1128,11 +2187,40 @@ const renderSettlementSection = () => {
     }
 
     if (admissionData.Status === 'Billed') {
+        const formData = new FormData();
+        formData.append('operation', 'getInvoiceById');
+        formData.append('json', JSON.stringify({ admission_id: admissionId }));
+
+        axios.post(`${getApiUrl}/invoices.php`, formData)
+            .then(res => {
+                let inv = res.data;
+                if (typeof inv === 'string') {
+                    try { inv = JSON.parse(inv); } catch (e) {}
+                }
+                renderBilledSettlementCard(inv);
+            })
+            .catch(() => {
+                renderBilledSettlementCard(null);
+            });
+        return;
+    }
+
+    if (admissionData.Status === 'Admitted') {
         container.innerHTML = `
-            <div class="card p-3" style="background-color: #f0fff4; border: 1px solid #48bb78; border-radius: 8px;">
-                <h3 style="margin-top:0; color: #276749;">✔ THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h3>
-                <p class="text-muted">The billing invoice and official Statement of Account (SOA) have been generated and finalized.</p>
-                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'">🖨 View / Print Official Statement of Account (SOA)</button>
+            <div class="card p-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="margin: 0; color: #0f172a;">Stage 3: Discharge & Final Settlement</h3>
+                    <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">PATIENT CURRENTLY ADMITTED</span>
+                </div>
+                <p class="text-muted mb-3">This patient is currently staying in Bed <strong>${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Bed board & lodging fees are continuing to accumulate daily.</p>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; margin-bottom: 18px;">
+                    <strong style="color: #1e40af;">Official Statement of Account (SOA) is Locked</strong>
+                    <p style="margin: 4px 0 0; font-size: 13.5px; color: #1e3a8a;">Under hospital billing regulations, the final Statement of Account and statutory discounts (Senior/PWD) are generated only after the patient is clinically discharged and bed occupancy is closed.</p>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')">🚪 Discharge Patient Now & Unlock SOA</button>
+                    <button type="button" class="btn btn-outline" onclick="window.location.href='partial_bill.html?admission_id=${admissionId}'">🖨 Print Interim Partial Bill Instead</button>
+                </div>
             </div>
         `;
         return;
@@ -1140,6 +2228,12 @@ const renderSettlementSection = () => {
 
     const gross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
     const formattedGross = gross.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    const medTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.medicine_total || 0)) : 0;
+    const docTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.doctor_total || 0)) : 0;
+    const roomTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.room_total || 0)) : 0;
+    const scanTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.scan_total || 0)) : 0;
+    const srvTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.service_total || 0)) : 0;
 
     let discountOptionsHtml = '<option value="" data-pct="0">None (0.00%)</option>';
     discountList.forEach(d => {
@@ -1150,6 +2244,60 @@ const renderSettlementSection = () => {
 
     let html = `
         ${isOccupyingBed}
+        <div class="card p-3 mb-3" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <label class="form-label" style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0;">
+                    Pay For Specific Charges / Category (Optional):
+                </label>
+                <span class="text-muted" style="font-size: 12.5px;">Click a category button or select checkboxes below to pay for specific items now</span>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                <button type="button" class="btn btn-sm btn-primary cat-quick-btn" data-cat="all">All Charges (Full Bill)</button>
+                ${medTotal > 0 ? `<button type="button" class="btn btn-sm btn-outline cat-quick-btn" data-cat="medicine">Drugs & Medicine (₱${medTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</button>` : ''}
+                ${docTotal > 0 ? `<button type="button" class="btn btn-sm btn-outline cat-quick-btn" data-cat="doctor">Doctor Fees (₱${docTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</button>` : ''}
+                ${roomTotal > 0 ? `<button type="button" class="btn btn-sm btn-outline cat-quick-btn" data-cat="room">Room & Board (₱${roomTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</button>` : ''}
+                ${scanTotal > 0 ? `<button type="button" class="btn btn-sm btn-outline cat-quick-btn" data-cat="scan">Diagnostic Imaging (₱${scanTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</button>` : ''}
+                ${srvTotal > 0 ? `<button type="button" class="btn btn-sm btn-outline cat-quick-btn" data-cat="service">Procedures & Services (₱${srvTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</button>` : ''}
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                ${medTotal > 0 ? `
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; cursor: pointer; user-select: none;">
+                        <input type="checkbox" class="cat-checkbox" data-cat="medicine" data-name="Drugs & Medicine" data-amount="${medTotal}" checked>
+                        <span>Drugs & Medicine: <strong>₱${medTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                    </label>
+                ` : ''}
+                ${docTotal > 0 ? `
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; cursor: pointer; user-select: none;">
+                        <input type="checkbox" class="cat-checkbox" data-cat="doctor" data-name="Doctor Fees" data-amount="${docTotal}" checked>
+                        <span>Doctor Fees: <strong>₱${docTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                    </label>
+                ` : ''}
+                ${roomTotal > 0 ? `
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; cursor: pointer; user-select: none;">
+                        <input type="checkbox" class="cat-checkbox" data-cat="room" data-name="Room & Board" data-amount="${roomTotal}" checked>
+                        <span>Room & Board: <strong>₱${roomTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                    </label>
+                ` : ''}
+                ${scanTotal > 0 ? `
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; cursor: pointer; user-select: none;">
+                        <input type="checkbox" class="cat-checkbox" data-cat="scan" data-name="Diagnostic Imaging" data-amount="${scanTotal}" checked>
+                        <span>Diagnostic Imaging: <strong>₱${scanTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                    </label>
+                ` : ''}
+                ${srvTotal > 0 ? `
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; cursor: pointer; user-select: none;">
+                        <input type="checkbox" class="cat-checkbox" data-cat="service" data-name="Medical Services" data-amount="${srvTotal}" checked>
+                        <span>Services: <strong>₱${srvTotal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                    </label>
+                ` : ''}
+            </div>
+            <div id="cat-scope-notice" style="margin-top: 8px; font-size: 13px; color: #0369a1; font-weight: 600;">
+                Paying for: All charges (Full bill)
+            </div>
+        </div>
+
         <table class="data-table mb-3">
             <thead>
                 <tr><th colspan="2">Billing Settlement & Statutory Discount Breakdown</th></tr>
@@ -1172,53 +2320,219 @@ const renderSettlementSection = () => {
                 <td align="right" style="color: #276749;"><strong>-<span id="settle-discount-amount-display">₱0.00</span></strong></td>
             </tr>
             <tr style="background-color: #edf2f7;">
-                <td><h3 style="margin: 5px 0;">NET AMOUNT DUE / SETTLED:</h3></td>
-                <td align="right"><h3 style="margin: 5px 0; color: var(--primary-color);" id="settle-net-display">₱${formattedGross}</h3></td>
+                <td><h3 style="margin: 5px 0;">NET AMOUNT ASSESSED:</h3></td>
+                <td align="right"><h3 style="margin: 5px 0; color: var(--primary);" id="settle-net-display">₱${formattedGross}</h3></td>
+            </tr>
+            <tr>
+                <td><strong>Payment Method:</strong></td>
+                <td align="right">
+                    <select id="settle_payment_method_id" class="form-select" style="max-width: 280px; display: inline-block;">
+                        ${getPaymentMethodOptionsHtml(1)}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Amount Tendered / Paid (₱):</strong></td>
+                <td align="right">
+                    <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;">
+                        <button type="button" id="btn-exact-cash" class="btn btn-secondary btn-sm" style="white-space: nowrap; font-size: 13px;" title="Reset input to exact net amount">Exact Net</button>
+                        <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${gross.toFixed(2)}" style="max-width: 170px; font-weight: 700; font-size: 15px; text-align: right;">
+                        <button type="button" id="btn-pay-now" class="btn btn-primary" style="font-weight: 700; padding: 9px 24px; white-space: nowrap;">Pay</button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Change / Outstanding Balance Status:</td>
+                <td align="right"><strong id="settle-change-display" style="font-size: 14.5px; color: #16a34a;">Change: ₱0.00</strong></td>
             </tr>
             </tbody>
         </table>
-        <div class="mt-3">
-            <button id="btnSettleBill" class="btn btn-primary btn-lg">Process Final Settlement & Generate Official Invoice</button>
+        <div class="mt-3" style="display: flex; justify-content: flex-end;">
+            <button id="btnSettleBill" class="btn btn-primary btn-lg">Process Billing Settlement & Generate Official Invoice</button>
         </div>
     `;
 
     container.innerHTML = html;
 
     const discountSelect = document.getElementById('settle_discount_id');
+    const cashInput = document.getElementById('settle_amount_paid');
+    const catCheckboxes = container.querySelectorAll('.cat-checkbox');
+    const catButtons = container.querySelectorAll('.cat-quick-btn');
+    const noticeEl = document.getElementById('cat-scope-notice');
+
+    const computeCurrentNet = () => {
+        const selectedOpt = discountSelect ? discountSelect.options[discountSelect.selectedIndex] : null;
+        const pct = selectedOpt ? parseFloat(selectedOpt.dataset.pct || 0) : 0;
+        const discountAmt = Math.round((gross * (pct / 100)) * 100) / 100;
+        const netAmt = Math.max(0, Math.round((gross - discountAmt) * 100) / 100);
+        return { pct, discountAmt, netAmt };
+    };
+
+    const updateSettlementTotals = () => {
+        const { pct, discountAmt, netAmt } = computeCurrentNet();
+
+        const lblPct = document.getElementById('settle-discount-pct-label');
+        const lblDisc = document.getElementById('settle-discount-amount-display');
+        const lblNet = document.getElementById('settle-net-display');
+        const lblChange = document.getElementById('settle-change-display');
+
+        if (lblPct) lblPct.textContent = `${pct.toFixed(2)}%`;
+        if (lblDisc) lblDisc.textContent = `₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblNet) lblNet.textContent = `₱${netAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+        const paid = cashInput ? parseFloat(cashInput.value || 0) : 0;
+        if (lblChange) {
+            if (paid >= netAmt) {
+                const change = Math.round((paid - netAmt) * 100) / 100;
+                lblChange.textContent = `Change: ₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                lblChange.style.color = '#16a34a';
+            } else {
+                const bal = Math.round((netAmt - paid) * 100) / 100;
+                lblChange.textContent = `Remaining Balance: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                lblChange.style.color = '#dc2626';
+            }
+        }
+    };
+
+    const applyCategorySelection = () => {
+        const { pct, netAmt } = computeCurrentNet();
+        let selectedSum = 0;
+        const selectedNames = [];
+        let totalCount = 0;
+        let checkedCount = 0;
+
+        catCheckboxes.forEach(cb => {
+            totalCount++;
+            if (cb.checked) {
+                checkedCount++;
+                selectedSum += parseFloat(cb.dataset.amount || 0);
+                selectedNames.push(cb.dataset.name);
+            }
+        });
+
+        if (checkedCount === totalCount || checkedCount === 0) {
+            if (cashInput) {
+                cashInput.value = netAmt.toFixed(2);
+            }
+            if (noticeEl) {
+                noticeEl.textContent = 'Paying for: All charges (Full bill)';
+                noticeEl.style.color = '#0369a1';
+            }
+        } else {
+            const netSelected = Math.max(0, Math.round(selectedSum * (1 - pct / 100) * 100) / 100);
+            if (cashInput) {
+                cashInput.value = netSelected.toFixed(2);
+            }
+            const rem = Math.max(0, Math.round((netAmt - netSelected) * 100) / 100);
+            if (noticeEl) {
+                noticeEl.textContent = `Patient is paying for: ${selectedNames.join(', ')} (₱${netSelected.toLocaleString('en-PH', {minimumFractionDigits: 2})}). Balance of ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})} will remain pending.`;
+                noticeEl.style.color = '#d97706';
+            }
+        }
+
+        updateSettlementTotals();
+    };
+
+    catButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetCat = btn.dataset.cat;
+            catButtons.forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline');
+            });
+            btn.classList.remove('btn-outline');
+            btn.classList.add('btn-primary');
+
+            catCheckboxes.forEach(cb => {
+                if (targetCat === 'all') {
+                    cb.checked = true;
+                } else {
+                    cb.checked = (cb.dataset.cat === targetCat);
+                }
+            });
+
+            applyCategorySelection();
+        });
+    });
+
+    catCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            catButtons.forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline');
+            });
+            applyCategorySelection();
+        });
+    });
+
     if (discountSelect) {
         discountSelect.addEventListener('change', () => {
-            const selectedOpt = discountSelect.options[discountSelect.selectedIndex];
-            const pct = parseFloat(selectedOpt.dataset.pct || 0);
-            const discountAmt = Math.round((gross * (pct / 100)) * 100) / 100;
-            const netAmt = Math.max(0, gross - discountAmt);
-
-            document.getElementById('settle-discount-pct-label').textContent = `${pct.toFixed(2)}%`;
-            document.getElementById('settle-discount-amount-display').textContent = `₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
-            document.getElementById('settle-net-display').textContent = `₱${netAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            applyCategorySelection();
         });
     }
 
-    const btnSettle = document.getElementById('btnSettleBill');
-    if (btnSettle) {
-        btnSettle.addEventListener('click', submitSettlement);
+    if (cashInput) {
+        cashInput.addEventListener('input', updateSettlementTotals);
     }
-}
+
+    document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
+        const { netAmt } = computeCurrentNet();
+        if (cashInput) {
+            cashInput.value = netAmt.toFixed(2);
+        }
+        updateSettlementTotals();
+    });
+
+    document.getElementById('btn-pay-now')?.addEventListener('click', submitSettlement);
+    document.getElementById('btnSettleBill')?.addEventListener('click', submitSettlement);
+
+    cashInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitSettlement();
+        }
+    });
+};
 
 const submitSettlement = () => {
-    console.log("admission_details.js: Submitting final billing settlement...");
-
     const discountSelect = document.getElementById('settle_discount_id');
-    const discountId = discountSelect ? discountSelect.value : null;
+    const discountId = discountSelect && discountSelect.value ? parseInt(discountSelect.value, 10) : null;
+    const cashInput = document.getElementById('settle_amount_paid');
+    const amountPaid = cashInput ? parseFloat(cashInput.value || 0) : 0;
+    const payMethodSelect = document.getElementById('settle_payment_method_id');
+    const paymentMethodId = payMethodSelect ? parseInt(payMethodSelect.value, 10) : 1;
 
-    const settlementMsg = "Are you sure you want to finalize this billing settlement?\n\nThis will record the official Final Invoice, calculate statutory discounts, release the bed (if active), and mark the admission as 'Billed'.";
-    showPopupConfirm(settlementMsg, () => {
+    if (isNaN(amountPaid) || amountPaid < 0) {
+        showPopupAlert('Please enter a valid payment amount.', 'warning');
+        return;
+    }
+
+    const gross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
+    const selectedOpt = discountSelect ? discountSelect.options[discountSelect.selectedIndex] : null;
+    const pct = selectedOpt ? parseFloat(selectedOpt.dataset.pct || 0) : 0;
+    const discountAmt = Math.round((gross * (pct / 100)) * 100) / 100;
+    const netAmt = Math.max(0, Math.round((gross - discountAmt) * 100) / 100);
+
+    let confirmMsg = '';
+    if (amountPaid < netAmt) {
+        const remaining = Math.max(0, Math.round((netAmt - amountPaid) * 100) / 100);
+        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will remain on the invoice. Any active bed stay will be closed and released.`;
+    } else {
+        confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nThis will record the official Final Invoice as PAID IN FULL and release the bed.`;
+    }
+
+    showPopupConfirm(confirmMsg, () => {
+        const userJson = sessionStorage.getItem('hospital_user');
+        const user = userJson ? JSON.parse(userJson) : null;
+        const uid = user ? (user.user_id || user.User_ID || 1) : 1;
+
         const payload = {
             admission_id: admissionId,
-            user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 1) : 1,
-            discount_id: discountId
+            user_id: uid,
+            discount_id: discountId,
+            amount_paid: amountPaid,
+            payment_method_id: paymentMethodId
         };
-
-        console.log("admission_details.js: Settlement payload:", payload);
 
         const formData = new FormData();
         formData.append('operation', 'settleInvoice');
@@ -1226,18 +2540,32 @@ const submitSettlement = () => {
 
         axios.post(`${postApiUrl}/invoices.php`, formData)
             .then(response => {
-                console.log("admission_details.js: Settlement response:", response.data);
-                if (response.data.success) {
-                    alert(response.data.message, () => {
-                        window.location.href = `invoice_print.html?id=${response.data.invoice_id}`;
+                if (response.data && response.data.success) {
+                    const payId = response.data.payment_id;
+                    const invId = response.data.invoice_id;
+                    const rcptNum = response.data.receipt_number || '';
+                    let msg = response.data.message;
+                    if (rcptNum) {
+                        msg += `\nOfficial Receipt: ${rcptNum}`;
+                    }
+
+                    showPopupAlert(msg, 'success', 'Settlement Completed', () => {
+                        window.location.href = `invoice_print.html?id=${invId}`;
                     });
                 } else {
-                    alert("Settlement Error: " + (response.data.error || "Failed to settle bill."));
+                    const err = response.data && response.data.error ? response.data.error : 'Failed to settle bill.';
+                    showPopupAlert('Settlement Error: ' + err, 'danger');
                 }
             })
-            .catch(err => {
-                console.error("admission_details.js: Error during settlement:", err);
-                alert("Network error processing settlement.");
+            .catch(() => {
+                showPopupAlert('Network error processing settlement.', 'danger');
             });
-    }, null, { title: 'Finalize Billing Settlement', confirmText: 'Finalize & Settle', type: 'warning' });
+    }, null, {
+        title: 'Confirm Billing Settlement',
+        confirmText: 'Process Settlement',
+        type: amountPaid < netAmt ? 'warning' : 'info'
+    });
 };
+
+
+

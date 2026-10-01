@@ -24,6 +24,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("search_input").addEventListener("input", filterAndSortDepartments);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDepartments);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDepartments);
+
+    const btnCloseView = document.getElementById("btnCloseViewDeptModal");
+    if (btnCloseView) btnCloseView.addEventListener("click", closeViewDepartmentModal);
+    const btnCloseViewBtn = document.getElementById("btnCloseViewDeptBtn");
+    if (btnCloseViewBtn) btnCloseViewBtn.addEventListener("click", closeViewDepartmentModal);
+    const viewModal = document.getElementById("viewDepartmentModal");
+    if (viewModal) {
+        viewModal.addEventListener("click", (e) => {
+            if (e.target === viewModal) closeViewDepartmentModal();
+        });
+    }
 });
 
 const displayDepartments = async () => {
@@ -125,19 +136,114 @@ const displayDepartmentsTable = (departments) => {
         const formattedCode = `${dept.Code_Prefix || 'DEPT'}-${String(dept.Station_ID).padStart(3, '0')}`;
         const row = document.createElement("tr");
         row.className = "clickable-row";
-        row.title = "Click to view / edit department";
+        row.title = "Click to view department details & assigned personnel";
         row.innerHTML = `
             <td><strong>${formattedCode}</strong></td>
             <td><span class="dept-code-pill">${dept.Code_Prefix || 'N/A'}</span></td>
             <td><strong>${dept.Station_Name}</strong></td>
             <td>${getStatusBadge(dept.Is_Active)}</td>
         `;
-        row.addEventListener("click", () => loadDepartmentForEdit(dept.Station_ID));
+        row.addEventListener("click", () => openViewDepartmentModal(dept.Station_ID));
         tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
+
+const openViewDepartmentModal = async (stationId) => {
+    try {
+        console.log(`[API] Fetching department details for ID: ${stationId}`);
+        const response = await axios.get(`${getApiUrl}/departments.php`, {
+            params: {
+                operation: "getDepartmentById",
+                json: JSON.stringify({ station_id: stationId })
+            }
+        });
+
+        if (response.status === 200 && response.data) {
+            const dept = response.data;
+            currentLoadedDepartment = dept;
+
+            const codeFormatted = `${dept.Code_Prefix || 'DEPT'}-${String(dept.Station_ID).padStart(3, '0')}`;
+            document.getElementById("view-dept-title").textContent = `Department Details (${codeFormatted})`;
+            document.getElementById("view_dept_name").textContent = dept.Station_Name || "";
+            document.getElementById("view_dept_code").textContent = `Station Code: ${codeFormatted}`;
+
+            const badge = document.getElementById("view_dept_status_badge");
+            if (badge) {
+                const isActive = (dept.Is_Active == 1);
+                badge.className = isActive ? "badge badge-success" : "badge badge-danger";
+                badge.textContent = isActive ? "Active" : "Archived";
+            }
+
+            const docs = dept.assigned_doctors || [];
+            const docsCount = document.getElementById("view_dept_doctors_count");
+            const docsEmpty = document.getElementById("view_dept_doctors_empty");
+            const docsTbody = document.getElementById("view_dept_doctors_tbody");
+            if (docsCount) docsCount.textContent = `${docs.length} Doctors`;
+            if (docsTbody) {
+                docsTbody.innerHTML = "";
+                if (docs.length === 0) {
+                    if (docsEmpty) docsEmpty.style.display = "block";
+                } else {
+                    if (docsEmpty) docsEmpty.style.display = "none";
+                    docs.forEach(d => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${d.Formatted_Code}</strong></td>
+                            <td>Dr. ${d.First_Name} ${d.Last_Name}</td>
+                            <td><span class="badge badge-primary">${d.Doctor_Type_Name}</span></td>
+                            <td>${getStatusBadge(d.Is_Active)}</td>
+                        `;
+                        docsTbody.appendChild(tr);
+                    });
+                }
+            }
+
+            const users = dept.assigned_users || [];
+            const usersCount = document.getElementById("view_dept_users_count");
+            const usersEmpty = document.getElementById("view_dept_users_empty");
+            const usersTbody = document.getElementById("view_dept_users_tbody");
+            if (usersCount) usersCount.textContent = `${users.length} Staff`;
+            if (usersTbody) {
+                usersTbody.innerHTML = "";
+                if (users.length === 0) {
+                    if (usersEmpty) usersEmpty.style.display = "block";
+                } else {
+                    if (usersEmpty) usersEmpty.style.display = "none";
+                    users.forEach(u => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${u.Formatted_Code}</strong></td>
+                            <td>${u.First_Name} ${u.Last_Name}</td>
+                            <td>${u.Username}</td>
+                            <td><span class="badge badge-secondary">${u.Role_Name}</span></td>
+                            <td>${getStatusBadge(u.Is_Active)}</td>
+                        `;
+                        usersTbody.appendChild(tr);
+                    });
+                }
+            }
+
+            const btnEdit = document.getElementById("btnOpenEditFromView");
+            if (btnEdit) {
+                btnEdit.onclick = () => {
+                    closeViewDepartmentModal();
+                    loadDepartmentForEdit(stationId);
+                };
+            }
+
+            openModal("viewDepartmentModal");
+        }
+    } catch (error) {
+        console.error("[API] Error fetching department details:", error);
+        alert("Failed to load department details.");
+    }
+};
+
+const closeViewDepartmentModal = () => {
+    closeModal("viewDepartmentModal");
 };
 
 const populateDepartmentForm = (dept) => {
@@ -161,7 +267,8 @@ const loadDepartmentForEdit = async (stationId) => {
             currentLoadedDepartment = dept;
             populateDepartmentForm(dept);
 
-            document.getElementById("form-title").textContent = `Edit Department (${dept.Code_Prefix || 'DEPT'}-${dept.Station_ID})`;
+            const formattedCode = `${dept.Code_Prefix || 'DEPT'}-${String(dept.Station_ID).padStart(3, '0')}`;
+            document.getElementById("form-title").textContent = `Edit Department (${formattedCode})`;
             document.getElementById("btnSubmit").textContent = "Update Department";
 
             const btnArchive = document.getElementById("btnArchive");

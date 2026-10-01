@@ -855,11 +855,11 @@ textarea.form-control {
     padding: 16px 24px;
     border-top: 1px solid var(--border-color);
     background-color: #f8fafc;
+    flex-wrap: wrap;
 }
 
 .modal-footer .btn-archive,
 .modal-footer #btnArchive {
-    margin-right: auto;
     background-color: #f59e0b !important;
     border: 1px solid #d97706 !important;
     color: #ffffff !important;
@@ -877,7 +877,6 @@ textarea.form-control {
 
 .modal-footer .btn-restore,
 .modal-footer #btnArchive.btn-restore {
-    margin-right: auto;
     background-color: #10b981 !important;
     border: 1px solid #059669 !important;
     color: #ffffff !important;
@@ -891,6 +890,60 @@ textarea.form-control {
     border-color: #047857 !important;
     color: #ffffff !important;
     box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+}
+
+.modal-footer #btnReset,
+.modal-footer .btn-reset {
+    margin-right: auto;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.modal-footer #btnReset:hover:not(:disabled),
+.modal-footer .btn-reset:hover:not(:disabled) {
+    background-color: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #1e293b !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.modal-footer .btn-secondary,
+.modal-footer #btnCancel,
+.modal-footer .btn-cancel {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.modal-footer .btn-secondary:hover:not(:disabled),
+.modal-footer #btnCancel:hover:not(:disabled),
+.modal-footer .btn-cancel:hover:not(:disabled) {
+    background-color: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.modal-footer .btn-primary,
+.modal-footer #btnSubmit {
+    background-color: var(--primary) !important;
+    border: 1px solid var(--primary-hover) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 4px var(--primary-glow);
+}
+
+.modal-footer .btn-primary:hover:not(:disabled),
+.modal-footer #btnSubmit:hover:not(:disabled) {
+    background-color: var(--primary-hover) !important;
+    border-color: #0369a1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 6px rgba(2, 132, 199, 0.3);
 }
 
 @keyframes fadeInModal {
@@ -1113,4 +1166,75 @@ textarea.form-control {
 @keyframes scaleUpAlert {
     from { opacity: 0; transform: scale(0.94); }
     to { opacity: 1; transform: scale(1); }
+}
+
+.input-lookup-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.input-lookup-group .form-control {
+    background-color: #f8fafc;
+    cursor: pointer;
+    flex: 1;
+}
+
+.input-lookup-group .btn-lookup {
+    white-space: nowrap;
+    font-weight: 600;
+    padding: 8px 16px;
+}
+
+.picker-modal-overlay {
+    z-index: 1300 !important;
+    background-color: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.picker-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.picker-item-row:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.picker-item-row.selected {
+    border-color: var(--primary);
+    background-color: #f0f9ff;
+}
+
+.picker-item-row.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f8fafc;
+}
+
+.picker-item-row .picker-item-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.picker-item-row.selected .picker-item-title {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.picker-item-row .picker-item-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 2px;
 }

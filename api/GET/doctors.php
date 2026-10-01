@@ -48,9 +48,17 @@ class DoctorMaster
         include "connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT d.*, GROUP_CONCAT(ds.Specialty_ID) AS Specialty_IDs 
+        $sql = "SELECT d.Doctor_ID, d.First_Name, d.Last_Name, d.Doctor_Type_ID, d.Station_ID, d.Code_Prefix, d.Base_Round_Fee, d.Is_Active,
+                       dt.Type_Name AS Doctor_Type_Name,
+                       st.Station_Name,
+                       CONCAT(d.Code_Prefix, '-', LPAD(d.Doctor_ID, 3, '0')) AS Formatted_Code,
+                       COALESCE(GROUP_CONCAT(DISTINCT s.Specialty_Name ORDER BY s.Specialty_Name SEPARATOR ', '), 'General Practice') AS Specialties,
+                       COALESCE(GROUP_CONCAT(DISTINCT ds.Specialty_ID), '') AS Specialty_IDs
                 FROM Doctor d 
+                LEFT JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID 
+                LEFT JOIN Enum_Department_Station st ON d.Station_ID = st.Station_ID 
                 LEFT JOIN Doctor_Specialty ds ON d.Doctor_ID = ds.Doctor_ID 
+                LEFT JOIN Enum_Specialty s ON ds.Specialty_ID = s.Specialty_ID 
                 WHERE d.Doctor_ID = :id 
                 GROUP BY d.Doctor_ID";
         $stmt = $conn->prepare($sql);
@@ -60,6 +68,34 @@ class DoctorMaster
 
         if ($rs) {
             $rs['specialty_ids_array'] = !empty($rs['Specialty_IDs']) ? explode(',', $rs['Specialty_IDs']) : [];
+
+            $patSql = "SELECT a.Admission_ID, a.Patient_ID, a.Chief_Complaint, a.Diagnosis, a.Status AS Admission_Status,
+                              DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Admission_Date,
+                              p.First_Name, p.Last_Name, CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                              CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                              rb.Bed_Code, r.Room_Name
+                       FROM Admission_Doctor ad
+                       INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID
+                       INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                       LEFT JOIN Room_Transfer_Log rtl ON rtl.Transfer_ID = (
+                           SELECT Transfer_ID FROM Room_Transfer_Log 
+                           WHERE Admission_ID = a.Admission_ID 
+                           ORDER BY (CASE WHEN Date_Out IS NULL THEN 0 ELSE 1 END), Date_In DESC 
+                           LIMIT 1
+                       )
+                       LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                       LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                       WHERE ad.Doctor_ID = :id
+                       ORDER BY (CASE WHEN a.Status = 'Admitted' THEN 0 ELSE 1 END), a.Admission_Date DESC";
+            $patStmt = $conn->prepare($patSql);
+            $patStmt->bindParam(":id", $json['doctor_id']);
+            $patStmt->execute();
+            $allAssigned = $patStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $rs['assigned_patients'] = $allAssigned;
+            $rs['active_patients'] = array_values(array_filter($allAssigned, function($p) {
+                return $p['Admission_Status'] === 'Admitted';
+            }));
         }
 
         return json_encode($rs ?: []);

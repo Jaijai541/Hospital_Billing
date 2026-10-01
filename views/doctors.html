@@ -1,10 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Doctors & Professional Fees — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/common.css?v=5.1">
     <link rel="stylesheet" href="../css/doctors.css">
 </head>
 <body>
@@ -19,6 +22,65 @@
                 </div>
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Doctor</button>
             </div>
+            <div id="viewDoctorModal" class="modal-overlay">
+                <div class="modal-container" style="max-width: 740px;">
+                    <div class="modal-header">
+                        <h3 id="view-doc-title">Doctor Details</h3>
+                        <button type="button" class="modal-close" id="btnCloseViewDoctorModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="view_doc_banner" style="margin-bottom: 18px; padding: 16px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h4 id="view_doc_name" style="margin: 0; font-size: 18px; color: var(--text-main); font-weight: 700;">Dr. First Last</h4>
+                                        <span id="view_doc_type_badge" class="badge badge-primary">Classification</span>
+                                    </div>
+                                    <div style="display: flex; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap;">
+                                        <span id="view_doc_code">Code: DOC-000</span>
+                                        <span>•</span>
+                                        <span id="view_doc_station">Station: N/A</span>
+                                        <span>•</span>
+                                        <span id="view_doc_fee">Fee: ₱ 0.00 / round</span>
+                                    </div>
+                                    <div style="margin-top: 6px; font-size: 13px; color: var(--text-main);">
+                                        <strong>Specialties:</strong> <span id="view_doc_specialties">General Practice</span>
+                                    </div>
+                                </div>
+                                <span id="view_doc_status_badge" class="badge badge-success">Active</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Assigned Patients</label>
+                                <span id="view_doc_patients_count" class="badge badge-info" style="font-size: 12px;">0 Assigned</span>
+                            </div>
+                            <div style="max-height: 250px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Admission</th>
+                                            <th>Bed / Room</th>
+                                            <th>Diagnosis / Complaint</th>
+                                            <th>Admission Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_doc_patients_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="view_doc_patients_empty" class="text-muted text-center" style="display: none; padding: 16px 0; font-size: 13px;">No patients assigned to this doctor.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCloseViewDoctorBtn" class="btn btn-secondary">Close</button>
+                        <button type="button" id="btnOpenEditFromDoctorView" class="btn btn-primary">Edit Doctor Details</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="formModal" class="modal-overlay">
                 <div class="modal-container modal-lg">
                     <div class="modal-header">
@@ -41,16 +103,20 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="doctor_type_id">Classification *</label>
-                                <select id="doctor_type_id" class="form-select" required>
-                                    <option value="">Select Classification...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="doctor_type_id" required>
+                                    <input type="text" id="doctor_type_id_text" class="form-control" placeholder="Click to select classification..." readonly>
+                                    <button type="button" id="btnBrowse_doctor_type_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label" for="station_id">Department / Station *</label>
-                                <select id="station_id" class="form-select" required>
-                                    <option value="">Select Department Station...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="station_id" required>
+                                    <input type="text" id="station_id_text" class="form-control" placeholder="Click to select department / station..." readonly>
+                                    <button type="button" id="btnBrowse_station_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -60,11 +126,12 @@
 
                             <div class="form-group col-full">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <label class="form-label" style="margin-bottom: 0;">Medical Specialties (Check all that apply):</label>
-                                    <button type="button" id="btnOpenAddSpecialtyModal" class="btn btn-sm btn-outline" style="padding: 3px 10px; font-size: 12.5px; font-weight: 600;">+ Add Specialty</button>
+                                    <label class="form-label" style="margin-bottom: 0;" for="selected_specialties_text">Medical Specialties *</label>
+                                    <button type="button" id="btnOpenAddSpecialtyModal" class="btn btn-sm btn-outline" style="padding: 3px 10px; font-size: 12.5px; font-weight: 600;">+ Manage Specialties</button>
                                 </div>
-                                <input type="text" id="specialty_search" class="form-control form-control-sm mb-2" placeholder="🔍 Search medical specialty...">
-                                <div id="specialties-checkboxes" style="max-height: 160px; overflow-y: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #f8fafc;">
+                                <div class="input-lookup-group">
+                                    <input type="text" id="selected_specialties_text" class="form-control" placeholder="Select medical specialties..." readonly>
+                                    <button type="button" id="btnBrowseSpecialties" class="btn btn-outline btn-lookup">Select</button>
                                 </div>
                             </div>
                         </div>
@@ -93,13 +160,57 @@
                         </div>
 
                         <div style="margin-top: 18px; border-top: 1px solid var(--border-color); padding-top: 14px;">
-                            <label class="form-label" style="margin-bottom: 8px; font-weight: 600;">Active Specialties (Click 🗑️ to remove):</label>
+                            <label class="form-label" style="margin-bottom: 8px; font-weight: 600;">Active Specialties:</label>
                             <div id="specialties-manage-list" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" id="btnCancelSpecialty" class="btn btn-secondary">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="specialtyPickerModal" class="modal-overlay picker-modal-overlay" style="display: none; z-index: 1200;">
+                <div class="modal-container" style="max-width: 650px;">
+                    <div class="modal-header">
+                        <h3 id="specialty_picker_title">Select Medical Specialties</h3>
+                        <button type="button" class="modal-close" id="btnCloseSpecialtyPicker" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 16px 20px;">
+                        <div class="lookup-picker-controls" style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; margin-bottom: 12px; width: 100%;">
+                            <input type="text" id="specialty_picker_search" class="form-control lookup-picker-search-input" placeholder="Search medical specialty..." autocomplete="off" style="flex: 1 1 0%; min-width: 100px; font-size: 0.88rem; padding: 8px 12px;">
+                            <select id="specialty_picker_filter" class="form-select lookup-picker-select" style="width: auto; flex: 0 0 auto; min-width: 110px; max-width: 145px; font-size: 0.85rem; padding: 8px 10px;">
+                                <option value="all">All Specialties</option>
+                                <option value="selected">Selected</option>
+                                <option value="unselected">Unselected</option>
+                            </select>
+                            <select id="specialty_picker_sort" class="form-select lookup-picker-select" style="width: auto; flex: 0 0 auto; min-width: 115px; max-width: 155px; font-size: 0.85rem; padding: 8px 10px;">
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="selected_first">Selected First</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <table class="data-table" id="specialty_picker_table" style="margin: 0; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 45px; text-align: center;"><input type="checkbox" id="specialty_picker_select_all" style="cursor: pointer;"></th>
+                                        <th>Specialty Name</th>
+                                        <th style="width: 110px; text-align: center;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="specialty_picker_tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="specialty_picker_empty" class="text-muted text-center" style="display: none; padding: 25px 0;">No matching specialties found.</div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span id="specialty_picker_status" style="font-size: 0.85rem; color: #64748b;">No specialties selected</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-secondary" id="btnCancelSpecialtyPicker">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="btnDoneSpecialtyPicker">Done</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -168,6 +279,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/doctors.js"></script>
+    <script src="../js/doctors.js?v=5.1"></script>
 </body>
 </html>
+

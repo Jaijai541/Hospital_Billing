@@ -9,17 +9,18 @@
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
-        <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Official Invoice / SOA</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Official Invoice / SOA</button>
+            <button type="button" class="btn btn-outline" id="btnOpenReceiptsModal" style="background: #ffffff; color: #0284c7; border: 1px solid #0284c7; font-weight: 600; padding: 7px 15px; border-radius: 6px; cursor: pointer;">🧾 View Official Receipts</button>
+        </div>
         <div class="print-toolbar-actions">
-            <a href="invoices.html" class="btn btn-secondary btn-sm">Invoices Directory</a>
-            <a href="admissions.html" class="btn btn-secondary btn-sm">Admissions Log</a>
-            <a href="index.html" class="btn btn-secondary btn-sm">Dashboard</a>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnBackToOrigin">← Back</button>
         </div>
     </div>
     <div class="invoice-sheet">
         <div class="hospital-header">
-            <h2>METROPOLITAN GENERAL HOSPITAL & MEDICAL CENTER</h2>
-            <p>123 Healthcare Avenue, Medical District, Metro Manila, Philippines</p>
+            <h2>IN-PATIENT HOSPITAL & MEDICAL CENTER</h2>
+            <p>123 Healthcare Avenue, Medical District, CDO City, Philippines</p>
             <p>Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
             <div class="doc-title">Official Statement of Account & In-Patient Billing Invoice</div>
         </div>
@@ -89,52 +90,105 @@
                 </tr>
             </tbody>
         </table>
-        <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--text-main); font-size: 15px; font-weight: 700;">ITEMIZED STATEMENT OF CHARGES & SERVICES</h4>
-
-        <div id="itemized-charges-container">
-            <p style="color: var(--text-muted); font-style: italic;">Loading itemized statement...</p>
-        </div>
-        <table class="soa-summary-table" style="margin-top: 24px;">
+        <div class="billing-section-header">HOSPITAL CHARGES</div>
+        <table class="soa-table charges-breakdown-table">
             <thead>
-                <tr class="header-row" style="background-color: #f1f5f9;">
-                    <th colspan="2" style="text-align: left;">BILLING SETTLEMENT & STATUTORY ADJUSTMENTS</th>
+                <tr class="header-row">
+                    <th width="48%" style="text-align: left;">PARTICULARS / SERVICES &amp; CHARGES</th>
+                    <th width="13%" style="text-align: right;">CHARGES</th>
+                    <th width="13%" style="text-align: right;">DISCOUNT</th>
+                    <th width="13%" style="text-align: right;">PAYMENT</th>
+                    <th width="13%" style="text-align: right;">BALANCE</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td width="70%">Room Accommodation & Board Subtotal:</td>
-                    <td width="30%" align="right" id="summary-room">₱0.00</td>
-                </tr>
-                <tr>
-                    <td>Attending Physician Bedside Visits & Professional Fees:</td>
-                    <td align="right" id="summary-doctor">₱0.00</td>
-                </tr>
-                <tr>
-                    <td>Pharmaceuticals & Medications (Net of Credited Returns):</td>
-                    <td align="right" id="summary-medicine">₱0.00</td>
-                </tr>
-                <tr>
-                    <td>Diagnostic & Radiology Scans Subtotal:</td>
-                    <td align="right" id="summary-scan">₱0.00</td>
-                </tr>
-                <tr>
-                    <td>Procedures & Medical Floor Services Subtotal:</td>
-                    <td align="right" id="summary-service">₱0.00</td>
-                </tr>
-                <tr class="gross-row">
-                    <td><strong>GROSS TOTAL ACCUMULATED CHARGES:</strong></td>
-                    <td align="right"><strong id="summary-gross">₱0.00</strong></td>
-                </tr>
-                <tr class="discount-row">
-                    <td><strong>LESS: APPLIED STATUTORY / INSTITUTIONAL DISCOUNT (<span id="discount-label">None</span>):</strong></td>
-                    <td align="right"><strong id="summary-discount">-₱0.00</strong></td>
-                </tr>
-                <tr class="net-row">
-                    <td><span style="font-size: 16px; font-weight: 800;">NET TOTAL AMOUNT SETTLED / DUE:</span></td>
-                    <td align="right"><span style="font-size: 16px; font-weight: 800;" id="summary-net">₱0.00</span></td>
-                </tr>
+            <tbody id="hospital-charges-tbody">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading charges...</td></tr>
             </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td><strong>SUBTOTAL HOSPITAL CHARGES:</strong></td>
+                    <td align="right" id="hosp-sub-total">₱0.00</td>
+                    <td align="right" id="hosp-sub-discount">₱0.00</td>
+                    <td align="right" id="hosp-sub-cash">₱0.00</td>
+                    <td align="right" id="hosp-sub-balance">₱0.00</td>
+                </tr>
+            </tfoot>
         </table>
+
+        <div class="billing-section-header" style="margin-top: 24px;">PROFESSIONAL FEES</div>
+        <table class="soa-table charges-breakdown-table">
+            <thead>
+                <tr class="header-row">
+                    <th width="55%" style="text-align: left;">PARTICULARS / ATTENDING PHYSICIAN(S)</th>
+                    <th width="15%" style="text-align: right;">CHARGES</th>
+                    <th width="15%" style="text-align: right;">DISCOUNT</th>
+                    <th width="15%" style="text-align: right;">BALANCE</th>
+                </tr>
+            </thead>
+            <tbody id="doctor-fees-tbody">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading professional fees...</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td><strong>SUBTOTAL PROFESSIONAL FEES:</strong></td>
+                    <td align="right" id="doc-sub-total">₱0.00</td>
+                    <td align="right" id="doc-sub-discount">₱0.00</td>
+                    <td align="right" id="doc-sub-balance">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="settlement-summary-box">
+            <table class="soa-table summary-detail-table">
+                <thead>
+                    <tr class="header-row">
+                        <th colspan="2" style="text-align: left;">BILLING &amp; SETTLEMENT SUMMARY</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td width="70%">Hospital Charges Subtotal:</td>
+                        <td width="30%" align="right" id="summary-hosp-total">₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Attending Physician Fees Subtotal:</td>
+                        <td align="right" id="summary-doc-total">₱0.00</td>
+                    </tr>
+                    <tr class="summary-gross-line">
+                        <td><strong>Gross Accumulated Charges:</strong></td>
+                        <td align="right"><strong id="summary-gross-total">₱0.00</strong></td>
+                    </tr>
+                    <tr class="summary-discount-line">
+                        <td>Less: Statutory / Institutional Discount (<span id="summary-discount-label">None</span>):</td>
+                        <td align="right"><strong id="summary-discount-total">-₱0.00</strong></td>
+                    </tr>
+                    <tr class="summary-net-line">
+                        <td><strong>Net Amount Assessed:</strong></td>
+                        <td align="right"><strong id="summary-net-total">₱0.00</strong></td>
+                    </tr>
+                    <tr class="summary-payment-line">
+                        <td>Less: Total Payments Received:</td>
+                        <td align="right"><strong id="summary-payment-total" style="color: #166534;">-₱0.00</strong></td>
+                    </tr>
+                    <tr id="row-change-line" style="display: none;">
+                        <td>Customer Change Given:</td>
+                        <td align="right" id="summary-change-total">₱0.00</td>
+                    </tr>
+                    <tr class="summary-balance-line">
+                        <td><strong style="font-size: 14px;">Remaining Net Balance Due:</strong></td>
+                        <td align="right"><strong style="font-size: 15px;" id="summary-balance-total">₱0.00</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="grand-balance-container">
+            <div class="grand-balance-banner">
+                <span class="grand-balance-label">BALANCE DUE &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span>
+                <span class="grand-balance-amount" id="grand-balance-due">₱0.00</span>
+                <span class="payment-status-badge" id="payment-status-badge">PAID</span>
+            </div>
+        </div>
         <table class="signatures-table">
             <tr>
                 <td width="33%">
@@ -160,8 +214,32 @@
         </div>
     </div>
 
+    <div class="modal-overlay no-print" id="paymentHistoryModal" style="display: none;">
+        <div class="modal-container" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Payment & Installment Transaction History</h3>
+                <button type="button" class="modal-close" id="btnCloseHistoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13.5px;">
+                        <div><strong style="color: #64748b;">Invoice Code:</strong> <span id="hist_invoice_code" style="font-weight: 700;"></span></div>
+                        <div><strong style="color: #64748b;">Admission Code:</strong> <span id="hist_admission_code" style="font-weight: 700;"></span></div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient:</strong> <span id="hist_patient_name" style="font-weight: 700;"></span></div>
+                    </div>
+                </div>
+                <div class="table-responsive" id="history-modal-table-div">
+                    <p class="text-muted">Loading transactions...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnDismissHistoryModal">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/invoice_print.js"></script>
+    <script src="../js/invoice_print.js?v=1.1"></script>
 </body>
 </html>

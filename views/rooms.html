@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Rooms & Beds Directory — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/common.css?v=5.1">
     <link rel="stylesheet" href="../css/rooms.css">
 </head>
 <body>
@@ -19,8 +22,85 @@
                 </div>
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Room</button>
             </div>
+            <div id="viewRoomModal" class="modal-overlay">
+                <div class="modal-container" style="max-width: 760px;">
+                    <div class="modal-header">
+                        <h3 id="view-room-title">Room Details</h3>
+                        <button type="button" class="modal-close" id="btnCloseViewRoomModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="view_room_banner" style="margin-bottom: 18px; padding: 16px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h4 id="view_room_name" style="margin: 0; font-size: 18px; color: var(--text-main); font-weight: 700;">Room Name</h4>
+                                        <span id="view_room_type_badge" class="badge badge-info">Classification</span>
+                                    </div>
+                                    <div style="display: flex; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap;">
+                                        <span id="view_room_rate">Rate: ₱ 0.00 / day</span>
+                                        <span>•</span>
+                                        <span id="view_room_capacity">Capacity: 0 Beds</span>
+                                        <span>•</span>
+                                        <span id="view_room_occupancy_summary">0 Vacant, 0 Occupied</span>
+                                    </div>
+                                </div>
+                                <span id="view_room_status_badge" class="badge badge-success">Active</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Current Bed Occupancy</label>
+                                <span id="view_room_beds_count" class="badge badge-info" style="font-size: 12px;">0 Beds</span>
+                            </div>
+                            <div style="max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Bed Code</th>
+                                            <th>Availability</th>
+                                            <th>Current Occupant</th>
+                                            <th>Diagnosis</th>
+                                            <th>Stay Started</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_room_beds_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="view_room_beds_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No beds configured for this room.</div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Room Occupancy History</label>
+                                <span id="view_room_history_count" class="badge badge-secondary" style="font-size: 12px;">0 Past Stays</span>
+                            </div>
+                            <div style="max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Bed</th>
+                                            <th>Patient</th>
+                                            <th>Stay Period</th>
+                                            <th>Duration</th>
+                                            <th>Total Fee</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_room_history_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="view_room_history_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No previous patient occupancy history recorded for this room.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCloseViewRoomBtn" class="btn btn-secondary">Close</button>
+                        <button type="button" id="btnOpenEditFromRoomView" class="btn btn-primary">Edit Room Details</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="formModal" class="modal-overlay">
-                <div class="modal-container">
+                <div class="modal-container" style="max-width: 620px;">
                     <div class="modal-header">
                         <h3 id="form-title">Add New Room</h3>
                         <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
@@ -36,9 +116,11 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="room_type_id">Room Classification *</label>
-                                <select id="room_type_id" class="form-select" required>
-                                    <option value="">Select Classification...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="room_type_id" required>
+                                    <input type="text" id="room_type_id_text" class="form-control" placeholder="Click to select classification..." readonly>
+                                    <button type="button" id="btnBrowse_room_type_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -59,6 +141,57 @@
                         <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
                         <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
                         <button type="button" id="btnSubmit" class="btn btn-primary">Submit Room</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bedOccupancyModal" class="modal-overlay">
+                <div class="modal-container" style="max-width: 680px;">
+                    <div class="modal-header">
+                        <h3 id="bed-modal-title">Bed Occupancy & History</h3>
+                        <button type="button" class="modal-close" id="btnCloseBedModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="bed_info_banner" style="margin-bottom: 16px; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div>
+                                    <h4 id="bed_banner_code" style="margin: 0; font-size: 16px; color: var(--text-main); font-weight: 700;">WRD-A-001</h4>
+                                    <span id="bed_banner_room" style="font-size: 13px; color: var(--text-muted);">Ward A (Ward) — ₱ 500.00 / day</span>
+                                </div>
+                                <span id="bed_banner_badge" class="badge badge-success">Vacant</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label" style="font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Current Occupant</label>
+                            <div id="bed_current_occupant_card" style="padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 6px; background-color: #ffffff;">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Occupancy Stay History</label>
+                                <span id="bed_history_count" class="badge badge-secondary" style="font-size: 12px;">0 Records</span>
+                            </div>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Stay Period</th>
+                                            <th>Days</th>
+                                            <th>Room Fee</th>
+                                            <th>Diagnosis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bed_history_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="bed_history_empty" class="text-muted text-center" style="display: none; padding: 14px 0; font-size: 13px;">No past occupancy records found for this bed.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCloseBedModalBtn" class="btn btn-secondary">Close</button>
                     </div>
                 </div>
             </div>
@@ -125,6 +258,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/rooms.js"></script>
+    <script src="../js/rooms.js?v=5.1"></script>
 </body>
 </html>
+

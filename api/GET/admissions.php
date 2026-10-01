@@ -31,13 +31,18 @@ class AdmissionManager
                         FROM Admission_Doctor ad
                         INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
                         WHERE ad.Admission_ID = a.Admission_ID
-                    ) AS Assigned_Doctors
+                    ) AS Assigned_Doctors,
+                    fi.Invoice_ID,
+                    fi.Net_Amount_Due,
+                    fi.Amount_Paid,
+                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance
                 FROM Admission a
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 LEFT JOIN Room_Transfer_Log rtl ON rtl.Admission_ID = a.Admission_ID AND rtl.Date_Out IS NULL
                 LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
                 LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
                 WHERE 1=1";
 
         $params = [];
@@ -48,14 +53,22 @@ class AdmissionManager
         }
 
         if (!empty($search)) {
+            $numOnly = preg_replace('/[^0-9]/', '', $search);
+            $searchId = !empty($numOnly) ? intval($numOnly) : 0;
             $sql .= " AND (p.First_Name LIKE :search 
                            OR p.Last_Name LIKE :search 
+                           OR CONCAT(p.Last_Name, ', ', p.First_Name) LIKE :search
+                           OR CONCAT(p.First_Name, ' ', p.Last_Name) LIKE :search
+                           OR CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) LIKE :search
                            OR rb.Bed_Code LIKE :search 
+                           OR r.Room_Name LIKE :search
                            OR a.Chief_Complaint LIKE :search 
                            OR a.Diagnosis LIKE :search 
+                           OR CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) LIKE :search
+                           OR CAST(a.Admission_ID AS CHAR) LIKE :search
                            OR a.Admission_ID = :search_id)";
             $params[':search'] = "%{$search}%";
-            $params[':search_id'] = is_numeric($search) ? intval($search) : 0;
+            $params[':search_id'] = $searchId;
         }
 
         $sql .= " ORDER BY a.Admission_ID DESC";
@@ -105,7 +118,11 @@ class AdmissionManager
                     rt.Type_Name AS Room_Type,
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Bed_Date_In,
-                    DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Bed_Assigned_Since
+                    DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Bed_Assigned_Since,
+                    fi.Invoice_ID,
+                    fi.Net_Amount_Due,
+                    fi.Amount_Paid,
+                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance
                 FROM Admission a
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
@@ -114,6 +131,7 @@ class AdmissionManager
                 LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
                 LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
                 WHERE a.Admission_ID = :id";
 
         $stmt = $conn->prepare($sql);

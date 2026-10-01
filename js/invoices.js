@@ -1,7 +1,38 @@
-const getApiUrl = "../api/GET";
+﻿const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allInvoices = [];
+let currentPaymentInvoice = null;
+let paymentMethods = [];
+
+const loadPaymentMethods = () => {
+    const formData = new FormData();
+    formData.append('operation', 'getPaymentMethods');
+
+    axios.post(`${getApiUrl}/invoices.php`, formData)
+        .then(response => {
+            paymentMethods = response.data || [];
+        })
+        .catch(() => {});
+};
+
+const openPaymentMethodPicker = () => {
+    openGenericLookupPicker({
+        title: "Select Payment Method",
+        items: paymentMethods.map(pm => ({
+            id: pm.Payment_Method_ID,
+            text: pm.Method_Name,
+            subtext: `Category: ${pm.Category_Type}`,
+            badge: pm.Category_Type,
+            badgeClass: "badge-info"
+        })),
+        selectedId: document.getElementById("pay_method_id").value,
+        onSelect: (item) => {
+            document.getElementById("pay_method_id").value = item.id;
+            document.getElementById("pay_method_id_text").value = item.text;
+        }
+    });
+};
 
 const renderInvoicesTable = (invoices) => {
     const tableDiv = document.getElementById('table-div');
@@ -18,35 +49,47 @@ const renderInvoicesTable = (invoices) => {
     html += '<th>Patient Code & Name</th>';
     html += '<th>Gross Charges</th>';
     html += '<th>Applied Discount</th>';
-    html += '<th>Discount Amount</th>';
-    html += '<th>Net Amount Settled</th>';
+    html += '<th>Net Amount Due</th>';
+    html += '<th>Amount Paid</th>';
+    html += '<th>Balance Due</th>';
+    html += '<th>Payment Status</th>';
     html += '<th>Settlement Date</th>';
-    html += '<th>Cashier / Billed By</th>';
-    html += '<th>Actions</th>';
+    html += '<th>Cashier</th>';
     html += '</tr></thead><tbody>';
 
     invoices.forEach(inv => {
         const gross = parseFloat(inv.Gross_Total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const discAmt = parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const net = parseFloat(inv.Net_Amount_Due || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const paid = parseFloat(inv.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const balVal = parseFloat(inv.Remaining_Balance !== undefined && inv.Remaining_Balance !== null ? inv.Remaining_Balance : Math.max(0, parseFloat(inv.Net_Amount_Due || 0) - parseFloat(inv.Amount_Paid || 0)));
+        const bal = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const paidVal = parseFloat(inv.Amount_Paid || 0);
 
-        const discBadge = inv.Discount_Name !== 'None' 
+        const discBadge = inv.Discount_Name && inv.Discount_Name !== 'None' 
             ? `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage).toFixed(0)}%)</span>` 
             : '<span class="text-muted">None</span>';
 
-        html += '<tr>';
+        let statusBadge = '';
+        if (balVal <= 0) {
+            statusBadge = '<span class="badge badge-success">PAID IN FULL</span>';
+        } else if (paidVal > 0) {
+            statusBadge = '<span class="badge badge-warning">PARTIALLY PAID</span>';
+        } else {
+            statusBadge = '<span class="badge badge-danger">PENDING PAYMENT</span>';
+        }
+
+        html += `<tr class="clickable-row" onclick="openPaymentHistoryModal(${inv.Invoice_ID})" title="Click row to view payment history, official receipts, SOA, or pay balance">`;
         html += `<td><strong>${inv.Invoice_Code}</strong></td>`;
         html += `<td><strong>${inv.Admission_Code}</strong></td>`;
         html += `<td><strong>${inv.Patient_Code}</strong><br>${inv.Patient_Name}</td>`;
         html += `<td>₱${gross}</td>`;
         html += `<td>${discBadge}</td>`;
-        html += `<td style="color: #276749;">-₱${discAmt}</td>`;
-        html += `<td><strong style="color: var(--primary-color);">₱${net}</strong></td>`;
+        html += `<td><strong style="color: var(--primary);">₱${net}</strong></td>`;
+        html += `<td>₱${paid}</td>`;
+        html += `<td><strong style="color: ${balVal > 0 ? '#dc2626' : '#16a34a'};">₱${bal}</strong></td>`;
+        html += `<td>${statusBadge}</td>`;
         html += `<td>${inv.Settlement_Date}</td>`;
         html += `<td>${inv.Cashier_Name}</td>`;
-        html += '<td>';
-        html += `<button type="button" class="btn btn-sm btn-primary" onclick="viewPrintInvoice(${inv.Invoice_ID})">View / Print SOA</button>`;
-        html += '</td>';
         html += '</tr>';
     });
 
@@ -73,36 +116,278 @@ const filterAndRenderInvoices = () => {
 };
 
 const loadInvoices = () => {
-    console.log("invoices.js: Fetching all settled invoices...");
-
     const formData = new FormData();
     formData.append('operation', 'getAllInvoices');
 
     axios.post(`${getApiUrl}/invoices.php`, formData)
         .then(response => {
-            console.log("invoices.js: Invoices received:", response.data);
             allInvoices = response.data || [];
             filterAndRenderInvoices();
         })
-        .catch(err => {
-            console.error("invoices.js: Error fetching invoices:", err);
-            alert("Failed to load invoices.");
+        .catch(() => {
+            showPopupAlert("Failed to load invoices.");
         });
 };
 
 const viewPrintInvoice = (invoiceId) => {
-    console.log("invoices.js: Navigating to print view for Invoice ID:", invoiceId);
     window.location.href = `invoice_print.html?id=${invoiceId}`;
 };
 
-window.viewPrintInvoice = viewPrintInvoice;
+const updatePaymentModalCalculations = () => {
+    if (!currentPaymentInvoice) return;
 
-window.addEventListener('DOMContentLoaded', () => {
-    console.log("invoices.js: Initializing Invoices view...");
+    const net = parseFloat(currentPaymentInvoice.Net_Amount_Due || 0);
+    const paidSoFar = parseFloat(currentPaymentInvoice.Amount_Paid || 0);
+    const currentBal = Math.max(0, Math.round((net - paidSoFar) * 100) / 100);
+
+    const inputVal = parseFloat(document.getElementById('pay_amount_input').value || 0);
+
+    const lblNewBal = document.getElementById('pay_new_balance_display');
+    const lblChange = document.getElementById('pay_change_display');
+
+    if (inputVal >= currentBal) {
+        const change = Math.round((inputVal - currentBal) * 100) / 100;
+        if (lblNewBal) {
+            lblNewBal.textContent = '₱0.00 (PAID IN FULL)';
+            lblNewBal.style.color = '#16a34a';
+        }
+        if (lblChange) {
+            lblChange.textContent = `₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            lblChange.style.color = '#16a34a';
+        }
+    } else {
+        const remaining = Math.max(0, Math.round((currentBal - inputVal) * 100) / 100);
+        if (lblNewBal) {
+            lblNewBal.textContent = `₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            lblNewBal.style.color = '#dc2626';
+        }
+        if (lblChange) {
+            lblChange.textContent = '₱0.00';
+            lblChange.style.color = '#64748b';
+        }
+    }
+};
+
+const openPaymentModal = (invoiceId) => {
+    const inv = allInvoices.find(i => String(i.Invoice_ID) === String(invoiceId));
+    if (!inv) return;
+
+    currentPaymentInvoice = inv;
+
+    const net = parseFloat(inv.Net_Amount_Due || 0);
+    const paid = parseFloat(inv.Amount_Paid || 0);
+    const bal = Math.max(0, Math.round((net - paid) * 100) / 100);
+
+    document.getElementById('pay_invoice_id').value = inv.Invoice_ID;
+    document.getElementById('pay_invoice_code').textContent = inv.Invoice_Code;
+    document.getElementById('pay_admission_code').textContent = inv.Admission_Code;
+    document.getElementById('pay_patient_name').textContent = `${inv.Patient_Code} - ${inv.Patient_Name}`;
+    document.getElementById('pay_net_due').textContent = net.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('pay_amount_paid').textContent = paid.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('pay_remaining_balance').textContent = bal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    const input = document.getElementById('pay_amount_input');
+    input.value = bal.toFixed(2);
+
+    const notesInput = document.getElementById('pay_notes_input');
+    if (notesInput) notesInput.value = '';
+
+    const defaultMethod = paymentMethods.find(pm => (pm.Method_Name || '').toLowerCase().includes("cash")) || paymentMethods[0];
+    if (defaultMethod) {
+        document.getElementById("pay_method_id").value = defaultMethod.Payment_Method_ID;
+        document.getElementById("pay_method_id_text").value = `${defaultMethod.Method_Name} (${defaultMethod.Category_Type})`;
+    } else {
+        document.getElementById("pay_method_id").value = "1";
+        document.getElementById("pay_method_id_text").value = "Cash (Cash)";
+    }
+
+    updatePaymentModalCalculations();
+    openModal('recordPaymentModal');
+};
+
+const openPaymentHistoryModal = (invoiceId) => {
+    const inv = allInvoices.find(i => String(i.Invoice_ID) === String(invoiceId));
+    if (!inv) return;
+
+    currentPaymentInvoice = inv;
+    const net = parseFloat(inv.Net_Amount_Due || 0);
+    const paid = parseFloat(inv.Amount_Paid || 0);
+    const balVal = parseFloat(inv.Remaining_Balance !== undefined && inv.Remaining_Balance !== null ? inv.Remaining_Balance : Math.max(0, net - paid));
+
+    document.getElementById('hist_invoice_code').textContent = inv.Invoice_Code;
+    document.getElementById('hist_admission_code').textContent = inv.Admission_Code;
+    document.getElementById('hist_patient_name').textContent = `${inv.Patient_Code} - ${inv.Patient_Name}`;
+
+    const elNet = document.getElementById('hist_net_due');
+    if (elNet) elNet.textContent = net.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const elPaid = document.getElementById('hist_amount_paid');
+    if (elPaid) elPaid.textContent = paid.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const elBal = document.getElementById('hist_remaining_balance');
+    if (elBal) {
+        elBal.textContent = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const wrap = document.getElementById('hist_remaining_balance_wrap');
+        if (wrap) {
+            wrap.style.color = balVal > 0 ? '#dc2626' : '#16a34a';
+        }
+    }
+
+    const btnPay = document.getElementById('btnHistPayBalance');
+    const badgePaid = document.getElementById('histPaidInFullBadge');
+    if (btnPay) {
+        if (balVal > 0) {
+            btnPay.style.display = 'inline-block';
+            btnPay.onclick = () => {
+                closeModal('paymentHistoryModal');
+                openPaymentModal(inv.Invoice_ID);
+            };
+        } else {
+            btnPay.style.display = 'none';
+        }
+    }
+    if (badgePaid) {
+        badgePaid.style.display = balVal <= 0 ? 'inline-block' : 'none';
+    }
+
+    const container = document.getElementById('history-modal-table-div');
+    container.innerHTML = '<p class="text-muted">Loading payment transactions...</p>';
+
+    const formData = new FormData();
+    formData.append('operation', 'getPaymentHistory');
+    formData.append('json', JSON.stringify({ invoice_id: invoiceId }));
+
+    axios.post(`${getApiUrl}/invoices.php`, formData)
+        .then(res => {
+            let list = res.data;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch (e) {}
+            }
+
+            if (!Array.isArray(list) || list.length === 0) {
+                container.innerHTML = '<p class="text-muted" style="margin: 12px 0;"><em>No payment transactions recorded for this invoice yet.</em></p>';
+                openModal('paymentHistoryModal');
+                return;
+            }
+
+            let rows = '';
+            list.forEach(p => {
+                const amt = parseFloat(p.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+                const bal = parseFloat(p.Balance_After || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+                const isPaid = parseFloat(p.Balance_After || 0) <= 0;
+
+                rows += `
+                    <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click row to view / print Official Receipt voucher">
+                        <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
+                        <td>${p.Payment_Date}</td>
+                        <td><span class="badge badge-info">${p.Payment_Method || 'Cash'}</span></td>
+                        <td>${p.Cashier_Name}</td>
+                        <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
+                        <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>
+                        <td>${p.Notes || '-'}</td>
+                        <td align="center"><button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">🧾 Print OR</button></td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <table class="data-table" style="font-size: 13px;">
+                    <thead>
+                        <tr>
+                            <th>Official Receipt #</th>
+                            <th>Date & Time</th>
+                            <th>Method</th>
+                            <th>Cashier</th>
+                            <th style="text-align: right;">Amount Paid</th>
+                            <th style="text-align: right;">Remaining Bal</th>
+                            <th>Particulars / Notes</th>
+                            <th style="text-align: center;">Official Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            `;
+
+            openModal('paymentHistoryModal');
+        })
+        .catch(() => {
+            container.innerHTML = '<p class="text-danger">Failed to load payment transactions.</p>';
+            openModal('paymentHistoryModal');
+        });
+};
+
+const submitPayment = () => {
+    if (!currentPaymentInvoice) return;
+
+    const invoiceId = document.getElementById('pay_invoice_id').value;
+    const amount = parseFloat(document.getElementById('pay_amount_input').value || 0);
+
+    if (isNaN(amount) || amount <= 0) {
+        showPopupAlert("Please enter a valid payment amount greater than zero.", "warning");
+        return;
+    }
+
+    const methodSelect = document.getElementById('pay_method_id');
+    const paymentMethodId = methodSelect ? parseInt(methodSelect.value, 10) : 1;
+    const notesInput = document.getElementById('pay_notes_input');
+    const payNotes = notesInput ? notesInput.value.trim() : '';
 
     const userJson = sessionStorage.getItem("hospital_user");
+    const user = userJson ? JSON.parse(userJson) : null;
+    const userId = user ? (user.user_id || user.User_ID || 1) : 1;
+
+    showPopupConfirm(`Confirm payment of ₱${amount.toLocaleString('en-PH', {minimumFractionDigits: 2})} for ${currentPaymentInvoice.Invoice_Code}?`, () => {
+        const payload = {
+            invoice_id: invoiceId,
+            payment_amount: amount,
+            payment_method_id: paymentMethodId,
+            notes: payNotes,
+            user_id: userId
+        };
+
+        const formData = new FormData();
+        formData.append('operation', 'recordPayment');
+        formData.append('json', JSON.stringify(payload));
+
+        axios.post(`${postApiUrl}/invoices.php`, formData)
+            .then(response => {
+                if (response.data.success) {
+                    closeModal('recordPaymentModal');
+                    const payId = response.data.payment_id;
+                    const rcptNum = response.data.receipt_number || '';
+                    let msg = response.data.message;
+                    if (rcptNum) {
+                        msg += `\nOfficial Receipt: ${rcptNum}`;
+                    }
+
+                    showPopupAlert(msg, "success", "Payment Recorded", () => {
+                        if (payId) {
+                            window.location.href = `payment_receipt.html?payment_id=${payId}`;
+                        } else {
+                            loadInvoices();
+                        }
+                    });
+                } else {
+                    showPopupAlert(response.data.error || "Failed to record payment.", "danger");
+                }
+            })
+            .catch(() => {
+                showPopupAlert("Network error while recording payment.", "danger");
+            });
+    }, null, {
+        title: "Confirm Payment",
+        confirmText: "Post Payment",
+        type: "info"
+    });
+};
+
+window.viewPrintInvoice = viewPrintInvoice;
+window.openPaymentModal = openPaymentModal;
+window.openPaymentHistoryModal = openPaymentHistoryModal;
+
+window.addEventListener('DOMContentLoaded', () => {
+    const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
-        console.warn("invoices.js: Unauthenticated session. Redirecting to login.");
         window.location.href = "login.html";
         return;
     }
@@ -116,7 +401,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
-            console.log("invoices.js: Logging out...");
             sessionStorage.removeItem("hospital_user");
             window.location.href = "login.html";
         });
@@ -125,5 +409,30 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
     document.getElementById('btnRefresh').addEventListener('click', loadInvoices);
 
+    document.getElementById('btnClosePaymentModal')?.addEventListener('click', () => closeModal('recordPaymentModal'));
+    document.getElementById('btnCancelPayment')?.addEventListener('click', () => closeModal('recordPaymentModal'));
+    document.getElementById('btnSubmitPayment')?.addEventListener('click', submitPayment);
+
+    document.getElementById('btnCloseHistoryModal')?.addEventListener('click', () => closeModal('paymentHistoryModal'));
+    document.getElementById('btnDismissHistoryModal')?.addEventListener('click', () => closeModal('paymentHistoryModal'));
+    document.getElementById('btnHistViewSOA')?.addEventListener('click', () => {
+        if (currentPaymentInvoice) {
+            viewPrintInvoice(currentPaymentInvoice.Invoice_ID);
+        }
+    });
+
+    document.getElementById('pay_amount_input')?.addEventListener('input', updatePaymentModalCalculations);
+
+    document.getElementById('btnPayFullBalance')?.addEventListener('click', () => {
+        if (!currentPaymentInvoice) return;
+        const net = parseFloat(currentPaymentInvoice.Net_Amount_Due || 0);
+        const paid = parseFloat(currentPaymentInvoice.Amount_Paid || 0);
+        const bal = Math.max(0, Math.round((net - paid) * 100) / 100);
+        document.getElementById('pay_amount_input').value = bal.toFixed(2);
+        updatePaymentModalCalculations();
+    });
+
+    loadPaymentMethods();
     loadInvoices();
 });
+

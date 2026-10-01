@@ -73,7 +73,111 @@ class RoomMaster
         $stmt->execute();
         $rs = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        if ($rs) {
+            $bedsSql = "SELECT b.Bed_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
+                               p.First_Name, p.Last_Name,
+                               CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                               CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                               DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Formatted_Date_In,
+                               a.Chief_Complaint, a.Diagnosis
+                        FROM Room_Bed b
+                        LEFT JOIN Room_Transfer_Log rtl ON b.Bed_ID = rtl.Bed_ID AND rtl.Date_Out IS NULL
+                        LEFT JOIN Admission a ON rtl.Admission_ID = a.Admission_ID AND a.Status = 'Admitted'
+                        LEFT JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                        WHERE b.Room_ID = :id
+                        ORDER BY b.Bed_Code ASC";
+            $bedsStmt = $conn->prepare($bedsSql);
+            $bedsStmt->bindParam(":id", $json['room_id']);
+            $bedsStmt->execute();
+            $rs['beds'] = $bedsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $histSql = "SELECT rtl.Transfer_ID, rtl.Admission_ID, rtl.Bed_ID, b.Bed_Code,
+                               rtl.Date_In, rtl.Date_Out, rtl.Total_Days, rtl.Total_Room_Fee,
+                               DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Formatted_Date_In,
+                               DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Formatted_Date_Out,
+                               p.First_Name, p.Last_Name,
+                               CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                               CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                               a.Chief_Complaint, a.Diagnosis
+                        FROM Room_Transfer_Log rtl
+                        INNER JOIN Room_Bed b ON rtl.Bed_ID = b.Bed_ID
+                        INNER JOIN Admission a ON rtl.Admission_ID = a.Admission_ID
+                        INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                        WHERE b.Room_ID = :id AND rtl.Date_Out IS NOT NULL
+                        ORDER BY rtl.Date_Out DESC
+                        LIMIT 20";
+            $histStmt = $conn->prepare($histSql);
+            $histStmt->bindParam(":id", $json['room_id']);
+            $histStmt->execute();
+            $rs['occupancy_history'] = $histStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
         return json_encode($rs ?: []);
+    }
+
+    function getBedOccupancyHistory($json)
+    {
+        include "connection.php";
+
+        $json = json_decode($json, true);
+        $bedId = $json['bed_id'] ?? 0;
+
+        $bedSql = "SELECT b.Bed_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
+                          r.Room_ID, r.Room_Name, rt.Type_Name,
+                          COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
+                   FROM Room_Bed b
+                   INNER JOIN Room r ON b.Room_ID = r.Room_ID
+                   INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                   WHERE b.Bed_ID = :bed_id";
+        $stmt = $conn->prepare($bedSql);
+        $stmt->bindParam(":bed_id", $bedId);
+        $stmt->execute();
+        $bed = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$bed) {
+            return json_encode([]);
+        }
+
+        $currSql = "SELECT rtl.Transfer_ID, rtl.Admission_ID, rtl.Bed_ID, rtl.Date_In,
+                           DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Formatted_Date_In,
+                           a.Patient_ID, a.Chief_Complaint, a.Diagnosis, a.Status AS Admission_Status,
+                           DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Admission_Date,
+                           p.First_Name, p.Last_Name,
+                           CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                           CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                           (SELECT GROUP_CONCAT(CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) SEPARATOR ', ')
+                            FROM Admission_Doctor ad
+                            INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                            WHERE ad.Admission_ID = a.Admission_ID) AS Attending_Doctors
+                    FROM Room_Transfer_Log rtl
+                    INNER JOIN Admission a ON rtl.Admission_ID = a.Admission_ID AND a.Status = 'Admitted'
+                    INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                    WHERE rtl.Bed_ID = :bed_id AND rtl.Date_Out IS NULL
+                    LIMIT 1";
+        $currStmt = $conn->prepare($currSql);
+        $currStmt->bindParam(":bed_id", $bedId);
+        $currStmt->execute();
+        $bed['current_occupant'] = $currStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $histSql = "SELECT rtl.Transfer_ID, rtl.Admission_ID, rtl.Bed_ID, rtl.Date_In, rtl.Date_Out,
+                           rtl.Total_Days, rtl.Total_Room_Fee,
+                           DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Formatted_Date_In,
+                           DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Formatted_Date_Out,
+                           a.Patient_ID, a.Chief_Complaint, a.Diagnosis, a.Status AS Admission_Status,
+                           p.First_Name, p.Last_Name,
+                           CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                           CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code
+                    FROM Room_Transfer_Log rtl
+                    INNER JOIN Admission a ON rtl.Admission_ID = a.Admission_ID
+                    INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                    WHERE rtl.Bed_ID = :bed_id AND rtl.Date_Out IS NOT NULL
+                    ORDER BY rtl.Date_Out DESC";
+        $histStmt = $conn->prepare($histSql);
+        $histStmt->bindParam(":bed_id", $bedId);
+        $histStmt->execute();
+        $bed['occupancy_history'] = $histStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode($bed);
     }
 }
 
@@ -98,6 +202,9 @@ switch ($operation) {
         break;
     case "getRoomById":
         echo $room->getRoomById($json);
+        break;
+    case "getBedOccupancyHistory":
+        echo $room->getBedOccupancyHistory($json);
         break;
 }
 ?>

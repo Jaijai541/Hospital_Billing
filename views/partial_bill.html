@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interim Statement of Account & Partial Bill — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/invoice_print.css">
+    <link rel="stylesheet" href="../css/partial_bill.css">
+</head>
+<body class="print-body">
+    <div class="no-print print-toolbar">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Interim / Partial Bill</button>
+            <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">Active Running Account</span>
+        </div>
+        <div class="print-toolbar-actions">
+            <a href="#" id="btnBackToChart" class="btn btn-secondary btn-sm">← Back to Patient Chart</a>
+        </div>
+    </div>
+
+    <div class="invoice-sheet">
+        <div class="hospital-header">
+            <h2>IN-PATIENT HOSPITAL &amp; MEDICAL CENTER</h2>
+            <p>123 Healthcare Avenue, Medical District, CDO City, Philippines</p>
+            <p>Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
+            <div class="doc-title" style="color: #0369a1;">INTERIM STATEMENT OF ACCOUNT &amp; RUNNING PARTIAL BILL</div>
+            <div class="partial-bill-badge">Interim Running Bill — Patient Currently Admitted</div>
+        </div>
+
+        <div class="partial-notice-box">
+            <strong>IMPORTANT NOTICE:</strong> This document reflects the running accumulated hospital charges incurred from the date of admission up to the timestamp shown below. The patient is <strong>currently admitted</strong> and receiving medical care. This is <strong>not a final discharge invoice</strong>; final room charges, statutory discounts (Senior/PWD), and full account clearance will be computed upon official discharge.
+        </div>
+
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th colspan="4" style="text-align: left;">ADMISSION &amp; CASE RECORD</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label-cell">Admission Code:</td>
+                    <td class="value-cell"><strong id="pb-admission-code">Loading...</strong></td>
+                    <td class="label-cell">Statement Generated On:</td>
+                    <td class="value-cell"><strong id="pb-statement-date">Loading...</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Admission Date &amp; Time:</td>
+                    <td class="value-cell" id="pb-admission-date">Loading...</td>
+                    <td class="label-cell">Length of Stay (To Date):</td>
+                    <td class="value-cell"><strong id="pb-stay-days" style="color: #0284c7;">Loading...</strong> day(s)</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Current Assigned Bed / Room:</td>
+                    <td class="value-cell"><strong id="pb-bed-room" class="text-primary">Loading...</strong></td>
+                    <td class="label-cell">Admission Status:</td>
+                    <td class="value-cell"><span class="badge badge-success" id="pb-admission-status">Admitted</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th colspan="4" style="text-align: left;">PATIENT DEMOGRAPHIC &amp; CLINICAL PROFILE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label-cell">Patient Name:</td>
+                    <td class="value-cell"><strong id="pb-patient-name">Loading...</strong></td>
+                    <td class="label-cell">Patient ID / Code:</td>
+                    <td class="value-cell" id="pb-patient-code">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Age / Date of Birth:</td>
+                    <td class="value-cell" id="pb-patient-age">Loading...</td>
+                    <td class="label-cell">Gender / Blood Type:</td>
+                    <td class="value-cell" id="pb-patient-gender-blood">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Contact Number:</td>
+                    <td class="value-cell" id="pb-patient-contact">Loading...</td>
+                    <td class="label-cell">Permanent Address:</td>
+                    <td class="value-cell" id="pb-patient-address">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Emergency Contact:</td>
+                    <td class="value-cell" id="pb-patient-emergency">Loading...</td>
+                    <td class="label-cell">Chief Complaint:</td>
+                    <td class="value-cell" id="pb-patient-complaint" style="font-style: italic;">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Clinical Diagnosis:</td>
+                    <td class="value-cell" colspan="3"><strong id="pb-patient-diagnosis" style="color: #0284c7;">Loading...</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Attending Physician(s):</td>
+                    <td class="value-cell" colspan="3" id="pb-patient-doctors">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-top: 24px; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">1. ROOM ACCOMMODATION &amp; BOARD CHARGES (RUNNING TO DATE)</h3>
+        </div>
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th>Room &amp; Bed Assigned</th>
+                    <th>Classification</th>
+                    <th>Date &amp; Time In</th>
+                    <th>Date &amp; Time Out / Status</th>
+                    <th style="text-align: right;">Days</th>
+                    <th style="text-align: right;">Daily Rate</th>
+                    <th style="text-align: right;">Total Room Fee</th>
+                </tr>
+            </thead>
+            <tbody id="pb-room-tbody">
+                <tr><td colspan="7" class="text-muted">Loading room stays...</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td colspan="6"><strong>SUBTOTAL ROOM &amp; BOARD:</strong></td>
+                    <td align="right" id="pb-subtotal-room">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top: 24px; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">2. ATTENDING PHYSICIAN BEDSIDE ROUNDS &amp; PROFESSIONAL FEES</h3>
+        </div>
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th>Attending / Visiting Physician</th>
+                    <th>Classification / Specialty</th>
+                    <th style="text-align: center;">Bedside Rounds Logged</th>
+                    <th style="text-align: right;">Total Professional Fees</th>
+                </tr>
+            </thead>
+            <tbody id="pb-doctor-tbody">
+                <tr><td colspan="4" class="text-muted">Loading doctor rounds...</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td colspan="3"><strong>SUBTOTAL DOCTOR PROFESSIONAL FEES:</strong></td>
+                    <td align="right" id="pb-subtotal-doctor">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top: 24px; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">3. DRUGS, PHARMACEUTICALS &amp; PHARMACY DISPENSATIONS</h3>
+        </div>
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th>Timestamp</th>
+                    <th>Medicine Description &amp; Item Code</th>
+                    <th style="text-align: right;">Qty Dispensed</th>
+                    <th style="text-align: right;">Unit Price</th>
+                    <th style="text-align: right;">Total Amount</th>
+                </tr>
+            </thead>
+            <tbody id="pb-medicine-tbody">
+                <tr><td colspan="5" class="text-muted">Loading medicine charges...</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td colspan="4"><strong>SUBTOTAL MEDICATIONS (NET OF RETURNS):</strong></td>
+                    <td align="right" id="pb-subtotal-medicine">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top: 24px; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">4. DIAGNOSTIC IMAGING &amp; LABORATORY EXAMINATIONS</h3>
+        </div>
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th>Timestamp</th>
+                    <th>Procedure / Examination Description</th>
+                    <th>Clinical Station</th>
+                    <th style="text-align: right;">Qty</th>
+                    <th style="text-align: right;">Unit Price</th>
+                    <th style="text-align: right;">Total Amount</th>
+                </tr>
+            </thead>
+            <tbody id="pb-scan-tbody">
+                <tr><td colspan="6" class="text-muted">Loading diagnostic scan charges...</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td colspan="5"><strong>SUBTOTAL DIAGNOSTICS &amp; LAB:</strong></td>
+                    <td align="right" id="pb-subtotal-scan">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top: 24px; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">5. PROCEDURES &amp; CLINICAL SERVICES</h3>
+        </div>
+        <table class="soa-table">
+            <thead>
+                <tr class="header-row">
+                    <th>Timestamp</th>
+                    <th>Service Description</th>
+                    <th>Clinical Station</th>
+                    <th style="text-align: right;">Qty</th>
+                    <th style="text-align: right;">Unit Price</th>
+                    <th style="text-align: right;">Total Amount</th>
+                </tr>
+            </thead>
+            <tbody id="pb-service-tbody">
+                <tr><td colspan="6" class="text-muted">Loading clinical service charges...</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td colspan="5"><strong>SUBTOTAL PROCEDURES &amp; SERVICES:</strong></td>
+                    <td align="right" id="pb-subtotal-service">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="settlement-summary-box" style="margin-top: 24px;">
+            <table class="soa-table summary-detail-table">
+                <thead>
+                    <tr class="header-row">
+                        <th colspan="2" style="text-align: left;">RUNNING FINANCIAL BREAKDOWN &amp; ACCUMULATED CHARGES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td width="70%">Room Accommodation &amp; Board Subtotal (To Date):</td>
+                        <td width="30%" align="right" id="pb-sum-room">₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Attending Physician Bedside Rounds &amp; Fees:</td>
+                        <td align="right" id="pb-sum-doctor">₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Pharmacy &amp; Medications Dispensed Subtotal:</td>
+                        <td align="right" id="pb-sum-medicine">₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Diagnostic Imaging &amp; Laboratory Examinations:</td>
+                        <td align="right" id="pb-sum-scan">₱0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Clinical Procedures &amp; Miscellaneous Services:</td>
+                        <td align="right" id="pb-sum-service">₱0.00</td>
+                    </tr>
+                    <tr class="summary-gross-line">
+                        <td><strong>Gross Accumulated Charges to Date:</strong></td>
+                        <td align="right"><strong id="pb-sum-gross">₱0.00</strong></td>
+                    </tr>
+                    <tr id="pb-row-returns" style="display: none; background-color: #f0fff4;">
+                        <td><strong style="color: #166534;">Less: Credited Medicine Returns:</strong></td>
+                        <td align="right"><strong style="color: #166534;" id="pb-sum-returns">-₱0.00</strong></td>
+                    </tr>
+                    <tr class="summary-net-line" style="background-color: #e0f2fe;">
+                        <td><strong style="font-size: 15px; color: #0369a1;">NET RUNNING ACCUMULATED CHARGES TO DATE:</strong></td>
+                        <td align="right"><strong style="font-size: 17px; color: #0369a1;" id="pb-sum-net">₱0.00</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="partial-running-total-card">
+            <div>
+                <div class="partial-running-label">Total Running Hospital Bill (As of Today)</div>
+                <div style="font-size: 12.5px; color: #64748b; margin-top: 2px;">Subject to additional orders &amp; stay charges prior to official discharge</div>
+            </div>
+            <div class="partial-running-val" id="pb-banner-total">₱0.00</div>
+        </div>
+
+        <table class="signatures-table">
+            <tr>
+                <td width="33%">
+                    <div class="sig-line"></div>
+                    <div class="sig-name" id="pb-sig-cashier">In-Patient Billing Clerk</div>
+                    <div class="sig-title">Prepared By / Billing Officer</div>
+                </td>
+                <td width="33%">
+                    <div class="sig-line"></div>
+                    <div class="sig-name" id="pb-sig-doctor">Attending Physician</div>
+                    <div class="sig-title">Attending / Resident Physician</div>
+                </td>
+                <td width="33%">
+                    <div class="sig-line"></div>
+                    <div class="sig-name" id="pb-sig-patient">Patient / Authorized Representative</div>
+                    <div class="sig-title">Conforme / Received Copy</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="soa-footer-note">
+            <em>This document serves as an Official Interim Partial Billing Statement generated by the In-Patient Hospital Billing System. Charges remain subject to updates and additions until patient discharge.</em>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/partial_bill.js?v=1.1"></script>
+</body>
+</html>

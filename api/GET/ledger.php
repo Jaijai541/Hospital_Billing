@@ -220,6 +220,139 @@ class LedgerManager
         $stmt->execute([':aid' => $admissionId]);
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
+
+    function getPartialBill($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+
+        $admSql = "SELECT 
+                    a.Admission_ID,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    a.Chief_Complaint,
+                    a.Diagnosis,
+                    a.Status AS Admission_Status,
+                    DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
+                    GREATEST(1, DATEDIFF(NOW(), a.Admission_Date)) AS Stay_Days_To_Date,
+                    DATE_FORMAT(NOW(), '%Y-%m-%d %h:%i %p') AS Statement_Date,
+                    p.Patient_ID,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                    CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
+                    p.Date_Of_Birth,
+                    TIMESTAMPDIFF(YEAR, p.Date_Of_Birth, CURDATE()) AS Age,
+                    g.Gender_Name,
+                    bt.Blood_Type_Name,
+                    p.Contact_Number,
+                    p.Address,
+                    p.Emergency_Contact_Name,
+                    p.Emergency_Contact_Number
+                FROM Admission a
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
+                LEFT JOIN Enum_Blood_Type bt ON p.Blood_Type_ID = bt.Blood_Type_ID
+                WHERE a.Admission_ID = :aid";
+
+        $admStmt = $conn->prepare($admSql);
+        $admStmt->execute([':aid' => $admissionId]);
+        $bill = $admStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$bill) {
+            return json_encode(['error' => 'Admission record not found.']);
+        }
+
+        $staySql = "SELECT 
+                    rtl.Transfer_ID,
+                    rtl.Bed_ID,
+                    rb.Bed_Code,
+                    r.Room_Name,
+                    rt.Type_Name AS Room_Type_Name,
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
+                    DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Date_In,
+                    DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Date_Out,
+                    rtl.Total_Days,
+                    rtl.Total_Room_Fee,
+                    CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END AS Is_Current_Stay,
+                    CASE WHEN rtl.Date_Out IS NULL 
+                         THEN GREATEST(1, DATEDIFF(NOW(), rtl.Date_In))
+                         ELSE COALESCE(rtl.Total_Days, 1)
+                    END AS Calculated_Days,
+                    CASE WHEN rtl.Date_Out IS NULL 
+                         THEN GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate)
+                         ELSE COALESCE(rtl.Total_Room_Fee, COALESCE(rtl.Total_Days, 1) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate))
+                    END AS Calculated_Room_Fee
+                FROM Room_Transfer_Log rtl
+                INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                WHERE rtl.Admission_ID = :aid
+                ORDER BY rtl.Transfer_ID ASC";
+
+        $stayStmt = $conn->prepare($staySql);
+        $stayStmt->execute([':aid' => $admissionId]);
+        $roomStays = $stayStmt->fetchAll(PDO::FETCH_ASSOC);
+        $bill['Room_Stays'] = $roomStays;
+
+        $docSql = "SELECT 
+                    ad.Admission_Doctor_ID,
+                    d.Doctor_ID,
+                    CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                    dt.Type_Name AS Doctor_Type,
+                    (
+                        SELECT GROUP_CONCAT(s.Specialty_Name SEPARATOR ', ')
+                        FROM Doctor_Specialty ds
+                        INNER JOIN Enum_Specialty s ON ds.Specialty_ID = s.Specialty_ID
+                        WHERE ds.Doctor_ID = d.Doctor_ID
+                    ) AS Specialties,
+                    COALESCE(SUM(drl.Charged_Fee), 0.00) AS Charges,
+                    COUNT(drl.Round_ID) AS Round_Count
+                FROM Admission_Doctor ad
+                INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                INNER JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
+                LEFT JOIN Doctor_Round_Log drl ON ad.Admission_Doctor_ID = drl.Admission_Doctor_ID
+                WHERE ad.Admission_ID = :aid
+                GROUP BY ad.Admission_Doctor_ID, d.Doctor_ID, d.First_Name, d.Last_Name, dt.Type_Name
+                ORDER BY Charges DESC, d.Last_Name ASC";
+
+        $docStmt = $conn->prepare($docSql);
+        $docStmt->execute([':aid' => $admissionId]);
+        $bill['Attending_Doctors'] = $docStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $ledgerItems = json_decode($this->getAdmissionLedger(json_encode(['admission_id' => $admissionId])), true);
+        $bill['Ledger_Items'] = $ledgerItems;
+
+        $ledgerSummary = json_decode($this->getLedgerSummary(json_encode(['admission_id' => $admissionId])), true);
+
+        $totalRoomStayCharges = 0;
+        foreach ($roomStays as $stay) {
+            $totalRoomStayCharges += floatval($stay['Calculated_Room_Fee']);
+        }
+
+        $gross = floatval($ledgerSummary['gross_total']);
+        $returns = floatval($ledgerSummary['return_total']);
+        $alreadyInLedgerRoom = floatval($ledgerSummary['room_total']);
+        $currentRoomToAdd = max(0, $totalRoomStayCharges - $alreadyInLedgerRoom);
+        $totalGross = $gross + $currentRoomToAdd;
+        $totalNet = $totalGross - $returns;
+
+        $bill['Summary'] = [
+            'room_total' => round($totalRoomStayCharges, 2),
+            'doctor_total' => floatval($ledgerSummary['doctor_total']),
+            'medicine_total' => floatval($ledgerSummary['medicine_total']),
+            'scan_total' => floatval($ledgerSummary['scan_total']),
+            'service_total' => floatval($ledgerSummary['service_total']),
+            'gross_total' => round($totalGross, 2),
+            'return_total' => round($returns, 2),
+            'net_accumulated_total' => round($totalNet, 2)
+        ];
+
+        return json_encode($bill);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -240,6 +373,9 @@ switch ($operation) {
         break;
     case 'getDispensedMedicines':
         echo $ledger->getDispensedMedicines($json);
+        break;
+    case 'getPartialBill':
+        echo $ledger->getPartialBill($json);
         break;
 }
 ?>

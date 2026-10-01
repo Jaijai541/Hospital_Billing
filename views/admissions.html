@@ -1,10 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>In-Patient Admissions — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/common.css?v=5.1">
     <link rel="stylesheet" href="../css/admissions.css">
 </head>
 <body>
@@ -29,19 +32,21 @@
                         <div class="form-grid">
                             <div class="form-group span-2">
                                 <label class="form-label" for="patient_id">Select Registered Patient *</label>
-                                <input type="text" id="patient_search_input" class="form-control form-control-sm mb-1" placeholder="🔍 Search patient by name or code...">
-                                <select id="patient_id" class="form-select" required>
-                                    <option value="">Loading patient directory...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="patient_id" required>
+                                    <input type="text" id="patient_id_text" class="form-control" placeholder="Click to select registered patient..." readonly>
+                                    <button type="button" id="btnBrowse_patient_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                                 <small class="text-muted">Select patient to admit. Patients currently admitted in a bed cannot be re-admitted until discharged.</small>
                             </div>
 
                             <div class="form-group span-2">
                                 <label class="form-label" for="bed_id">Assign Vacant Bed *</label>
-                                <input type="text" id="bed_search_input" class="form-control form-control-sm mb-1" placeholder="🔍 Search bed by room, code, or type...">
-                                <select id="bed_id" class="form-select" required>
-                                    <option value="">Loading available beds...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="bed_id" required>
+                                    <input type="text" id="bed_id_text" class="form-control" placeholder="Click to select vacant room / bed..." readonly>
+                                    <button type="button" id="btnBrowse_bed_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                                 <small class="text-muted">Shows bed code, room name, type, and daily board & lodging rate.</small>
                             </div>
 
@@ -59,7 +64,7 @@
 
                             <div class="form-group span-2">
                                 <label class="form-label">Assign Attending Physician(s) *</label>
-                                <input type="text" id="doctor_search_input" class="form-control form-control-sm mb-2" placeholder="🔍 Search physician by name, type, or specialty...">
+                                <input type="text" id="doctor_search_input" class="form-control form-control-sm mb-2" placeholder="🔍 Search physician by name, type, or specialty...">
                                 <div id="doctors_container">
                                     Loading physicians...
                                 </div>
@@ -80,8 +85,8 @@
                     <div class="card-body">
                         <div class="filter-bar">
                             <div class="form-group" style="min-width: 280px;">
-                                <label class="form-label" for="search_input">Search Patient, Bed or ID</label>
-                                <input type="text" id="search_input" class="form-control" placeholder="Search patient name, bed code, or ID...">
+                                <label class="form-label" for="search_input">Search Admission ID, Patient, or Bed</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search admission ID (e.g. ADM-007), patient name, bed code...">
                             </div>
 
                             <div class="form-group">
@@ -90,7 +95,7 @@
                                     <option value="all" selected>All Records</option>
                                     <option value="Admitted">Admitted (Currently In Hospital)</option>
                                     <option value="Discharged">Discharged</option>
-                                    <option value="Billed">Billed / Settled</option>
+                                    <option value="Billed">Billed Accounts (Settled & With Balance)</option>
                                 </select>
                             </div>
 
@@ -109,6 +114,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/admissions.js"></script>
+    <script src="../js/admissions.js?v=2.3"></script>
 </body>
 </html>
+

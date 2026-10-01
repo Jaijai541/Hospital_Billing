@@ -1,4 +1,4 @@
-const getApiUrl = "../api/GET";
+﻿const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allAdmissions = [];
@@ -232,9 +232,18 @@ const renderAdmissionsTable = (admissions) => {
         const doctors = a.Assigned_Doctors ? a.Assigned_Doctors.split('; ').join('<br>') : '<span class="text-muted">None</span>';
 
         let statusBadge = '<span class="badge badge-info">' + a.Status + '</span>';
-        if (a.Status === 'Admitted') statusBadge = '<span class="badge badge-success">Admitted</span>';
-        else if (a.Status === 'Discharged') statusBadge = '<span class="badge badge-warning">Discharged</span>';
-        else if (a.Status === 'Billed') statusBadge = '<span class="badge badge-info">Billed / Settled</span>';
+        if (a.Status === 'Admitted') {
+            statusBadge = '<span class="badge badge-primary" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600;">Admitted</span>';
+        } else if (a.Status === 'Discharged') {
+            statusBadge = '<span class="badge badge-warning">Discharged</span>';
+        } else if (a.Status === 'Billed') {
+            const rem = parseFloat(a.Remaining_Balance !== undefined && a.Remaining_Balance !== null ? a.Remaining_Balance : 0);
+            if (rem > 0) {
+                statusBadge = `<span class="badge badge-warning" style="background: #f59e0b; color: #fff;">Billed (Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+            } else {
+                statusBadge = '<span class="badge badge-success">Settled (Paid in Full)</span>';
+            }
+        }
 
         const diagnosisBadge = a.Diagnosis 
             ? `<strong>${a.Diagnosis}</strong>` 
@@ -257,19 +266,38 @@ const renderAdmissionsTable = (admissions) => {
 };
 
 const filterAndRenderTable = () => {
-    const query = document.getElementById('search_input').value.toLowerCase().trim();
+    const rawQuery = document.getElementById('search_input').value.trim();
+    const query = rawQuery.toLowerCase();
     if (!query) {
         renderAdmissionsTable(allAdmissions);
         return;
     }
 
+    const queryNum = query.replace(/[^0-9]/g, '');
+
     const filtered = allAdmissions.filter(a => {
-        return (a.Patient_Name && a.Patient_Name.toLowerCase().includes(query)) ||
-               (a.Patient_Code && a.Patient_Code.toLowerCase().includes(query)) ||
-               (a.Bed_Code && a.Bed_Code.toLowerCase().includes(query)) ||
-               (a.Chief_Complaint && a.Chief_Complaint.toLowerCase().includes(query)) ||
-               (a.Diagnosis && a.Diagnosis.toLowerCase().includes(query)) ||
-               (a.Admission_ID && a.Admission_ID.toString().includes(query));
+        const admIdStr = String(a.Admission_ID || '');
+        const admCode = `adm-${admIdStr.padStart(3, '0')}`;
+        const admCodeShort = `adm-${admIdStr}`;
+        const patCode = String(a.Patient_Code || '').toLowerCase();
+        const patName = String(a.Patient_Name || '').toLowerCase();
+        const bedCode = String(a.Bed_Code || '').toLowerCase();
+        const roomName = String(a.Room_Name || '').toLowerCase();
+        const complaint = String(a.Chief_Complaint || '').toLowerCase();
+        const diagnosis = String(a.Diagnosis || '').toLowerCase();
+
+        const matchesAdmId = admCode.includes(query) ||
+                             admCodeShort.includes(query) ||
+                             admIdStr.includes(query) ||
+                             (query.includes('adm') && queryNum && String(a.Admission_ID) === String(parseInt(queryNum, 10)));
+
+        return matchesAdmId ||
+               patCode.includes(query) ||
+               patName.includes(query) ||
+               bedCode.includes(query) ||
+               roomName.includes(query) ||
+               complaint.includes(query) ||
+               diagnosis.includes(query);
     });
 
     renderAdmissionsTable(filtered);
@@ -297,19 +325,16 @@ const loadAdmissions = () => {
 };
 
 const resetForm = () => {
-    if (document.getElementById('patient_search_input')) document.getElementById('patient_search_input').value = '';
-    if (document.getElementById('bed_search_input')) document.getElementById('bed_search_input').value = '';
     if (document.getElementById('doctor_search_input')) document.getElementById('doctor_search_input').value = '';
 
-    document.getElementById('patient_id').value = '';
+    document.getElementById("patient_id").value = "";
+    document.getElementById("patient_id_text").value = "";
     document.getElementById('chief_complaint').value = '';
     if (document.getElementById('diagnosis')) document.getElementById('diagnosis').value = '';
-    document.getElementById('bed_id').value = '';
+    document.getElementById("bed_id").value = "";
+    document.getElementById("bed_id_text").value = "";
     const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
     checkedBoxes.forEach(cb => cb.checked = false);
-
-    populatePatientDropdown();
-    populateBedDropdown();
     filterDoctorsCheckboxes();
 };
 
@@ -427,15 +452,15 @@ window.addEventListener('DOMContentLoaded', () => {
         loadAdmissions();
     });
 
-    const patSearch = document.getElementById('patient_search_input');
-    if (patSearch) {
-        patSearch.addEventListener('input', populatePatientDropdown);
-    }
+    const patInput = document.getElementById("patient_id_text");
+    if (patInput) patInput.addEventListener("click", openPatientPicker);
+    const btnBrowsePat = document.getElementById("btnBrowse_patient_id");
+    if (btnBrowsePat) btnBrowsePat.addEventListener("click", openPatientPicker);
 
-    const bedSearch = document.getElementById('bed_search_input');
-    if (bedSearch) {
-        bedSearch.addEventListener('input', populateBedDropdown);
-    }
+    const bedInput = document.getElementById("bed_id_text");
+    if (bedInput) bedInput.addEventListener("click", openBedPicker);
+    const btnBrowseBed = document.getElementById("btnBrowse_bed_id");
+    if (btnBrowseBed) btnBrowseBed.addEventListener("click", openBedPicker);
 
     const docSearch = document.getElementById('doctor_search_input');
     if (docSearch) {
@@ -447,3 +472,4 @@ window.addEventListener('DOMContentLoaded', () => {
     loadDoctors();
     loadAdmissions();
 });
+

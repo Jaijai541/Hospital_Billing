@@ -1,10 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Patient Directory — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/common.css?v=5.1">
     <link rel="stylesheet" href="../css/patients.css">
 </head>
 <body>
@@ -28,6 +31,16 @@
                     <div class="modal-body">
                         <input type="hidden" id="patient_id" value="">
 
+                        <div id="patient_bed_info_banner" style="display: none; margin-bottom: 16px; padding: 12px 16px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div>
+                                    <span style="font-weight: 700; color: #166534; font-size: 13.5px;">Current Bed Stay:</span>
+                                    <span id="patient_current_bed_text" style="color: #15803d; font-size: 13.5px; margin-left: 6px; font-weight: 600;"></span>
+                                </div>
+                                <span id="patient_bed_status_badge" class="badge badge-success"></span>
+                            </div>
+                        </div>
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label" for="first_name">First Name *</label>
@@ -46,9 +59,11 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="gender_id">Gender *</label>
-                                <select id="gender_id" class="form-select" required>
-                                    <option value="">Select Gender...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="gender_id" required>
+                                    <input type="text" id="gender_id_text" class="form-control" placeholder="Click to select gender..." readonly>
+                                    <button type="button" id="btnBrowse_gender_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                             </div>
 
                             <div class="form-group" id="gender_other_group" style="display: none;">
@@ -58,9 +73,11 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="blood_type_id">Blood Type *</label>
-                                <select id="blood_type_id" class="form-select" required>
-                                    <option value="">Select Blood Type...</option>
-                                </select>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="blood_type_id" required>
+                                    <input type="text" id="blood_type_id_text" class="form-control" placeholder="Click to select blood type..." readonly>
+                                    <button type="button" id="btnBrowse_blood_type_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -147,6 +164,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/common.js"></script>
-    <script src="../js/patients.js"></script>
+    <script src="../js/patients.js?v=2.1"></script>
 </body>
 </html>
+

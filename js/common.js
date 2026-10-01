@@ -396,6 +396,174 @@ const toggleRecordStatus = (apiFile, idKey, idVal, currentStatus, recordName, on
     });
 };
 
+let genericLookupPickerState = {
+    items: [],
+    selectedId: null,
+    onSelect: null,
+    title: "Select Item"
+};
+
+const openGenericLookupPicker = (options) => {
+    let modal = document.getElementById("system-generic-lookup-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "system-generic-lookup-modal";
+        modal.className = "modal-overlay picker-modal-overlay";
+        modal.innerHTML = `
+            <div class="modal-container" style="max-width: 540px;">
+                <div class="modal-header">
+                    <h3 id="generic_lookup_title">Select Item</h3>
+                    <button type="button" class="modal-close" id="btnCloseGenericLookup" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 16px 20px;">
+                    <div class="lookup-picker-controls" style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <input type="text" id="generic_lookup_search" class="form-control lookup-picker-search-input" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 8px 12px; font-size: 0.9rem;">
+                        <select id="generic_lookup_filter" class="form-select lookup-picker-select" style="width: auto; min-width: 110px; font-size: 0.85rem; padding: 8px 10px;">
+                            <option value="all">All</option>
+                            <option value="selected">Selected</option>
+                            <option value="unselected">Unselected</option>
+                        </select>
+                        <select id="generic_lookup_sort" class="form-select lookup-picker-select" style="width: auto; min-width: 120px; font-size: 0.85rem; padding: 8px 10px;">
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="selected_first">Selected First</option>
+                        </select>
+                    </div>
+                    <div id="generic_lookup_list" style="max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;"></div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                    <span id="generic_lookup_status" style="font-size: 0.85rem; color: var(--text-muted);">Click an item to select</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" id="btnCancelGenericLookup">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closePicker = () => {
+            modal.style.display = "none";
+        };
+
+        document.getElementById("btnCloseGenericLookup").addEventListener("click", closePicker);
+        document.getElementById("btnCancelGenericLookup").addEventListener("click", closePicker);
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                closePicker();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.style.display === "flex") {
+                closePicker();
+            }
+        });
+
+        document.getElementById("generic_lookup_search").addEventListener("input", renderGenericLookupList);
+        document.getElementById("generic_lookup_filter").addEventListener("change", renderGenericLookupList);
+        document.getElementById("generic_lookup_sort").addEventListener("change", renderGenericLookupList);
+    }
+
+    genericLookupPickerState.title = options.title || "Select Item";
+    genericLookupPickerState.items = options.items || [];
+    genericLookupPickerState.selectedId = (options.selectedId !== undefined && options.selectedId !== null) ? String(options.selectedId) : "";
+    genericLookupPickerState.onSelect = options.onSelect;
+
+    document.getElementById("generic_lookup_title").textContent = genericLookupPickerState.title;
+    document.getElementById("generic_lookup_search").value = "";
+    document.getElementById("generic_lookup_filter").value = "all";
+    document.getElementById("generic_lookup_sort").value = "name_asc";
+
+    const selectedItem = genericLookupPickerState.items.find(item => String(item.id) === genericLookupPickerState.selectedId);
+    const statusEl = document.getElementById("generic_lookup_status");
+    if (statusEl) {
+        statusEl.textContent = selectedItem ? `Selected: ${selectedItem.text}` : "Click an item to select";
+    }
+
+    renderGenericLookupList();
+
+    modal.style.display = "flex";
+    document.getElementById("generic_lookup_search").focus();
+};
+
+const renderGenericLookupList = () => {
+    const listContainer = document.getElementById("generic_lookup_list");
+    const searchStr = (document.getElementById("generic_lookup_search").value || "").toLowerCase().trim();
+    const filterVal = document.getElementById("generic_lookup_filter").value;
+    const sortVal = document.getElementById("generic_lookup_sort").value;
+
+    let filtered = genericLookupPickerState.items.filter(item => {
+        const matchesSearch = !searchStr || 
+            (item.text && item.text.toLowerCase().includes(searchStr)) || 
+            (item.subtext && item.subtext.toLowerCase().includes(searchStr));
+
+        if (!matchesSearch) return false;
+
+        const isSelected = String(item.id) === String(genericLookupPickerState.selectedId);
+        if (filterVal === "selected") return isSelected;
+        if (filterVal === "unselected") return !isSelected;
+        return true;
+    });
+
+    if (sortVal === "name_asc") {
+        filtered.sort((a, b) => (a.text || "").localeCompare(b.text || ""));
+    } else if (sortVal === "name_desc") {
+        filtered.sort((a, b) => (b.text || "").localeCompare(a.text || ""));
+    } else if (sortVal === "selected_first") {
+        filtered.sort((a, b) => {
+            const aSel = String(a.id) === String(genericLookupPickerState.selectedId) ? 1 : 0;
+            const bSel = String(b.id) === String(genericLookupPickerState.selectedId) ? 1 : 0;
+            if (aSel !== bSel) return bSel - aSel;
+            return (a.text || "").localeCompare(b.text || "");
+        });
+    }
+
+    listContainer.innerHTML = "";
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.9rem;">No matching records found.</div>`;
+        return;
+    }
+
+    filtered.forEach(item => {
+        const isSelected = String(item.id) === String(genericLookupPickerState.selectedId);
+        const isDisabled = !!item.disabled;
+
+        const el = document.createElement("div");
+        el.className = `picker-item-row${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`;
+
+        const subtextHtml = item.subtext ? `<div class="picker-item-sub">${item.subtext}</div>` : "";
+        let badgeHtml = "";
+        if (isSelected) {
+            badgeHtml = `<span class="badge badge-primary" style="font-size: 0.75rem;">Selected</span>`;
+        } else if (item.badge) {
+            badgeHtml = `<span class="badge ${item.badgeClass || 'badge-info'}" style="font-size: 0.75rem;">${item.badge}</span>`;
+        }
+
+        el.innerHTML = `
+            <div style="flex: 1; min-width: 0; padding-right: 10px;">
+                <div class="picker-item-title">${item.text}</div>
+                ${subtextHtml}
+            </div>
+            <div style="flex-shrink: 0;">
+                ${badgeHtml}
+            </div>
+        `;
+
+        if (!isDisabled) {
+            el.addEventListener("click", () => {
+                if (genericLookupPickerState.onSelect) {
+                    genericLookupPickerState.onSelect(item);
+                }
+                const modal = document.getElementById("system-generic-lookup-modal");
+                if (modal) modal.style.display = "none";
+            });
+        }
+
+        listContainer.appendChild(el);
+    });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof renderSidebar !== "undefined") {
         renderSidebar();

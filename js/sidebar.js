@@ -23,7 +23,7 @@ const renderSidebar = () => {
     sidebarEl.innerHTML = `
         <div class="sidebar-brand">
             <div class="sidebar-brand-text">
-                <h2>St. Jude Hospital</h2>
+                <h2>In-Patient Hospital</h2>
                 <span class="subtitle">Billing & Patient System</span>
             </div>
             <button type="button" id="btn-sidebar-close" class="sidebar-close-btn" title="Collapse Sidebar (Alt + S)" aria-label="Collapse Sidebar">&times;</button>
@@ -60,7 +60,7 @@ const renderSidebar = () => {
 
             <div class="nav-section-title">Billing & Settlement</div>
             <ul class="sidebar-nav">
-                <li><a href="invoices.html"${isActive("invoices.html")}>Settled Invoices</a></li>
+                <li><a href="invoices.html"${isActive("invoices.html")}>Invoices & Settlement</a></li>
             </ul>
 
             <div class="nav-section-title">System & Tools</div>

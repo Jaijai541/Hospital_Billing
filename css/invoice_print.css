@@ -107,36 +107,166 @@ body.print-body {
     width: 25%;
 }
 
-.soa-summary-table {
+.billing-section-header {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #0f172a;
+    text-transform: uppercase;
+    margin-top: 24px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #334155;
+}
+
+.charges-breakdown-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 28px;
-    font-size: 14px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
 }
 
-.soa-summary-table th,
-.soa-summary-table td {
+.charges-breakdown-table th, 
+.charges-breakdown-table td {
     border: 1px solid #cbd5e1;
-    padding: 9px 14px;
+    padding: 7px 12px;
+    vertical-align: middle;
 }
 
-.soa-summary-table .gross-row {
+.charges-breakdown-table thead tr.header-row {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: 0.5px;
+}
+
+.charges-breakdown-table tfoot .subtotal-row {
+    background-color: #f8fafc;
+    font-weight: 800;
+    font-size: 13.5px;
+    border-top: 2px solid #0f172a;
+    border-bottom: 2px solid #0f172a;
+}
+
+.particular-subtitle {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.particular-item-list {
+    margin-top: 5px;
+    padding: 4px 8px;
+    background-color: #f8fafc;
+    border-radius: 4px;
+    border-left: 2px solid #94a3b8;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.particular-sub-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: #334155;
+}
+
+.particular-sub-item.return-item {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.settlement-summary-box {
+    margin-top: 20px;
+    margin-bottom: 14px;
+}
+
+.summary-detail-table {
+    margin-bottom: 0;
+}
+
+.summary-gross-line {
     background-color: #f8fafc;
     font-weight: 700;
-    font-size: 14.5px;
 }
 
-.soa-summary-table .discount-row {
+.summary-discount-line {
     background-color: #f0fdf4;
     color: #166534;
     font-weight: 600;
 }
 
-.soa-summary-table .net-row {
+.summary-net-line {
+    background-color: #f1f5f9;
+    font-weight: 700;
+}
+
+.summary-payment-line {
+    background-color: #f0fdf4;
+    color: #166534;
+    font-weight: 600;
+}
+
+.summary-balance-line {
     background-color: #e0f2fe;
     color: #0369a1;
-    font-size: 16px;
     font-weight: 800;
+}
+
+.payment-status-badge {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-left: 14px;
+    display: inline-block;
+    border: 1.5px solid transparent;
+}
+
+.payment-status-badge.paid {
+    background-color: #dcfce7;
+    color: #15803d;
+    border-color: #86efac;
+}
+
+.payment-status-badge.due {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+.grand-balance-container {
+    margin-top: 14px;
+    margin-bottom: 24px;
+}
+
+.grand-balance-banner {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background-color: #f8fafc;
+    border: 2px solid #0f172a;
+    padding: 10px 18px;
+}
+
+.grand-balance-label {
+    font-size: 14.5px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #0f172a;
+    margin-right: 18px;
+}
+
+.grand-balance-amount {
+    font-size: 18px;
+    font-weight: 900;
+    color: #0f172a;
 }
 
 .signatures-table {
@@ -213,8 +343,61 @@ body.print-body {
     }
 
     .soa-table th, .soa-table td,
-    .soa-summary-table th, .soa-summary-table td {
-        padding: 6px 10px !important;
-        font-size: 12px !important;
+    .charges-breakdown-table th, .charges-breakdown-table td,
+    .formula-table th, .formula-table td {
+        padding: 5px 8px !important;
+        font-size: 11.5px !important;
+    }
+
+    .particular-item-list {
+        padding: 2px 5px !important;
+        margin-top: 3px !important;
+        gap: 1px !important;
+    }
+
+    .particular-sub-item {
+        font-size: 10.5px !important;
+    }
+
+    .billing-section-header {
+        font-size: 13px !important;
+        margin-top: 14px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 2px !important;
+    }
+
+    .settlement-summary-box {
+        margin-top: 12px !important;
+        margin-bottom: 10px !important;
+        page-break-inside: avoid !important;
+    }
+
+    .summary-detail-table th, .summary-detail-table td {
+        padding: 4px 6px !important;
+        font-size: 11px !important;
+    }
+
+    .grand-balance-container {
+        margin-top: 12px !important;
+        margin-bottom: 14px !important;
+    }
+
+    .grand-balance-banner {
+        padding: 6px 12px !important;
+        background-color: #f8fafc !important;
+        border: 1.5px solid #000000 !important;
+    }
+
+    .grand-balance-label {
+        font-size: 13px !important;
+    }
+
+    .grand-balance-amount {
+        font-size: 15px !important;
+    }
+
+    .signatures-table {
+        margin-top: 20px !important;
+        margin-bottom: 12px !important;
     }
 }

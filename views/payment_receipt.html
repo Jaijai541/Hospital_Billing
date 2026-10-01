@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Payment Receipt — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/payment_receipt.css">
+</head>
+<body class="receipt-body">
+
+    <div class="no-print receipt-toolbar">
+        <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Official Receipt</button>
+        <div class="receipt-toolbar-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-back-origin">← Back</button>
+        </div>
+    </div>
+
+    <div class="receipt-sheet" id="receipt-content">
+        <div class="receipt-header">
+            <h2>IN-PATIENT HOSPITAL & MEDICAL CENTER</h2>
+            <p>123 Healthcare Avenue, Medical District, CDO City, Philippines</p>
+            <p>Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
+            <div class="receipt-banner">Official Receipt / Cashier Voucher</div>
+        </div>
+
+        <div class="receipt-meta-grid">
+            <div class="receipt-meta-item">
+                <span class="receipt-meta-label">Receipt Number</span>
+                <span class="receipt-meta-val or-highlight" id="or-number">Loading...</span>
+            </div>
+            <div class="receipt-meta-item">
+                <span class="receipt-meta-label">Payment Date & Time</span>
+                <span class="receipt-meta-val" id="or-date">Loading...</span>
+            </div>
+            <div class="receipt-meta-item">
+                <span class="receipt-meta-label">Invoice Reference</span>
+                <span class="receipt-meta-val" id="or-invoice-code">Loading...</span>
+            </div>
+            <div class="receipt-meta-item">
+                <span class="receipt-meta-label">Admission Case #</span>
+                <span class="receipt-meta-val" id="or-admission-code">Loading...</span>
+            </div>
+        </div>
+
+        <div class="receipt-section-title">Patient Identification</div>
+        <table class="receipt-table mb-3">
+            <tbody>
+                <tr>
+                    <td class="label-col">Patient Code & Name:</td>
+                    <td class="value-col" style="text-align: left;"><strong id="or-patient-name">Loading...</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-col">Age / Gender:</td>
+                    <td class="value-col" style="text-align: left;" id="or-patient-demographics">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Contact Number:</td>
+                    <td class="value-col" style="text-align: left;" id="or-patient-contact">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="receipt-section-title">Payment Settlement Breakdown</div>
+        <table class="receipt-table mb-3">
+            <tbody>
+                <tr>
+                    <td class="label-col">Payment Method:</td>
+                    <td class="value-col"><strong id="or-payment-method">Loading...</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-col">Particulars / Remarks:</td>
+                    <td class="value-col" id="or-payment-notes">-</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Total Net Statement Assessed:</td>
+                    <td class="value-col" id="or-net-assessed">₱0.00</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Outstanding Balance Prior to Payment:</td>
+                    <td class="value-col" id="or-balance-before">₱0.00</td>
+                </tr>
+                <tr class="highlight-received">
+                    <td class="label-col" style="background-color: #f0fdf4;"><strong style="font-size: 14.5px; color: #166534;">AMOUNT RECEIVED TODAY:</strong></td>
+                    <td class="value-col"><strong id="or-amount-paid" style="font-size: 18px; color: #16a34a;">₱0.00</strong></td>
+                </tr>
+                <tr class="highlight-remaining">
+                    <td class="label-col" style="background-color: #fefce8;"><strong style="font-size: 14px; color: #854d0e;">NEW REMAINING BALANCE DUE:</strong></td>
+                    <td class="value-col"><strong id="or-balance-after" style="font-size: 17px; color: #dc2626;">₱0.00</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-col">Account Settlement Status:</td>
+                    <td class="value-col" id="or-status-cell"><span class="status-tag status-paid">PAID IN FULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="receipt-signatures">
+            <div class="signature-box">
+                <div class="signature-line" id="or-cashier-name">Cashier Staff</div>
+                <div class="signature-role" id="or-cashier-role">Authorized Hospital Cashier</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line">Patient / Payor Representative</div>
+                <div class="signature-role">Signature over Printed Name</div>
+            </div>
+        </div>
+
+        <div class="receipt-notice">
+            This Official Cashier Receipt serves as a valid acknowledgment of cumulative installment payment.<br>
+            Please retain this receipt for your records. For inquiries, contact the Billing Office at (02) 8888-4567.
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/payment_receipt.js?v=1.1"></script>
+</body>
+</html>

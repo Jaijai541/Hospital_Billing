@@ -106,3 +106,6 @@ Before completing any task or handing off to another agent, verify:
 - [ ] Character encoding is intact (`₱` Philippine Peso, checkmarks `✔`, em dashes `—`).
 - [ ] Cache-busting query strings on HTML views are bumped if CSS/JS changed.
 - [ ] No temporary or scratch files are left in the repository directory.
+
+git add .
+git commit -m "Working checkpoint: lookup pickers clean and working"

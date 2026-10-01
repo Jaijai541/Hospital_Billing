@@ -46,104 +46,48 @@ const dischargePatient = (admissionId, patientName) => {
 
 window.dischargePatient = dischargePatient;
 
-const populatePatientDropdown = () => {
-    const select = document.getElementById('patient_id');
-    const query = (document.getElementById('patient_search_input')?.value || '').toLowerCase().trim();
-    select.innerHTML = '<option value="">-- Select Patient --</option>';
-
-    const filtered = activePatients.filter(p => {
-        if (!query) return true;
-        const text = `${p.Patient_Code || ''} ${p.Full_Name || ''} ${p.Gender_Name || ''} ${p.Blood_Type_Name || ''}`.toLowerCase();
-        return text.includes(query);
-    });
-
-    if (filtered.length === 0) {
-        select.innerHTML = '<option value="">No matching patients found</option>';
-        return;
-    }
-
-    filtered.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.Patient_ID;
-        const isAdmitted = (p.Active_Admission_ID !== null || p.Latest_Admission_Status === 'Admitted');
-
-        let note = '';
-        if (isAdmitted) {
-            note = ' [Currently Admitted]';
-            option.disabled = true;
-        }
-
-        option.textContent = `${p.Patient_Code} — ${p.Full_Name} (${p.Gender_Name || 'N/A'}, Blood: ${p.Blood_Type_Name || 'N/A'})${note}`;
-        select.appendChild(option);
-    });
-};
-
-const loadPatients = () => {
-    console.log("admissions.js: Fetching active patients...");
-    const formData = new FormData();
-    formData.append('operation', 'getActivePatients');
-
-    axios.post(`${getApiUrl}/admissions.php`, formData)
-        .then(response => {
-            console.log("admissions.js: Active patients received:", response.data);
+const loadPatients = async () => {
+    try {
+        const formData = new FormData();
+        formData.append('operation', 'getActivePatients');
+        const response = await axios.post(`${getApiUrl}/admissions.php`, formData);
+        if (response.data) {
             activePatients = response.data;
-            populatePatientDropdown();
-        })
-        .catch(err => {
-            console.error("admissions.js: Error fetching active patients:", err);
-            alert("Failed to load active patients list.");
-        });
+        }
+    } catch (err) {
+        console.error("admissions.js: Error fetching active patients:", err);
+    }
 };
 
-const populateBedDropdown = () => {
-    const select = document.getElementById('bed_id');
-    const query = (document.getElementById('bed_search_input')?.value || '').toLowerCase().trim();
-    select.innerHTML = '<option value="">-- Select Vacant Bed --</option>';
-
-    if (availableBeds.length === 0) {
-        select.innerHTML = '<option value="">No vacant beds available currently</option>';
-        return;
-    }
-
-    const filtered = availableBeds.filter(b => {
-        if (!query) return true;
-        const text = `${b.Bed_Code || ''} ${b.Room_Name || ''} ${b.Room_Type || ''} ${b.Daily_Rate || ''}`.toLowerCase();
-        return text.includes(query);
-    });
-
-    if (filtered.length === 0) {
-        select.innerHTML = '<option value="">No matching beds found</option>';
-        return;
-    }
-
-    filtered.forEach(b => {
-        const option = document.createElement('option');
-        option.value = b.Bed_ID;
-        option.textContent = `Bed: ${b.Bed_Code} | Room: ${b.Room_Name} (${b.Room_Type}) — ₱${parseFloat(b.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day`;
-        select.appendChild(option);
-    });
-};
-
-const loadBeds = () => {
-    console.log("admissions.js: Fetching vacant beds...");
-    const formData = new FormData();
-    formData.append('operation', 'getAvailableBeds');
-
-    axios.post(`${getApiUrl}/admissions.php`, formData)
-        .then(response => {
-            console.log("admissions.js: Vacant beds received:", response.data);
+const loadBeds = async () => {
+    try {
+        const formData = new FormData();
+        formData.append('operation', 'getAvailableBeds');
+        const response = await axios.post(`${getApiUrl}/admissions.php`, formData);
+        if (response.data) {
             availableBeds = response.data;
-            populateBedDropdown();
-        })
-        .catch(err => {
-            console.error("admissions.js: Error fetching vacant beds:", err);
-            alert("Failed to load vacant beds.");
-        });
+        }
+    } catch (err) {
+        console.error("admissions.js: Error fetching vacant beds:", err);
+    }
+};
+
+const loadDoctors = async () => {
+    try {
+        const formData = new FormData();
+        formData.append('operation', 'getActiveDoctors');
+        const response = await axios.post(`${getApiUrl}/admissions.php`, formData);
+        if (response.data) {
+            activeDoctors = response.data;
+        }
+    } catch (err) {
+        console.error("admissions.js: Error fetching active doctors:", err);
+    }
 };
 
 const openPatientPicker = async () => {
     if (!activePatients || activePatients.length === 0) {
-        loadPatients();
+        await loadPatients();
     }
     openGenericLookupPicker({
         title: "Select Registered Patient",
@@ -152,7 +96,7 @@ const openPatientPicker = async () => {
             return {
                 id: p.Patient_ID,
                 text: `${p.Patient_Code} — ${p.Full_Name}`,
-                subtext: `Gender: ${p.Gender_Name || "N/A"} | Blood: ${p.Blood_Type_Name || "N/A"}${isAdmitted ? " (Currently Admitted)" : ""}`,
+                subtext: `Gender: ${p.Gender_Name || "N/A"} | Blood Type: ${p.Blood_Type_Name || "N/A"}${p.Date_Of_Birth ? ` | DOB: ${p.Date_Of_Birth}` : ""}${isAdmitted ? " (Currently Admitted in hospital bed)" : ""}`,
                 disabled: isAdmitted,
                 badge: isAdmitted ? "Admitted" : "Available",
                 badgeClass: isAdmitted ? "badge-danger" : "badge-success"
@@ -170,14 +114,16 @@ const openPatientPicker = async () => {
 
 const openBedPicker = async () => {
     if (!availableBeds || availableBeds.length === 0) {
-        loadBeds();
+        await loadBeds();
     }
     openGenericLookupPicker({
-        title: "Select Vacant Bed",
+        title: "Assign Vacant Bed",
         items: availableBeds.map(b => ({
             id: b.Bed_ID,
             text: `Bed ${b.Bed_Code} — ${b.Room_Name} (${b.Room_Type})`,
-            subtext: `Daily Rate: ₱${parseFloat(b.Daily_Rate).toFixed(2)}/day`
+            subtext: `Daily Board & Lodging Rate: ₱${parseFloat(b.Daily_Rate).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`,
+            badge: "Vacant",
+            badgeClass: "badge-success"
         })),
         selectedId: document.getElementById("bed_id") ? document.getElementById("bed_id").value : "",
         onSelect: (item) => {
@@ -189,64 +135,234 @@ const openBedPicker = async () => {
     });
 };
 
-const filterDoctorsCheckboxes = () => {
-    const query = (document.getElementById('doctor_search_input')?.value || '').toLowerCase().trim();
-    const rows = document.querySelectorAll('#doctors_container .doctor-row');
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = (!query || text.includes(query)) ? '' : 'none';
-    });
-};
+let selectedDoctorIds = [];
+let tempSelectedDoctorIds = [];
+let currentFilteredDoctors = [];
 
-const populateDoctorsCheckboxes = () => {
-    const container = document.getElementById('doctors_container');
-    container.innerHTML = '';
-
-    if (activeDoctors.length === 0) {
-        container.innerHTML = '<em>No active physicians found in master file.</em>';
+const updateDoctorsText = () => {
+    const txt = document.getElementById("selected_doctors_text");
+    if (!txt) return;
+    if (selectedDoctorIds.length === 0) {
+        txt.value = "";
         return;
     }
-
-    activeDoctors.forEach(d => {
-        const div = document.createElement('div');
-        div.className = 'doctor-row';
-        div.style.marginBottom = '4px';
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `doc_${d.Doctor_ID}`;
-        checkbox.value = d.Doctor_ID;
-        checkbox.className = 'doctor-checkbox';
-
-        const label = document.createElement('label');
-        label.htmlFor = `doc_${d.Doctor_ID}`;
-        const specs = d.Specialties ? ` [${d.Specialties}]` : '';
-        const fee = parseFloat(d.Base_Round_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        label.textContent = ` ${d.Full_Name} (${d.Doctor_Type}${specs}) — Base Round Fee: ₱${fee}`;
-
-        div.appendChild(checkbox);
-        div.appendChild(label);
-        container.appendChild(div);
+    const names = selectedDoctorIds.map(id => {
+        const d = activeDoctors.find(doc => String(doc.Doctor_ID) === String(id));
+        return d ? d.Full_Name : `Doctor #${id}`;
     });
-
-    filterDoctorsCheckboxes();
+    txt.value = names.join("; ");
 };
 
-const loadDoctors = () => {
-    console.log("admissions.js: Fetching active physicians...");
-    const formData = new FormData();
-    formData.append('operation', 'getActiveDoctors');
+const openDoctorPicker = async () => {
+    if (!activeDoctors || activeDoctors.length === 0) {
+        await loadDoctors();
+    }
+    tempSelectedDoctorIds = [...selectedDoctorIds];
 
-    axios.post(`${getApiUrl}/admissions.php`, formData)
-        .then(response => {
-            console.log("admissions.js: Active physicians received:", response.data);
-            activeDoctors = response.data;
-            populateDoctorsCheckboxes();
-        })
-        .catch(err => {
-            console.error("admissions.js: Error fetching active doctors:", err);
-            alert("Failed to load physicians.");
+    const searchInput = document.getElementById("doctor_picker_search");
+    if (searchInput) searchInput.value = "";
+
+    const filterSelect = document.getElementById("doctor_picker_filter");
+    if (filterSelect) filterSelect.value = "all";
+
+    const sortSelect = document.getElementById("doctor_picker_sort");
+    if (sortSelect) sortSelect.value = "name_asc";
+
+    renderDoctorPickerRows();
+
+    const pickerModal = document.getElementById("doctorPickerModal");
+    if (pickerModal) {
+        pickerModal.classList.add("active");
+        pickerModal.style.display = "flex";
+        setTimeout(() => {
+            if (searchInput) searchInput.focus();
+        }, 50);
+    }
+};
+
+const closeDoctorPicker = () => {
+    const pickerModal = document.getElementById("doctorPickerModal");
+    if (pickerModal) {
+        pickerModal.classList.remove("active");
+        pickerModal.style.display = "none";
+    }
+    tempSelectedDoctorIds = [];
+};
+
+const confirmDoctorPicker = () => {
+    selectedDoctorIds = [...tempSelectedDoctorIds];
+    updateDoctorsText();
+    closeDoctorPicker();
+};
+
+const togglePickerDoctor = (docId) => {
+    docId = String(docId);
+    const index = tempSelectedDoctorIds.indexOf(docId);
+    if (index > -1) {
+        tempSelectedDoctorIds.splice(index, 1);
+    } else {
+        tempSelectedDoctorIds.push(docId);
+    }
+
+    const row = document.querySelector(`#doctor_picker_tbody tr[data-id="${docId}"]`);
+    if (row) {
+        const isNowSelected = tempSelectedDoctorIds.includes(docId);
+        const cb = row.querySelector(".doctor-picker-cb");
+        if (cb) cb.checked = isNowSelected;
+        if (isNowSelected) {
+            row.classList.add("selected-row");
+        } else {
+            row.classList.remove("selected-row");
+        }
+    }
+
+    const selectAllCb = document.getElementById("doctor_picker_select_all");
+    if (selectAllCb && currentFilteredDoctors.length > 0) {
+        const allVisibleSelected = currentFilteredDoctors.every(d => tempSelectedDoctorIds.includes(String(d.Doctor_ID)));
+        const someVisibleSelected = currentFilteredDoctors.some(d => tempSelectedDoctorIds.includes(String(d.Doctor_ID)));
+        selectAllCb.checked = allVisibleSelected;
+        selectAllCb.indeterminate = (!allVisibleSelected && someVisibleSelected);
+    }
+
+    const statusMsg = document.getElementById("doctor_picker_status");
+    if (statusMsg) {
+        const count = tempSelectedDoctorIds.length;
+        statusMsg.textContent = count === 0 ? "No physicians selected" : `${count} physician${count === 1 ? "" : "s"} selected`;
+    }
+};
+
+const toggleSelectAllPickerDoctors = (checked) => {
+    currentFilteredDoctors.forEach(d => {
+        const docId = String(d.Doctor_ID);
+        const idx = tempSelectedDoctorIds.indexOf(docId);
+        if (checked) {
+            if (idx === -1) tempSelectedDoctorIds.push(docId);
+        } else {
+            if (idx > -1) tempSelectedDoctorIds.splice(idx, 1);
+        }
+    });
+    renderDoctorPickerRows();
+};
+
+const renderDoctorPickerRows = () => {
+    const searchInput = document.getElementById("doctor_picker_search");
+    const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+    const filterSelect = document.getElementById("doctor_picker_filter");
+    const filterVal = filterSelect ? filterSelect.value : "all";
+    const sortSelect = document.getElementById("doctor_picker_sort");
+    const sortBy = sortSelect ? sortSelect.value : "name_asc";
+
+    const tbody = document.getElementById("doctor_picker_tbody");
+    const emptyMsg = document.getElementById("doctor_picker_empty");
+    const statusMsg = document.getElementById("doctor_picker_status");
+    const selectAllCb = document.getElementById("doctor_picker_select_all");
+
+    let list = activeDoctors.filter(d => {
+        const docId = String(d.Doctor_ID);
+        const isSelected = tempSelectedDoctorIds.includes(docId);
+        const nameMatch = (d.Full_Name || "").toLowerCase().includes(query);
+        const specMatch = (d.Specialties || "").toLowerCase().includes(query);
+        const typeMatch = (d.Doctor_Type || "").toLowerCase().includes(query);
+        const stationMatch = (d.Station_Name || "").toLowerCase().includes(query);
+        const matchesQuery = !query || nameMatch || specMatch || typeMatch || stationMatch;
+
+        let matchesFilter = true;
+        if (filterVal === "selected") {
+            matchesFilter = isSelected;
+        } else if (filterVal === "unselected") {
+            matchesFilter = !isSelected;
+        } else if (filterVal === "Resident") {
+            matchesFilter = d.Doctor_Type === "Resident";
+        } else if (filterVal === "Attending") {
+            matchesFilter = d.Doctor_Type === "Attending";
+        }
+
+        return matchesQuery && matchesFilter;
+    });
+
+    list.sort((a, b) => {
+        const aSelected = tempSelectedDoctorIds.includes(String(a.Doctor_ID));
+        const bSelected = tempSelectedDoctorIds.includes(String(b.Doctor_ID));
+
+        if (sortBy === "selected_first") {
+            if (aSelected && !bSelected) return -1;
+            if (!aSelected && bSelected) return 1;
+            return (a.Full_Name || "").localeCompare(b.Full_Name || "");
+        } else if (sortBy === "name_desc") {
+            return (b.Full_Name || "").localeCompare(a.Full_Name || "");
+        } else if (sortBy === "fee_asc") {
+            return parseFloat(a.Base_Round_Fee || 0) - parseFloat(b.Base_Round_Fee || 0);
+        } else if (sortBy === "fee_desc") {
+            return parseFloat(b.Base_Round_Fee || 0) - parseFloat(a.Base_Round_Fee || 0);
+        } else {
+            return (a.Full_Name || "").localeCompare(b.Full_Name || "");
+        }
+    });
+
+    currentFilteredDoctors = list;
+    tbody.innerHTML = "";
+
+    if (list.length === 0) {
+        if (emptyMsg) emptyMsg.style.display = "block";
+        if (selectAllCb) {
+            selectAllCb.checked = false;
+            selectAllCb.indeterminate = false;
+            selectAllCb.disabled = true;
+        }
+    } else {
+        if (emptyMsg) emptyMsg.style.display = "none";
+        if (selectAllCb) selectAllCb.disabled = false;
+
+        list.forEach(d => {
+            const docId = String(d.Doctor_ID);
+            const isSelected = tempSelectedDoctorIds.includes(docId);
+
+            const row = document.createElement("tr");
+            row.className = `picker-row ${isSelected ? "selected-row" : ""}`;
+            row.setAttribute("data-id", docId);
+            row.style.cursor = "pointer";
+
+            const specs = d.Specialties ? `<div style="font-size: 11.5px; color: var(--text-muted);">${d.Specialties}</div>` : "";
+            const station = d.Station_Name ? `<span class="badge badge-info" style="font-size: 11px; padding: 2px 6px;">${d.Station_Name}</span>` : "";
+            const typeBadge = `<span class="badge ${d.Doctor_Type === 'Attending' ? 'badge-primary' : 'badge-secondary'}" style="font-size: 11px; padding: 2px 6px;">${d.Doctor_Type}</span>`;
+
+            row.innerHTML = `
+                <td style="text-align: center;">
+                    <input type="checkbox" class="doctor-picker-cb" value="${docId}" ${isSelected ? "checked" : ""} style="cursor: pointer; pointer-events: none;">
+                </td>
+                <td>
+                    <div style="font-weight: 600; color: var(--text-main);">${d.Full_Name}</div>
+                    <div style="display: flex; gap: 6px; align-items: center; margin-top: 2px;">
+                        ${typeBadge}
+                        ${station}
+                    </div>
+                    ${specs}
+                </td>
+                <td style="text-align: right; font-weight: 600;">
+                    ₱${parseFloat(d.Base_Round_Fee || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                </td>
+            `;
+
+            row.addEventListener("click", () => {
+                togglePickerDoctor(docId);
+            });
+
+            tbody.appendChild(row);
         });
+
+        const allVisibleSelected = list.every(d => tempSelectedDoctorIds.includes(String(d.Doctor_ID)));
+        const someVisibleSelected = list.some(d => tempSelectedDoctorIds.includes(String(d.Doctor_ID)));
+
+        if (selectAllCb) {
+            selectAllCb.checked = allVisibleSelected;
+            selectAllCb.indeterminate = (!allVisibleSelected && someVisibleSelected);
+        }
+    }
+
+    if (statusMsg) {
+        const count = tempSelectedDoctorIds.length;
+        statusMsg.textContent = count === 0 ? "No physicians selected" : `${count} physician${count === 1 ? "" : "s"} selected`;
+    }
 };
 
 const renderAdmissionsTable = (admissions) => {
@@ -373,17 +489,16 @@ const loadAdmissions = () => {
 };
 
 const resetForm = () => {
-    if (document.getElementById('doctor_search_input')) document.getElementById('doctor_search_input').value = '';
-
     document.getElementById("patient_id").value = "";
     document.getElementById("patient_id_text").value = "";
     document.getElementById('chief_complaint').value = '';
     if (document.getElementById('diagnosis')) document.getElementById('diagnosis').value = '';
     document.getElementById("bed_id").value = "";
     document.getElementById("bed_id_text").value = "";
-    const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
-    checkedBoxes.forEach(cb => cb.checked = false);
-    filterDoctorsCheckboxes();
+    selectedDoctorIds = [];
+    tempSelectedDoctorIds = [];
+    const docTxt = document.getElementById("selected_doctors_text");
+    if (docTxt) docTxt.value = "";
 };
 
 const submitAdmission = () => {
@@ -409,10 +524,7 @@ const submitAdmission = () => {
         return;
     }
 
-    const checkedBoxes = document.querySelectorAll('.doctor-checkbox:checked');
-    const doctorIds = Array.from(checkedBoxes).map(cb => cb.value);
-
-    if (doctorIds.length === 0) {
+    if (!selectedDoctorIds || selectedDoctorIds.length === 0) {
         alert("Please assign at least one attending or resident physician.");
         return;
     }
@@ -422,7 +534,7 @@ const submitAdmission = () => {
         chief_complaint: chiefComplaint,
         diagnosis: diagnosis,
         bed_id: bedId,
-        doctor_ids: doctorIds
+        doctor_ids: selectedDoctorIds
     };
 
     console.log("admissions.js: Submitting payload:", payload);
@@ -510,10 +622,47 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnBrowseBed = document.getElementById("btnBrowse_bed_id");
     if (btnBrowseBed) btnBrowseBed.addEventListener("click", openBedPicker);
 
-    const docSearch = document.getElementById('doctor_search_input');
-    if (docSearch) {
-        docSearch.addEventListener('input', filterDoctorsCheckboxes);
+    const docInput = document.getElementById("selected_doctors_text");
+    if (docInput) docInput.addEventListener("click", openDoctorPicker);
+    const btnBrowseDoc = document.getElementById("btnBrowseDoctors");
+    if (btnBrowseDoc) btnBrowseDoc.addEventListener("click", openDoctorPicker);
+
+    const btnCloseDoc = document.getElementById("btnCloseDoctorPicker");
+    if (btnCloseDoc) btnCloseDoc.addEventListener("click", closeDoctorPicker);
+    const btnCancelDoc = document.getElementById("btnCancelDoctorPicker");
+    if (btnCancelDoc) btnCancelDoc.addEventListener("click", closeDoctorPicker);
+    const btnConfirmDoc = document.getElementById("btnConfirmDoctorPicker");
+    if (btnConfirmDoc) btnConfirmDoc.addEventListener("click", confirmDoctorPicker);
+
+    const docModal = document.getElementById("doctorPickerModal");
+    if (docModal) {
+        docModal.addEventListener("click", (e) => {
+            if (e.target === docModal) closeDoctorPicker();
+        });
     }
+
+    const docSearch = document.getElementById("doctor_picker_search");
+    if (docSearch) docSearch.addEventListener("input", renderDoctorPickerRows);
+    const docFilter = document.getElementById("doctor_picker_filter");
+    if (docFilter) docFilter.addEventListener("change", renderDoctorPickerRows);
+    const docSort = document.getElementById("doctor_picker_sort");
+    if (docSort) docSort.addEventListener("change", renderDoctorPickerRows);
+    const docSelectAll = document.getElementById("doctor_picker_select_all");
+    if (docSelectAll) {
+        docSelectAll.addEventListener("change", (e) => {
+            toggleSelectAllPickerDoctors(e.target.checked);
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const docPicker = document.getElementById("doctorPickerModal");
+            if (docPicker && (docPicker.classList.contains("active") || docPicker.style.display === "flex")) {
+                e.stopImmediatePropagation();
+                closeDoctorPicker();
+            }
+        }
+    });
 
     loadPatients();
     loadBeds();

@@ -1238,3 +1238,32 @@ textarea.form-control {
     color: var(--text-muted);
     margin-top: 2px;
 }
+
+.picker-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.picker-row:hover {
+    background-color: #f1f5f9 !important;
+}
+
+.picker-row.selected-row {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+}
+
+.picker-row.selected-row td {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    font-weight: 600;
+}
+
+.lookup-picker-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap !important;
+    margin-bottom: 12px;
+    width: 100%;
+}

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>In-Patient Admissions — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=6.0">
-    <link rel="stylesheet" href="../css/admissions.css">
+    <link rel="stylesheet" href="../css/common.css?v=6.1">
+    <link rel="stylesheet" href="../css/admissions.css?v=6.1">
 </head>
 <body>
 
@@ -63,18 +63,66 @@
                             </div>
 
                             <div class="form-group span-2">
-                                <label class="form-label">Assign Attending Physician(s) *</label>
-                                <input type="text" id="doctor_search_input" class="form-control form-control-sm mb-2" placeholder="🔍 Search physician by name, type, or specialty...">
-                                <div id="doctors_container">
-                                    Loading physicians...
+                                <label class="form-label" for="selected_doctors_text">Assign Attending Physician(s) *</label>
+                                <div class="input-lookup-group">
+                                    <input type="text" id="selected_doctors_text" class="form-control" placeholder="Click to select physician(s)..." readonly>
+                                    <button type="button" id="btnBrowseDoctors" class="btn btn-outline btn-lookup">Select</button>
                                 </div>
-                                <small class="text-muted">Check all attending and resident doctors responsible for this patient.</small>
+                                <small class="text-muted">Select one or more attending or resident physicians responsible for this patient.</small>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" id="btnCancel">Cancel</button>
                         <button type="button" id="btnSubmitAdmit" class="btn btn-primary">Submit In-Patient Admission</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="doctorPickerModal" class="modal-overlay picker-modal-overlay" style="display: none; z-index: 1200;">
+                <div class="modal-container" style="max-width: 680px;">
+                    <div class="modal-header">
+                        <h3 id="doctor_picker_title">Select Attending Physician(s)</h3>
+                        <button type="button" class="modal-close" id="btnCloseDoctorPicker" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 16px 20px;">
+                        <div class="lookup-picker-controls">
+                            <input type="text" id="doctor_picker_search" class="form-control lookup-picker-search-input" placeholder="Search physician by name, specialty, or type..." autocomplete="off" style="flex: 1 1 0%; min-width: 100px; font-size: 0.88rem; padding: 8px 12px;">
+                            <select id="doctor_picker_filter" class="form-select lookup-picker-select" style="width: auto; flex: 0 0 auto; min-width: 110px; max-width: 145px; font-size: 0.85rem; padding: 8px 10px;">
+                                <option value="all">All Doctors</option>
+                                <option value="selected">Selected</option>
+                                <option value="unselected">Unselected</option>
+                                <option value="Resident">Residents</option>
+                                <option value="Attending">Attendings</option>
+                            </select>
+                            <select id="doctor_picker_sort" class="form-select lookup-picker-select" style="width: auto; flex: 0 0 auto; min-width: 115px; max-width: 155px; font-size: 0.85rem; padding: 8px 10px;">
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="selected_first">Selected First</option>
+                                <option value="fee_asc">Lowest Fee</option>
+                                <option value="fee_desc">Highest Fee</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px;">
+                            <table class="data-table" id="doctor_picker_table" style="margin: 0; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 45px; text-align: center;"><input type="checkbox" id="doctor_picker_select_all" style="cursor: pointer;"></th>
+                                        <th>Physician Name & Details</th>
+                                        <th style="width: 130px; text-align: right;">Base Round Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="doctor_picker_tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="doctor_picker_empty" class="text-muted text-center" style="display: none; padding: 25px 0;">No matching physicians found.</div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span id="doctor_picker_status" style="font-size: 0.85rem; color: var(--text-muted);">No physicians selected</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-secondary" id="btnCancelDoctorPicker">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="btnConfirmDoctorPicker">Confirm Selection</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,9 +160,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=6.0"></script>
-    <script src="../js/common.js?v=6.0"></script>
-    <script src="../js/admissions.js?v=6.0"></script>
+    <script src="../js/sidebar.js?v=6.1"></script>
+    <script src="../js/common.js?v=6.1"></script>
+    <script src="../js/admissions.js?v=6.1"></script>
 </body>
 </html>
 

@@ -162,12 +162,13 @@ class InvoiceManager
                         iad.Applied_Discount_ID,
                         iad.Discount_ID,
                         iad.Discount_Name,
-                        iad.Discount_Type_ID,
+                        ed.Discount_Type_ID,
                         COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type,
                         iad.Discount_Value,
                         iad.Calculated_Deduction
                        FROM Invoice_Applied_Discount iad
-                       LEFT JOIN Enum_Discount_Type edt ON iad.Discount_Type_ID = edt.Discount_Type_ID
+                       LEFT JOIN Enum_Discount ed ON iad.Discount_ID = ed.Discount_ID
+                       LEFT JOIN Enum_Discount_Type edt ON ed.Discount_Type_ID = edt.Discount_Type_ID
                        WHERE iad.Invoice_ID = :iid
                        ORDER BY iad.Applied_Discount_ID ASC";
         $appDiscStmt = $conn->prepare($appDiscSql);

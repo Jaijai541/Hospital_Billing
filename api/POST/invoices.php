@@ -130,8 +130,24 @@ class InvoiceManager
                 $cType = ($cd['type'] ?? 'Fixed') === 'Percentage' ? 'Percentage' : 'Fixed';
                 $cVal = floatval($cd['value'] ?? 0);
                 if ($cVal > 0) {
+                    $chkDisc = $conn->prepare("SELECT Discount_ID FROM Enum_Discount WHERE Discount_Name = :name LIMIT 1");
+                    $chkDisc->execute([':name' => $cName]);
+                    $foundId = $chkDisc->fetchColumn();
+                    if (!$foundId) {
+                        $typeId = ($cType === 'Fixed') ? 2 : 1;
+                        $insD = $conn->prepare("INSERT INTO Enum_Discount (Discount_Name, Discount_Type_ID, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active) VALUES (:name, :type_id, :pct, :fixed, :exempt, 1)");
+                        $insD->execute([
+                            ':name' => $cName,
+                            ':type_id' => $typeId,
+                            ':pct' => ($cType === 'Percentage' ? $cVal : 0.00),
+                            ':fixed' => ($cType === 'Fixed' ? $cVal : 0.00),
+                            ':exempt' => !empty($cd['is_vat_exempt']) ? 1 : 0
+                        ]);
+                        $foundId = $conn->lastInsertId();
+                    }
+
                     $allDiscountsToApply[] = [
-                        'discount_id' => null,
+                        'discount_id' => intval($foundId),
                         'name' => $cName,
                         'type' => $cType,
                         'pct' => ($cType === 'Percentage') ? $cVal : 0,
@@ -249,17 +265,15 @@ class InvoiceManager
             if (!empty($appliedItems)) {
                 $insAppDisc = $conn->prepare("
                     INSERT INTO Invoice_Applied_Discount 
-                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Type_ID, Discount_Value, Calculated_Deduction)
+                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Value, Calculated_Deduction)
                     VALUES 
-                        (:iid, :did, :dname, :dtypeid, :dval, :dded)
+                        (:iid, :did, :dname, :dval, :dded)
                 ");
                 foreach ($appliedItems as $ai) {
-                    $typeId = ($ai['type'] === 'Fixed') ? 2 : 1;
                     $insAppDisc->execute([
                         ':iid' => $invoiceId,
                         ':did' => $ai['discount_id'],
                         ':dname' => $ai['name'],
-                        ':dtypeid' => $typeId,
                         ':dval' => $ai['value'],
                         ':dded' => $ai['deduction']
                     ]);

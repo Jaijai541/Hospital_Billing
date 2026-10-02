@@ -2273,7 +2273,8 @@ const renderBilledSettlementCard = (inv) => {
             return `<div>• <strong>${ad.Discount_Name}</strong> (${valStr}) — <span style="color: #166534; font-weight: 600;">-₱${parseFloat(ad.Calculated_Deduction || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span></div>`;
         }).join('');
     } else if (inv.Discount_Summary) {
-        discountDetailsHtml = `${inv.Discount_Summary} — <span style="color: #166534; font-weight: 600;">-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
+        const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
+        discountDetailsHtml = `${discItems.join('<br>')} — <span style="color: #166534; font-weight: 600;">-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
     } else if (discountAmt > 0) {
         discountDetailsHtml = `${inv.Discount_Name || 'Statutory Discount'} (${parseFloat(inv.Discount_Percentage || 0).toFixed(2)}%) — <span style="color: #166534; font-weight: 600;">-₱${discountAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
     }

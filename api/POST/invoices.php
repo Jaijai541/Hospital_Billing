@@ -220,7 +220,7 @@ class InvoiceManager
                     $summaryParts[] = $ai['name'] . ' ' . number_format($ai['value'], 2) . '% (-₱' . number_format($ai['deduction'], 2) . ')';
                 }
             }
-            $discountSummary = !empty($summaryParts) ? implode('; ', $summaryParts) : null;
+            $discountSummary = !empty($summaryParts) ? implode('<br>', $summaryParts) : null;
 
             if ($isVatExempt) {
                 $vatRate = 0.00;

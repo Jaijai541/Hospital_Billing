@@ -175,7 +175,8 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
 
     if (elDiscLabel) {
         if (inv.Discount_Summary) {
-            elDiscLabel.textContent = inv.Discount_Summary;
+            const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
+            elDiscLabel.innerHTML = discItems.join('<br>');
         } else if (discName && discName !== "None" && discPct > 0) {
             elDiscLabel.textContent = `${discName} - ${discPct.toFixed(2)}%`;
         } else {

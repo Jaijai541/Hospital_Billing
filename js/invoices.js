@@ -68,9 +68,10 @@ const renderInvoicesTable = (invoices) => {
 
         let discBadge = '<span class="text-muted">None</span>';
         if (inv.Discount_Summary) {
-            discBadge = `<span class="badge badge-info" style="font-size: 11px; max-width: 200px; white-space: normal; display: inline-block; text-align: left;">${inv.Discount_Summary}<br></span><br>`;
+            const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
+            discBadge = discItems.map(item => `<span class="badge badge-info" style="font-size: 11px; max-width: 220px; white-space: normal; display: inline-block; text-align: left; margin-bottom: 2px;">${item}</span>`).join('<br>');
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span><br>`;
+            discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
         }
 
         const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);
@@ -254,7 +255,8 @@ const openPaymentHistoryModal = (invoiceId) => {
     const elDiscSumm = document.getElementById('hist_discounts_summary');
     if (elDiscSumm) {
         if (inv.Discount_Summary) {
-            elDiscSumm.textContent = inv.Discount_Summary;
+            const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
+            elDiscSumm.innerHTML = discItems.join('<br>');
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
             elDiscSumm.textContent = `${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
         } else {

@@ -1522,9 +1522,10 @@ const renderTransfersTable = (transfers) => {
     html += '</tr></thead><tbody>';
 
     transfers.forEach(t => {
-        const rate = parseFloat(t.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const rawRate = parseFloat(t.Daily_Rate || t.Room_Rate || 0);
+        const rate = isNaN(rawRate) ? '0.00' : rawRate.toLocaleString('en-PH', {minimumFractionDigits: 2});
         const fee = t.Total_Room_Fee ? `₱${parseFloat(t.Total_Room_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '<span class="text-muted">Accumulating...</span>';
-        const isCurrent = t.Is_Current_Stay == 1;
+        const isCurrent = (t.Is_Current == 1 || t.Is_Current_Stay == 1 || !t.Date_Out || t.Date_Out === 'Currently In Bed');
 
         const stayBadge = isCurrent 
             ? '<span class="badge badge-success">Active Occupancy</span>' 
@@ -1589,7 +1590,7 @@ const filterAvailableBeds = () => {
     filtered.forEach(b => {
         const opt = document.createElement('option');
         opt.value = b.Bed_ID;
-        const rate = parseFloat(b.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const rate = parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
         opt.textContent = `Bed: ${b.Bed_Code} | ${b.Room_Name} (${b.Room_Type}) — ₱${rate}/day`;
         if (String(b.Bed_ID) === String(currentVal)) opt.selected = true;
         select.appendChild(opt);

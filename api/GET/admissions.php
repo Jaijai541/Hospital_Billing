@@ -281,11 +281,13 @@ class AdmissionManager
                     rb.Bed_Code,
                     r.Room_Name,
                     rt.Type_Name AS Room_Type,
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate, 0.00) AS Daily_Rate,
                     DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Date_In,
                     DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Date_Out,
                     rtl.Total_Days,
                     rtl.Total_Room_Fee,
-                    (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current
+                    (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current,
+                    (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current_Stay
                 FROM Room_Transfer_Log rtl
                 INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID

@@ -273,7 +273,8 @@ const renderSummaryBox = (summary) => {
     const returns = parseFloat(summary.return_total || 0);
     const net = parseFloat(summary.net_accumulated_total || (gross - returns));
     const estimatedVat = Math.round(net * 0.12 * 100) / 100;
-    const totalWithVat = Math.round((net + estimatedVat) * 100) / 100;
+    const vatableBase = Math.round((net - estimatedVat) * 100) / 100;
+    const totalAmount = net;
 
     document.getElementById("pb-sum-room").textContent = `₱${formatMoney(room)}`;
     document.getElementById("pb-sum-doctor").textContent = `₱${formatMoney(doc)}`;
@@ -292,12 +293,12 @@ const renderSummaryBox = (summary) => {
         }
     }
 
-    document.getElementById("pb-sum-net").textContent = `₱${formatMoney(net)}`;
+    document.getElementById("pb-sum-net").textContent = `₱${formatMoney(vatableBase)}`;
     const elVat = document.getElementById("pb-sum-vat");
-    if (elVat) elVat.textContent = `+₱${formatMoney(estimatedVat)}`;
+    if (elVat) elVat.textContent = `₱${formatMoney(estimatedVat)}`;
     const elTotalWithVat = document.getElementById("pb-sum-total-with-vat");
-    if (elTotalWithVat) elTotalWithVat.textContent = `₱${formatMoney(totalWithVat)}`;
-    document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalWithVat)}`;
+    if (elTotalWithVat) elTotalWithVat.textContent = `₱${formatMoney(totalAmount)}`;
+    document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalAmount)}`;
 };
 
 const loadPartialBill = (admissionId) => {

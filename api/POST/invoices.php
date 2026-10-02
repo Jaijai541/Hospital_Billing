@@ -230,10 +230,10 @@ class InvoiceManager
                 $netAmountDue = $netAfterDiscounts;
             } else {
                 $vatRate = 12.00;
-                $vatableAmount = $netAfterDiscounts;
                 $vatAmount = round($netAfterDiscounts * 0.12, 2);
+                $vatableAmount = round($netAfterDiscounts - $vatAmount, 2);
                 $vatExemptAmount = 0.00;
-                $netAmountDue = round($netAfterDiscounts + $vatAmount, 2);
+                $netAmountDue = $netAfterDiscounts;
             }
 
             $amountPaidInput = isset($json['amount_paid']) ? floatval($json['amount_paid']) : null;

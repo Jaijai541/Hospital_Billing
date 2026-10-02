@@ -2409,12 +2409,12 @@ const renderSettlementSection = () => {
                 <td align="right" style="color: #276749;"><strong>-<span id="settle-pct-discount-display">₱0.00</span></strong></td>
             </tr>
             <tr style="background-color: #f1f5f9;">
-                <td><strong>Net Billable Amount (Before Tax):</strong></td>
+                <td><strong>Total Net Bill:</strong></td>
                 <td align="right"><strong id="settle-net-before-tax-display">₱${formattedGross}</strong></td>
             </tr>
             <tr id="settle-vat-row">
-                <td>Value-Added Tax (12% VAT):</td>
-                <td align="right"><strong id="settle-vat-display" style="color: #0369a1;">+₱0.00 (12% VAT)</strong></td>
+                <td style="padding-left: 20px; font-size: 13px; color: #475569;">• 12% Value-Added Tax (included in bill):</td>
+                <td align="right"><strong id="settle-vat-display" style="color: #0369a1;">₱0.00</strong></td>
             </tr>
             <tr style="background-color: #edf2f7;">
                 <td><h3 style="margin: 5px 0;">NET AMOUNT ASSESSED:</h3></td>
@@ -2543,10 +2543,10 @@ const renderSettlementSection = () => {
             netAmountDue = netBeforeTax;
         } else {
             vatRate = 12.00;
-            vatableAmount = netBeforeTax;
             vatAmount = Math.round((netBeforeTax * 0.12) * 100) / 100;
+            vatableAmount = Math.round((netBeforeTax - vatAmount) * 100) / 100;
             vatExemptAmount = 0;
-            netAmountDue = Math.round((netBeforeTax + vatAmount) * 100) / 100;
+            netAmountDue = netBeforeTax;
         }
 
         return {
@@ -2591,7 +2591,7 @@ const renderSettlementSection = () => {
             if (math.isVatExempt) {
                 lblVat.innerHTML = '<span class="badge badge-success" style="font-size: 12px;">₱0.00 (12% VAT-Exempt — Senior/PWD)</span>';
             } else {
-                lblVat.innerHTML = `+₱${math.vatAmount.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 12.5px;">(12% on ₱${math.vatableAmount.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                lblVat.innerHTML = `₱${math.vatAmount.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 12.5px;">(12% included; VATable: ₱${math.vatableAmount.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
             }
         }
 
@@ -2814,7 +2814,7 @@ const submitSettlement = () => {
     const pctDed = Math.round(afterFixed * (totalPct / 100) * 100) / 100;
     const netBeforeTax = Math.max(0, Math.round((afterFixed - pctDed) * 100) / 100);
     const vatAmt = isExempt ? 0 : Math.round(netBeforeTax * 0.12 * 100) / 100;
-    const netAmt = Math.round((netBeforeTax + vatAmt) * 100) / 100;
+    const netAmt = netBeforeTax;
 
     let confirmMsg = '';
     if (amountPaid < netAmt) {

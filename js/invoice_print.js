@@ -185,7 +185,7 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
 
     if (elDiscTotal) elDiscTotal.textContent = `-₱${formatMoney(discAmt)}`;
 
-    const netBefore = (vatableAmt > 0 ? vatableAmt : (vatExemptAmt > 0 ? vatExemptAmt : Math.max(0, gross - discAmt)));
+    const netBefore = (vatableAmt > 0 && vatAmt > 0 ? (vatableAmt + vatAmt) : (net > 0 ? net : Math.max(0, gross - discAmt)));
     if (elNetBeforeTax) elNetBeforeTax.textContent = `₱${formatMoney(netBefore)}`;
 
     if (isExempt) {
@@ -201,7 +201,7 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
             if (elVatableAmt) elVatableAmt.textContent = `₱${formatMoney(vatableAmt > 0 ? vatableAmt : netBefore)}`;
         }
         if (elRowExempt) elRowExempt.style.display = "none";
-        if (elVatAmt) elVatAmt.textContent = `+₱${formatMoney(vatAmt)}`;
+        if (elVatAmt) elVatAmt.textContent = `₱${formatMoney(vatAmt)}`;
     }
 
     if (elNetTotal) elNetTotal.textContent = `₱${formatMoney(net)}`;

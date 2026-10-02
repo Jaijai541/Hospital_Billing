@@ -247,7 +247,7 @@ const openPaymentHistoryModal = (invoiceId) => {
         if (isExempt) {
             elVatWrap.innerHTML = '<span class="badge badge-success" style="font-size: 11px;">0% (VAT-Exempt)</span>';
         } else {
-            elVatWrap.innerHTML = `+₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 11px;">(12%)</span>`;
+            elVatWrap.innerHTML = `₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 11px;">(12% included)</span>`;
         }
     }
 

@@ -13,18 +13,16 @@ class Discount
         $typeId = ($type === 'Fixed') ? 2 : 1;
         if (!empty($json['discount_type_id'])) {
             $typeId = intval($json['discount_type_id']);
-            $type = ($typeId === 2) ? 'Fixed' : 'Percentage';
         }
         $pct = floatval($json['discount_percentage'] ?? 0);
         $fixed = floatval($json['fixed_amount'] ?? 0);
         $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
 
-        $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Type_ID, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active) 
-                VALUES (:name, :type_id, :type, :percentage, :fixed, :exempt, 1)";
+        $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Type_ID, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active) 
+                VALUES (:name, :type_id, :percentage, :fixed, :exempt, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['discount_name']);
         $stmt->bindParam(":type_id", $typeId);
-        $stmt->bindParam(":type", $type);
         $stmt->bindParam(":percentage", $pct);
         $stmt->bindParam(":fixed", $fixed);
         $stmt->bindParam(":exempt", $isVatExempt);
@@ -42,7 +40,6 @@ class Discount
         $typeId = ($type === 'Fixed') ? 2 : 1;
         if (!empty($json['discount_type_id'])) {
             $typeId = intval($json['discount_type_id']);
-            $type = ($typeId === 2) ? 'Fixed' : 'Percentage';
         }
         $pct = floatval($json['discount_percentage'] ?? 0);
         $fixed = floatval($json['fixed_amount'] ?? 0);
@@ -51,7 +48,6 @@ class Discount
         $sql = "UPDATE Enum_Discount 
                 SET Discount_Name = :name, 
                     Discount_Type_ID = :type_id,
-                    Discount_Type = :type,
                     Discount_Percentage = :percentage,
                     Fixed_Amount = :fixed,
                     Is_Vat_Exempt = :exempt
@@ -59,7 +55,6 @@ class Discount
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['discount_name']);
         $stmt->bindParam(":type_id", $typeId);
-        $stmt->bindParam(":type", $type);
         $stmt->bindParam(":percentage", $pct);
         $stmt->bindParam(":fixed", $fixed);
         $stmt->bindParam(":exempt", $isVatExempt);

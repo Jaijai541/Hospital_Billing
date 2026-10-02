@@ -59,7 +59,7 @@ class ArchiveManager
                 $sql = "SELECT d.Discount_ID AS ID,
                                CONCAT('DISC-', LPAD(d.Discount_ID, 3, '0')) AS Code,
                                d.Discount_Name AS Name,
-                               CASE WHEN d.Discount_Type_ID = 2 OR d.Discount_Type = 'Fixed' THEN CONCAT('Fixed: ₱', FORMAT(d.Fixed_Amount, 2)) ELSE CONCAT('Rate: ', FORMAT(d.Discount_Percentage, 2), '%') END AS Details
+                               CASE WHEN d.Discount_Type_ID = 2 THEN CONCAT('Fixed: ₱', FORMAT(d.Fixed_Amount, 2)) ELSE CONCAT('Rate: ', FORMAT(d.Discount_Percentage, 2), '%') END AS Details
                         FROM Enum_Discount d
                         WHERE d.Is_Active = 0
                         ORDER BY d.Discount_Name ASC";

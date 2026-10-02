@@ -110,7 +110,7 @@ class InvoiceManager
             $allDiscountsToApply = [];
             if (!empty($discountIds)) {
                 $placeholders = implode(',', array_fill(0, count($discountIds), '?'));
-                $dStmt = $conn->prepare("SELECT Discount_ID, Discount_Name, Discount_Type, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt FROM Enum_Discount WHERE Discount_ID IN ($placeholders) AND Is_Active = 1");
+                $dStmt = $conn->prepare("SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt FROM Enum_Discount d LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID WHERE d.Discount_ID IN ($placeholders) AND d.Is_Active = 1");
                 $dStmt->execute($discountIds);
                 $fetchedDiscs = $dStmt->fetchAll(PDO::FETCH_ASSOC);
                 foreach ($fetchedDiscs as $fd) {
@@ -249,9 +249,9 @@ class InvoiceManager
             if (!empty($appliedItems)) {
                 $insAppDisc = $conn->prepare("
                     INSERT INTO Invoice_Applied_Discount 
-                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Type_ID, Discount_Type, Discount_Value, Calculated_Deduction)
+                        (Invoice_ID, Discount_ID, Discount_Name, Discount_Type_ID, Discount_Value, Calculated_Deduction)
                     VALUES 
-                        (:iid, :did, :dname, :dtypeid, :dtype, :dval, :dded)
+                        (:iid, :did, :dname, :dtypeid, :dval, :dded)
                 ");
                 foreach ($appliedItems as $ai) {
                     $typeId = ($ai['type'] === 'Fixed') ? 2 : 1;
@@ -260,7 +260,6 @@ class InvoiceManager
                         ':did' => $ai['discount_id'],
                         ':dname' => $ai['name'],
                         ':dtypeid' => $typeId,
-                        ':dtype' => $ai['type'],
                         ':dval' => $ai['value'],
                         ':dded' => $ai['deduction']
                     ]);

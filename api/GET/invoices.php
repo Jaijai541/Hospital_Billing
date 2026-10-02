@@ -12,7 +12,7 @@ class InvoiceManager
                     d.Discount_ID,
                     d.Discount_Name,
                     d.Discount_Type_ID,
-                    COALESCE(edt.Type_Name, d.Discount_Type) AS Discount_Type,
+                    COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type,
                     d.Discount_Percentage,
                     d.Fixed_Amount,
                     d.Is_Vat_Exempt
@@ -113,7 +113,7 @@ class InvoiceManager
                     COALESCE(d.Discount_Name, 'None') AS Discount_Name,
                     COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
                     COALESCE(d.Fixed_Amount, 0.00) AS Fixed_Amount,
-                    COALESCE(d.Discount_Type, 'Percentage') AS Discount_Type,
+                    COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type,
                     u.User_ID AS Cashier_User_ID,
                     CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
                     ur.Role_Name AS Cashier_Role,
@@ -143,6 +143,7 @@ class InvoiceManager
                 LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
                 LEFT JOIN Enum_Blood_Type bt ON p.Blood_Type_ID = bt.Blood_Type_ID
                 LEFT JOIN Enum_Discount d ON fi.Discount_ID = d.Discount_ID
+                LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
                 WHERE " . (!empty($invoiceId) ? "fi.Invoice_ID = :iid" : "fi.Admission_ID = :aid");
 
         $stmt = $conn->prepare($sql);
@@ -162,7 +163,7 @@ class InvoiceManager
                         iad.Discount_ID,
                         iad.Discount_Name,
                         iad.Discount_Type_ID,
-                        COALESCE(edt.Type_Name, iad.Discount_Type) AS Discount_Type,
+                        COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type,
                         iad.Discount_Value,
                         iad.Calculated_Deduction
                        FROM Invoice_Applied_Discount iad

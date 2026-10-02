@@ -286,7 +286,6 @@ CREATE TABLE IF NOT EXISTS Invoice_Applied_Discount (
     Discount_Name VARCHAR(100) NOT NULL,
     Discount_Value DECIMAL(12, 2) NOT NULL,
     Calculated_Deduction DECIMAL(12, 2) NOT NULL,
-    Applied_At DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
     FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID)
 );

@@ -9,13 +9,9 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
-        $type = in_array($json['discount_type'] ?? '', ['Fixed', 'Percentage']) ? $json['discount_type'] : 'Percentage';
-        $typeId = ($type === 'Fixed') ? 2 : 1;
-        if (!empty($json['discount_type_id'])) {
-            $typeId = intval($json['discount_type_id']);
-        }
+        $typeId = 1;
         $pct = floatval($json['discount_percentage'] ?? 0);
-        $fixed = floatval($json['fixed_amount'] ?? 0);
+        $fixed = 0.00;
         $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
 
         $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Type_ID, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active) 
@@ -36,13 +32,9 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
-        $type = in_array($json['discount_type'] ?? '', ['Fixed', 'Percentage']) ? $json['discount_type'] : 'Percentage';
-        $typeId = ($type === 'Fixed') ? 2 : 1;
-        if (!empty($json['discount_type_id'])) {
-            $typeId = intval($json['discount_type_id']);
-        }
+        $typeId = 1;
         $pct = floatval($json['discount_percentage'] ?? 0);
-        $fixed = floatval($json['fixed_amount'] ?? 0);
+        $fixed = 0.00;
         $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
 
         $sql = "UPDATE Enum_Discount 

@@ -34,25 +34,12 @@
                         <div class="form-grid">
                             <div class="form-group span-2">
                                 <label class="form-label" for="discount_name">Discount Policy Name</label>
-                                <input type="text" id="discount_name" class="form-control" placeholder="e.g. Senior Citizen, PWD, Hospital Voucher, LGU Subsidy" required>
-                            </div>
-
-                            <div class="form-group span-2">
-                                <label class="form-label" for="discount_type">Discount Scheme Type</label>
-                                <select id="discount_type" class="form-select">
-                                    <option value="Percentage">Percentage Rate (%)</option>
-                                    <option value="Fixed">Fixed Deduction / Voucher (₱)</option>
-                                </select>
+                                <input type="text" id="discount_name" class="form-control" placeholder="e.g. Senior Citizen, PWD, Government Employee" required>
                             </div>
 
                             <div class="form-group span-2" id="group_percentage">
-                                <label class="form-label" for="discount_percentage">Discount Percentage (%)</label>
-                                <input type="number" step="0.01" min="0" max="100" id="discount_percentage" class="form-control" placeholder="e.g. 20.00">
-                            </div>
-
-                            <div class="form-group span-2" id="group_fixed" style="display: none;">
-                                <label class="form-label" for="fixed_amount">Fixed Voucher Amount (₱)</label>
-                                <input type="number" step="0.01" min="0" id="fixed_amount" class="form-control" placeholder="e.g. 1000.00">
+                                <label class="form-label" for="discount_percentage">Discount Rate (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" id="discount_percentage" class="form-control" placeholder="e.g. 20.00" required>
                             </div>
 
                             <div class="form-group span-2">
@@ -86,15 +73,6 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="filter_type">Discount Type</label>
-                                <select id="filter_type" class="form-select">
-                                    <option value="all">All Types</option>
-                                    <option value="Percentage">Percentage Only</option>
-                                    <option value="Fixed">Fixed Vouchers Only</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
                                 <label class="form-label" for="filter_status">Status</label>
                                 <select id="filter_status" class="form-select">
                                     <option value="all">All Records</option>
@@ -110,8 +88,8 @@
                                     <option value="name_desc">Name (Z to A)</option>
                                     <option value="code_asc">Code (A to Z)</option>
                                     <option value="code_desc">Code (Z to A)</option>
-                                    <option value="val_asc">Value (Lowest First)</option>
-                                    <option value="val_desc">Value (Highest First)</option>
+                                    <option value="val_desc">Rate (Highest First)</option>
+                                    <option value="val_asc">Rate (Lowest First)</option>
                                     <option value="id_desc">Newest First (ID)</option>
                                 </select>
                             </div>
@@ -126,8 +104,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=6.5"></script>
-    <script src="../js/common.js?v=6.5"></script>
-    <script src="../js/discounts.js?v=6.5"></script>
+    <script src="../js/sidebar.js?v=7.0"></script>
+    <script src="../js/common.js?v=7.0"></script>
+    <script src="../js/discounts.js?v=7.0"></script>
 </body>
 </html>

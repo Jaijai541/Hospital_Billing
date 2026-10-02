@@ -18,7 +18,7 @@ class InvoiceManager
                     d.Is_Vat_Exempt
                 FROM Enum_Discount d
                 LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
-                WHERE d.Is_Active = 1
+                WHERE d.Is_Active = 1 AND (d.Discount_Type_ID = 1 OR edt.Type_Name = 'Percentage')
                 ORDER BY d.Discount_Type_ID ASC, d.Discount_Percentage DESC, d.Fixed_Amount DESC, d.Discount_Name ASC";
 
         $stmt = $conn->prepare($sql);

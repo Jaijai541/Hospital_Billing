@@ -2577,21 +2577,17 @@ const renderSettlementSection = () => {
 
     let discountCheckboxesHtml = '';
     discountList.forEach(d => {
-        const isFixed = (d.Discount_Type === 'Fixed');
-        const badgeColor = isFixed ? 'background: #e0f2fe; color: #0369a1;' : 'background: #fef3c7; color: #92400e;';
-        const valText = isFixed 
-            ? `Fixed: ₱${parseFloat(d.Fixed_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}` 
-            : `${parseFloat(d.Discount_Percentage || 0).toFixed(2)}%`;
+        const valText = `${parseFloat(d.Discount_Percentage || 0).toFixed(2)}%`;
         const vatBadge = (d.Is_Vat_Exempt == 1) ? `<span class="badge badge-success" style="font-size: 11px; padding: 2px 7px;">12% VAT EXEMPT</span>` : '';
 
         discountCheckboxesHtml += `
             <label style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; user-select: none;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="${d.Discount_Type}" data-pct="${d.Discount_Percentage}" data-fixed="${d.Fixed_Amount}" data-vat-exempt="${d.Is_Vat_Exempt}" style="width: 17px; height: 17px; cursor: pointer;">
+                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="Percentage" data-pct="${d.Discount_Percentage}" data-fixed="0.00" data-vat-exempt="${d.Is_Vat_Exempt}" style="width: 17px; height: 17px; cursor: pointer;">
                     <span style="font-weight: 600; font-size: 13.5px; color: #1e293b;">${d.Discount_Name}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
-                    <span class="badge" style="${badgeColor} font-size: 11.5px; padding: 3px 8px;">${valText}</span>
+                    <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11.5px; padding: 3px 8px;">${valText}</span>
                     ${vatBadge}
                 </div>
             </label>
@@ -2657,9 +2653,9 @@ const renderSettlementSection = () => {
         <div class="card p-3 mb-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <label class="form-label" style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0;">
-                    Discounts, Deductions & Vouchers (Cumulative / Stacking Enabled):
+                    Institutional Policy Discounts (Cumulative / Stacking Enabled):
                 </label>
-                <span class="text-muted" style="font-size: 12.5px;">Fixed vouchers deduct first, then percentage discounts apply to remaining subtotal</span>
+                <span class="text-muted" style="font-size: 12.5px;">Medical assistance &amp; vouchers deduct first, then percentage discounts apply</span>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-bottom: 12px;">
@@ -2667,11 +2663,11 @@ const renderSettlementSection = () => {
             </div>
 
             <div style="background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 6px; padding: 10px 14px;">
-                <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">+ Add Custom Fixed Voucher / Courtesy Deduction:</div>
+                <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">+ Add Medical Assistance / Dynamic Voucher (e.g. Malasakit, PCSO, DSWD, Guarantee Letter):</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <input type="text" id="custom_voucher_name_input" class="form-control" style="max-width: 250px; font-size: 13px;" placeholder="e.g. Hospital Voucher, LGU Subsidy">
-                    <input type="number" id="custom_voucher_val_input" class="form-control" style="max-width: 160px; font-size: 13px;" step="0.01" min="0.01" placeholder="Amount (₱)">
-                    <button type="button" id="btnAddCustomVoucher" class="btn btn-outline btn-sm" style="font-weight: 600;">+ Add Voucher</button>
+                    <input type="text" id="custom_voucher_name_input" class="form-control" style="max-width: 270px; font-size: 13px;" placeholder="e.g. Malasakit, PCSO, DSWD, Guarantee Letter">
+                    <input type="number" id="custom_voucher_val_input" class="form-control" style="max-width: 170px; font-size: 13px;" step="0.01" min="0.01" placeholder="Acquired Amount (₱)">
+                    <button type="button" id="btnAddCustomVoucher" class="btn btn-outline btn-sm" style="font-weight: 600;">+ Add Assistance</button>
                 </div>
                 <div id="custom-vouchers-tags" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
             </div>
@@ -2687,11 +2683,11 @@ const renderSettlementSection = () => {
                 <td width="55%" align="right"><strong>₱<span id="settle-gross-display">${formattedGross}</span></strong></td>
             </tr>
             <tr>
-                <td>Less: Fixed Vouchers &amp; Deductions:</td>
+                <td>Less: Medical Assistance &amp; Vouchers:</td>
                 <td align="right" style="color: #276749;"><strong>-<span id="settle-fixed-deductions-display">₱0.00</span></strong></td>
             </tr>
             <tr style="background-color: #f8fafc;">
-                <td>Subtotal After Fixed Deductions:</td>
+                <td>Subtotal After Assistance / Vouchers:</td>
                 <td align="right"><strong>₱<span id="settle-subtotal-after-fixed-display">${formattedGross}</span></strong></td>
             </tr>
             <tr>

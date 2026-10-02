@@ -68,9 +68,9 @@ const renderInvoicesTable = (invoices) => {
 
         let discBadge = '<span class="text-muted">None</span>';
         if (inv.Discount_Summary) {
-            discBadge = `<span class="badge badge-info" style="font-size: 11px; max-width: 200px; white-space: normal; display: inline-block; text-align: left;">${inv.Discount_Summary}</span>`;
+            discBadge = `<span class="badge badge-info" style="font-size: 11px; max-width: 200px; white-space: normal; display: inline-block; text-align: left;">${inv.Discount_Summary}<br></span><br>`;
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
+            discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span><br>`;
         }
 
         const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);

@@ -455,7 +455,8 @@
                             <h2 style="margin: 0;">2. Live Itemized Billing Ledger & Running Account</h2>
                             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-secondary btn-sm" id="btnOpenReturnModal">+ Return Medicine</button>
-                                <button type="button" class="btn btn-primary btn-sm" id="btnTabLedgerPartialBill">🖨 Print Partial Bill (Interim)</button>
+                                <button type="button" class="btn btn-outline btn-sm" id="btnTabLedgerPartialBill">🖨 Print Partial Bill (Interim)</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btnOpenAdvancePaymentModal">💵 Record Advance Payment</button>
                             </div>
                         </div>
                         <div class="card-body">
@@ -674,10 +675,63 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="advancePaymentModal" style="display: none;">
+        <div class="modal-container" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3>Record Advance Payment / Patient Deposit</h3>
+                <button type="button" class="modal-close" id="btnCloseAdvancePaymentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13.5px;">
+                        <div><strong style="color: #64748b;">Patient:</strong> <span id="adv_patient_name" style="font-weight: 700;"></span></div>
+                        <div><strong style="color: #64748b;">Admission:</strong> <span id="adv_admission_code" style="font-weight: 700;"></span></div>
+                        <div><strong style="color: #64748b;">Running Charges:</strong> <span id="adv_running_charges" style="font-weight: 600;">₱0.00</span></div>
+                        <div><strong style="color: #64748b;">Prior Advance Paid:</strong> <span id="adv_prior_paid" style="font-weight: 600; color: #16a34a;">₱0.00</span></div>
+                    </div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #86efac; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; color: #1e3a8a; font-size: 14px;">ESTIMATED UNPAID BALANCE:</span>
+                        <strong style="font-size: 17px; color: #1e3a8a;" id="adv_unpaid_balance">₱0.00</strong>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="adv_method_id">Payment Method *</label>
+                    <div class="input-lookup-group">
+                        <input type="hidden" id="adv_method_id" required>
+                        <input type="text" id="adv_method_id_text" class="form-control" placeholder="Click to select payment method..." readonly>
+                        <button type="button" id="btnBrowse_adv_method_id" class="btn btn-outline btn-lookup">Select</button>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="adv_amount_input">Deposit / Payment Tendered (₱) *</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="adv_amount_input" class="form-control" step="0.01" min="0.01" placeholder="0.00" style="font-weight: 700; font-size: 16px;" required>
+                        <button type="button" class="btn btn-secondary" id="btnPayAdvExactBalance" style="white-space: nowrap;">Pay Running Balance</button>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="adv_notes_input">Particulars / Remarks</label>
+                    <input type="text" id="adv_notes_input" class="form-control" placeholder="e.g. Initial Admission Deposit, Surgical Advance, Interim Payment">
+                </div>
+
+                <div style="background-color: #f8fafc; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; color: #64748b;">
+                    Official Receipt (OR) will be immediately generated and printable. All advance deposits will be automatically credited to the patient's final Statement of Account upon discharge.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelAdvancePayment">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitAdvancePayment">Post Advance Payment & Issue OR</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=6.7"></script>
-    <script src="../js/common.js?v=6.7"></script>
-    <script src="../js/admission_details.js?v=6.7"></script>
+    <script src="../js/sidebar.js?v=6.8"></script>
+    <script src="../js/common.js?v=6.8"></script>
+    <script src="../js/admission_details.js?v=6.8"></script>
 </body>
 </html>
 

@@ -236,14 +236,21 @@ class InvoiceManager
                 $netAmountDue = $netAfterDiscounts;
             }
 
+            $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
+            $advStmt->execute([':aid' => $admissionId]);
+            $totalAdvancePaid = floatval($advStmt->fetchColumn());
+
+            $remainingNetToSettle = max(0.00, round($netAmountDue - $totalAdvancePaid, 2));
+
             $amountPaidInput = isset($json['amount_paid']) ? floatval($json['amount_paid']) : null;
-            $amountPaid = ($amountPaidInput !== null && $amountPaidInput >= 0) ? round($amountPaidInput, 2) : $netAmountDue;
-            $changeAmount = max(0.00, round($amountPaid - $netAmountDue, 2));
+            $tenderedAtDischarge = ($amountPaidInput !== null && $amountPaidInput >= 0) ? round($amountPaidInput, 2) : $remainingNetToSettle;
+            $totalAmountPaid = round($totalAdvancePaid + $tenderedAtDischarge, 2);
+            $changeAmount = max(0.00, round($totalAmountPaid - $netAmountDue, 2));
 
             $invSql = "INSERT INTO Final_Invoice 
-                        (Admission_ID, Processed_By_User_ID, Discount_ID, Gross_Total, Discount_Amount, VAT_Rate, VATable_Amount, VAT_Amount, VAT_Exempt_Amount, Discount_Summary, Net_Amount_Due, Amount_Paid, Change_Amount, Settlement_Date)
+                        (Admission_ID, Processed_By_User_ID, Discount_ID, Gross_Total, Discount_Amount, Advance_Payment_Amount, VAT_Rate, VATable_Amount, VAT_Amount, VAT_Exempt_Amount, Discount_Summary, Net_Amount_Due, Amount_Paid, Change_Amount, Settlement_Date)
                        VALUES 
-                        (:aid, :uid, :did, :gross, :disc, :vrate, :vatable, :vatamt, :vatexempt, :dsum, :net, :paid, :change, NOW())";
+                        (:aid, :uid, :did, :gross, :disc, :adv, :vrate, :vatable, :vatamt, :vatexempt, :dsum, :net, :paid, :change, NOW())";
             $invStmt = $conn->prepare($invSql);
             $invStmt->execute([
                 ':aid' => $admissionId,
@@ -251,13 +258,14 @@ class InvoiceManager
                 ':did' => $primaryDiscountId,
                 ':gross' => $grossTotal,
                 ':disc' => $discountAmount,
+                ':adv' => $totalAdvancePaid,
                 ':vrate' => $vatRate,
                 ':vatable' => $vatableAmount,
                 ':vatamt' => $vatAmount,
                 ':vatexempt' => $vatExemptAmount,
                 ':dsum' => $discountSummary,
                 ':net' => $netAmountDue,
-                ':paid' => $amountPaid,
+                ':paid' => $totalAmountPaid,
                 ':change' => $changeAmount
             ]);
             $invoiceId = $conn->lastInsertId();
@@ -283,28 +291,30 @@ class InvoiceManager
             $updAdm = $conn->prepare("UPDATE Admission SET Status = 'Billed' WHERE Admission_ID = :aid");
             $updAdm->execute([':aid' => $admissionId]);
 
+            $linkAdv = $conn->prepare("UPDATE Invoice_Payment SET Invoice_ID = :iid WHERE Admission_ID = :aid AND Invoice_ID IS NULL");
+            $linkAdv->execute([':iid' => $invoiceId, ':aid' => $admissionId]);
+
             $paymentId = null;
             $receiptNumber = null;
-            if ($amountPaid > 0) {
+            if ($tenderedAtDischarge > 0) {
                 $countPayments = $conn->query("SELECT COUNT(*) FROM Invoice_Payment")->fetchColumn();
                 $nextReceiptNum = intval($countPayments) + 1;
                 $receiptNumber = 'OR-' . str_pad($nextReceiptNum, 5, '0', STR_PAD_LEFT);
-                $initialApplied = min($amountPaid, $netAmountDue);
-                $balAfter = max(0.00, round($netAmountDue - $amountPaid, 2));
+                $balAfter = max(0.00, round($remainingNetToSettle - $tenderedAtDischarge, 2));
 
                 $insPay = $conn->prepare("
                     INSERT INTO Invoice_Payment 
-                        (Invoice_ID, Admission_ID, Cashier_User_ID, Receipt_Number, Amount_Paid, Balance_Before, Balance_After, Payment_Method_ID, Notes, Payment_Date)
+                        (Invoice_ID, Admission_ID, Cashier_User_ID, Receipt_Number, Amount_Paid, Balance_Before, Balance_After, Payment_Method_ID, Notes, Is_Advance, Payment_Date)
                     VALUES 
-                        (:iid, :aid, :uid, :rnum, :paid, :bb, :ba, :pmid, 'Initial Settlement Payment', NOW())
+                        (:iid, :aid, :uid, :rnum, :paid, :bb, :ba, :pmid, 'Final Discharge Settlement Payment', 0, NOW())
                 ");
                 $insPay->execute([
                     ':iid' => $invoiceId,
                     ':aid' => $admissionId,
                     ':uid' => $userId,
                     ':rnum' => $receiptNumber,
-                    ':paid' => $initialApplied,
-                    ':bb' => $netAmountDue,
+                    ':paid' => $tenderedAtDischarge,
+                    ':bb' => $remainingNetToSettle,
                     ':ba' => $balAfter,
                     ':pmid' => $paymentMethodId
                 ]);
@@ -322,8 +332,8 @@ class InvoiceManager
             }
 
             $invCode = 'INV-' . str_pad($invoiceId, 3, '0', STR_PAD_LEFT);
-            $rem = max(0.00, round($netAmountDue - $amountPaid, 2));
-            $settleDesc = "Settled invoice {$invCode} for Net: ₱" . number_format($netAmountDue, 2) . ", Tendered: ₱" . number_format($amountPaid, 2) . ", Balance: ₱" . number_format($rem, 2);
+            $rem = max(0.00, round($netAmountDue - $totalAmountPaid, 2));
+            $settleDesc = "Settled invoice {$invCode} for Net: ₱" . number_format($netAmountDue, 2) . ", Advance Credited: ₱" . number_format($totalAdvancePaid, 2) . ", Tendered at Discharge: ₱" . number_format($tenderedAtDischarge, 2) . ", Total Paid: ₱" . number_format($totalAmountPaid, 2) . ", Balance: ₱" . number_format($rem, 2);
 
             $logStmt = $conn->prepare("
                 INSERT INTO Audit_Log 
@@ -349,10 +359,12 @@ class InvoiceManager
                 'receipt_number' => $receiptNumber,
                 'gross_total' => $grossTotal,
                 'discount_amount' => $discountAmount,
+                'advance_payment_amount' => $totalAdvancePaid,
                 'net_amount_due' => $netAmountDue,
-                'amount_paid' => $amountPaid,
+                'tendered_at_discharge' => $tenderedAtDischarge,
+                'amount_paid' => $totalAmountPaid,
                 'change_amount' => $changeAmount,
-                'remaining_balance' => max(0.00, round($netAmountDue - $amountPaid, 2))
+                'remaining_balance' => max(0.00, round($netAmountDue - $totalAmountPaid, 2))
             ]);
 
         } catch (Exception $e) {
@@ -510,6 +522,144 @@ class InvoiceManager
             return json_encode(['error' => 'Payment processing failed: ' . $e->getMessage()]);
         }
     }
+
+    function recordAdvancePayment($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $paymentAmount = floatval($json['payment_amount'] ?? 0);
+        $paymentMethodId = !empty($json['payment_method_id']) ? intval($json['payment_method_id']) : 1;
+        $notes = !empty($json['notes']) ? trim($json['notes']) : 'Advance Patient Deposit';
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required for advance billing.']);
+        }
+
+        if (empty($userId)) {
+            return json_encode(['error' => 'Active user session is required. Please re-login.']);
+        }
+
+        if ($paymentAmount <= 0) {
+            return json_encode(['error' => 'Advance payment amount must be greater than zero.']);
+        }
+
+        try {
+            $conn->beginTransaction();
+
+            $admCheck = $conn->prepare("SELECT Admission_ID, Patient_ID, Status FROM Admission WHERE Admission_ID = :aid FOR UPDATE");
+            $admCheck->execute([':aid' => $admissionId]);
+            $admission = $admCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$admission) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Admission record not found.']);
+            }
+
+            if ($admission['Status'] === 'Billed') {
+                $conn->rollBack();
+                return json_encode(['error' => 'This admission is already settled and billed. Please use the invoice payments section.']);
+            }
+
+            $sumStmt = $conn->prepare("SELECT COALESCE(SUM(Total_Charge), 0.00) AS Gross_Total FROM Billing_Ledger WHERE Admission_ID = :aid");
+            $sumStmt->execute([':aid' => $admissionId]);
+            $ledgerGross = floatval($sumStmt->fetchColumn());
+
+            $currStayStmt = $conn->prepare("
+                SELECT rtl.Date_In, COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
+                FROM Room_Transfer_Log rtl
+                INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                WHERE rtl.Admission_ID = :aid AND rtl.Date_Out IS NULL
+            ");
+            $currStayStmt->execute([':aid' => $admissionId]);
+            $stay = $currStayStmt->fetch(PDO::FETCH_ASSOC);
+            $runningRoomFee = 0.00;
+            if ($stay) {
+                $dIn = new DateTime($stay['Date_In']);
+                $dNow = new DateTime();
+                $diffDays = max(1, $dNow->diff($dIn)->days);
+                $runningRoomFee = $diffDays * floatval($stay['Daily_Rate']);
+            }
+
+            $totalRunningEst = $ledgerGross + $runningRoomFee;
+
+            $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
+            $advStmt->execute([':aid' => $admissionId]);
+            $priorAdvanceTotal = floatval($advStmt->fetchColumn());
+
+            $balBefore = max(0.00, round($totalRunningEst - $priorAdvanceTotal, 2));
+            $balAfter = max(0.00, round($balBefore - $paymentAmount, 2));
+
+            $countPayments = $conn->query("SELECT COUNT(*) FROM Invoice_Payment")->fetchColumn();
+            $nextReceiptNum = intval($countPayments) + 1;
+            $receiptNumber = 'OR-' . str_pad($nextReceiptNum, 5, '0', STR_PAD_LEFT);
+
+            $insPay = $conn->prepare("
+                INSERT INTO Invoice_Payment 
+                    (Invoice_ID, Admission_ID, Cashier_User_ID, Receipt_Number, Amount_Paid, Balance_Before, Balance_After, Payment_Method_ID, Notes, Is_Advance, Payment_Date)
+                VALUES 
+                    (NULL, :aid, :uid, :rnum, :paid, :bb, :ba, :pmid, :notes, 1, NOW())
+            ");
+            $insPay->execute([
+                ':aid' => $admissionId,
+                ':uid' => $userId,
+                ':rnum' => $receiptNumber,
+                ':paid' => $paymentAmount,
+                ':bb' => $balBefore,
+                ':ba' => $balAfter,
+                ':pmid' => $paymentMethodId,
+                ':notes' => $notes
+            ]);
+            $paymentId = $conn->lastInsertId();
+
+            $cashierName = 'Cashier Staff';
+            $uStmt = $conn->prepare("SELECT CONCAT(First_Name, ' ', Last_Name) FROM System_User WHERE User_ID = :uid");
+            $uStmt->execute([':uid' => $userId]);
+            $uName = $uStmt->fetchColumn();
+            if ($uName) {
+                $cashierName = $uName;
+            }
+
+            $methodStmt = $conn->prepare("SELECT Method_Name FROM Enum_Payment_Method WHERE Payment_Method_ID = :pmid");
+            $methodStmt->execute([':pmid' => $paymentMethodId]);
+            $methodName = $methodStmt->fetchColumn() ?: 'Cash';
+
+            $admCode = 'ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT);
+            $logStmt = $conn->prepare("
+                INSERT INTO Audit_Log 
+                    (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By, Created_At)
+                VALUES 
+                    (:uid, :aid, 'Advance Payment Recorded', 'Billing', :ref, :descr, :by, NOW())
+            ");
+            $logStmt->execute([
+                ':uid' => $userId,
+                ':aid' => $admissionId,
+                ':ref' => $receiptNumber,
+                ':descr' => "Received advance deposit of ₱" . number_format($paymentAmount, 2) . " ({$methodName}) for {$admCode}. Remarks: {$notes}",
+                ':by' => $cashierName
+            ]);
+
+            $conn->commit();
+            return json_encode([
+                'success' => true,
+                'message' => 'Advance payment recorded successfully and Official Receipt generated!',
+                'payment_id' => $paymentId,
+                'receipt_number' => $receiptNumber,
+                'amount_paid' => $paymentAmount,
+                'balance_before' => $balBefore,
+                'balance_after' => $balAfter,
+                'total_advance_paid' => round($priorAdvanceTotal + $paymentAmount, 2)
+            ]);
+
+        } catch (Exception $e) {
+            $conn->rollBack();
+            return json_encode(['error' => 'Advance payment failed: ' . $e->getMessage()]);
+        }
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -527,6 +677,9 @@ switch ($operation) {
         break;
     case 'recordPayment':
         echo $invoice->recordPayment($json);
+        break;
+    case 'recordAdvancePayment':
+        echo $invoice->recordAdvancePayment($json);
         break;
 }
 ?>

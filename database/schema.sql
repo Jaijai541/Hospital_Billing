@@ -264,6 +264,7 @@ CREATE TABLE IF NOT EXISTS Final_Invoice (
     Discount_ID INT NULL,
     Gross_Total DECIMAL(12, 2) NOT NULL,
     Discount_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    Advance_Payment_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     VAT_Rate DECIMAL(5, 2) DEFAULT 12.00,
     VATable_Amount DECIMAL(12, 2) DEFAULT 0.00,
     VAT_Amount DECIMAL(12, 2) DEFAULT 0.00,
@@ -292,7 +293,7 @@ CREATE TABLE IF NOT EXISTS Invoice_Applied_Discount (
 
 CREATE TABLE IF NOT EXISTS Invoice_Payment (
     Payment_ID INT AUTO_INCREMENT PRIMARY KEY,
-    Invoice_ID INT NOT NULL,
+    Invoice_ID INT NULL,
     Admission_ID INT NOT NULL,
     Cashier_User_ID INT NOT NULL,
     Receipt_Number VARCHAR(30) NOT NULL,
@@ -301,9 +302,10 @@ CREATE TABLE IF NOT EXISTS Invoice_Payment (
     Balance_After DECIMAL(12, 2) NOT NULL,
     Payment_Method_ID INT NOT NULL DEFAULT 1,
     Notes VARCHAR(255) NULL,
+    Is_Advance BOOLEAN DEFAULT FALSE,
     Payment_Date DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
+    FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE SET NULL,
     FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
     FOREIGN KEY (Cashier_User_ID) REFERENCES System_User(User_ID),
     FOREIGN KEY (Payment_Method_ID) REFERENCES Enum_Payment_Method(Payment_Method_ID)

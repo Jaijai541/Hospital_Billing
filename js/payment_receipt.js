@@ -17,8 +17,14 @@ const renderReceipt = (data) => {
 
     document.getElementById('or-number').textContent = data.Receipt_Number || 'OR-00000';
     document.getElementById('or-date').textContent = data.Formatted_Payment_Date || '-';
-    document.getElementById('or-invoice-code').textContent = data.Invoice_Code || '-';
+    const isAdvance = (data.Is_Advance == 1 || data.Invoice_Code === 'Pre-Discharge Advance Deposit');
+    document.getElementById('or-invoice-code').textContent = isAdvance ? 'Pre-Discharge Advance Deposit' : (data.Invoice_Code || '-');
     document.getElementById('or-admission-code').textContent = data.Admission_Code || '-';
+
+    const banner = document.querySelector('.receipt-banner');
+    if (banner && isAdvance) {
+        banner.textContent = 'Official Receipt / Patient Advance Deposit Voucher';
+    }
 
     document.getElementById('or-patient-name').textContent = `${data.Patient_Code} - ${data.Patient_Name}`;
     const ageStr = data.Age !== null && data.Age !== undefined ? `${data.Age} yrs` : '-';
@@ -30,7 +36,7 @@ const renderReceipt = (data) => {
         ? `${data.Payment_Method} (${data.Category_Type})` 
         : (data.Payment_Method || 'Cash');
     document.getElementById('or-payment-method').textContent = methodDisplay;
-    document.getElementById('or-payment-notes').textContent = data.Notes || 'Installment Payment';
+    document.getElementById('or-payment-notes').textContent = data.Notes || (isAdvance ? 'Advance Patient Deposit' : 'Installment Payment');
 
     document.getElementById('or-net-assessed').textContent = formatCurrency(data.Net_Amount_Due);
     document.getElementById('or-balance-before').textContent = formatCurrency(data.Balance_Before);
@@ -44,10 +50,10 @@ const renderReceipt = (data) => {
 
     if (balAfter <= 0) {
         lblBalAfter.style.color = '#16a34a';
-        statusCell.innerHTML = '<span class="status-tag status-paid">PAID IN FULL</span>';
+        statusCell.innerHTML = `<span class="status-tag status-paid">${isAdvance ? 'RUNNING CHARGES COVERED' : 'PAID IN FULL'}</span>`;
     } else {
         lblBalAfter.style.color = '#dc2626';
-        statusCell.innerHTML = `<span class="status-tag status-pending">PENDING BALANCE: ${formatCurrency(balAfter)}</span>`;
+        statusCell.innerHTML = `<span class="status-tag status-pending">${isAdvance ? 'EST. RUNNING BALANCE: ' : 'PENDING BALANCE: '}${formatCurrency(balAfter)}</span>`;
     }
 
     document.getElementById('or-cashier-name').textContent = data.Cashier_Name || 'Cashier Staff';

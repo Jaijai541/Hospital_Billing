@@ -173,6 +173,10 @@ class LedgerManager
             }
         }
 
+        $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
+        $advStmt->execute([':aid' => $admissionId]);
+        $advanceTotal = floatval($advStmt->fetchColumn());
+
         return json_encode([
             'room_total' => round($roomTotal, 2),
             'doctor_total' => round($doctorTotal, 2),
@@ -182,6 +186,8 @@ class LedgerManager
             'gross_total' => round($grossTotal, 2),
             'return_total' => round($returnTotal, 2),
             'net_total' => round($netTotal, 2),
+            'advance_payments_total' => round($advanceTotal, 2),
+            'balance_due' => round(max(0.00, $netTotal - $advanceTotal), 2),
             'total_items' => count($rows)
         ]);
     }
@@ -333,12 +339,36 @@ class LedgerManager
             $totalRoomStayCharges += floatval($stay['Calculated_Room_Fee']);
         }
 
+        $advSql = "SELECT 
+                    ip.Payment_ID,
+                    ip.Receipt_Number,
+                    ip.Amount_Paid,
+                    ip.Balance_Before,
+                    ip.Balance_After,
+                    epm.Method_Name AS Payment_Method,
+                    COALESCE(ip.Notes, 'Advance Deposit') AS Notes,
+                    DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Payment_Date
+                   FROM Invoice_Payment ip
+                   INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
+                   WHERE ip.Admission_ID = :aid AND (ip.Invoice_ID IS NULL OR ip.Is_Advance = 1)
+                   ORDER BY ip.Payment_ID ASC";
+        $advStmt = $conn->prepare($advSql);
+        $advStmt->execute([':aid' => $admissionId]);
+        $advPayments = $advStmt->fetchAll(PDO::FETCH_ASSOC);
+        $bill['Advance_Payments'] = $advPayments;
+
+        $totalAdvance = 0.00;
+        foreach ($advPayments as $ap) {
+            $totalAdvance += floatval($ap['Amount_Paid']);
+        }
+
         $gross = floatval($ledgerSummary['gross_total']);
         $returns = floatval($ledgerSummary['return_total']);
         $alreadyInLedgerRoom = floatval($ledgerSummary['room_total']);
         $currentRoomToAdd = max(0, $totalRoomStayCharges - $alreadyInLedgerRoom);
         $totalGross = $gross + $currentRoomToAdd;
         $totalNet = $totalGross - $returns;
+        $remainingBal = max(0.00, round($totalNet - $totalAdvance, 2));
 
         $bill['Summary'] = [
             'room_total' => round($totalRoomStayCharges, 2),
@@ -348,7 +378,9 @@ class LedgerManager
             'service_total' => floatval($ledgerSummary['service_total']),
             'gross_total' => round($totalGross, 2),
             'return_total' => round($returns, 2),
-            'net_accumulated_total' => round($totalNet, 2)
+            'net_accumulated_total' => round($totalNet, 2),
+            'advance_payments_total' => round($totalAdvance, 2),
+            'remaining_balance' => round($remainingBal, 2)
         ];
 
         return json_encode($bill);

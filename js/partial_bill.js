@@ -64,6 +64,7 @@ const renderPartialBill = (bill) => {
     renderRoomStaysTable(bill.Room_Stays || []);
     renderDoctorsTable(bill.Attending_Doctors || []);
     renderLedgerCategories(bill.Ledger_Items || []);
+    renderAdvancePayments(bill.Advance_Payments || [], bill.Summary ? bill.Summary.advance_payments_total : 0);
     renderSummaryBox(bill.Summary || {});
 
     const userJson = sessionStorage.getItem("hospital_user");
@@ -263,6 +264,34 @@ const renderLedgerCategories = (items) => {
     document.getElementById("pb-subtotal-service").textContent = `₱${formatMoney(srvSubtotal)}`;
 };
 
+const renderAdvancePayments = (advPayments, totalAdvance) => {
+    const sec = document.getElementById("pb-advance-section");
+    const tbody = document.getElementById("pb-advance-tbody");
+    const subtotalEl = document.getElementById("pb-subtotal-advance");
+    if (!sec || !tbody) return;
+
+    if (!advPayments || advPayments.length === 0) {
+        sec.style.display = "none";
+        return;
+    }
+
+    sec.style.display = "block";
+    let html = "";
+    advPayments.forEach(p => {
+        html += `
+            <tr>
+                <td><strong>${p.Receipt_Number}</strong></td>
+                <td>${p.Payment_Date || "-"}</td>
+                <td>${p.Payment_Method}</td>
+                <td>${p.Notes || "Advance Patient Deposit"}</td>
+                <td align="right"><strong>₱${formatMoney(p.Amount_Paid)}</strong></td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+    if (subtotalEl) subtotalEl.textContent = `₱${formatMoney(totalAdvance)}`;
+};
+
 const renderSummaryBox = (summary) => {
     const room = parseFloat(summary.room_total || 0);
     const doc = parseFloat(summary.doctor_total || 0);
@@ -272,9 +301,11 @@ const renderSummaryBox = (summary) => {
     const gross = parseFloat(summary.gross_total || 0);
     const returns = parseFloat(summary.return_total || 0);
     const net = parseFloat(summary.net_accumulated_total || (gross - returns));
+    const advancePaid = parseFloat(summary.advance_payments_total || 0);
     const estimatedVat = Math.round(net * 0.12 * 100) / 100;
     const vatableBase = Math.round((net - estimatedVat) * 100) / 100;
     const totalAmount = net;
+    const netRemaining = Math.max(0, totalAmount - advancePaid);
 
     document.getElementById("pb-sum-room").textContent = `₱${formatMoney(room)}`;
     document.getElementById("pb-sum-doctor").textContent = `₱${formatMoney(doc)}`;
@@ -298,7 +329,30 @@ const renderSummaryBox = (summary) => {
     if (elVat) elVat.textContent = `₱${formatMoney(estimatedVat)}`;
     const elTotalWithVat = document.getElementById("pb-sum-total-with-vat");
     if (elTotalWithVat) elTotalWithVat.textContent = `₱${formatMoney(totalAmount)}`;
-    document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalAmount)}`;
+
+    const rowAdvance = document.getElementById("pb-row-advance-payments");
+    if (rowAdvance) {
+        if (advancePaid > 0) {
+            rowAdvance.style.display = "table-row";
+            document.getElementById("pb-sum-advance-payments").textContent = `-₱${formatMoney(advancePaid)}`;
+        } else {
+            rowAdvance.style.display = "none";
+        }
+    }
+
+    const rowNetDue = document.getElementById("pb-row-net-due");
+    if (rowNetDue) {
+        if (advancePaid > 0) {
+            rowNetDue.style.display = "table-row";
+            document.getElementById("pb-sum-remaining-balance").textContent = `₱${formatMoney(netRemaining)}`;
+            document.getElementById("pb-banner-total").textContent = `₱${formatMoney(netRemaining)}`;
+        } else {
+            rowNetDue.style.display = "none";
+            document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalAmount)}`;
+        }
+    } else {
+        document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalAmount)}`;
+    }
 };
 
 const loadPartialBill = (admissionId) => {

@@ -46,6 +46,7 @@ class InvoiceManager
                     COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
                     fi.Gross_Total,
                     fi.Discount_Amount,
+                    COALESCE(fi.Advance_Payment_Amount, 0.00) AS Advance_Payment_Amount,
                     fi.VAT_Rate,
                     fi.VATable_Amount,
                     fi.VAT_Amount,
@@ -100,6 +101,7 @@ class InvoiceManager
                     CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
                     fi.Gross_Total,
                     fi.Discount_Amount,
+                    COALESCE(fi.Advance_Payment_Amount, 0.00) AS Advance_Payment_Amount,
                     fi.VAT_Rate,
                     fi.VATable_Amount,
                     fi.VAT_Amount,
@@ -392,20 +394,21 @@ class InvoiceManager
                     ip.Balance_Before,
                     ip.Balance_After,
                     ip.Payment_Method_ID,
+                    ip.Is_Advance,
                     epm.Method_Name AS Payment_Method,
                     epm.Category_Type,
                     COALESCE(ip.Notes, '') AS Notes,
                     DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Payment_Date,
                     u.User_ID AS Cashier_User_ID,
                     CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
-                    fi.Net_Amount_Due,
-                    fi.Gross_Total,
-                    CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
+                    COALESCE(fi.Net_Amount_Due, ip.Balance_Before) AS Net_Amount_Due,
+                    COALESCE(fi.Gross_Total, ip.Balance_Before) AS Gross_Total,
+                    COALESCE(CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')), 'Pre-Discharge Advance Deposit') AS Invoice_Code,
                     CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
                     CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
                     CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code
                 FROM Invoice_Payment ip
-                INNER JOIN Final_Invoice fi ON ip.Invoice_ID = fi.Invoice_ID
+                LEFT JOIN Final_Invoice fi ON ip.Invoice_ID = fi.Invoice_ID
                 INNER JOIN Admission a ON ip.Admission_ID = a.Admission_ID
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
@@ -443,6 +446,7 @@ class InvoiceManager
                     ip.Balance_Before,
                     ip.Balance_After,
                     ip.Payment_Method_ID,
+                    ip.Is_Advance,
                     epm.Method_Name AS Payment_Method,
                     epm.Category_Type,
                     COALESCE(ip.Notes, '') AS Notes,
@@ -450,12 +454,12 @@ class InvoiceManager
                     u.User_ID AS Cashier_User_ID,
                     CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
                     ur.Role_Name AS Cashier_Role,
-                    fi.Net_Amount_Due,
-                    fi.Gross_Total,
-                    fi.Discount_Amount,
+                    COALESCE(fi.Net_Amount_Due, ip.Balance_Before) AS Net_Amount_Due,
+                    COALESCE(fi.Gross_Total, ip.Balance_Before) AS Gross_Total,
+                    COALESCE(fi.Discount_Amount, 0.00) AS Discount_Amount,
                     COALESCE(d.Discount_Name, 'None') AS Discount_Name,
                     COALESCE(d.Discount_Percentage, 0.00) AS Discount_Percentage,
-                    CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
+                    COALESCE(CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')), 'Pre-Discharge Advance Deposit') AS Invoice_Code,
                     CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
                     a.Chief_Complaint,
                     a.Diagnosis,
@@ -469,7 +473,7 @@ class InvoiceManager
                     p.Contact_Number,
                     p.Address
                 FROM Invoice_Payment ip
-                INNER JOIN Final_Invoice fi ON ip.Invoice_ID = fi.Invoice_ID
+                LEFT JOIN Final_Invoice fi ON ip.Invoice_ID = fi.Invoice_ID
                 INNER JOIN Admission a ON ip.Admission_ID = a.Admission_ID
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
@@ -492,6 +496,55 @@ class InvoiceManager
         }
 
         return json_encode($receipt);
+    }
+
+    function getAdvancePayments($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+
+        $sql = "SELECT 
+                    ip.Payment_ID,
+                    ip.Invoice_ID,
+                    ip.Admission_ID,
+                    ip.Receipt_Number,
+                    ip.Amount_Paid,
+                    ip.Balance_Before,
+                    ip.Balance_After,
+                    ip.Payment_Method_ID,
+                    epm.Method_Name AS Payment_Method,
+                    epm.Category_Type,
+                    COALESCE(ip.Notes, 'Advance Patient Deposit') AS Notes,
+                    ip.Is_Advance,
+                    DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Payment_Date,
+                    u.User_ID AS Cashier_User_ID,
+                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name
+                FROM Invoice_Payment ip
+                INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
+                INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
+                WHERE ip.Admission_ID = :aid AND (ip.Is_Advance = 1 OR ip.Invoice_ID IS NULL)
+                ORDER BY ip.Payment_ID ASC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':aid' => $admissionId]);
+        $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $totalAdvance = 0.00;
+        foreach ($payments as $p) {
+            $totalAdvance += floatval($p['Amount_Paid']);
+        }
+
+        return json_encode([
+            'payments' => $payments,
+            'total_advance_amount' => round($totalAdvance, 2),
+            'count' => count($payments)
+        ]);
     }
 }
 
@@ -522,6 +575,9 @@ switch ($operation) {
         break;
     case 'getPaymentReceipt':
         echo $invoice->getPaymentReceipt($json);
+        break;
+    case 'getAdvancePayments':
+        echo $invoice->getAdvancePayments($json);
         break;
 }
 

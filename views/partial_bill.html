@@ -273,11 +273,42 @@
                         <td><strong style="font-size: 15px; color: #0369a1;">ESTIMATED TOTAL RUNNING CHARGES (VAT-INCLUSIVE):</strong></td>
                         <td align="right"><strong style="font-size: 17px; color: #0369a1;" id="pb-sum-total-with-vat">₱0.00</strong></td>
                     </tr>
+                    <tr id="pb-row-advance-payments" style="display: none; background-color: #ecfdf5;">
+                        <td><strong style="color: #059669;">Less: Total Advance Payments &amp; Deposits Received:</strong></td>
+                        <td align="right"><strong style="color: #059669; font-size: 15px;" id="pb-sum-advance-payments">-₱0.00</strong></td>
+                    </tr>
+                    <tr id="pb-row-net-due" style="display: none; background-color: #fefce8; border-top: 2px solid #ca8a04;">
+                        <td><strong style="font-size: 15px; color: #b45309;">ESTIMATED NET UNPAID RUNNING BALANCE:</strong></td>
+                        <td align="right"><strong style="font-size: 17px; color: #b45309;" id="pb-sum-remaining-balance">₱0.00</strong></td>
+                    </tr>
                 </tbody>
             </table>
             <div style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic;">
                 *Note: Estimated VAT is calculated at 12%. Statutory discounts (Senior Citizen 20%, PWD) and 12% VAT exemptions are officially assessed and applied upon final patient discharge and settlement.
             </div>
+        </div>
+
+        <div id="pb-advance-section" style="display: none; margin-top: 24px; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">6. ADVANCE PAYMENTS &amp; PATIENT DEPOSITS RECEIVED (OFFICIAL RECEIPTS)</h3>
+            <table class="soa-table">
+                <thead>
+                    <tr class="header-row">
+                        <th>Official Receipt #</th>
+                        <th>Payment Date &amp; Time</th>
+                        <th>Payment Method</th>
+                        <th>Particulars / Notes</th>
+                        <th style="text-align: right;">Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody id="pb-advance-tbody">
+                </tbody>
+                <tfoot>
+                    <tr class="subtotal-row" style="background-color: #ecfdf5;">
+                        <td colspan="4"><strong>TOTAL ADVANCE PAYMENTS / DEPOSITS CREDITED:</strong></td>
+                        <td align="right" id="pb-subtotal-advance" style="color: #059669; font-weight: 700;">₱0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
 
         <div class="partial-running-total-card">
@@ -314,7 +345,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=6.6"></script>
-    <script src="../js/partial_bill.js?v=6.6"></script>
+    <script src="../js/common.js?v=6.8"></script>
+    <script src="../js/partial_bill.js?v=6.8"></script>
 </body>
 </html>

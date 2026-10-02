@@ -352,7 +352,30 @@ const initClinicalModals = () => {
     if (btnCloseReturn) btnCloseReturn.addEventListener('click', () => closeModal('returnModal'));
     if (btnCancelReturn) btnCancelReturn.addEventListener('click', () => closeModal('returnModal'));
 
-    [orderModal, roundModal, transferModal, returnModal].forEach(m => {
+    const advanceModal = document.getElementById('advancePaymentModal');
+    const btnOpenAdv = document.getElementById('btnOpenAdvancePaymentModal');
+    const btnCloseAdv = document.getElementById('btnCloseAdvancePaymentModal');
+    const btnCancelAdv = document.getElementById('btnCancelAdvancePayment');
+    const btnSubmitAdv = document.getElementById('btnSubmitAdvancePayment');
+    const btnBrowseAdvMethod = document.getElementById('btnBrowse_adv_method_id');
+    const btnPayAdvExact = document.getElementById('btnPayAdvExactBalance');
+
+    if (btnOpenAdv) btnOpenAdv.addEventListener('click', openAdvancePaymentModal);
+    if (btnCloseAdv) btnCloseAdv.addEventListener('click', () => closeModal('advancePaymentModal'));
+    if (btnCancelAdv) btnCancelAdv.addEventListener('click', () => closeModal('advancePaymentModal'));
+    if (btnSubmitAdv) btnSubmitAdv.addEventListener('click', submitAdvancePayment);
+    if (btnBrowseAdvMethod) btnBrowseAdvMethod.addEventListener('click', openAdvancePaymentMethodPicker);
+    if (btnPayAdvExact) {
+        btnPayAdvExact.addEventListener('click', () => {
+            const netCharges = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
+            const advPaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
+            const unpaidBal = latestSummary && latestSummary.balance_due !== undefined ? parseFloat(latestSummary.balance_due) : Math.max(0, netCharges - advPaid);
+            const input = document.getElementById('adv_amount_input');
+            if (input) input.value = unpaidBal > 0 ? unpaidBal.toFixed(2) : '0.00';
+        });
+    }
+
+    [orderModal, roundModal, transferModal, returnModal, advanceModal].forEach(m => {
         if (m) {
             m.addEventListener('click', (e) => {
                 if (e.target === m) closeModal(m.id);
@@ -371,6 +394,7 @@ const initClinicalModals = () => {
             if (roundModal && roundModal.style.display === 'flex') closeModal('roundModal');
             if (transferModal && transferModal.style.display === 'flex') closeModal('transferModal');
             if (returnModal && returnModal.style.display === 'flex') closeModal('returnModal');
+            if (advanceModal && advanceModal.style.display === 'flex') closeModal('advancePaymentModal');
         }
     });
 };
@@ -1049,6 +1073,12 @@ const loadAdmissionDetails = () => {
             if (btnOpenReturnPharm) {
                 btnOpenReturnPharm.disabled = !isAdmitted;
                 btnOpenReturnPharm.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            }
+            const btnOpenAdvPay = document.getElementById('btnOpenAdvancePaymentModal');
+            if (btnOpenAdvPay) {
+                btnOpenAdvPay.disabled = !isAdmitted;
+                btnOpenAdvPay.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                btnOpenAdvPay.style.display = isAdmitted ? 'inline-block' : 'none';
             }
 
             const btnSubOrder = document.getElementById('btnSubmitOrder');
@@ -1740,6 +1770,10 @@ const renderSummaryBox = (summary) => {
     const gross = parseFloat(summary.gross_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
     const returns = parseFloat(summary.return_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
     const net = parseFloat(summary.net_total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const advPaid = parseFloat(summary.advance_payments_total || 0);
+    const balDue = parseFloat(summary.balance_due !== undefined ? summary.balance_due : Math.max(0, (summary.net_total || 0) - advPaid));
+    const formattedAdv = advPaid.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const formattedBal = balDue.toLocaleString('en-PH', {minimumFractionDigits: 2});
 
     let html = '<table class="data-table mb-3">';
     html += '<thead><tr><th colspan="2">Running Financial Breakdown & Statement of Charges</th></tr></thead><tbody>';
@@ -1753,10 +1787,14 @@ const renderSummaryBox = (summary) => {
         html += `<tr style="background-color: #f0fff4;"><td><strong style="color: #2f855a;">Less: Total Medicine Returns Credited:</strong></td><td align="right"><strong style="color: #2f855a;">-₱${returns}</strong></td></tr>`;
     }
     html += `<tr style="background-color: #edf2f7;"><td><h3 style="margin: 4px 0; color: #1a202c;">NET CHARGES ACCUMULATED TO DATE:</h3></td><td align="right"><h3 style="margin: 4px 0; color: var(--primary-color);">₱${net}</h3></td></tr>`;
+    if (advPaid > 0) {
+        html += `<tr style="background-color: #f0fdf4;"><td><strong style="color: #16a34a;">Less: Total Advance Payments &amp; Deposits Paid:</strong></td><td align="right"><strong style="color: #16a34a;">-₱${formattedAdv}</strong></td></tr>`;
+        html += `<tr style="background-color: #eff6ff;"><td><h3 style="margin: 4px 0; color: #1e3a8a;">ESTIMATED UNPAID RUNNING BALANCE:</h3></td><td align="right"><h3 style="margin: 4px 0; color: #1e3a8a;">₱${formattedBal}</h3></td></tr>`;
+    }
     html += '</tbody></table>';
 
     container.innerHTML = html;
-}
+};
 
 const loadDispensedMedicines = () => {
     console.log("admission_details.js: Loading dispensed medicines for returns...");
@@ -1869,6 +1907,248 @@ const getPaymentMethodOptionsHtml = (selectedId = 1) => {
         opts += `<option value="${pm.Payment_Method_ID}" ${isSel}>${pm.Method_Name} (${pm.Category_Type})</option>`;
     });
     return opts;
+};
+
+const openAdvancePaymentModal = () => {
+    if (!admissionData) {
+        showPopupAlert('Admission details not loaded yet.', 'warning');
+        return;
+    }
+
+    const netCharges = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
+    const advPaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
+    const unpaidBal = latestSummary && latestSummary.balance_due !== undefined ? parseFloat(latestSummary.balance_due) : Math.max(0, netCharges - advPaid);
+
+    const elPatient = document.getElementById('adv_patient_name');
+    const elAdmCode = document.getElementById('adv_admission_code');
+    const elRunning = document.getElementById('adv_running_charges');
+    const elPaid = document.getElementById('adv_prior_paid');
+    const elBal = document.getElementById('adv_unpaid_balance');
+
+    if (elPatient) elPatient.textContent = admissionData.Full_Name || 'Patient';
+    if (elAdmCode) elAdmCode.textContent = admissionData.Admission_Code || ('ADM-' + String(admissionId).padStart(3, '0'));
+    if (elRunning) elRunning.textContent = `₱${netCharges.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+    if (elPaid) elPaid.textContent = `₱${advPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+    if (elBal) elBal.textContent = `₱${unpaidBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+    const inputMethodId = document.getElementById('adv_method_id');
+    const inputMethodText = document.getElementById('adv_method_id_text');
+    const inputAmount = document.getElementById('adv_amount_input');
+    const inputNotes = document.getElementById('adv_notes_input');
+
+    if (inputMethodId) inputMethodId.value = '1';
+    if (inputMethodText) inputMethodText.value = 'Cash (Cash)';
+    if (inputAmount) inputAmount.value = '';
+    if (inputNotes) inputNotes.value = '';
+
+    openModal('advancePaymentModal');
+};
+
+const openAdvancePaymentMethodPicker = () => {
+    if (!paymentMethodsList || paymentMethodsList.length === 0) {
+        const fd = new FormData();
+        fd.append('operation', 'getPaymentMethods');
+        axios.post(`${getApiUrl}/invoices.php`, fd).then(res => {
+            paymentMethodsList = res.data || [];
+            showAdvanceMethodPicker();
+        }).catch(() => {
+            showAdvanceMethodPicker();
+        });
+        return;
+    }
+    showAdvanceMethodPicker();
+};
+
+const showAdvanceMethodPicker = () => {
+    const list = (paymentMethodsList && paymentMethodsList.length > 0) ? paymentMethodsList : [
+        { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash' },
+        { Payment_Method_ID: 2, Method_Name: 'GCash', Category_Type: 'E-Wallet' },
+        { Payment_Method_ID: 3, Method_Name: 'Maya', Category_Type: 'E-Wallet' },
+        { Payment_Method_ID: 4, Method_Name: 'Credit / Debit Card', Category_Type: 'Card' },
+        { Payment_Method_ID: 5, Method_Name: 'Bank Wire / Online Transfer', Category_Type: 'Bank' }
+    ];
+
+    openGenericLookupPicker({
+        title: "Select Payment Method",
+        items: list.map(pm => ({
+            id: pm.Payment_Method_ID,
+            text: `${pm.Method_Name}`,
+            subtext: `Category: ${pm.Category_Type || 'Payment'}`,
+            badge: pm.Category_Type || 'Payment',
+            badgeClass: 'badge-info'
+        })),
+        selectedId: document.getElementById('adv_method_id') ? document.getElementById('adv_method_id').value : 1,
+        onSelect: (item) => {
+            const inputId = document.getElementById('adv_method_id');
+            const inputText = document.getElementById('adv_method_id_text');
+            if (inputId) inputId.value = item.id;
+            if (inputText) inputText.value = item.text;
+        }
+    });
+};
+
+const submitAdvancePayment = () => {
+    const methodInput = document.getElementById('adv_method_id');
+    const methodId = methodInput && methodInput.value ? parseInt(methodInput.value, 10) : 1;
+    const amountInput = document.getElementById('adv_amount_input');
+    const amt = amountInput ? parseFloat(amountInput.value) : 0;
+    const notesInput = document.getElementById('adv_notes_input');
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    if (isNaN(amt) || amt <= 0) {
+        showPopupAlert('Please enter a valid deposit amount greater than 0.00.', 'warning');
+        return;
+    }
+
+    const confirmMsg = `Confirm recording advance deposit of ₱${amt.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn official payment receipt (OR) will be issued immediately and the deposit will be credited against the patient's final bill upon discharge.`;
+
+    showPopupConfirm(confirmMsg, () => {
+        const userJson = sessionStorage.getItem('hospital_user');
+        const user = userJson ? JSON.parse(userJson) : null;
+        const uid = user ? (user.user_id || user.User_ID || 1) : 1;
+
+        const payload = {
+            admission_id: admissionId,
+            user_id: uid,
+            payment_amount: amt,
+            payment_method_id: methodId,
+            notes: notes || 'Advance Patient Deposit'
+        };
+
+        const formData = new FormData();
+        formData.append('operation', 'recordAdvancePayment');
+        formData.append('json', JSON.stringify(payload));
+
+        axios.post(`${postApiUrl}/invoices.php`, formData)
+            .then(res => {
+                if (res.data && res.data.success) {
+                    closeModal('advancePaymentModal');
+                    const payId = res.data.payment_id;
+                    const rcptNum = res.data.receipt_number || '';
+                    const alertMsg = `${res.data.message}\n\nOfficial Receipt: ${rcptNum}\nDeposit Tendered: ₱${parseFloat(res.data.amount_paid).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+                    loadLedger();
+                    loadLedgerSummary();
+                    loadAdmissionDetails();
+
+                    showPopupAlert(alertMsg, 'success', 'Advance Payment Accepted', () => {
+                        if (payId) {
+                            window.location.href = `payment_receipt.html?payment_id=${payId}`;
+                        }
+                    });
+                } else {
+                    const err = res.data && res.data.error ? res.data.error : 'Failed to record advance payment.';
+                    showPopupAlert('Advance Payment Error: ' + err, 'danger');
+                }
+            })
+            .catch(() => {
+                showPopupAlert('Network error processing advance payment.', 'danger');
+            });
+    }, null, {
+        title: 'Confirm Advance Payment',
+        confirmText: 'Post Advance Payment',
+        type: 'info'
+    });
+};
+
+const renderAdmittedAdvanceBillingCard = (advList) => {
+    const container = document.getElementById('settlement-container');
+    if (!container) return;
+
+    const runningGross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
+    const totalAdvPaid = advList.reduce((acc, p) => acc + parseFloat(p.Amount_Paid || 0), 0);
+    const unpaidBal = Math.max(0, runningGross - totalAdvPaid);
+
+    const formattedRunning = runningGross.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const formattedAdv = totalAdvPaid.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const formattedBal = unpaidBal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    let advRowsHtml = '';
+    if (advList.length === 0) {
+        advRowsHtml = '<tr><td colspan="7" class="text-muted text-center" style="padding: 16px;"><em>No advance payments recorded yet for this admission. The patient or relatives may make advance deposits at any time.</em></td></tr>';
+    } else {
+        advList.forEach(p => {
+            const pAmt = parseFloat(p.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+            const methodBadge = `<span class="badge badge-info">${p.Payment_Method || 'Cash'}</span>`;
+            advRowsHtml += `
+                <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click to view Official Receipt">
+                    <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
+                    <td>${p.Formatted_Payment_Date || p.Payment_Date}</td>
+                    <td>${methodBadge}</td>
+                    <td>${p.Cashier_Name || 'Cashier Staff'}</td>
+                    <td align="right"><strong style="color: #16a34a;">₱${pAmt}</strong></td>
+                    <td>${p.Notes || 'Advance Patient Deposit'}</td>
+                    <td align="center">
+                        <button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">🧾 Print OR</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    container.innerHTML = `
+        <div class="card p-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                <h3 style="margin: 0; color: #0f172a;">Stage 3: Advance Billing &amp; Pre-Discharge Deposits</h3>
+                <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">PATIENT CURRENTLY ADMITTED</span>
+            </div>
+            <p class="text-muted mb-3">This patient is currently staying in Bed <strong>${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Bed board & lodging and clinical charges continue to accumulate daily.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #3b82f6;">
+                    <div style="font-size: 12.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Running Charges To Date</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #1e293b; margin-top: 4px;">₱${formattedRunning}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Net of medicine returns</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #16a34a;">
+                    <div style="font-size: 12.5px; font-weight: 700; color: #16a34a; text-transform: uppercase;">Total Advance Deposits Paid</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #16a34a; margin-top: 4px;">₱${formattedAdv}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Official Receipts issued</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #f59e0b;">
+                    <div style="font-size: 12.5px; font-weight: 700; color: #b45309; text-transform: uppercase;">Estimated Unpaid Balance</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #b45309; margin-top: 4px;">₱${formattedBal}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Running charges less deposits</div>
+                </div>
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; margin-bottom: 18px;">
+                <strong style="color: #1e40af;">Pre-Discharge Advance Payment Policy</strong>
+                <p style="margin: 4px 0 0; font-size: 13.5px; color: #1e3a8a;">Patients and relatives may make deposits at any time during admission. All advance payments immediately produce Official Receipts (OR) and will be automatically credited against the final bill upon clinical discharge.</p>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
+                <button type="button" class="btn btn-primary" onclick="openAdvancePaymentModal()">💵 Record Advance Payment</button>
+                <button type="button" class="btn btn-outline" onclick="window.location.href='partial_bill.html?admission_id=${admissionId}'">🖨 Print Interim Partial Bill</button>
+                <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')">🚪 Discharge Patient Now &amp; Unlock SOA</button>
+            </div>
+
+            <div class="card p-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="margin: 0; color: #1e293b;">Advance Deposits &amp; Official Receipts History</h4>
+                    <span class="text-muted" style="font-size: 13px;">Pre-discharge payments recorded for this admission</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" style="font-size: 13.5px;">
+                        <thead>
+                            <tr>
+                                <th>Official Receipt #</th>
+                                <th>Date &amp; Time</th>
+                                <th>Payment Method</th>
+                                <th>Cashier</th>
+                                <th style="text-align: right;">Amount Paid</th>
+                                <th>Particulars / Notes</th>
+                                <th style="text-align: center;">Official Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${advRowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
 };
 
 const renderPaymentHistoryTable = (invId, admId, targetEl) => {
@@ -2024,6 +2304,7 @@ const renderBilledSettlementCard = (inv) => {
                         <tr><td>Net Billable (Before Tax):</td><td>₱${netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
                         <tr><td>Value-Added Tax (12% VAT):</td><td>${vatDetailsHtml}</td></tr>
                         <tr><td>Net Amount Assessed:</td><td><strong>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
+                        ${parseFloat(inv.Advance_Payment_Amount || 0) > 0 ? `<tr><td>Pre-Discharge Advance Deposits Credited:</td><td><strong style="color: #16a34a;">-₱${parseFloat(inv.Advance_Payment_Amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>` : ''}
                         <tr><td>Total Payments Received:</td><td><strong style="color: #16a34a;">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
                         ${changeAmt > 0 ? `<tr><td>Customer Change Given:</td><td>₱${changeAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>` : ''}
                         <tr><td>Remaining Balance Due:</td><td><strong style="color: #16a34a;">₱0.00</strong></td></tr>
@@ -2069,6 +2350,7 @@ const renderBilledSettlementCard = (inv) => {
                     <tr><td>Net Billable (Before Tax):</td><td>₱${netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td></tr>
                     <tr><td>Value-Added Tax (12% VAT):</td><td>${vatDetailsHtml}</td></tr>
                     <tr><td>Net Amount Due:</td><td><strong>₱${netDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
+                    ${parseFloat(inv.Advance_Payment_Amount || 0) > 0 ? `<tr><td>Pre-Discharge Advance Deposits Credited:</td><td><strong style="color: #16a34a;">-₱${parseFloat(inv.Advance_Payment_Amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>` : ''}
                     <tr><td>Total Amount Paid So Far:</td><td><strong style="color: #16a34a;">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td></tr>
                     <tr style="background-color: #fef2f2;">
                         <td><strong style="color: #dc2626;">REMAINING BALANCE DUE:</strong></td>
@@ -2255,28 +2537,34 @@ const renderSettlementSection = () => {
     }
 
     if (admissionData.Status === 'Admitted') {
-        container.innerHTML = `
-            <div class="card p-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-                    <h3 style="margin: 0; color: #0f172a;">Stage 3: Discharge & Final Settlement</h3>
-                    <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">PATIENT CURRENTLY ADMITTED</span>
-                </div>
-                <p class="text-muted mb-3">This patient is currently staying in Bed <strong>${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Bed board & lodging fees are continuing to accumulate daily.</p>
-                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; margin-bottom: 18px;">
-                    <strong style="color: #1e40af;">Official Statement of Account (SOA) is Locked</strong>
-                    <p style="margin: 4px 0 0; font-size: 13.5px; color: #1e3a8a;">Under hospital billing regulations, the final Statement of Account and statutory discounts (Senior/PWD) are generated only after the patient is clinically discharged and bed occupancy is closed.</p>
-                </div>
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')">🚪 Discharge Patient Now & Unlock SOA</button>
-                    <button type="button" class="btn btn-outline" onclick="window.location.href='partial_bill.html?admission_id=${admissionId}'">🖨 Print Interim Partial Bill Instead</button>
-                </div>
-            </div>
-        `;
+        const formData = new FormData();
+        formData.append('operation', 'getAdvancePayments');
+        formData.append('json', JSON.stringify({ admission_id: admissionId }));
+
+        axios.post(`${getApiUrl}/invoices.php`, formData)
+            .then(res => {
+                let list = res.data;
+                if (typeof list === 'string') {
+                    try { list = JSON.parse(list); } catch (e) {}
+                }
+                if (list && list.payments && Array.isArray(list.payments)) {
+                    list = list.payments;
+                } else if (!Array.isArray(list)) {
+                    list = [];
+                }
+                renderAdmittedAdvanceBillingCard(list);
+            })
+            .catch(() => {
+                renderAdmittedAdvanceBillingCard([]);
+            });
         return;
     }
 
     const gross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
     const formattedGross = gross.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const advancePaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
+    const formattedAdv = advancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const initialRemaining = Math.max(0, gross - advancePaid);
 
     const medTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.medicine_total || 0)) : 0;
     const docTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.doctor_total || 0)) : 0;
@@ -2421,6 +2709,16 @@ const renderSettlementSection = () => {
                 <td><h3 style="margin: 5px 0;">NET AMOUNT ASSESSED:</h3></td>
                 <td align="right"><h3 style="margin: 5px 0; color: var(--primary);" id="settle-net-display">₱${formattedGross}</h3></td>
             </tr>
+            ${advancePaid > 0 ? `
+            <tr style="background-color: #f0fdf4;">
+                <td><strong style="color: #16a34a;">Less: Advance Payments &amp; Patient Deposits Credited:</strong></td>
+                <td align="right"><strong style="color: #16a34a;">-<span id="settle-advance-display">₱${formattedAdv}</span></strong></td>
+            </tr>
+            <tr style="background-color: #eff6ff;">
+                <td><h3 style="margin: 5px 0; color: #1e3a8a;">NET BALANCE DUE AT DISCHARGE:</h3></td>
+                <td align="right"><h3 style="margin: 5px 0; color: #1e3a8a;" id="settle-balance-due-display">₱${initialRemaining.toLocaleString('en-PH', {minimumFractionDigits: 2})}</h3></td>
+            </tr>
+            ` : ''}
             <tr>
                 <td><strong>Payment Method:</strong></td>
                 <td align="right">
@@ -2430,11 +2728,11 @@ const renderSettlementSection = () => {
                 </td>
             </tr>
             <tr>
-                <td><strong>Amount Tendered / Paid (₱):</strong></td>
+                <td><strong>Amount Tendered / Paid at Discharge (₱):</strong></td>
                 <td align="right">
                     <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;">
-                        <button type="button" id="btn-exact-cash" class="btn btn-secondary btn-sm" style="white-space: nowrap; font-size: 13px;" title="Reset input to exact net amount">Exact Net</button>
-                        <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${gross.toFixed(2)}" style="max-width: 170px; font-weight: 700; font-size: 15px; text-align: right;">
+                        <button type="button" id="btn-exact-cash" class="btn btn-secondary btn-sm" style="white-space: nowrap; font-size: 13px;" title="Reset input to exact remaining balance">Exact Balance</button>
+                        <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${initialRemaining.toFixed(2)}" style="max-width: 170px; font-weight: 700; font-size: 15px; text-align: right;">
                         <button type="button" id="btn-pay-now" class="btn btn-primary" style="font-weight: 700; padding: 9px 24px; white-space: nowrap;">Pay</button>
                     </div>
                 </td>
@@ -2445,12 +2743,32 @@ const renderSettlementSection = () => {
             </tr>
             </tbody>
         </table>
+
+        ${advancePaid > 0 ? `
+            <div class="card p-3 mb-3" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="margin: 0; color: #166534;">Advance Patient Deposits Credited to Final Bill</h4>
+                    <span class="badge badge-success" style="font-size: 13px;">₱${formattedAdv} Total Deposits</span>
+                </div>
+                <div id="discharged-advance-history-table" class="table-responsive">
+                    <p class="text-muted" style="margin: 4px 0;">Loading advance deposits...</p>
+                </div>
+            </div>
+        ` : ''}
+
         <div class="mt-3" style="display: flex; justify-content: flex-end;">
             <button id="btnSettleBill" class="btn btn-primary btn-lg">Process Billing Settlement & Generate Official Invoice</button>
         </div>
     `;
 
     container.innerHTML = html;
+
+    if (advancePaid > 0) {
+        const advDiv = document.getElementById('discharged-advance-history-table');
+        if (advDiv) {
+            renderPaymentHistoryTable(null, admissionId, advDiv);
+        }
+    }
 
     const cashInput = document.getElementById('settle_amount_paid');
     const catCheckboxes = container.querySelectorAll('.cat-checkbox');
@@ -2550,6 +2868,9 @@ const renderSettlementSection = () => {
             netAmountDue = netBeforeTax;
         }
 
+        const advancePaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
+        const remainingNetToSettle = Math.max(0, Math.round((netAmountDue - advancePaid) * 100) / 100);
+
         return {
             selectedBase,
             totalFixedDeduction,
@@ -2564,6 +2885,8 @@ const renderSettlementSection = () => {
             vatableAmount,
             vatExemptAmount,
             netAmountDue,
+            advancePaid,
+            remainingNetToSettle,
             selectedDiscounts
         };
     };
@@ -2579,6 +2902,8 @@ const renderSettlementSection = () => {
         const lblNetBeforeTax = document.getElementById('settle-net-before-tax-display');
         const lblVat = document.getElementById('settle-vat-display');
         const lblNet = document.getElementById('settle-net-display');
+        const lblAdv = document.getElementById('settle-advance-display');
+        const lblBalDue = document.getElementById('settle-balance-due-display');
         const lblChange = document.getElementById('settle-change-display');
 
         if (lblGross) lblGross.textContent = math.selectedBase.toLocaleString('en-PH', {minimumFractionDigits: 2});
@@ -2597,16 +2922,20 @@ const renderSettlementSection = () => {
         }
 
         if (lblNet) lblNet.textContent = `₱${math.netAmountDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblAdv) lblAdv.textContent = `₱${math.advancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblBalDue) lblBalDue.textContent = `₱${math.remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
         const paid = cashInput ? parseFloat(cashInput.value || 0) : 0;
         if (lblChange) {
-            if (paid >= math.netAmountDue) {
-                const change = Math.round((paid - math.netAmountDue) * 100) / 100;
-                lblChange.textContent = `Change: ₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            if (paid >= math.remainingNetToSettle) {
+                const change = Math.round((paid - math.remainingNetToSettle) * 100) / 100;
+                lblChange.textContent = change > 0 
+                    ? `Change: ₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})} (Fully Paid)` 
+                    : 'Fully Settled (₱0.00 Balance)';
                 lblChange.style.color = '#16a34a';
             } else {
-                const bal = Math.round((math.netAmountDue - paid) * 100) / 100;
-                lblChange.textContent = `Remaining Balance: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                const bal = Math.round((math.remainingNetToSettle - paid) * 100) / 100;
+                lblChange.textContent = `Remaining Balance Due: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
                 lblChange.style.color = '#dc2626';
             }
         }
@@ -2634,7 +2963,7 @@ const renderSettlementSection = () => {
                 customVouchersList.splice(idx, 1);
                 renderCustomVoucherTags();
                 const math = computeSettlementMath();
-                if (cashInput) cashInput.value = math.netAmountDue.toFixed(2);
+                if (cashInput) cashInput.value = math.remainingNetToSettle.toFixed(2);
                 updateSettlementTotals();
             });
         });
@@ -2656,7 +2985,7 @@ const renderSettlementSection = () => {
 
         if (checkedCount === totalCount || checkedCount === 0) {
             if (cashInput) {
-                cashInput.value = math.netAmountDue.toFixed(2);
+                cashInput.value = math.remainingNetToSettle.toFixed(2);
             }
             if (noticeEl) {
                 noticeEl.textContent = 'Paying for: All charges (Full bill)';
@@ -2664,10 +2993,10 @@ const renderSettlementSection = () => {
             }
         } else {
             if (cashInput) {
-                cashInput.value = math.netAmountDue.toFixed(2);
+                cashInput.value = math.remainingNetToSettle.toFixed(2);
             }
             if (noticeEl) {
-                noticeEl.textContent = `Patient is paying for: ${selectedNames.join(', ')} (₱${math.netAmountDue.toLocaleString('en-PH', {minimumFractionDigits: 2})}). Balance will remain pending.`;
+                noticeEl.textContent = `Patient is paying for: ${selectedNames.join(', ')} (₱${math.remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})}). Balance will remain pending.`;
                 noticeEl.style.color = '#d97706';
             }
         }
@@ -2710,7 +3039,7 @@ const renderSettlementSection = () => {
     container.querySelectorAll('.discount-checkbox').forEach(cb => {
         cb.addEventListener('change', () => {
             const math = computeSettlementMath();
-            if (cashInput) cashInput.value = math.netAmountDue.toFixed(2);
+            if (cashInput) cashInput.value = math.remainingNetToSettle.toFixed(2);
             updateSettlementTotals();
         });
     });
@@ -2738,7 +3067,7 @@ const renderSettlementSection = () => {
 
         renderCustomVoucherTags();
         const math = computeSettlementMath();
-        if (cashInput) cashInput.value = math.netAmountDue.toFixed(2);
+        if (cashInput) cashInput.value = math.remainingNetToSettle.toFixed(2);
         updateSettlementTotals();
     });
 
@@ -2749,7 +3078,7 @@ const renderSettlementSection = () => {
     document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
         const math = computeSettlementMath();
         if (cashInput) {
-            cashInput.value = math.netAmountDue.toFixed(2);
+            cashInput.value = math.remainingNetToSettle.toFixed(2);
         }
         updateSettlementTotals();
     });
@@ -2766,7 +3095,7 @@ const renderSettlementSection = () => {
 
     renderCustomVoucherTags();
     const initialMath = computeSettlementMath();
-    if (cashInput) cashInput.value = initialMath.netAmountDue.toFixed(2);
+    if (cashInput) cashInput.value = initialMath.remainingNetToSettle.toFixed(2);
     updateSettlementTotals();
 };
 
@@ -2817,12 +3146,15 @@ const submitSettlement = () => {
     const vatAmt = isExempt ? 0 : Math.round(netBeforeTax * 0.12 * 100) / 100;
     const netAmt = netBeforeTax;
 
+    const totalAdvancePaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
+    const remainingNetToSettle = Math.max(0, Math.round((netAmt - totalAdvancePaid) * 100) / 100);
+
     let confirmMsg = '';
-    if (amountPaid < netAmt) {
-        const remaining = Math.max(0, Math.round((netAmt - amountPaid) * 100) / 100);
-        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will remain on the invoice. Any active bed stay will be closed and released.`;
+    if (amountPaid < remainingNetToSettle) {
+        const remaining = Math.max(0, Math.round((remainingNetToSettle - amountPaid) * 100) / 100);
+        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will remain on the invoice. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. Any active bed stay will be closed and released.`;
     } else {
-        confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nThis will record the official Final Invoice as PAID IN FULL and release the bed.`;
+        confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nPre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. This will record the official Final Invoice as PAID IN FULL and release the bed.`;
     }
 
     showPopupConfirm(confirmMsg, () => {
@@ -2868,7 +3200,7 @@ const submitSettlement = () => {
     }, null, {
         title: 'Confirm Billing Settlement',
         confirmText: 'Process Settlement',
-        type: amountPaid < netAmt ? 'warning' : 'info'
+        type: amountPaid < remainingNetToSettle ? 'warning' : 'info'
     });
 };
 

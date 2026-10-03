@@ -2647,6 +2647,9 @@ const renderSettlementSection = () => {
     const roomTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.room_total || 0)) : 0;
     const scanTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.scan_total || 0)) : 0;
     const srvTotal = latestSummary ? Math.max(0, parseFloat(latestSummary.service_total || 0)) : 0;
+    const defaultPm = (paymentMethodsList && paymentMethodsList.length > 0)
+        ? (paymentMethodsList.find(p => p.Payment_Method_ID == 1) || paymentMethodsList[0])
+        : { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash', Description: 'Cash Tendered at Cashier Counter' };
 
     const isOccupyingBed = admissionData.Bed_Code ? `<p style="color: #856404; background-color: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;"><strong>Note:</strong> The patient is currently assigned to Bed <strong>${admissionData.Bed_Code}</strong>. Processing settlement will automatically calculate final board & lodging, release the bed as available, and finalize the account.</p>` : '';
 
@@ -2778,8 +2781,8 @@ const renderSettlementSection = () => {
                 <td align="right"><strong id="settle-vat-display" style="color: #0369a1;">₱0.00</strong></td>
             </tr>
             <tr style="background-color: #edf2f7;">
-                <td><h3 style="margin: 5px 0;">NET AMOUNT ASSESSED:</h3></td>
-                <td align="right"><h3 style="margin: 5px 0; color: var(--primary);" id="settle-net-display">₱${formattedGross}</h3></td>
+                <td><h4 style="margin: 4px 0;">NET AMOUNT ASSESSED:</h4></td>
+                <td align="right"><h4 style="margin: 4px 0; color: var(--primary);" id="settle-net-display">₱${formattedGross}</h4></td>
             </tr>
             ${advancePaid > 0 ? `
             <tr style="background-color: #f0fdf4;">
@@ -2790,87 +2793,119 @@ const renderSettlementSection = () => {
                 <td><h3 style="margin: 5px 0; color: #1e3a8a;">NET BALANCE DUE AT DISCHARGE:</h3></td>
                 <td align="right"><h3 style="margin: 5px 0; color: #1e3a8a;" id="settle-balance-due-display">₱${initialRemaining.toLocaleString('en-PH', {minimumFractionDigits: 2})}</h3></td>
             </tr>
-            ` : ''}
-            <tr>
-                <td><strong>Payment Method:</strong></td>
-                <td align="right">
-                    <select id="settle_payment_method_id" class="form-select" style="max-width: 280px; display: inline-block;">
-                        ${getPaymentMethodOptionsHtml(1)}
-                    </select>
-                </td>
+            ` : `
+            <tr style="background-color: #eff6ff;">
+                <td><h3 style="margin: 5px 0; color: #1e3a8a;">NET BALANCE DUE AT DISCHARGE:</h3></td>
+                <td align="right"><h3 style="margin: 5px 0; color: #1e3a8a;" id="settle-balance-due-display">₱${initialRemaining.toLocaleString('en-PH', {minimumFractionDigits: 2})}</h3></td>
             </tr>
-            <tr>
-                <td><strong>Amount Tendered / Paid at Discharge (₱):</strong></td>
-                <td align="right">
-                    <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
-                        <button type="button" id="btn-exact-cash" class="btn btn-outline-primary btn-sm" style="white-space: nowrap; font-size: 12.5px; font-weight: 600;" title="Full cash payment today">💵 Full Cash</button>
-                        <button type="button" id="btn-zero-cash" class="btn btn-outline-warning btn-sm" style="white-space: nowrap; font-size: 12.5px; font-weight: 600;" title="No cash paid today, defer 100% to Promissory Note (NR / AR)">📝 ₱0 Down (Promissory Note)</button>
-                        <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${initialRemaining.toFixed(2)}" style="max-width: 140px; font-weight: 700; font-size: 15px; text-align: right;">
-                        <button type="button" id="btn-pay-now" class="btn btn-primary" style="font-weight: 700; padding: 7px 20px; white-space: nowrap;">Pay</button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>Change / Outstanding Balance Status:</td>
-                <td align="right"><strong id="settle-change-display" style="font-size: 14.5px; color: #16a34a;">Change: ₱0.00</strong></td>
-            </tr>
+            `}
             </tbody>
         </table>
 
-        <div id="promissory-note-settlement-card" class="card p-3 mb-3" style="display: none; background: #fffdf5; border: 1px solid #f59e0b; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 18px;">📝</span>
-                    <strong style="color: #92400e; font-size: 15px;">Promissory Note &amp; Mutual Settlement Agreement</strong>
+        <div class="card p-4 mb-4" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                <div>
+                    <h3 style="margin: 0; color: #0f172a; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                        <span>💳</span> Discharge Payment &amp; Settlement Authorization
+                    </h3>
+                    <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Specify payment received today or formalize credit/receivable promissory terms before patient departure</p>
                 </div>
-                <span class="badge badge-warning" style="font-size: 12.5px;" id="pn_balance_badge">Unsettled Balance: ₱0.00</span>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" id="btn-quick-full-cash" class="btn btn-outline-primary btn-sm" style="font-weight: 600; padding: 6px 12px;">
+                        💵 Pay Full Cash / Online
+                    </button>
+                    <button type="button" id="btn-quick-promissory" class="btn btn-outline-warning btn-sm" style="font-weight: 600; padding: 6px 12px;">
+                        📝 Defer via Promissory Note (NR / AR)
+                    </button>
+                </div>
             </div>
-            <p class="text-muted mb-3" style="font-size: 13px;">
-                Because an outstanding balance remains upon discharge, a legally binding Promissory Note is prepared between the Hospital and the Patient / Guarantor. Please select the agreed payment schedule:
-            </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                <div class="form-group">
-                    <label class="form-label" for="pn_plan_type_id" style="font-weight: 600;">Settlement Scheme / Plan Type *</label>
-                    <select id="pn_plan_type_id" class="form-select">
-                        ${renderPromissoryPlanOptionsHtml()}
-                    </select>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px;">Payment Method *</label>
+                    <div class="input-lookup-group" style="display: flex; gap: 8px;">
+                        <input type="hidden" id="settle_payment_method_id" value="${defaultPm.Payment_Method_ID}">
+                        <input type="text" id="settle_payment_method_text" class="form-control" value="${defaultPm.Method_Name} (${defaultPm.Category_Type || 'Payment'})" readonly style="background-color: #f8fafc; cursor: pointer; font-weight: 600;" title="Click to choose payment method in a separate window">
+                        <button type="button" id="btn-open-settle-pm-picker" class="btn btn-outline btn-lookup" style="white-space: nowrap; font-weight: 600;">
+                            🔍 Select Method
+                        </button>
+                    </div>
+                    <small class="text-muted" id="settle_pm_hint" style="display: block; margin-top: 4px; font-size: 12px;">${defaultPm.Description || 'Standard physical Philippine Peso currency tender'}</small>
                 </div>
-                <div class="form-group" id="pn_months_group">
-                    <label class="form-label" for="pn_installment_months" style="font-weight: 600;">Installment Period *</label>
-                    <select id="pn_installment_months" class="form-select">
-                        <option value="1">1 Month (Lump Sum)</option>
-                        <option value="2">2 Months (Equal Split)</option>
-                        <option value="3" selected>3 Months (Quarterly Terms)</option>
-                        <option value="6">6 Months (Extended Terms)</option>
-                    </select>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="settle_amount_paid" style="font-weight: 600; margin-bottom: 6px;">Amount Tendered / Paid Today (₱) *</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="position: relative; flex: 1;">
+                            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748b; font-size: 15px;">₱</span>
+                            <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${initialRemaining.toFixed(2)}" style="font-weight: 700; font-size: 16px; padding-left: 26px;">
+                        </div>
+                        <button type="button" id="btn-exact-cash" class="btn btn-outline-primary btn-sm" style="white-space: nowrap; font-weight: 600; height: 38px;" title="Set tendered amount to exact balance due">Exact Full</button>
+                        <button type="button" id="btn-zero-cash" class="btn btn-outline-warning btn-sm" style="white-space: nowrap; font-weight: 600; height: 38px;" title="Set tendered to ₱0.00 and defer 100% to Promissory Note">₱0 Down</button>
+                    </div>
+                    <small class="text-muted" style="display: block; margin-top: 4px; font-size: 12px;">Enter 0.00 if deferring 100% balance to Promissory Note</small>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="pn_next_due_date" style="font-weight: 600;">Next Payment Due Date *</label>
-                    <input type="date" id="pn_next_due_date" class="form-control" value="${getDefaultNextDueDate()}">
+            </div>
+
+            <div id="settle-change-display" style="padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 13.5px; margin-bottom: 16px;">
+                <span style="color: #15803d; font-weight: 700;">✔ Exact Full Settlement (₱0.00 Balance)</span> — Official Receipt and Statement of Account will be generated.
+            </div>
+
+            <div id="promissory-note-settlement-card" class="card p-3" style="display: none; background: #fffdf5; border: 1px solid #f59e0b; border-radius: 8px; margin-top: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">📝</span>
+                        <strong style="color: #92400e; font-size: 15px;">Promissory Note &amp; Mutual Settlement Agreement</strong>
+                    </div>
+                    <span class="badge badge-warning" style="font-size: 12.5px;" id="pn_balance_badge">Unsettled Balance: ₱0.00</span>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" style="font-weight: 600;">Scheduled Installment / Due Amount</label>
-                    <div id="pn_monthly_amount_display" style="padding: 7px 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 15px; color: #15803d;">
-                        ₱0.00
+                <p class="text-muted mb-3" style="font-size: 13px;">
+                    Because an outstanding balance remains upon discharge, a legally binding Promissory Note is prepared between the Hospital and the Patient / Guarantor. Please select the agreed payment schedule:
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label class="form-label" for="pn_plan_type_id" style="font-weight: 600;">Settlement Scheme / Plan Type *</label>
+                        <select id="pn_plan_type_id" class="form-select">
+                            ${renderPromissoryPlanOptionsHtml()}
+                        </select>
+                    </div>
+                    <div class="form-group" id="pn_months_group">
+                        <label class="form-label" for="pn_installment_months" style="font-weight: 600;">Installment Period *</label>
+                        <select id="pn_installment_months" class="form-select">
+                            <option value="1">1 Month (Lump Sum)</option>
+                            <option value="2">2 Months (Equal Split)</option>
+                            <option value="3" selected>3 Months (Quarterly Terms)</option>
+                            <option value="6">6 Months (Extended Terms)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pn_next_due_date" style="font-weight: 600;">Next Payment Due Date *</label>
+                        <input type="date" id="pn_next_due_date" class="form-control" value="${getDefaultNextDueDate()}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 600;">Scheduled Installment / Due Amount</label>
+                        <div id="pn_monthly_amount_display" style="padding: 7px 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 15px; color: #15803d;">
+                            ₱0.00
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                <div class="form-group">
-                    <label class="form-label" for="pn_guarantor_name" style="font-weight: 600;">Responsible Guarantor / Co-Signer Name</label>
-                    <input type="text" id="pn_guarantor_name" class="form-control" placeholder="e.g. Maria Santos (Relative / Guarantor)" value="${(admissionData.Emergency_Contact_Name || admissionData.Patient_Name || '').replace(/"/g, '&quot;')}">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label class="form-label" for="pn_guarantor_name" style="font-weight: 600;">Responsible Guarantor / Co-Signer Name</label>
+                        <input type="text" id="pn_guarantor_name" class="form-control" placeholder="e.g. Maria Santos (Relative / Guarantor)" value="${(admissionData.Emergency_Contact_Name || admissionData.Patient_Name || '').replace(/"/g, '&quot;')}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pn_guarantor_contact" style="font-weight: 600;">Guarantor Contact Number</label>
+                        <input type="text" id="pn_guarantor_contact" class="form-control" placeholder="e.g. 0917-123-4567" value="${(admissionData.Emergency_Contact_Number || admissionData.Contact_Number || '').replace(/"/g, '&quot;')}">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="pn_guarantor_contact" style="font-weight: 600;">Guarantor Contact Number</label>
-                    <input type="text" id="pn_guarantor_contact" class="form-control" placeholder="e.g. 0917-123-4567" value="${(admissionData.Emergency_Contact_Number || admissionData.Contact_Number || '').replace(/"/g, '&quot;')}">
+                <div class="form-group mb-2">
+                    <label class="form-label" for="pn_notes" style="font-weight: 600;">Special Settlement Conditions / Remarks</label>
+                    <input type="text" id="pn_notes" class="form-control" placeholder="e.g. Patient agreed to pay remaining balance in cash or GCash on or before due date">
                 </div>
-            </div>
-            <div class="form-group mb-2">
-                <label class="form-label" for="pn_notes" style="font-weight: 600;">Special Settlement Conditions / Remarks</label>
-                <input type="text" id="pn_notes" class="form-control" placeholder="e.g. Patient agreed to pay remaining balance in cash or GCash on or before due date">
-            </div>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 12.5px; color: #475569; margin-top: 6px;">
-                <strong>Mutual Agreement Clause:</strong> Both parties (the Hospital and the undersigned Patient / Guarantor) formally agree to this payment schedule. By finalizing discharge with this balance, the official Statement of Account and Receipt will be generated reflecting this schedule and require mutual signatures.
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 12.5px; color: #475569; margin-top: 6px;">
+                    <strong>Mutual Agreement Clause:</strong> Both parties (the Hospital and the undersigned Patient / Guarantor) formally agree to this payment schedule. By finalizing discharge with this balance, the official Statement of Account and Receipt will be generated reflecting this schedule and require mutual signatures.
+                </div>
             </div>
         </div>
 
@@ -2886,8 +2921,10 @@ const renderSettlementSection = () => {
             </div>
         ` : ''}
 
-        <div class="mt-3" style="display: flex; justify-content: flex-end;">
-            <button id="btnSettleBill" class="btn btn-primary btn-lg">Process Billing Settlement & Generate Official Invoice</button>
+        <div class="mt-3 mb-4" style="display: flex; justify-content: center;">
+            <button id="btnSettleBill" class="btn btn-primary btn-lg" style="font-weight: 700; padding: 12px 32px; font-size: 1rem; min-width: 320px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                Process Billing Settlement &amp; Generate Official Invoice
+            </button>
         </div>
     `;
 
@@ -3056,22 +3093,26 @@ const renderSettlementSection = () => {
         if (lblBalDue) lblBalDue.textContent = `₱${math.remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
         const paid = cashInput ? parseFloat(cashInput.value || 0) : 0;
-        const btnPayNow = document.getElementById('btn-pay-now');
         const btnSettle = document.getElementById('btnSettleBill');
 
         if (lblChange) {
             if (paid >= math.remainingNetToSettle) {
                 const change = Math.round((paid - math.remainingNetToSettle) * 100) / 100;
-                lblChange.textContent = change > 0 
-                    ? `Change: ₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})} (Fully Paid)` 
-                    : 'Fully Settled (₱0.00 Balance)';
-                lblChange.style.color = '#16a34a';
+                lblChange.style.background = '#f0fdf4';
+                lblChange.style.borderColor = '#bbf7d0';
+                lblChange.innerHTML = change > 0 
+                    ? `<span style="color: #15803d; font-weight: 700;">✔ Full Payment Tendered</span> — Customer Change: <strong>₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> (Official Receipt and Statement of Account will be issued)` 
+                    : '<span style="color: #15803d; font-weight: 700;">✔ Exact Full Settlement (₱0.00 Balance)</span> — Official Receipt and Statement of Account will be issued.';
             } else if (paid === 0) {
                 const bal = math.remainingNetToSettle;
-                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">📝 ₱0.00 Cash Paid Today — Full ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})} Balance Deferred to Promissory Note (NR / AR)</span>`;
+                lblChange.style.background = '#fffdf5';
+                lblChange.style.borderColor = '#f59e0b';
+                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">📝 ₱0.00 Cash Paid Today</span> — Full <strong>₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> balance deferred to Promissory Note (NR / AR)`;
             } else {
                 const bal = Math.round((math.remainingNetToSettle - paid) * 100) / 100;
-                lblChange.innerHTML = `<span style="color: #b45309;">Cash Downpayment: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})} | <strong style="color: #dc2626;">Promissory Note Balance: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>`;
+                lblChange.style.background = '#fffdf5';
+                lblChange.style.borderColor = '#f59e0b';
+                lblChange.innerHTML = `<span style="color: #0369a1; font-weight: 700;">💵 Partial Cash Paid: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span> | <strong style="color: #b45309;">Remaining Balance Deferred to Promissory Note: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>`;
             }
         }
 
@@ -3107,16 +3148,36 @@ const renderSettlementSection = () => {
             }
 
             if (paid === 0) {
-                if (btnPayNow) btnPayNow.textContent = 'Execute Note';
-                if (btnSettle) btnSettle.textContent = 'Process Promissory Note Agreement & Issue Official SOA';
+                if (btnSettle) btnSettle.textContent = '📝 Process Promissory Note Agreement & Issue Official SOA (₱0 Down)';
             } else {
-                if (btnPayNow) btnPayNow.textContent = 'Pay Downpayment';
-                if (btnSettle) btnSettle.textContent = 'Process Partial Settlement & Promissory Note';
+                if (btnSettle) btnSettle.textContent = '📝 Record Partial Payment & Finalize Promissory Note';
             }
         } else {
             if (pnCard) pnCard.style.display = 'none';
-            if (btnPayNow) btnPayNow.textContent = 'Pay Full';
-            if (btnSettle) btnSettle.textContent = 'Process Billing Settlement & Generate Official Invoice';
+            if (btnSettle) btnSettle.textContent = '💵 Finalize Full Payment & Release Patient';
+        }
+
+        const btnQuickCash = document.getElementById('btn-quick-full-cash');
+        const btnQuickPn = document.getElementById('btn-quick-promissory');
+
+        if (btnQuickCash) {
+            if (paid >= math.remainingNetToSettle && math.remainingNetToSettle > 0) {
+                btnQuickCash.classList.remove('btn-outline-primary');
+                btnQuickCash.classList.add('btn-primary');
+            } else {
+                btnQuickCash.classList.remove('btn-primary');
+                btnQuickCash.classList.add('btn-outline-primary');
+            }
+        }
+
+        if (btnQuickPn) {
+            if (paid === 0 && math.remainingNetToSettle > 0) {
+                btnQuickPn.classList.remove('btn-outline-warning');
+                btnQuickPn.classList.add('btn-warning');
+            } else {
+                btnQuickPn.classList.remove('btn-warning');
+                btnQuickPn.classList.add('btn-outline-warning');
+            }
         }
     };
 
@@ -3250,18 +3311,72 @@ const renderSettlementSection = () => {
         updateSettlementTotals();
     });
 
-    if (cashInput) {
-        cashInput.addEventListener('input', updateSettlementTotals);
-    }
+    const openSettlePaymentMethodPicker = () => {
+        const list = (paymentMethodsList && paymentMethodsList.length > 0) ? paymentMethodsList : [
+            { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash', Code_Prefix: 'CSH', Description: 'Cash Tendered at Cashier Counter' },
+            { Payment_Method_ID: 2, Method_Name: 'Accounts Receivable (AR)', Category_Type: 'Receivable', Code_Prefix: 'AR', Description: 'Promissory Note / Hospital Accounts Receivable' },
+            { Payment_Method_ID: 3, Method_Name: 'Notes Receivable', Category_Type: 'Receivable', Code_Prefix: 'NR', Description: 'Formal Promissory Note with Due Date' },
+            { Payment_Method_ID: 4, Method_Name: 'GCash', Category_Type: 'Digital / E-Wallet', Code_Prefix: 'GCSH', Description: 'GCash Mobile Wallet Transfer' },
+            { Payment_Method_ID: 5, Method_Name: 'PayMaya (Maya)', Category_Type: 'Digital / E-Wallet', Code_Prefix: 'MAYA', Description: 'Maya Mobile Wallet Transfer' },
+            { Payment_Method_ID: 6, Method_Name: 'Bank Transfer', Category_Type: 'Bank', Code_Prefix: 'BANK', Description: 'Direct Online Bank Transfer / Deposit' },
+            { Payment_Method_ID: 7, Method_Name: 'Credit / Debit Card', Category_Type: 'Card', Code_Prefix: 'CARD', Description: 'POS Terminal Credit or Debit Card' },
+            { Payment_Method_ID: 8, Method_Name: 'Check / Cheque', Category_Type: 'Check', Code_Prefix: 'CHK', Description: 'Bank Manager or Company Cheque' }
+        ];
 
-    const payMethodSelect = document.getElementById('settle_payment_method_id');
-    payMethodSelect?.addEventListener('change', () => {
-        const selOpt = payMethodSelect.options[payMethodSelect.selectedIndex];
-        const code = selOpt ? selOpt.dataset.code : '';
-        const name = selOpt ? (selOpt.dataset.name || '').toLowerCase() : '';
+        const currentId = document.getElementById('settle_payment_method_id') ? document.getElementById('settle_payment_method_id').value : 1;
 
-        const isNR = code === 'NR' || name.includes('notes receivable');
-        const isAR = code === 'AR' || name.includes('accounts receivable');
+        openGenericLookupPicker({
+            title: "Select Settlement Payment Method",
+            selectedId: currentId,
+            items: list.map(pm => {
+                const isReceivable = (pm.Code_Prefix === 'NR' || pm.Code_Prefix === 'AR' || (pm.Category_Type && pm.Category_Type.toLowerCase().includes('receivable')) || (pm.Method_Name && pm.Method_Name.toLowerCase().includes('receivable')));
+                let badgeClass = 'badge-info';
+                if (pm.Category_Type === 'Cash') badgeClass = 'badge-success';
+                else if (isReceivable) badgeClass = 'badge-warning';
+                else if (pm.Category_Type && pm.Category_Type.toLowerCase().includes('wallet')) badgeClass = 'badge-primary';
+                else if (pm.Category_Type === 'Card') badgeClass = 'badge-secondary';
+
+                return {
+                    id: pm.Payment_Method_ID,
+                    text: `${pm.Method_Name} (${pm.Category_Type || 'Payment'})`,
+                    subtext: pm.Description || (isReceivable ? 'Deferred settlement with Promissory Note' : 'Immediate payment upon discharge'),
+                    badge: pm.Category_Type || 'Payment',
+                    badgeClass: badgeClass,
+                    raw: pm
+                };
+            }),
+            onSelect: (selectedItem) => {
+                applySelectedPaymentMethod(selectedItem.raw || selectedItem);
+            }
+        });
+    };
+
+    const applySelectedPaymentMethod = (pm) => {
+        const inputId = document.getElementById('settle_payment_method_id');
+        const inputText = document.getElementById('settle_payment_method_text');
+        const hintText = document.getElementById('settle_pm_hint');
+
+        const pmId = pm.Payment_Method_ID || pm.id;
+        const pmName = pm.Method_Name || pm.text || '';
+        const pmCode = pm.Code_Prefix || (pm.raw ? pm.raw.Code_Prefix : '') || '';
+        const pmCat = pm.Category_Type || (pm.raw ? pm.raw.Category_Type : '') || '';
+        const pmDesc = pm.Description || (pm.raw ? pm.raw.Description : '') || '';
+
+        if (inputId) inputId.value = pmId;
+        if (inputText) inputText.value = `${pmName} (${pmCat || 'Payment'})`;
+
+        const isNR = pmCode === 'NR' || pmName.toLowerCase().includes('notes receivable');
+        const isAR = pmCode === 'AR' || pmName.toLowerCase().includes('accounts receivable');
+
+        if (hintText) {
+            if (isNR) {
+                hintText.innerHTML = '<strong style="color: #b45309;">📝 Notes Receivable: Formal Promissory Note with negotiable installment schedule</strong>';
+            } else if (isAR) {
+                hintText.innerHTML = '<strong style="color: #b45309;">📝 Accounts Receivable: 30-day deferred credit agreement</strong>';
+            } else {
+                hintText.innerHTML = pmDesc ? `<span class="text-muted">${pmDesc}</span>` : '<span class="text-muted">Payment tendered and verified today</span>';
+            }
+        }
 
         if (isNR || isAR) {
             if (cashInput) {
@@ -3280,41 +3395,69 @@ const renderSettlementSection = () => {
                     }
                 }
             }
-            updateSettlementTotals();
         } else {
             const math = computeSettlementMath();
             if (cashInput && parseFloat(cashInput.value || 0) === 0) {
                 cashInput.value = math.remainingNetToSettle.toFixed(2);
             }
+        }
+
+        updateSettlementTotals();
+    };
+
+    if (cashInput) {
+        cashInput.addEventListener('input', () => {
+            const paid = parseFloat(cashInput.value || 0);
+            const inputId = document.getElementById('settle_payment_method_id');
+            const currentMethodId = inputId ? parseInt(inputId.value, 10) : 1;
+            const currentPm = (paymentMethodsList || []).find(p => p.Payment_Method_ID == currentMethodId);
+            const isReceivable = currentPm && (currentPm.Code_Prefix === 'NR' || currentPm.Code_Prefix === 'AR' || (currentPm.Category_Type && currentPm.Category_Type.toLowerCase().includes('receivable')));
+
+            if (paid === 0 && !isReceivable) {
+                const nrPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'NR') || (paymentMethodsList || []).find(p => p.Code_Prefix === 'AR');
+                if (nrPm) {
+                    applySelectedPaymentMethod(nrPm);
+                    return;
+                }
+            } else if (paid > 0 && isReceivable) {
+                const cashPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'CSH' || p.Payment_Method_ID == 1);
+                if (cashPm) {
+                    applySelectedPaymentMethod(cashPm);
+                    return;
+                }
+            }
+            updateSettlementTotals();
+        });
+    }
+
+    document.getElementById('btn-open-settle-pm-picker')?.addEventListener('click', openSettlePaymentMethodPicker);
+    document.getElementById('settle_payment_method_text')?.addEventListener('click', openSettlePaymentMethodPicker);
+
+    document.getElementById('btn-quick-full-cash')?.addEventListener('click', () => {
+        const math = computeSettlementMath();
+        if (cashInput) {
+            cashInput.value = math.remainingNetToSettle.toFixed(2);
+        }
+        const inputId = document.getElementById('settle_payment_method_id');
+        const currentMethodId = inputId ? parseInt(inputId.value, 10) : 1;
+        const currentPm = (paymentMethodsList || []).find(p => p.Payment_Method_ID == currentMethodId);
+        const isReceivable = currentPm && (currentPm.Code_Prefix === 'NR' || currentPm.Code_Prefix === 'AR' || (currentPm.Category_Type && currentPm.Category_Type.toLowerCase().includes('receivable')));
+        if (isReceivable || !currentPm) {
+            const cashPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'CSH' || p.Payment_Method_ID == 1) || { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash' };
+            applySelectedPaymentMethod(cashPm);
+        } else {
             updateSettlementTotals();
         }
     });
 
-    document.getElementById('pn_plan_type_id')?.addEventListener('change', updateSettlementTotals);
-    document.getElementById('pn_installment_months')?.addEventListener('change', updateSettlementTotals);
-
-    document.getElementById('btn-zero-cash')?.addEventListener('click', () => {
+    document.getElementById('btn-quick-promissory')?.addEventListener('click', () => {
         if (cashInput) {
             cashInput.value = '0.00';
         }
-        if (payMethodSelect) {
-            for (let i = 0; i < payMethodSelect.options.length; i++) {
-                if (payMethodSelect.options[i].dataset.code === 'NR') {
-                    payMethodSelect.selectedIndex = i;
-                    break;
-                }
-            }
-        }
-        const planSelect = document.getElementById('pn_plan_type_id');
-        if (planSelect) {
-            for (let i = 0; i < planSelect.options.length; i++) {
-                if (planSelect.options[i].dataset.code === 'Monthly_Installment') {
-                    planSelect.selectedIndex = i;
-                    break;
-                }
-            }
-        }
-        updateSettlementTotals();
+        const nrPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'NR' || (p.Method_Name && p.Method_Name.toLowerCase().includes('notes receivable'))) 
+            || (paymentMethodsList || []).find(p => p.Code_Prefix === 'AR')
+            || { Payment_Method_ID: 3, Method_Name: 'Notes Receivable', Category_Type: 'Receivable', Code_Prefix: 'NR' };
+        applySelectedPaymentMethod(nrPm);
     });
 
     document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
@@ -3322,22 +3465,31 @@ const renderSettlementSection = () => {
         if (cashInput) {
             cashInput.value = math.remainingNetToSettle.toFixed(2);
         }
-        if (payMethodSelect) {
-            const selOpt = payMethodSelect.options[payMethodSelect.selectedIndex];
-            const optCode = selOpt ? selOpt.dataset.code : '';
-            if (optCode === 'NR' || optCode === 'AR') {
-                for (let i = 0; i < payMethodSelect.options.length; i++) {
-                    if (payMethodSelect.options[i].dataset.code === 'CSH' || payMethodSelect.options[i].value == '1') {
-                        payMethodSelect.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
+        const inputId = document.getElementById('settle_payment_method_id');
+        const currentMethodId = inputId ? parseInt(inputId.value, 10) : 1;
+        const currentPm = (paymentMethodsList || []).find(p => p.Payment_Method_ID == currentMethodId);
+        const isReceivable = currentPm && (currentPm.Code_Prefix === 'NR' || currentPm.Code_Prefix === 'AR' || (currentPm.Category_Type && currentPm.Category_Type.toLowerCase().includes('receivable')));
+        if (isReceivable || !currentPm) {
+            const cashPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'CSH' || p.Payment_Method_ID == 1) || { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash' };
+            applySelectedPaymentMethod(cashPm);
+        } else {
+            updateSettlementTotals();
         }
-        updateSettlementTotals();
     });
 
-    document.getElementById('btn-pay-now')?.addEventListener('click', submitSettlement);
+    document.getElementById('btn-zero-cash')?.addEventListener('click', () => {
+        if (cashInput) {
+            cashInput.value = '0.00';
+        }
+        const nrPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'NR' || (p.Method_Name && p.Method_Name.toLowerCase().includes('notes receivable'))) 
+            || (paymentMethodsList || []).find(p => p.Code_Prefix === 'AR')
+            || { Payment_Method_ID: 3, Method_Name: 'Notes Receivable', Category_Type: 'Receivable', Code_Prefix: 'NR' };
+        applySelectedPaymentMethod(nrPm);
+    });
+
+    document.getElementById('pn_plan_type_id')?.addEventListener('change', updateSettlementTotals);
+    document.getElementById('pn_installment_months')?.addEventListener('change', updateSettlementTotals);
+
     document.getElementById('btnSettleBill')?.addEventListener('click', submitSettlement);
 
     cashInput?.addEventListener('keydown', (e) => {

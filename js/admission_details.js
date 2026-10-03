@@ -1928,12 +1928,12 @@ const submitMedicineReturn = () => {
 const getPaymentMethodOptionsHtml = (selectedId = 1) => {
     let opts = '';
     if (!paymentMethodsList || paymentMethodsList.length === 0) {
-        opts = '<option value="1">Cash (Cash)</option>';
+        opts = '<option value="1" data-code="CSH" data-category="Cash" data-name="Cash">Cash (Cash)</option>';
         return opts;
     }
     paymentMethodsList.forEach(pm => {
         const isSel = pm.Payment_Method_ID == selectedId ? 'selected' : '';
-        opts += `<option value="${pm.Payment_Method_ID}" ${isSel}>${pm.Method_Name} (${pm.Category_Type})</option>`;
+        opts += `<option value="${pm.Payment_Method_ID}" data-code="${pm.Code_Prefix || ''}" data-category="${pm.Category_Type || ''}" data-name="${pm.Method_Name || ''}" ${isSel}>${pm.Method_Name} (${pm.Category_Type})</option>`;
     });
     return opts;
 };
@@ -2802,10 +2802,11 @@ const renderSettlementSection = () => {
             <tr>
                 <td><strong>Amount Tendered / Paid at Discharge (₱):</strong></td>
                 <td align="right">
-                    <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;">
-                        <button type="button" id="btn-exact-cash" class="btn btn-secondary btn-sm" style="white-space: nowrap; font-size: 13px;" title="Reset input to exact remaining balance">Exact Balance</button>
-                        <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${initialRemaining.toFixed(2)}" style="max-width: 170px; font-weight: 700; font-size: 15px; text-align: right;">
-                        <button type="button" id="btn-pay-now" class="btn btn-primary" style="font-weight: 700; padding: 9px 24px; white-space: nowrap;">Pay</button>
+                    <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+                        <button type="button" id="btn-exact-cash" class="btn btn-outline-primary btn-sm" style="white-space: nowrap; font-size: 12.5px; font-weight: 600;" title="Full cash payment today">💵 Full Cash</button>
+                        <button type="button" id="btn-zero-cash" class="btn btn-outline-warning btn-sm" style="white-space: nowrap; font-size: 12.5px; font-weight: 600;" title="No cash paid today, defer 100% to Promissory Note (NR / AR)">📝 ₱0 Down (Promissory Note)</button>
+                        <input type="number" id="settle_amount_paid" class="form-control" step="0.01" min="0" placeholder="0.00" value="${initialRemaining.toFixed(2)}" style="max-width: 140px; font-weight: 700; font-size: 15px; text-align: right;">
+                        <button type="button" id="btn-pay-now" class="btn btn-primary" style="font-weight: 700; padding: 7px 20px; white-space: nowrap;">Pay</button>
                     </div>
                 </td>
             </tr>
@@ -3055,6 +3056,9 @@ const renderSettlementSection = () => {
         if (lblBalDue) lblBalDue.textContent = `₱${math.remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
         const paid = cashInput ? parseFloat(cashInput.value || 0) : 0;
+        const btnPayNow = document.getElementById('btn-pay-now');
+        const btnSettle = document.getElementById('btnSettleBill');
+
         if (lblChange) {
             if (paid >= math.remainingNetToSettle) {
                 const change = Math.round((paid - math.remainingNetToSettle) * 100) / 100;
@@ -3062,10 +3066,12 @@ const renderSettlementSection = () => {
                     ? `Change: ₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})} (Fully Paid)` 
                     : 'Fully Settled (₱0.00 Balance)';
                 lblChange.style.color = '#16a34a';
+            } else if (paid === 0) {
+                const bal = math.remainingNetToSettle;
+                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">📝 ₱0.00 Cash Paid Today — Full ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})} Balance Deferred to Promissory Note (NR / AR)</span>`;
             } else {
                 const bal = Math.round((math.remainingNetToSettle - paid) * 100) / 100;
-                lblChange.textContent = `Remaining Balance Due: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
-                lblChange.style.color = '#dc2626';
+                lblChange.innerHTML = `<span style="color: #b45309;">Cash Downpayment: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})} | <strong style="color: #dc2626;">Promissory Note Balance: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>`;
             }
         }
 
@@ -3099,8 +3105,18 @@ const renderSettlementSection = () => {
             if (pnMonthlyDisplay) {
                 pnMonthlyDisplay.textContent = `₱${monthlyAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} / month (${months} mo${months > 1 ? 's' : ''})`;
             }
+
+            if (paid === 0) {
+                if (btnPayNow) btnPayNow.textContent = 'Execute Note';
+                if (btnSettle) btnSettle.textContent = 'Process Promissory Note Agreement & Issue Official SOA';
+            } else {
+                if (btnPayNow) btnPayNow.textContent = 'Pay Downpayment';
+                if (btnSettle) btnSettle.textContent = 'Process Partial Settlement & Promissory Note';
+            }
         } else {
             if (pnCard) pnCard.style.display = 'none';
+            if (btnPayNow) btnPayNow.textContent = 'Pay Full';
+            if (btnSettle) btnSettle.textContent = 'Process Billing Settlement & Generate Official Invoice';
         }
     };
 
@@ -3238,13 +3254,85 @@ const renderSettlementSection = () => {
         cashInput.addEventListener('input', updateSettlementTotals);
     }
 
+    const payMethodSelect = document.getElementById('settle_payment_method_id');
+    payMethodSelect?.addEventListener('change', () => {
+        const selOpt = payMethodSelect.options[payMethodSelect.selectedIndex];
+        const code = selOpt ? selOpt.dataset.code : '';
+        const name = selOpt ? (selOpt.dataset.name || '').toLowerCase() : '';
+
+        const isNR = code === 'NR' || name.includes('notes receivable');
+        const isAR = code === 'AR' || name.includes('accounts receivable');
+
+        if (isNR || isAR) {
+            if (cashInput) {
+                cashInput.value = '0.00';
+            }
+            const planSelect = document.getElementById('pn_plan_type_id');
+            if (planSelect) {
+                for (let i = 0; i < planSelect.options.length; i++) {
+                    const optCode = planSelect.options[i].dataset.code;
+                    if (isAR && optCode === 'Full_30_Days') {
+                        planSelect.selectedIndex = i;
+                        break;
+                    } else if (isNR && optCode === 'Monthly_Installment') {
+                        planSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            updateSettlementTotals();
+        } else {
+            const math = computeSettlementMath();
+            if (cashInput && parseFloat(cashInput.value || 0) === 0) {
+                cashInput.value = math.remainingNetToSettle.toFixed(2);
+            }
+            updateSettlementTotals();
+        }
+    });
+
     document.getElementById('pn_plan_type_id')?.addEventListener('change', updateSettlementTotals);
     document.getElementById('pn_installment_months')?.addEventListener('change', updateSettlementTotals);
+
+    document.getElementById('btn-zero-cash')?.addEventListener('click', () => {
+        if (cashInput) {
+            cashInput.value = '0.00';
+        }
+        if (payMethodSelect) {
+            for (let i = 0; i < payMethodSelect.options.length; i++) {
+                if (payMethodSelect.options[i].dataset.code === 'NR') {
+                    payMethodSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        const planSelect = document.getElementById('pn_plan_type_id');
+        if (planSelect) {
+            for (let i = 0; i < planSelect.options.length; i++) {
+                if (planSelect.options[i].dataset.code === 'Monthly_Installment') {
+                    planSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        updateSettlementTotals();
+    });
 
     document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
         const math = computeSettlementMath();
         if (cashInput) {
             cashInput.value = math.remainingNetToSettle.toFixed(2);
+        }
+        if (payMethodSelect) {
+            const selOpt = payMethodSelect.options[payMethodSelect.selectedIndex];
+            const optCode = selOpt ? selOpt.dataset.code : '';
+            if (optCode === 'NR' || optCode === 'AR') {
+                for (let i = 0; i < payMethodSelect.options.length; i++) {
+                    if (payMethodSelect.options[i].dataset.code === 'CSH' || payMethodSelect.options[i].value == '1') {
+                        payMethodSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
         }
         updateSettlementTotals();
     });
@@ -3316,9 +3404,11 @@ const submitSettlement = () => {
     const remainingNetToSettle = Math.max(0, Math.round((netAmt - totalAdvancePaid) * 100) / 100);
 
     let confirmMsg = '';
-    if (amountPaid < remainingNetToSettle) {
+    if (amountPaid === 0) {
+        confirmMsg = `Confirm Promissory Note (NR / AR) execution with ₱0.00 cash paid today?\n\nThe entire balance of ₱${remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a formal Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. An Official Statement of Account (SOA) will be generated for signing.`;
+    } else if (amountPaid < remainingNetToSettle) {
         const remaining = Math.max(0, Math.round((remainingNetToSettle - amountPaid) * 100) / 100);
-        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. Any active bed stay will be closed and released.`;
+        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. An Official Receipt will be issued for the cash payment.`;
     } else {
         confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nPre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. This will record the official Final Invoice as PAID IN FULL and release the bed.`;
     }
@@ -3400,8 +3490,8 @@ const submitSettlement = () => {
                 showPopupAlert('Settlement Error: ' + errMsg, 'danger');
             });
     }, null, {
-        title: 'Confirm Billing Settlement',
-        confirmText: 'Process Settlement',
+        title: amountPaid === 0 ? 'Confirm Promissory Note Agreement' : 'Confirm Billing Settlement',
+        confirmText: amountPaid === 0 ? 'Execute Promissory Note' : 'Process Settlement',
         type: amountPaid < remainingNetToSettle ? 'warning' : 'info'
     });
 };

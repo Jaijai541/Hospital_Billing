@@ -334,24 +334,27 @@ const renderSummaryBox = (summary) => {
     if (rowAdvance) {
         if (advancePaid > 0) {
             rowAdvance.style.display = "table-row";
-            document.getElementById("pb-sum-advance-payments").textContent = `-₱${formatMoney(advancePaid)}`;
+            const elAdv = document.getElementById("pb-sum-advance-payments");
+            if (elAdv) elAdv.textContent = `-₱${formatMoney(advancePaid)}`;
         } else {
             rowAdvance.style.display = "none";
         }
     }
 
     const rowNetDue = document.getElementById("pb-row-net-due");
+    const bannerTotalEl = document.getElementById("pb-banner-total");
     if (rowNetDue) {
         if (advancePaid > 0) {
             rowNetDue.style.display = "table-row";
-            document.getElementById("pb-sum-remaining-balance").textContent = `₱${formatMoney(netRemaining)}`;
-            document.getElementById("pb-banner-total").textContent = `₱${formatMoney(netRemaining)}`;
+            const elRemBal = document.getElementById("pb-sum-remaining-balance");
+            if (elRemBal) elRemBal.textContent = `₱${formatMoney(netRemaining)}`;
+            if (bannerTotalEl) bannerTotalEl.textContent = `₱${formatMoney(netRemaining)}`;
         } else {
             rowNetDue.style.display = "none";
-            document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalAmount)}`;
+            if (bannerTotalEl) bannerTotalEl.textContent = `₱${formatMoney(totalAmount)}`;
         }
     } else {
-        document.getElementById("pb-banner-total").textContent = `₱${formatMoney(totalAmount)}`;
+        if (bannerTotalEl) bannerTotalEl.textContent = `₱${formatMoney(totalAmount)}`;
     }
 };
 

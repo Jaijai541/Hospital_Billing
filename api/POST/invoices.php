@@ -349,6 +349,72 @@ class InvoiceManager
                 ':by' => $cashierName
             ]);
 
+            $promissoryNoteId = null;
+            if ($rem > 0) {
+                $pnData = $json['promissory_note'] ?? [];
+
+                $planTypeId = !empty($pnData['plan_type_id']) ? intval($pnData['plan_type_id']) : 0;
+                $planCode = !empty($pnData['plan_type_code']) ? trim($pnData['plan_type_code']) : '';
+
+                if (empty($planTypeId) && !empty($planCode)) {
+                    $chkPlan = $conn->prepare("SELECT Plan_Type_ID FROM Enum_Promissory_Plan_Type WHERE Plan_Type_Code = :code LIMIT 1");
+                    $chkPlan->execute([':code' => $planCode]);
+                    $planTypeId = intval($chkPlan->fetchColumn());
+                }
+
+                if (empty($planTypeId)) {
+                    $planTypeId = 1;
+                }
+
+                $months = !empty($pnData['installment_months']) ? max(1, intval($pnData['installment_months'])) : 1;
+                $monthlyAmount = !empty($pnData['monthly_amount']) && floatval($pnData['monthly_amount']) > 0
+                    ? round(floatval($pnData['monthly_amount']), 2)
+                    : round(ceil(($rem / $months) * 100) / 100, 2);
+
+                $nextDueDate = !empty($pnData['next_due_date']) ? trim($pnData['next_due_date']) : '';
+                if (empty($nextDueDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $nextDueDate)) {
+                    $nextDueDate = date('Y-m-d', strtotime('+30 days'));
+                }
+
+                $guarantorName = !empty($pnData['guarantor_name']) ? trim($pnData['guarantor_name']) : null;
+                $guarantorContact = !empty($pnData['guarantor_contact']) ? trim($pnData['guarantor_contact']) : null;
+                $pnNotes = !empty($pnData['notes']) ? trim($pnData['notes']) : 'Promissory Note agreement executed at discharge';
+
+                $insPn = $conn->prepare("
+                    INSERT INTO Promissory_Note 
+                        (Invoice_ID, Admission_ID, Total_Balance_Owed, Plan_Type_ID, Installment_Months, Monthly_Amount, Next_Due_Date, Guarantor_Name, Guarantor_Contact, Notes, Status, Created_At)
+                    VALUES 
+                        (:iid, :aid, :bal, :ptid, :months, :mamt, :ndate, :gname, :gcontact, :notes, 'Active', NOW())
+                ");
+                $insPn->execute([
+                    ':iid' => $invoiceId,
+                    ':aid' => $admissionId,
+                    ':bal' => $rem,
+                    ':ptid' => $planTypeId,
+                    ':months' => $months,
+                    ':mamt' => $monthlyAmount,
+                    ':ndate' => $nextDueDate,
+                    ':gname' => $guarantorName,
+                    ':gcontact' => $guarantorContact,
+                    ':notes' => $pnNotes
+                ]);
+                $promissoryNoteId = $conn->lastInsertId();
+
+                $logPn = $conn->prepare("
+                    INSERT INTO Audit_Log 
+                        (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By, Created_At)
+                    VALUES 
+                        (:uid, :aid, 'Promissory Note Executed', 'Billing', :ref, :descr, :by, NOW())
+                ");
+                $logPn->execute([
+                    ':uid' => $userId,
+                    ':aid' => $admissionId,
+                    ':ref' => $invCode,
+                    ':descr' => "Executed Promissory Note agreement for balance ₱" . number_format($rem, 2) . " (Next Due: {$nextDueDate}, Schedule: ₱" . number_format($monthlyAmount, 2) . " for {$months} mo(s)). Guarantor: " . ($guarantorName ?: 'Patient'),
+                    ':by' => $cashierName
+                ]);
+            }
+
             $conn->commit();
             return json_encode([
                 'success' => true,
@@ -357,6 +423,7 @@ class InvoiceManager
                 'admission_id' => $admissionId,
                 'payment_id' => $paymentId,
                 'receipt_number' => $receiptNumber,
+                'promissory_note_id' => $promissoryNoteId,
                 'gross_total' => $grossTotal,
                 'discount_amount' => $discountAmount,
                 'advance_payment_amount' => $totalAdvancePaid,
@@ -364,7 +431,7 @@ class InvoiceManager
                 'tendered_at_discharge' => $tenderedAtDischarge,
                 'amount_paid' => $totalAmountPaid,
                 'change_amount' => $changeAmount,
-                'remaining_balance' => max(0.00, round($netAmountDue - $totalAmountPaid, 2))
+                'remaining_balance' => $rem
             ]);
 
         } catch (Exception $e) {
@@ -499,6 +566,25 @@ class InvoiceManager
                 ':descr' => $desc,
                 ':by' => $cashierName
             ]);
+
+            $chkPn = $conn->prepare("SELECT Note_ID, Installment_Months, Monthly_Amount FROM Promissory_Note WHERE Invoice_ID = :iid ORDER BY Note_ID DESC LIMIT 1");
+            $chkPn->execute([':iid' => $inv['Invoice_ID']]);
+            $pnFound = $chkPn->fetch(PDO::FETCH_ASSOC);
+
+            if ($pnFound) {
+                if ($newRemaining <= 0) {
+                    $updPn = $conn->prepare("UPDATE Promissory_Note SET Total_Balance_Owed = 0.00, Status = 'Settled' WHERE Note_ID = :nid");
+                    $updPn->execute([':nid' => $pnFound['Note_ID']]);
+                } else {
+                    $nextDueDate = date('Y-m-d', strtotime('+30 days'));
+                    $updPn = $conn->prepare("UPDATE Promissory_Note SET Total_Balance_Owed = :rem, Next_Due_Date = :ndate WHERE Note_ID = :nid");
+                    $updPn->execute([
+                        ':rem' => $newRemaining,
+                        ':ndate' => $nextDueDate,
+                        ':nid' => $pnFound['Note_ID']
+                    ]);
+                }
+            }
 
             $conn->commit();
 

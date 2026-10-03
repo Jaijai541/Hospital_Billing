@@ -93,6 +93,12 @@ const renderInvoicesTable = (invoices) => {
             statusBadge = '<span class="badge badge-danger">PENDING PAYMENT</span>';
         }
 
+        if (balVal > 0 && inv.Promissory_Next_Due_Date) {
+            const dueStr = inv.Formatted_Promissory_Next_Due_Date || inv.Promissory_Next_Due_Date;
+            const dueAmt = parseFloat(inv.Promissory_Monthly_Amount || balVal);
+            statusBadge += `<br><span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-size: 11px; margin-top: 4px; display: inline-block;">📅 PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+        }
+
         html += `<tr class="clickable-row" onclick="openPaymentHistoryModal(${inv.Invoice_ID})" title="Click row to view payment history, official receipts, SOA, or pay balance">`;
         html += `<td><strong>${inv.Invoice_Code}</strong></td>`;
         html += `<td><strong>${inv.Admission_Code}</strong></td>`;
@@ -275,6 +281,20 @@ const openPaymentHistoryModal = (invoiceId) => {
         if (wrap) {
             wrap.style.color = balVal > 0 ? '#dc2626' : '#16a34a';
         }
+    }
+
+    const pnWrap = document.getElementById('hist_pn_wrap');
+    const pnText = document.getElementById('hist_pn_text');
+    if (balVal > 0 && inv.Promissory_Next_Due_Date) {
+        if (pnWrap && pnText) {
+            pnWrap.style.display = 'block';
+            const planStr = inv.Promissory_Plan_Name || 'Installment Plan';
+            const dueStr = inv.Formatted_Promissory_Next_Due_Date || inv.Promissory_Next_Due_Date;
+            const dueAmt = parseFloat(inv.Promissory_Monthly_Amount || balVal);
+            pnText.textContent = `${planStr} — Next Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}/mo)`;
+        }
+    } else if (pnWrap) {
+        pnWrap.style.display = 'none';
     }
 
     const btnPay = document.getElementById('btnHistPayBalance');

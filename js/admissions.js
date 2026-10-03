@@ -485,7 +485,13 @@ const renderAdmissionsTable = (admissions) => {
         } else if (a.Status === 'Billed') {
             const rem = parseFloat(a.Remaining_Balance !== undefined && a.Remaining_Balance !== null ? a.Remaining_Balance : 0);
             if (rem > 0) {
-                statusBadge = `<span class="badge badge-warning" style="background: #f59e0b; color: #fff;">Billed (Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                let pnInfo = '';
+                if (a.Promissory_Next_Due_Date) {
+                    const dueStr = a.Formatted_Promissory_Next_Due_Date || a.Promissory_Next_Due_Date;
+                    const dueAmt = parseFloat(a.Promissory_Monthly_Amount || rem);
+                    pnInfo = `<br><span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-size: 11px; margin-top: 4px; display: inline-block;">📅 PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                }
+                statusBadge = `<span class="badge badge-warning" style="background: #f59e0b; color: #fff;">Billed (Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>${pnInfo}`;
             } else {
                 statusBadge = '<span class="badge badge-success">Settled (Paid in Full)</span>';
             }

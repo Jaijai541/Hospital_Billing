@@ -227,6 +227,31 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
             elBadge.className = "payment-status-badge due";
         }
     }
+
+    const pnSection = document.getElementById("promissory-note-print-section");
+    if (pnSection) {
+        if (remainingBalance > 0 && inv.Promissory_Note) {
+            pnSection.style.display = "";
+            const pn = inv.Promissory_Note;
+            const elPlan = document.getElementById("pn-print-plan");
+            const elDue = document.getElementById("pn-print-due-date");
+            const elMonthly = document.getElementById("pn-print-monthly-amount");
+            const elMonths = document.getElementById("pn-print-months");
+            const elGuar = document.getElementById("pn-print-guarantor");
+            const elStatus = document.getElementById("pn-print-status");
+            const elBalText = document.getElementById("pn-print-balance-text");
+
+            if (elPlan) elPlan.textContent = `${pn.Plan_Type_Name || 'Standard Plan'} (${pn.Installment_Months || 1} Month/s)`;
+            if (elDue) elDue.textContent = pn.Formatted_Next_Due_Date || pn.Next_Due_Date || "N/A";
+            if (elMonthly) elMonthly.textContent = `₱${formatMoney(pn.Monthly_Amount || remainingBalance)}`;
+            if (elMonths) elMonths.textContent = pn.Installment_Months || "1";
+            if (elGuar) elGuar.textContent = `${pn.Guarantor_Name || inv.Emergency_Contact_Name || inv.Patient_Name || 'Patient / Guarantor'}${pn.Guarantor_Contact ? ` (${pn.Guarantor_Contact})` : ''}`;
+            if (elStatus) elStatus.textContent = `${pn.Status || 'Active'} AGREEMENT`;
+            if (elBalText) elBalText.textContent = `₱${formatMoney(remainingBalance)}`;
+        } else {
+            pnSection.style.display = "none";
+        }
+    }
 };
 
 const renderInvoice = (inv) => {

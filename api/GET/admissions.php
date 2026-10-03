@@ -35,7 +35,15 @@ class AdmissionManager
                     fi.Invoice_ID,
                     fi.Net_Amount_Due,
                     fi.Amount_Paid,
-                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance
+                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance,
+                    pn.Note_ID AS Promissory_Note_ID,
+                    ppt.Plan_Type_Code AS Promissory_Plan_Code,
+                    ppt.Plan_Type_Name AS Promissory_Plan_Name,
+                    pn.Installment_Months AS Promissory_Months,
+                    pn.Monthly_Amount AS Promissory_Monthly_Amount,
+                    DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Promissory_Next_Due_Date,
+                    DATE_FORMAT(pn.Next_Due_Date, '%b %d, %Y') AS Formatted_Promissory_Next_Due_Date,
+                    pn.Status AS Promissory_Status
                 FROM Admission a
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 LEFT JOIN Room_Transfer_Log rtl ON rtl.Admission_ID = a.Admission_ID AND rtl.Date_Out IS NULL
@@ -43,6 +51,8 @@ class AdmissionManager
                 LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
                 LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
                 LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
+                LEFT JOIN Promissory_Note pn ON pn.Admission_ID = a.Admission_ID
+                LEFT JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
                 WHERE 1=1";
 
         $params = [];
@@ -165,6 +175,31 @@ class AdmissionManager
         $docStmt = $conn->prepare($docSql);
         $docStmt->execute([':id' => $id]);
         $admission['Assigned_Doctors'] = $docStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $pnSql = "SELECT 
+                    pn.Note_ID,
+                    pn.Invoice_ID,
+                    pn.Admission_ID,
+                    pn.Total_Balance_Owed,
+                    pn.Plan_Type_ID,
+                    ppt.Plan_Type_Code,
+                    ppt.Plan_Type_Name,
+                    pn.Installment_Months,
+                    pn.Monthly_Amount,
+                    DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Next_Due_Date,
+                    DATE_FORMAT(pn.Next_Due_Date, '%M %d, %Y') AS Formatted_Next_Due_Date,
+                    pn.Guarantor_Name,
+                    pn.Guarantor_Contact,
+                    pn.Notes,
+                    pn.Status,
+                    DATE_FORMAT(pn.Created_At, '%Y-%m-%d %h:%i %p') AS Created_At
+                  FROM Promissory_Note pn
+                  INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                  WHERE pn.Admission_ID = :id
+                  ORDER BY pn.Note_ID DESC LIMIT 1";
+        $pnStmt = $conn->prepare($pnSql);
+        $pnStmt->execute([':id' => $id]);
+        $admission['Promissory_Note'] = $pnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         return json_encode($admission);
     }

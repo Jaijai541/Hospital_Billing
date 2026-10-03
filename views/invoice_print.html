@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official Statement of Account — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=6.4">
-    <link rel="stylesheet" href="../css/invoice_print.css?v=6.4">
+    <link rel="stylesheet" href="../css/common.css?v=7.1">
+    <link rel="stylesheet" href="../css/invoice_print.css?v=7.1">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
@@ -206,6 +206,33 @@
                 <span class="payment-status-badge" id="payment-status-badge">PAID</span>
             </div>
         </div>
+
+        <div id="promissory-note-print-section" style="display: none; margin-top: 18px; border: 1.5px solid #1e293b; border-radius: 4px; padding: 12px 14px; background: #fafafa;">
+            <div style="font-weight: 700; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-bottom: 8px; color: #0f172a; display: flex; justify-content: space-between;">
+                <span>PROMISSORY NOTE &amp; MUTUAL SETTLEMENT AGREEMENT</span>
+                <span id="pn-print-status" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">ACTIVE AGREEMENT</span>
+            </div>
+            <table class="soa-table" style="margin-bottom: 8px; font-size: 12px;">
+                <tbody>
+                    <tr>
+                        <td class="label-cell" width="22%">Settlement Plan:</td>
+                        <td class="value-cell" width="28%" id="pn-print-plan">Monthly Installment Plan</td>
+                        <td class="label-cell" width="22%">Next Payment Due Date:</td>
+                        <td class="value-cell" width="28%"><strong id="pn-print-due-date" style="color: #b91c1c;">—</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Installment Schedule:</td>
+                        <td class="value-cell" id="pn-print-installment"><strong id="pn-print-monthly-amount">₱0.00</strong> (<span id="pn-print-months">1</span> Month/s)</td>
+                        <td class="label-cell">Responsible Guarantor:</td>
+                        <td class="value-cell" id="pn-print-guarantor">—</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="font-size: 11px; line-height: 1.5; color: #334155; text-align: justify; margin-top: 6px;">
+                <strong>ACKNOWLEDGEMENT &amp; UNDERTAKING:</strong> I/We, the undersigned patient / authorized guarantor, hereby acknowledge the outstanding balance of <strong id="pn-print-balance-text">₱0.00</strong> owed to IN-PATIENT HOSPITAL &amp; MEDICAL CENTER for hospitalization services rendered. I/We unconditionally promise and agree to pay the scheduled installment amount on or before the due date indicated above until the account is fully satisfied. Both the Hospital Credit/Billing Officer and the Patient/Guarantor have mutually reviewed, approved, and agreed to this settlement commitment.
+            </div>
+        </div>
+
         <table class="signatures-table">
             <tr>
                 <td width="33%">
@@ -256,7 +283,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=6.9"></script>
-    <script src="../js/invoice_print.js?v=6.9"></script>
+    <script src="../js/common.js?v=7.1"></script>
+    <script src="../js/invoice_print.js?v=7.1"></script>
 </body>
 </html>

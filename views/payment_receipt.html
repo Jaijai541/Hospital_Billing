@@ -88,12 +88,20 @@
                     <td class="label-col" style="background-color: #fefce8;"><strong style="font-size: 14px; color: #854d0e;">NEW REMAINING BALANCE DUE:</strong></td>
                     <td class="value-col"><strong id="or-balance-after" style="font-size: 17px; color: #dc2626;">₱0.00</strong></td>
                 </tr>
+                <tr id="or-pn-schedule-row" style="display: none; background-color: #f0fdf4;">
+                    <td class="label-col" style="background-color: #f0fdf4;"><strong style="font-size: 13.5px; color: #166534;">NEXT PAYMENT SCHEDULE:</strong></td>
+                    <td class="value-col"><strong id="or-next-due-date" style="color: #b91c1c;">—</strong> (<span id="or-next-monthly-amount">₱0.00</span> via <span id="or-pn-plan-name">Installment Plan</span>)</td>
+                </tr>
                 <tr>
                     <td class="label-col">Account Settlement Status:</td>
                     <td class="value-col" id="or-status-cell"><span class="status-tag status-paid">PAID IN FULL</span></td>
                 </tr>
             </tbody>
         </table>
+
+        <div id="or-pn-agreement-box" style="display: none; background: #fafafa; border: 1px dashed #94a3b8; border-radius: 4px; padding: 8px 12px; margin-bottom: 12px; font-size: 11px; color: #334155; line-height: 1.45;">
+            <strong>MUTUAL SETTLEMENT AGREEMENT:</strong> Both parties (In-Patient Hospital and the Patient / Guarantor) acknowledge and mutually agree to the Promissory Note payment schedule detailed above. Timely payment of the remaining balance is required on or before each scheduled due date.
+        </div>
 
         <div class="receipt-signatures">
             <div class="signature-box">
@@ -113,7 +121,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=6.0"></script>
-    <script src="../js/payment_receipt.js?v=6.0"></script>
+    <script src="../js/common.js?v=7.1"></script>
+    <script src="../js/payment_receipt.js?v=7.1"></script>
 </body>
 </html>

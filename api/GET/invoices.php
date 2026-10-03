@@ -56,12 +56,25 @@ class InvoiceManager
                     COALESCE(fi.Amount_Paid, fi.Net_Amount_Due) AS Amount_Paid,
                     COALESCE(fi.Change_Amount, 0.00) AS Change_Amount,
                     GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) AS Remaining_Balance,
-                    DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Settlement_Date
+                    DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Settlement_Date,
+                    pn.Note_ID AS Promissory_Note_ID,
+                    pn.Plan_Type_ID AS Promissory_Plan_Type_ID,
+                    ppt.Plan_Type_Code AS Promissory_Plan_Code,
+                    ppt.Plan_Type_Name AS Promissory_Plan_Name,
+                    pn.Installment_Months AS Promissory_Months,
+                    pn.Monthly_Amount AS Promissory_Monthly_Amount,
+                    DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Promissory_Next_Due_Date,
+                    DATE_FORMAT(pn.Next_Due_Date, '%b %d, %Y') AS Formatted_Promissory_Next_Due_Date,
+                    pn.Guarantor_Name AS Promissory_Guarantor_Name,
+                    pn.Guarantor_Contact AS Promissory_Guarantor_Contact,
+                    pn.Status AS Promissory_Status
                 FROM Final_Invoice fi
                 INNER JOIN Admission a ON fi.Admission_ID = a.Admission_ID
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 INNER JOIN System_User u ON fi.Processed_By_User_ID = u.User_ID
                 LEFT JOIN Enum_Discount d ON fi.Discount_ID = d.Discount_ID
+                LEFT JOIN Promissory_Note pn ON fi.Invoice_ID = pn.Invoice_ID
+                LEFT JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
                 WHERE 1=1";
 
         $params = [];
@@ -206,6 +219,31 @@ class InvoiceManager
 
         $invoice['Ledger_Items'] = $this->fetchLedgerItems($conn, $aid);
         $invoice['Category_Summary'] = $this->fetchLedgerSummary($conn, $aid);
+
+        $pnSql = "SELECT 
+                    pn.Note_ID,
+                    pn.Invoice_ID,
+                    pn.Admission_ID,
+                    pn.Total_Balance_Owed,
+                    pn.Plan_Type_ID,
+                    ppt.Plan_Type_Code,
+                    ppt.Plan_Type_Name,
+                    pn.Installment_Months,
+                    pn.Monthly_Amount,
+                    DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Next_Due_Date,
+                    DATE_FORMAT(pn.Next_Due_Date, '%M %d, %Y') AS Formatted_Next_Due_Date,
+                    pn.Guarantor_Name,
+                    pn.Guarantor_Contact,
+                    pn.Notes,
+                    pn.Status,
+                    DATE_FORMAT(pn.Created_At, '%Y-%m-%d %h:%i %p') AS Created_At
+                  FROM Promissory_Note pn
+                  INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                  WHERE pn.Invoice_ID = :iid
+                  LIMIT 1";
+        $pnStmt = $conn->prepare($pnSql);
+        $pnStmt->execute([':iid' => $invoice['Invoice_ID']]);
+        $invoice['Promissory_Note'] = $pnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         return json_encode($invoice);
     }
@@ -495,7 +533,57 @@ class InvoiceManager
             return json_encode(['error' => 'Payment receipt not found.']);
         }
 
+        $aid = $receipt['Admission_ID'];
+        $iid = $receipt['Invoice_ID'];
+        $pnSql = "SELECT 
+                    pn.Note_ID,
+                    pn.Invoice_ID,
+                    pn.Admission_ID,
+                    pn.Total_Balance_Owed,
+                    pn.Plan_Type_ID,
+                    ppt.Plan_Type_Code,
+                    ppt.Plan_Type_Name,
+                    pn.Installment_Months,
+                    pn.Monthly_Amount,
+                    DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Next_Due_Date,
+                    DATE_FORMAT(pn.Next_Due_Date, '%M %d, %Y') AS Formatted_Next_Due_Date,
+                    pn.Guarantor_Name,
+                    pn.Guarantor_Contact,
+                    pn.Notes,
+                    pn.Status
+                  FROM Promissory_Note pn
+                  INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                  WHERE " . (!empty($iid) ? "pn.Invoice_ID = :iid" : "pn.Admission_ID = :aid") . "
+                  ORDER BY pn.Note_ID DESC LIMIT 1";
+        $pnStmt = $conn->prepare($pnSql);
+        if (!empty($iid)) {
+            $pnStmt->execute([':iid' => $iid]);
+        } else {
+            $pnStmt->execute([':aid' => $aid]);
+        }
+        $receipt['Promissory_Note'] = $pnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
         return json_encode($receipt);
+    }
+
+    function getPromissoryPlanTypes()
+    {
+        include "connection.php";
+
+        $sql = "SELECT 
+                    Plan_Type_ID,
+                    Plan_Type_Code,
+                    Plan_Type_Name,
+                    Default_Months,
+                    Description,
+                    Is_Active
+                FROM Enum_Promissory_Plan_Type
+                WHERE Is_Active = 1
+                ORDER BY Plan_Type_ID ASC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
     function getAdvancePayments($json = '{}')
@@ -575,6 +663,9 @@ switch ($operation) {
         break;
     case 'getPaymentReceipt':
         echo $invoice->getPaymentReceipt($json);
+        break;
+    case 'getPromissoryPlanTypes':
+        echo $invoice->getPromissoryPlanTypes();
         break;
     case 'getAdvancePayments':
         echo $invoice->getAdvancePayments($json);

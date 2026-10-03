@@ -78,6 +78,15 @@ CREATE TABLE IF NOT EXISTS Enum_Payment_Method (
     Is_Active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS Enum_Promissory_Plan_Type (
+    Plan_Type_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Plan_Type_Code VARCHAR(30) UNIQUE NOT NULL,
+    Plan_Type_Name VARCHAR(100) NOT NULL,
+    Default_Months INT NOT NULL DEFAULT 1,
+    Description VARCHAR(255) NULL,
+    Is_Active BOOLEAN DEFAULT TRUE
+);
+
 
 -- ============================================================
 -- 2. MASTER ENTITIES (Users & Doctors)
@@ -309,6 +318,26 @@ CREATE TABLE IF NOT EXISTS Invoice_Payment (
     FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
     FOREIGN KEY (Cashier_User_ID) REFERENCES System_User(User_ID),
     FOREIGN KEY (Payment_Method_ID) REFERENCES Enum_Payment_Method(Payment_Method_ID)
+);
+
+CREATE TABLE IF NOT EXISTS Promissory_Note (
+    Note_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Invoice_ID INT NOT NULL,
+    Admission_ID INT NOT NULL,
+    Total_Balance_Owed DECIMAL(12, 2) NOT NULL,
+    Plan_Type_ID INT NOT NULL,
+    Installment_Months INT DEFAULT 1,
+    Monthly_Amount DECIMAL(12, 2) NOT NULL,
+    Next_Due_Date DATE NOT NULL,
+    Guarantor_Name VARCHAR(150) NULL,
+    Guarantor_Contact VARCHAR(50) NULL,
+    Notes VARCHAR(255) NULL,
+    Status ENUM('Active', 'Settled', 'Overdue') DEFAULT 'Active',
+    Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
+    FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
+    FOREIGN KEY (Plan_Type_ID) REFERENCES Enum_Promissory_Plan_Type(Plan_Type_ID)
 );
 
 -- ============================================================

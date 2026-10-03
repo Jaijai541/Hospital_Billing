@@ -10,6 +10,7 @@ let dispensedMedicinesList = [];
 let currentUser = null;
 let discountList = [];
 let paymentMethodsList = [];
+let promissoryPlanTypes = [];
 let latestSummary = null;
 let customVouchersList = [];
 let switchClinicalTab = null;
@@ -2213,6 +2214,27 @@ const renderPaymentHistoryTable = (invId, admId, targetEl) => {
         });
 };
 
+const getDefaultNextDueDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const renderPromissoryPlanOptionsHtml = () => {
+    if (!promissoryPlanTypes || promissoryPlanTypes.length === 0) {
+        return `
+            <option value="1" data-code="Full_30_Days" data-months="1">Full Settlement (Within 30 Days)</option>
+            <option value="2" data-code="Monthly_Installment" data-months="3">Monthly Installment Plan</option>
+        `;
+    }
+    return promissoryPlanTypes.map(p => `
+        <option value="${p.Plan_Type_ID}" data-code="${p.Plan_Type_Code}" data-months="${p.Default_Months}">${p.Plan_Type_Name}</option>
+    `).join('');
+};
+
 const loadDiscounts = () => {
     const p1 = axios.post(`${getApiUrl}/invoices.php`, (() => {
         const fd = new FormData();
@@ -2226,10 +2248,17 @@ const loadDiscounts = () => {
         return fd;
     })());
 
-    Promise.all([p1, p2])
-        .then(([resDisc, resPay]) => {
+    const p3 = axios.post(`${getApiUrl}/invoices.php`, (() => {
+        const fd = new FormData();
+        fd.append('operation', 'getPromissoryPlanTypes');
+        return fd;
+    })());
+
+    Promise.all([p1, p2, p3])
+        .then(([resDisc, resPay, resPlan]) => {
             discountList = resDisc.data || [];
             paymentMethodsList = resPay.data || [];
+            promissoryPlanTypes = resPlan.data || [];
             renderSettlementSection();
         })
         .catch(() => {
@@ -2359,6 +2388,24 @@ const renderBilledSettlementCard = (inv) => {
                     </tr>
                 </tbody>
             </table>
+
+            ${inv.Promissory_Note ? `
+                <div class="card p-3 mb-3" style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                        <h4 style="margin: 0; color: #166534;">📝 Active Promissory Note Agreement</h4>
+                        <span class="badge badge-success" style="font-size: 13px;">${inv.Promissory_Note.Status || 'Active'}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 13.5px; color: #1e293b;">
+                        <div><strong>Settlement Plan:</strong> ${inv.Promissory_Note.Plan_Type_Name || 'Standard Plan'} (${inv.Promissory_Note.Installment_Months || 1} Month${(inv.Promissory_Note.Installment_Months || 1) > 1 ? 's' : ''})</div>
+                        <div><strong>Next Payment Due:</strong> <span style="color: #b91c1c; font-weight: 700;">${inv.Promissory_Note.Formatted_Next_Due_Date || inv.Promissory_Note.Next_Due_Date}</span></div>
+                        <div><strong>Scheduled Amount:</strong> <strong style="color: #15803d;">₱${parseFloat(inv.Promissory_Note.Monthly_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></div>
+                        <div><strong>Guarantor:</strong> ${inv.Promissory_Note.Guarantor_Name || 'Patient'} ${inv.Promissory_Note.Guarantor_Contact ? `(${inv.Promissory_Note.Guarantor_Contact})` : ''}</div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12.5px; color: #4b5563; font-style: italic;">
+                        Mutual Terms: Both parties agreed to the settlement schedule at discharge. Follow-up payments posted below will automatically update the Promissory Note ledger.
+                    </div>
+                </div>
+            ` : ''}
 
             <div class="card p-3 mb-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;">
                 <h4 style="margin-top: 0; margin-bottom: 12px; color: #1e293b;">Record Additional Follow-Up Payment</h4>
@@ -2741,6 +2788,63 @@ const renderSettlementSection = () => {
             </tbody>
         </table>
 
+        <div id="promissory-note-settlement-card" class="card p-3 mb-3" style="display: none; background: #fffdf5; border: 1px solid #f59e0b; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 18px;">📝</span>
+                    <strong style="color: #92400e; font-size: 15px;">Promissory Note &amp; Mutual Settlement Agreement</strong>
+                </div>
+                <span class="badge badge-warning" style="font-size: 12.5px;" id="pn_balance_badge">Unsettled Balance: ₱0.00</span>
+            </div>
+            <p class="text-muted mb-3" style="font-size: 13px;">
+                Because an outstanding balance remains upon discharge, a legally binding Promissory Note is prepared between the Hospital and the Patient / Guarantor. Please select the agreed payment schedule:
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div class="form-group">
+                    <label class="form-label" for="pn_plan_type_id" style="font-weight: 600;">Settlement Scheme / Plan Type *</label>
+                    <select id="pn_plan_type_id" class="form-select">
+                        ${renderPromissoryPlanOptionsHtml()}
+                    </select>
+                </div>
+                <div class="form-group" id="pn_months_group">
+                    <label class="form-label" for="pn_installment_months" style="font-weight: 600;">Installment Period *</label>
+                    <select id="pn_installment_months" class="form-select">
+                        <option value="1">1 Month (Lump Sum)</option>
+                        <option value="2">2 Months (Equal Split)</option>
+                        <option value="3" selected>3 Months (Quarterly Terms)</option>
+                        <option value="6">6 Months (Extended Terms)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="pn_next_due_date" style="font-weight: 600;">Next Payment Due Date *</label>
+                    <input type="date" id="pn_next_due_date" class="form-control" value="${getDefaultNextDueDate()}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600;">Scheduled Installment / Due Amount</label>
+                    <div id="pn_monthly_amount_display" style="padding: 7px 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 15px; color: #15803d;">
+                        ₱0.00
+                    </div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div class="form-group">
+                    <label class="form-label" for="pn_guarantor_name" style="font-weight: 600;">Responsible Guarantor / Co-Signer Name</label>
+                    <input type="text" id="pn_guarantor_name" class="form-control" placeholder="e.g. Maria Santos (Relative / Guarantor)" value="${(admissionData.Emergency_Contact_Name || admissionData.Patient_Name || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="pn_guarantor_contact" style="font-weight: 600;">Guarantor Contact Number</label>
+                    <input type="text" id="pn_guarantor_contact" class="form-control" placeholder="e.g. 0917-123-4567" value="${(admissionData.Emergency_Contact_Number || admissionData.Contact_Number || '').replace(/"/g, '&quot;')}">
+                </div>
+            </div>
+            <div class="form-group mb-2">
+                <label class="form-label" for="pn_notes" style="font-weight: 600;">Special Settlement Conditions / Remarks</label>
+                <input type="text" id="pn_notes" class="form-control" placeholder="e.g. Patient agreed to pay remaining balance in cash or GCash on or before due date">
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 12.5px; color: #475569; margin-top: 6px;">
+                <strong>Mutual Agreement Clause:</strong> Both parties (the Hospital and the undersigned Patient / Guarantor) formally agree to this payment schedule. By finalizing discharge with this balance, the official Statement of Account and Receipt will be generated reflecting this schedule and require mutual signatures.
+            </div>
+        </div>
+
         ${advancePaid > 0 ? `
             <div class="card p-3 mb-3" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -2936,6 +3040,40 @@ const renderSettlementSection = () => {
                 lblChange.style.color = '#dc2626';
             }
         }
+
+        const pnCard = document.getElementById('promissory-note-settlement-card');
+        const pnBadge = document.getElementById('pn_balance_badge');
+        const pnMonthlyDisplay = document.getElementById('pn_monthly_amount_display');
+        const planSelect = document.getElementById('pn_plan_type_id');
+        const monthsSelect = document.getElementById('pn_installment_months');
+        const monthsGroup = document.getElementById('pn_months_group');
+
+        const remBal = Math.max(0, Math.round((math.remainingNetToSettle - paid) * 100) / 100);
+
+        if (remBal > 0) {
+            if (pnCard) pnCard.style.display = 'block';
+            if (pnBadge) pnBadge.textContent = `Unsettled Balance: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+            let months = 1;
+            if (planSelect) {
+                const selectedOpt = planSelect.options[planSelect.selectedIndex];
+                const code = selectedOpt ? selectedOpt.dataset.code : '';
+                if (code === 'Monthly_Installment') {
+                    if (monthsGroup) monthsGroup.style.display = 'block';
+                    months = monthsSelect ? parseInt(monthsSelect.value, 10) : 3;
+                } else {
+                    if (monthsGroup) monthsGroup.style.display = 'none';
+                    months = 1;
+                }
+            }
+
+            const monthlyAmt = Math.ceil((remBal / months) * 100) / 100;
+            if (pnMonthlyDisplay) {
+                pnMonthlyDisplay.textContent = `₱${monthlyAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} / month (${months} mo${months > 1 ? 's' : ''})`;
+            }
+        } else {
+            if (pnCard) pnCard.style.display = 'none';
+        }
     };
 
     const renderCustomVoucherTags = () => {
@@ -3072,6 +3210,9 @@ const renderSettlementSection = () => {
         cashInput.addEventListener('input', updateSettlementTotals);
     }
 
+    document.getElementById('pn_plan_type_id')?.addEventListener('change', updateSettlementTotals);
+    document.getElementById('pn_installment_months')?.addEventListener('change', updateSettlementTotals);
+
     document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
         const math = computeSettlementMath();
         if (cashInput) {
@@ -3149,7 +3290,7 @@ const submitSettlement = () => {
     let confirmMsg = '';
     if (amountPaid < remainingNetToSettle) {
         const remaining = Math.max(0, Math.round((remainingNetToSettle - amountPaid) * 100) / 100);
-        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will remain on the invoice. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. Any active bed stay will be closed and released.`;
+        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. Any active bed stay will be closed and released.`;
     } else {
         confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nPre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. This will record the official Final Invoice as PAID IN FULL and release the bed.`;
     }
@@ -3167,6 +3308,31 @@ const submitSettlement = () => {
             amount_paid: amountPaid,
             payment_method_id: paymentMethodId
         };
+
+        if (amountPaid < remainingNetToSettle) {
+            const planSelect = document.getElementById('pn_plan_type_id');
+            const monthsSelect = document.getElementById('pn_installment_months');
+            const dueDateInput = document.getElementById('pn_next_due_date');
+            const guarantorNameInput = document.getElementById('pn_guarantor_name');
+            const guarantorContactInput = document.getElementById('pn_guarantor_contact');
+            const notesInput = document.getElementById('pn_notes');
+
+            const planTypeId = planSelect ? parseInt(planSelect.value, 10) : 1;
+            const months = monthsSelect ? parseInt(monthsSelect.value, 10) : 1;
+            const remaining = Math.max(0, Math.round((remainingNetToSettle - amountPaid) * 100) / 100);
+            const monthlyAmount = Math.ceil((remaining / months) * 100) / 100;
+            const nextDueDate = (dueDateInput && dueDateInput.value) ? dueDateInput.value : '';
+
+            payload.promissory_note = {
+                plan_type_id: planTypeId,
+                installment_months: months,
+                monthly_amount: monthlyAmount,
+                next_due_date: nextDueDate,
+                guarantor_name: guarantorNameInput ? guarantorNameInput.value.trim() : '',
+                guarantor_contact: guarantorContactInput ? guarantorContactInput.value.trim() : '',
+                notes: notesInput ? notesInput.value.trim() : ''
+            };
+        }
 
         const formData = new FormData();
         formData.append('operation', 'settleInvoice');

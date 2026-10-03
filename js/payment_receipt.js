@@ -56,6 +56,23 @@ const renderReceipt = (data) => {
         statusCell.innerHTML = `<span class="status-tag status-pending">${isAdvance ? 'EST. RUNNING BALANCE: ' : 'PENDING BALANCE: '}${formatCurrency(balAfter)}</span>`;
     }
 
+    const pnRow = document.getElementById('or-pn-schedule-row');
+    const pnBox = document.getElementById('or-pn-agreement-box');
+    if (data.Promissory_Note && balAfter > 0) {
+        if (pnRow) {
+            pnRow.style.display = '';
+            document.getElementById('or-next-due-date').textContent = data.Promissory_Note.Formatted_Next_Due_Date || data.Promissory_Note.Next_Due_Date || '—';
+            document.getElementById('or-next-monthly-amount').textContent = formatCurrency(data.Promissory_Note.Monthly_Amount || balAfter);
+            document.getElementById('or-pn-plan-name').textContent = data.Promissory_Note.Plan_Type_Name || 'Installment Plan';
+        }
+        if (pnBox) {
+            pnBox.style.display = 'block';
+        }
+    } else {
+        if (pnRow) pnRow.style.display = 'none';
+        if (pnBox) pnBox.style.display = 'none';
+    }
+
     document.getElementById('or-cashier-name').textContent = data.Cashier_Name || 'Cashier Staff';
     document.getElementById('or-cashier-role').textContent = `${data.Cashier_Role || 'Cashier'} / Official Hospital Staff`;
 

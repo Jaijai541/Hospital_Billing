@@ -50,10 +50,14 @@ const renderReceipt = (data) => {
 
     if (balAfter <= 0) {
         lblBalAfter.style.color = '#16a34a';
-        statusCell.innerHTML = `<span class="status-tag status-paid">${isAdvance ? 'RUNNING CHARGES COVERED' : 'PAID IN FULL'}</span>`;
+        if (statusCell) {
+            statusCell.textContent = isAdvance ? 'RUNNING CHARGES COVERED' : 'PAID IN FULL';
+        }
     } else {
         lblBalAfter.style.color = '#dc2626';
-        statusCell.innerHTML = `<span class="status-tag status-pending">${isAdvance ? 'EST. RUNNING BALANCE: ' : 'PENDING BALANCE: '}${formatCurrency(balAfter)}</span>`;
+        if (statusCell) {
+            statusCell.textContent = `${isAdvance ? 'EST. RUNNING BALANCE: ' : 'PENDING BALANCE: '}${formatCurrency(balAfter)}`;
+        }
     }
 
     const pnRow = document.getElementById('or-pn-schedule-row');

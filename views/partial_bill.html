@@ -12,7 +12,6 @@
     <div class="no-print print-toolbar">
         <div style="display: flex; gap: 10px; align-items: center;">
             <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Interim / Partial Bill</button>
-            <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">Active Running Account</span>
         </div>
         <div class="print-toolbar-actions">
             <a href="#" id="btnBackToChart" class="btn btn-secondary btn-sm">← Back to Patient Chart</a>
@@ -25,7 +24,7 @@
             <p>123 Healthcare Avenue, Medical District, CDO City, Philippines</p>
             <p>Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
             <div class="doc-title" style="color: #0369a1;">INTERIM STATEMENT OF ACCOUNT &amp; RUNNING PARTIAL BILL</div>
-            <div class="partial-bill-badge">Interim Running Bill — Patient Currently Admitted</div>
+            <div style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Interim Running Bill — Patient Currently Admitted</div>
         </div>
 
         <div class="partial-notice-box">
@@ -55,7 +54,7 @@
                     <td class="label-cell">Current Assigned Bed / Room:</td>
                     <td class="value-cell"><strong id="pb-bed-room" class="text-primary">Loading...</strong></td>
                     <td class="label-cell">Admission Status:</td>
-                    <td class="value-cell"><span class="badge badge-success" id="pb-admission-status">Admitted</span></td>
+                    <td class="value-cell"><strong id="pb-admission-status">Admitted</strong></td>
                 </tr>
             </tbody>
         </table>
@@ -337,7 +336,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=7.0"></script>
-    <script src="../js/partial_bill.js?v=7.0"></script>
+    <script src="../js/common.js?v=7.1"></script>
+    <script src="../js/partial_bill.js?v=7.1"></script>
 </body>
 </html>

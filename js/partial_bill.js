@@ -16,11 +16,6 @@ const renderPartialBill = (bill) => {
     const statusBadge = document.getElementById("pb-admission-status");
     if (statusBadge) {
         statusBadge.textContent = bill.Admission_Status || "Admitted";
-        if (bill.Admission_Status === "Discharged" || bill.Admission_Status === "Billed") {
-            statusBadge.className = "badge badge-info";
-        } else {
-            statusBadge.className = "badge badge-success";
-        }
     }
 
     const currentStay = (bill.Room_Stays || []).find(s => parseInt(s.Is_Current_Stay, 10) === 1);
@@ -110,7 +105,7 @@ const renderRoomStaysTable = (stays) => {
         subtotal += fee;
         const isCurrent = parseInt(s.Is_Current_Stay, 10) === 1;
         const statusHtml = isCurrent 
-            ? '<span class="badge badge-success">Active Bed Stay (To Date)</span>' 
+            ? 'Active Bed Stay (To Date)' 
             : (s.Date_Out || "Transferred");
 
         html += `

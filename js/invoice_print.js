@@ -580,7 +580,7 @@ const openPaymentHistoryModal = () => {
                     <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click row to view / print Official Receipt voucher">
                         <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
                         <td>${p.Payment_Date}</td>
-                        <td><span class="badge badge-info">${p.Payment_Method || 'Cash'}</span></td>
+                        <td>${p.Payment_Method || 'Cash'}</td>
                         <td>${p.Cashier_Name}</td>
                         <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
                         <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>

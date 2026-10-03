@@ -13,7 +13,7 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
 
         $decodedOut = json_decode($output, true);
         $isSuccess = ($output === "1")
-            || (is_array($decodedOut) && (($decodedOut['status'] ?? '') === 'success' || isset($decodedOut['user_id'])));
+            || (is_array($decodedOut) && (($decodedOut['status'] ?? '') === 'success' || ($decodedOut['success'] ?? false) === true || isset($decodedOut['user_id'])));
 
         if (!$isSuccess) return;
 

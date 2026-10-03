@@ -213,6 +213,28 @@ class AdmissionManager
         try {
             $conn->beginTransaction();
 
+            $statusCheck = $conn->prepare("SELECT Status FROM Admission WHERE Admission_ID = :aid");
+            $statusCheck->execute([':aid' => $admissionId]);
+            $currentStatus = $statusCheck->fetchColumn();
+
+            if (!$currentStatus) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Admission record not found.']);
+            }
+
+            if ($currentStatus === 'Billed') {
+                $conn->rollBack();
+                return json_encode(['error' => 'Patient admission is already settled and billed.']);
+            }
+
+            if ($currentStatus === 'Discharged') {
+                $conn->commit();
+                return json_encode([
+                    'success' => true,
+                    'message' => 'Patient is already discharged.'
+                ]);
+            }
+
             $currStayStmt = $conn->prepare("
                 SELECT 
                     rtl.Transfer_ID,

@@ -24,18 +24,33 @@ const dischargePatient = (admissionId, patientName) => {
         axios.post(`${postApiUrl}/admissions.php`, formData)
             .then(response => {
                 console.log("admissions.js: Discharge response:", response.data);
-                if (response.data.success) {
-                    alert(response.data.message);
-                    loadBeds();
-                    loadPatients();
-                    loadAdmissions();
+                let resData = response.data;
+                if (typeof resData === 'string') {
+                    try {
+                        resData = JSON.parse(resData);
+                    } catch (e) {}
+                }
+
+                if (resData && resData.success) {
+                    alert(resData.message);
+                    try {
+                        loadBeds();
+                        loadPatients();
+                        loadAdmissions();
+                    } catch (refreshErr) {
+                        console.error("admissions.js: Error refreshing list after discharge:", refreshErr);
+                    }
                 } else {
-                    alert("Discharge Error: " + (response.data.error || "Unknown error"));
+                    const errMsg = (resData && (resData.error || resData.message)) ? (resData.error || resData.message) : "Unknown error";
+                    alert("Discharge Error: " + errMsg);
                 }
             })
             .catch(err => {
                 console.error("admissions.js: Error discharging patient:", err);
-                alert("Network error discharging patient.");
+                const errMsg = (err && err.response && err.response.data && err.response.data.error)
+                    ? err.response.data.error
+                    : (err && err.message ? err.message : "Network error discharging patient.");
+                alert("Discharge Error: " + errMsg);
             });
     }, null, {
         title: "Confirm Clinical Discharge",

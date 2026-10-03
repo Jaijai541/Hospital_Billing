@@ -382,9 +382,9 @@ class InvoiceManager
 
                 $insPn = $conn->prepare("
                     INSERT INTO Promissory_Note 
-                        (Invoice_ID, Admission_ID, Total_Balance_Owed, Plan_Type_ID, Installment_Months, Monthly_Amount, Next_Due_Date, Guarantor_Name, Guarantor_Contact, Notes, Status_ID, Created_At)
+                        (Invoice_ID, Admission_ID, Total_Balance_Owed, Plan_Type_ID, Installment_Months, Monthly_Amount, Next_Due_Date, Guarantor_Name, Guarantor_Contact, Notes, Status, Created_At)
                     VALUES 
-                        (:iid, :aid, :bal, :ptid, :months, :mamt, :ndate, :gname, :gcontact, :notes, 1, NOW())
+                        (:iid, :aid, :bal, :ptid, :months, :mamt, :ndate, :gname, :gcontact, :notes, 'Active', NOW())
                 ");
                 $insPn->execute([
                     ':iid' => $invoiceId,
@@ -573,7 +573,7 @@ class InvoiceManager
 
             if ($pnFound) {
                 if ($newRemaining <= 0) {
-                    $updPn = $conn->prepare("UPDATE Promissory_Note SET Total_Balance_Owed = 0.00, Status_ID = 2 WHERE Note_ID = :nid");
+                    $updPn = $conn->prepare("UPDATE Promissory_Note SET Total_Balance_Owed = 0.00, Status = 'Settled' WHERE Note_ID = :nid");
                     $updPn->execute([':nid' => $pnFound['Note_ID']]);
                 } else {
                     $nextDueDate = date('Y-m-d', strtotime('+30 days'));

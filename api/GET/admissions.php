@@ -43,7 +43,9 @@ class AdmissionManager
                     pn.Monthly_Amount AS Promissory_Monthly_Amount,
                     DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Promissory_Next_Due_Date,
                     DATE_FORMAT(pn.Next_Due_Date, '%b %d, %Y') AS Formatted_Promissory_Next_Due_Date,
-                    pn.Status AS Promissory_Status
+                    pn.Status_ID AS Promissory_Status_ID,
+                    eps.Status_Code AS Promissory_Status_Code,
+                    COALESCE(eps.Status_Name, 'Active') AS Promissory_Status
                 FROM Admission a
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 LEFT JOIN Room_Transfer_Log rtl ON rtl.Admission_ID = a.Admission_ID AND rtl.Date_Out IS NULL
@@ -53,6 +55,7 @@ class AdmissionManager
                 LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
                 LEFT JOIN Promissory_Note pn ON pn.Admission_ID = a.Admission_ID
                 LEFT JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                LEFT JOIN Enum_Promissory_Status eps ON pn.Status_ID = eps.Status_ID
                 WHERE 1=1";
 
         $params = [];
@@ -191,10 +194,13 @@ class AdmissionManager
                     pn.Guarantor_Name,
                     pn.Guarantor_Contact,
                     pn.Notes,
-                    pn.Status,
+                    pn.Status_ID,
+                    eps.Status_Code,
+                    COALESCE(eps.Status_Name, 'Active') AS Status,
                     DATE_FORMAT(pn.Created_At, '%Y-%m-%d %h:%i %p') AS Created_At
                   FROM Promissory_Note pn
                   INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                  LEFT JOIN Enum_Promissory_Status eps ON pn.Status_ID = eps.Status_ID
                   WHERE pn.Admission_ID = :id
                   ORDER BY pn.Note_ID DESC LIMIT 1";
         $pnStmt = $conn->prepare($pnSql);

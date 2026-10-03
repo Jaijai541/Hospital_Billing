@@ -67,7 +67,9 @@ class InvoiceManager
                     DATE_FORMAT(pn.Next_Due_Date, '%b %d, %Y') AS Formatted_Promissory_Next_Due_Date,
                     pn.Guarantor_Name AS Promissory_Guarantor_Name,
                     pn.Guarantor_Contact AS Promissory_Guarantor_Contact,
-                    pn.Status AS Promissory_Status
+                    pn.Status_ID AS Promissory_Status_ID,
+                    eps.Status_Code AS Promissory_Status_Code,
+                    COALESCE(eps.Status_Name, 'Active') AS Promissory_Status
                 FROM Final_Invoice fi
                 INNER JOIN Admission a ON fi.Admission_ID = a.Admission_ID
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
@@ -75,6 +77,7 @@ class InvoiceManager
                 LEFT JOIN Enum_Discount d ON fi.Discount_ID = d.Discount_ID
                 LEFT JOIN Promissory_Note pn ON fi.Invoice_ID = pn.Invoice_ID
                 LEFT JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                LEFT JOIN Enum_Promissory_Status eps ON pn.Status_ID = eps.Status_ID
                 WHERE 1=1";
 
         $params = [];
@@ -235,10 +238,13 @@ class InvoiceManager
                     pn.Guarantor_Name,
                     pn.Guarantor_Contact,
                     pn.Notes,
-                    pn.Status,
+                    pn.Status_ID,
+                    eps.Status_Code,
+                    COALESCE(eps.Status_Name, 'Active') AS Status,
                     DATE_FORMAT(pn.Created_At, '%Y-%m-%d %h:%i %p') AS Created_At
                   FROM Promissory_Note pn
                   INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                  LEFT JOIN Enum_Promissory_Status eps ON pn.Status_ID = eps.Status_ID
                   WHERE pn.Invoice_ID = :iid
                   LIMIT 1";
         $pnStmt = $conn->prepare($pnSql);
@@ -550,9 +556,12 @@ class InvoiceManager
                     pn.Guarantor_Name,
                     pn.Guarantor_Contact,
                     pn.Notes,
-                    pn.Status
+                    pn.Status_ID,
+                    eps.Status_Code,
+                    COALESCE(eps.Status_Name, 'Active') AS Status
                   FROM Promissory_Note pn
                   INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                  LEFT JOIN Enum_Promissory_Status eps ON pn.Status_ID = eps.Status_ID
                   WHERE " . (!empty($iid) ? "pn.Invoice_ID = :iid" : "pn.Admission_ID = :aid") . "
                   ORDER BY pn.Note_ID DESC LIMIT 1";
         $pnStmt = $conn->prepare($pnSql);
@@ -580,6 +589,25 @@ class InvoiceManager
                 FROM Enum_Promissory_Plan_Type
                 WHERE Is_Active = 1
                 ORDER BY Plan_Type_ID ASC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    function getPromissoryStatuses()
+    {
+        include "connection.php";
+
+        $sql = "SELECT 
+                    Status_ID,
+                    Status_Code,
+                    Status_Name,
+                    Description,
+                    Is_Active
+                FROM Enum_Promissory_Status
+                WHERE Is_Active = 1
+                ORDER BY Status_ID ASC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -666,6 +694,9 @@ switch ($operation) {
         break;
     case 'getPromissoryPlanTypes':
         echo $invoice->getPromissoryPlanTypes();
+        break;
+    case 'getPromissoryStatuses':
+        echo $invoice->getPromissoryStatuses();
         break;
     case 'getAdvancePayments':
         echo $invoice->getAdvancePayments($json);

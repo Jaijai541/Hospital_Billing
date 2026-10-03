@@ -87,6 +87,14 @@ CREATE TABLE IF NOT EXISTS Enum_Promissory_Plan_Type (
     Is_Active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS Enum_Promissory_Status (
+    Status_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Status_Code VARCHAR(30) UNIQUE NOT NULL,
+    Status_Name VARCHAR(50) NOT NULL,
+    Description VARCHAR(255) NULL,
+    Is_Active BOOLEAN DEFAULT TRUE
+);
+
 
 -- ============================================================
 -- 2. MASTER ENTITIES (Users & Doctors)
@@ -332,12 +340,13 @@ CREATE TABLE IF NOT EXISTS Promissory_Note (
     Guarantor_Name VARCHAR(150) NULL,
     Guarantor_Contact VARCHAR(50) NULL,
     Notes VARCHAR(255) NULL,
-    Status ENUM('Active', 'Settled', 'Overdue') DEFAULT 'Active',
+    Status_ID INT NOT NULL DEFAULT 1,
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE CASCADE,
     FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
-    FOREIGN KEY (Plan_Type_ID) REFERENCES Enum_Promissory_Plan_Type(Plan_Type_ID)
+    FOREIGN KEY (Plan_Type_ID) REFERENCES Enum_Promissory_Plan_Type(Plan_Type_ID),
+    FOREIGN KEY (Status_ID) REFERENCES Enum_Promissory_Status(Status_ID)
 );
 
 -- ============================================================

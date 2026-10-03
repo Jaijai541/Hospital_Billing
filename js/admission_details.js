@@ -2393,7 +2393,7 @@ const renderBilledSettlementCard = (inv) => {
                 <div class="card p-3 mb-3" style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                         <h4 style="margin: 0; color: #166534;">📝 Active Promissory Note Agreement</h4>
-                        <span class="badge badge-success" style="font-size: 13px;">${inv.Promissory_Note.Status || 'Active'}</span>
+                        <span class="badge ${String(inv.Promissory_Note.Status || '').toLowerCase() === 'settled' ? 'badge-success' : (String(inv.Promissory_Note.Status || '').toLowerCase() === 'overdue' ? 'badge-danger' : 'badge-info')}" style="font-size: 13px;">${inv.Promissory_Note.Status || 'Active'}</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 13.5px; color: #1e293b;">
                         <div><strong>Settlement Plan:</strong> ${inv.Promissory_Note.Plan_Type_Name || 'Standard Plan'} (${inv.Promissory_Note.Installment_Months || 1} Month${(inv.Promissory_Note.Installment_Months || 1) > 1 ? 's' : ''})</div>

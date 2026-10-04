@@ -97,19 +97,14 @@ const initEvents = () => {
     if (btnCloseHistoryModal) btnCloseHistoryModal.addEventListener("click", closeHistoryModal);
     if (btnDismissHistory) btnDismissHistory.addEventListener("click", closeHistoryModal);
 
-    const btnBrowseMethod = document.getElementById("btnBrowse_pay_method_id");
-    if (btnBrowseMethod) {
-        btnBrowseMethod.addEventListener("click", openPaymentMethodLookup);
+    const payMethodText = document.getElementById("pay_method_id_text");
+    if (payMethodText) {
+        payMethodText.addEventListener("click", openPaymentMethodPicker);
     }
 
-    const btnCloseMethod = document.getElementById("btnCloseMethodLookupModal");
-    const btnCancelMethod = document.getElementById("btnCancelMethodLookup");
-    if (btnCloseMethod) btnCloseMethod.addEventListener("click", closePaymentMethodLookup);
-    if (btnCancelMethod) btnCancelMethod.addEventListener("click", closePaymentMethodLookup);
-
-    const methodSearch = document.getElementById("method_search_input");
-    if (methodSearch) {
-        methodSearch.addEventListener("input", filterPaymentMethodsTable);
+    const btnBrowseMethod = document.getElementById("btnBrowse_pay_method_id");
+    if (btnBrowseMethod) {
+        btnBrowseMethod.addEventListener("click", openPaymentMethodPicker);
     }
 };
 
@@ -275,7 +270,6 @@ const renderTable = (notes) => {
             <th style="min-width: 170px;">Balance & Progress</th>
             <th>Next Due Date</th>
             <th>Status</th>
-            <th style="text-align: right; min-width: 210px;">Actions</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -284,6 +278,8 @@ const renderTable = (notes) => {
 
     notes.forEach(note => {
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click row to view promissory note ledger, installment history, SOA, or post payment";
 
         const netDue = parseFloat(note.Net_Amount_Due) || 0;
         const paidSoFar = parseFloat(note.Total_Paid_To_Date) || 0;
@@ -365,22 +361,9 @@ const renderTable = (notes) => {
             <td>
                 ${statusBadgeHtml}
             </td>
-            <td style="text-align: right; white-space: nowrap;">
-                ${bal > 0 ? `<button type="button" class="btn btn-sm btn-primary btn-pay-note" style="margin-right: 4px;">💵 Record Payment</button>` : ""}
-                <button type="button" class="btn btn-sm btn-outline btn-ledger-note" style="margin-right: 4px;" title="View Installments Payment History">📋 Ledger</button>
-                <a href="invoice_print.html?id=${note.Invoice_ID}" target="_blank" class="btn btn-sm btn-outline" title="Print Statement & Promissory Agreement">🖨 SOA</a>
-            </td>
         `;
 
-        const btnPay = row.querySelector(".btn-pay-note");
-        if (btnPay) {
-            btnPay.addEventListener("click", () => openPaymentModal(note));
-        }
-
-        const btnLedger = row.querySelector(".btn-ledger-note");
-        if (btnLedger) {
-            btnLedger.addEventListener("click", () => openPaymentHistoryModal(note));
-        }
+        row.addEventListener("click", () => openPaymentHistoryModal(note));
 
         tbody.appendChild(row);
     });
@@ -609,7 +592,6 @@ const renderHistoryTable = (payments) => {
             <th style="text-align: right;">Amount Paid</th>
             <th style="text-align: right;">Balance After</th>
             <th>Cashier</th>
-            <th>Action</th>
         </tr>
     `;
     table.appendChild(thead);
@@ -617,6 +599,8 @@ const renderHistoryTable = (payments) => {
     const tbody = document.createElement("tbody");
     payments.forEach((p, idx) => {
         const row = document.createElement("tr");
+        row.className = "clickable-row";
+        row.title = "Click row to view / print Official Receipt voucher";
 
         const amt = parseFloat(p.Amount_Paid) || 0;
         const balAfter = parseFloat(p.Balance_After) || 0;
@@ -632,10 +616,12 @@ const renderHistoryTable = (payments) => {
             <td style="text-align: right; font-weight: 700; color: #16a34a;">₱${amt.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
             <td style="text-align: right; font-weight: 600;">₱${balAfter.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
             <td>${p.Cashier_Name || "Cashier"}</td>
-            <td>
-                <a href="payment_receipt.html?payment_id=${p.Payment_ID}" target="_blank" class="btn btn-sm btn-outline" style="padding: 4px 8px; font-size: 12px;">🖨 Receipt</a>
-            </td>
         `;
+
+        row.addEventListener("click", () => {
+            window.open(`payment_receipt.html?payment_id=${p.Payment_ID}`, "_blank");
+        });
+
         tbody.appendChild(row);
     });
 
@@ -649,57 +635,22 @@ const closeHistoryModal = () => {
     if (modal) modal.style.display = "none";
 };
 
-const openPaymentMethodLookup = () => {
-    const modal = document.getElementById("paymentMethodLookupModal");
-    if (!modal) return;
-
-    const searchInput = document.getElementById("method_search_input");
-    if (searchInput) searchInput.value = "";
-
-    renderPaymentMethodTable(allPaymentMethods);
-    modal.style.display = "flex";
-};
-
-const closePaymentMethodLookup = () => {
-    const modal = document.getElementById("paymentMethodLookupModal");
-    if (modal) modal.style.display = "none";
-};
-
-const filterPaymentMethodsTable = () => {
-    const search = (document.getElementById("method_search_input")?.value || "").trim().toLowerCase();
-    const filtered = allPaymentMethods.filter(m => {
-        return (m.Method_Name || "").toLowerCase().includes(search) ||
-               (m.Category_Type || "").toLowerCase().includes(search);
-    });
-    renderPaymentMethodTable(filtered);
-};
-
-const renderPaymentMethodTable = (methods) => {
-    const tbody = document.getElementById("paymentMethodTableBody");
-    if (!tbody) return;
-
-    if (!methods || methods.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-center" style="padding: 16px; color: var(--text-muted);">No payment methods found.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = "";
-    methods.forEach(m => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td><strong>${m.Method_Name}</strong></td>
-            <td><span class="badge badge-secondary">${m.Category_Type}</span></td>
-            <td><button type="button" class="btn btn-sm btn-primary btn-select-method">Select</button></td>
-        `;
-
-        tr.querySelector(".btn-select-method").addEventListener("click", () => {
+const openPaymentMethodPicker = () => {
+    openGenericLookupPicker({
+        title: "Select Payment Method",
+        items: allPaymentMethods.map(pm => ({
+            id: pm.Payment_Method_ID,
+            text: pm.Method_Name,
+            subtext: `Category: ${pm.Category_Type}`,
+            badge: pm.Category_Type,
+            badgeClass: "badge-info"
+        })),
+        selectedId: document.getElementById("pay_method_id")?.value || "",
+        onSelect: (item) => {
             const payMethodId = document.getElementById("pay_method_id");
             const payMethodText = document.getElementById("pay_method_id_text");
-            if (payMethodId) payMethodId.value = m.Payment_Method_ID;
-            if (payMethodText) payMethodText.value = m.Method_Name;
-            closePaymentMethodLookup();
-        });
-
-        tbody.appendChild(tr);
+            if (payMethodId) payMethodId.value = item.id;
+            if (payMethodText) payMethodText.value = item.text;
+        }
     });
 };

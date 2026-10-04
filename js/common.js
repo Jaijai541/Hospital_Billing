@@ -98,8 +98,8 @@ const closeModal = (modalId = "formModal") => {
     }
 };
 
-const showPopupAlert = (message, type = null, title = null, callback = null) => {
-    if (callback === null && type instanceof Function) {
+const showToast = (message, type = null, title = null, callback = null, duration = null) => {
+    if (callback === null && typeof type === "function") {
         callback = type;
         type = null;
     }
@@ -107,11 +107,11 @@ const showPopupAlert = (message, type = null, title = null, callback = null) => 
     const strMsg = String(message || "");
 
     if (!type) {
-        if (/successfully|registered|updated|admitted|discharged|settled|restored|transferred|created|recorded/i.test(strMsg)) {
+        if (/successfully|registered|updated|admitted|discharged|settled|restored|transferred|created|recorded|saved|generated/i.test(strMsg)) {
             type = "success";
         } else if (/error|failed|cannot|could not|permanently|invalid|server error/i.test(strMsg)) {
             type = "danger";
-        } else if (/please|required|missing|fill in|specify|select/i.test(strMsg)) {
+        } else if (/please|required|missing|fill in|specify|select|warning/i.test(strMsg)) {
             type = "warning";
         } else {
             type = "info";
@@ -121,84 +121,120 @@ const showPopupAlert = (message, type = null, title = null, callback = null) => 
     if (!title) {
         switch (type) {
             case "success": title = "Success"; break;
-            case "danger":  title = "System Notice"; break;
+            case "danger":  title = "System Error"; break;
             case "warning": title = "Validation Notice"; break;
             default:        title = "Notification"; break;
         }
     }
 
-    let modal = document.getElementById("system-custom-alert-modal");
-    if (!modal) {
-        modal = document.createElement("div");
-        modal.id = "system-custom-alert-modal";
-        modal.className = "custom-alert-overlay";
-        modal.innerHTML = `
-            <div class="custom-alert-box">
-                <div class="custom-alert-stripe"></div>
-                <div class="custom-alert-header">
-                    <div class="custom-alert-title-group">
-                        <span class="custom-alert-icon"></span>
-                        <h3 class="custom-alert-title"></h3>
-                    </div>
-                    <button type="button" class="custom-alert-close" aria-label="Close dialog">&times;</button>
-                </div>
-                <div class="custom-alert-body">
-                    <p class="custom-alert-message"></p>
-                </div>
-                <div class="custom-alert-footer">
-                    <button type="button" class="btn btn-primary custom-alert-btn">OK</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+    if (!duration) {
+        if (type === "danger") duration = 5000;
+        else if (type === "warning") duration = 4500;
+        else if (callback) duration = 3200;
+        else duration = 3800;
     }
 
-    const box = modal.querySelector(".custom-alert-box");
-    const titleEl = modal.querySelector(".custom-alert-title");
-    const msgEl = modal.querySelector(".custom-alert-message");
-    const iconEl = modal.querySelector(".custom-alert-icon");
-    const closeBtn = modal.querySelector(".custom-alert-close");
-    const okBtn = modal.querySelector(".custom-alert-btn");
-
-    box.className = `custom-alert-box alert-type-${type}`;
-    titleEl.textContent = title;
-    msgEl.textContent = strMsg;
+    let container = document.getElementById("system-toast-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "system-toast-container";
+        container.className = "toast-container";
+        document.body.appendChild(container);
+    }
 
     let iconText = "ℹ";
     if (type === "success") iconText = "✓";
     else if (type === "danger") iconText = "✕";
     else if (type === "warning") iconText = "!";
-    iconEl.textContent = iconText;
 
-    const closeModalHandler = () => {
-        modal.style.display = "none";
-        document.removeEventListener("keydown", keyHandler);
-        if (callback) {
-            callback();
+    const toast = document.createElement("div");
+    toast.className = `toast-item toast-${type}`;
+    toast.setAttribute("role", "alert");
+    toast.innerHTML = `
+        <div class="toast-stripe"></div>
+        <div class="toast-content">
+            <div class="toast-icon-wrap">
+                <span class="toast-icon">${iconText}</span>
+            </div>
+            <div class="toast-text-wrap">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${strMsg}</div>
+            </div>
+            <button type="button" class="toast-close" aria-label="Close notification">&times;</button>
+        </div>
+        <div class="toast-progress">
+            <div class="toast-progress-bar" style="animation-duration: ${duration}ms;"></div>
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    let isDismissed = false;
+    let timerId = null;
+    let remaining = duration;
+    let startTime = Date.now();
+
+    const dismissToast = () => {
+        if (isDismissed) return;
+        isDismissed = true;
+        if (timerId) clearTimeout(timerId);
+
+        toast.classList.add("toast-hiding");
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+            if (typeof callback === "function") {
+                callback();
+            }
+        }, 280);
+    };
+
+    const startTimer = () => {
+        startTime = Date.now();
+        timerId = setTimeout(dismissToast, remaining);
+    };
+
+    startTimer();
+
+    toast.addEventListener("mouseenter", () => {
+        if (timerId) {
+            clearTimeout(timerId);
+            timerId = null;
         }
-    };
+        remaining -= Date.now() - startTime;
+        if (remaining < 1000) remaining = 1000;
+        toast.classList.add("toast-paused");
+    });
 
-    const keyHandler = (e) => {
-        if (e.key === "Escape" || e.key === "Enter") {
-            e.preventDefault();
-            closeModalHandler();
+    toast.addEventListener("mouseleave", () => {
+        toast.classList.remove("toast-paused");
+        startTimer();
+    });
+
+    const closeBtn = toast.querySelector(".toast-close");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dismissToast();
+        });
+    }
+
+    toast.addEventListener("click", (e) => {
+        if (e.target !== closeBtn && !closeBtn?.contains(e.target)) {
+            dismissToast();
         }
-    };
+    });
 
-    closeBtn.onclick = closeModalHandler;
-    okBtn.onclick = closeModalHandler;
-    modal.onclick = (e) => {
-        if (e.target === modal) closeModalHandler();
-    };
+    return toast;
+};
 
-    document.addEventListener("keydown", keyHandler);
-
-    modal.style.display = "flex";
-    okBtn.focus();
+const showPopupAlert = (message, type = null, title = null, callback = null) => {
+    return showToast(message, type, title, callback);
 };
 
 window.alert = (msg, callback) => {
-    showPopupAlert(msg, null, null, callback);
+    showToast(msg, null, null, callback);
 };
 
 const showPopupConfirm = (message, onConfirm = null, onCancel = null, options = {}) => {

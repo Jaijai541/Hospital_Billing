@@ -37,10 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnOpenAddRoomType) {
         btnOpenAddRoomType.addEventListener("click", openRoomTypeModal);
     }
-    const btnManageClassificationsHeader = document.getElementById("btnManageClassificationsHeader");
-    if (btnManageClassificationsHeader) {
-        btnManageClassificationsHeader.addEventListener("click", openRoomTypeModal);
-    }
     const btnCloseRoomTypeModal = document.getElementById("btnCloseRoomTypeModal");
     if (btnCloseRoomTypeModal) {
         btnCloseRoomTypeModal.addEventListener("click", closeRoomTypeModal);

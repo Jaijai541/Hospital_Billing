@@ -121,8 +121,15 @@ const renderAuditTable = (logs) => {
     const tableDiv = document.getElementById("table-div");
     tableDiv.innerHTML = "";
 
+    if (typeof updateFilterCount === "function") {
+        const total = (typeof allAuditLogs !== "undefined" && Array.isArray(allAuditLogs)) ? allAuditLogs.length : (logs ? logs.length : 0);
+        updateFilterCount(logs ? logs.length : 0, total, "log entries");
+    }
+
     if (!logs || logs.length === 0) {
-        tableDiv.innerHTML = `<p style="padding: 15px;">No audit log entries match the selected filters.</p>`;
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("📜", "No audit log entries match the selected filters", "Try expanding your date range, module, or action filters.")
+            : `<p style="padding: 15px;">No audit log entries match the selected filters.</p>`;
         return;
     }
 

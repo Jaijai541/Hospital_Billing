@@ -560,6 +560,9 @@ const filterAndSortDoctors = () => {
         }
     });
 
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(filtered.length, allDoctors.length, "physicians");
+    }
     displayDoctorsTable(filtered);
 };
 
@@ -568,7 +571,9 @@ const displayDoctorsTable = (doctors) => {
     tableDiv.innerHTML = "";
 
     if (!doctors || doctors.length === 0) {
-        tableDiv.innerHTML = "<p>No matching doctors found.</p>";
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("🩺", "No matching physicians found", "Try clearing your search terms or specialty filters to view all doctors.")
+            : "<p>No matching doctors found.</p>";
         return;
     }
 

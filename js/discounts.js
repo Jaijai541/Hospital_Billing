@@ -105,6 +105,9 @@ const filterAndSortDiscounts = () => {
     });
 
     console.log(`[UI] Filtered & Sorted: Displaying ${filtered.length} of ${allDiscounts.length} discounts`);
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(filtered.length, allDiscounts.length, "discounts");
+    }
     displayDiscountsTable(filtered);
 };
 
@@ -113,7 +116,9 @@ const displayDiscountsTable = (discounts) => {
     tableDiv.innerHTML = "";
 
     if (!discounts || discounts.length === 0) {
-        tableDiv.innerHTML = "<p>No matching discounts found.</p>";
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("🏷️", "No statutory or institutional discounts found", "No discount records match your search criteria.")
+            : "<p>No matching discounts found.</p>";
         return;
     }
 

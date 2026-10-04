@@ -233,8 +233,15 @@ const renderTable = (notes) => {
     const tableDiv = document.getElementById("table-div");
     if (!tableDiv) return;
 
+    if (typeof updateFilterCount === "function") {
+        const total = (typeof allPromissoryNotes !== "undefined" && Array.isArray(allPromissoryNotes)) ? allPromissoryNotes.length : (notes ? notes.length : 0);
+        updateFilterCount(notes ? notes.length : 0, total, "promissory notes");
+    }
+
     if (!notes || notes.length === 0) {
-        tableDiv.innerHTML = `<p style="padding: 24px; text-align: center; color: var(--text-muted);">No promissory notes match the selected filters.</p>`;
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("📝", "No promissory notes match the selected filters", "Try changing the status, installment plan, or due date criteria.")
+            : `<p style="padding: 24px; text-align: center; color: var(--text-muted);">No promissory notes match the selected filters.</p>`;
         return;
     }
 

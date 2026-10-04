@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allCatalogs = [];
@@ -98,6 +98,9 @@ const filterAndSortCatalogs = () => {
     });
 
     console.log(`[UI] Displaying ${filtered.length} of ${allCatalogs.length} catalog items.`);
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(filtered.length, allCatalogs.length, "catalog items");
+    }
     displayCatalogsTable(filtered);
 };
 
@@ -106,7 +109,9 @@ const displayCatalogsTable = (items) => {
     tableDiv.innerHTML = "";
 
     if (!items || items.length === 0) {
-        tableDiv.innerHTML = "<p>No matching catalog items found.</p>";
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("📦", "No catalog items found", "No items match your search in this catalog category.")
+            : "<p>No matching catalog items found.</p>";
         return;
     }
 

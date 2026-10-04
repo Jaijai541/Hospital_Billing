@@ -673,4 +673,78 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     initAppSession();
     initSidebarControls();
+    initSearchClearButtons();
 });
+
+const getEmptyStateHtml = (icon = "🔍", title = "No matching records found", subtitle = "Try adjusting your search keywords or filter criteria.") => {
+    return `
+        <div class="empty-state-card">
+            <div class="empty-state-icon">${icon}</div>
+            <div class="empty-state-title">${title}</div>
+            <div class="empty-state-subtitle">${subtitle}</div>
+        </div>
+    `;
+};
+
+const updateFilterCount = (currentCount, totalCount, label = "records") => {
+    let countEl = document.getElementById("filter_results_count");
+    if (!countEl) {
+        const filterBar = document.querySelector(".filter-bar, .filter-toolbar");
+        if (filterBar) {
+            countEl = document.createElement("div");
+            countEl.id = "filter_results_count";
+            countEl.className = "filter-results-count";
+            filterBar.appendChild(countEl);
+        }
+    }
+    if (countEl) {
+        if (totalCount !== undefined && totalCount !== null && totalCount !== currentCount) {
+            countEl.innerHTML = `<span class="badge badge-info">Showing ${currentCount} of ${totalCount} ${label}</span>`;
+        } else {
+            countEl.innerHTML = `<span class="badge badge-info">${currentCount} ${label}</span>`;
+        }
+    }
+};
+
+const initSearchClearButtons = () => {
+    document.querySelectorAll("input[type='text'][id*='search'], input[type='text'][placeholder*='Search'], input[type='search']").forEach(input => {
+        if (input.dataset.hasClearBtn) return;
+        input.dataset.hasClearBtn = "true";
+
+        const parent = input.parentElement;
+        if (!parent) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "search-wrapper";
+        parent.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+
+        const clearBtn = document.createElement("button");
+        clearBtn.type = "button";
+        clearBtn.className = "search-clear-btn";
+        clearBtn.setAttribute("aria-label", "Clear search input");
+        clearBtn.setAttribute("title", "Clear search");
+        clearBtn.textContent = "✕";
+        wrapper.appendChild(clearBtn);
+
+        const updateVisibility = () => {
+            if (input.value && input.value.trim().length > 0) {
+                clearBtn.classList.add("active");
+            } else {
+                clearBtn.classList.remove("active");
+            }
+        };
+
+        input.addEventListener("input", updateVisibility);
+        input.addEventListener("keyup", updateVisibility);
+        clearBtn.addEventListener("click", () => {
+            input.value = "";
+            updateVisibility();
+            input.focus();
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+            input.dispatchEvent(new Event("keyup", { bubbles: true }));
+        });
+
+        updateVisibility();
+    });
+};

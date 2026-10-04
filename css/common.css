@@ -487,6 +487,65 @@ textarea.form-control {
     width: 100%;
 }
 
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-wrapper input {
+    width: 100%;
+    padding-right: 32px !important;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 0;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.search-clear-btn:hover {
+    color: #ef4444;
+    background-color: #fee2e2;
+}
+
+.search-clear-btn.active {
+    display: inline-flex;
+}
+
+.filter-results-count {
+    margin-left: auto;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: center;
+}
+
+.filter-results-count .badge {
+    font-size: 12px;
+    padding: 3px 9px;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -663,17 +722,29 @@ textarea.form-control {
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: min(72vh, 680px);
     margin-top: 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.modal-body .table-responsive {
+    max-height: 340px;
 }
 
 .data-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 14.5px;
     text-align: left;
 }
 
 .data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
     background-color: #f8fafc;
     color: #475569;
     font-weight: 700;
@@ -681,6 +752,35 @@ textarea.form-control {
     letter-spacing: 0.5px;
     padding: 13px 16px;
     border-bottom: 2px solid var(--border-color);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.empty-state-card {
+    text-align: center;
+    padding: 42px 20px;
+    color: var(--text-muted);
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    border: 1px dashed #cbd5e1;
+    margin: 16px 0;
+}
+
+.empty-state-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+.empty-state-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.empty-state-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
 .data-table td {

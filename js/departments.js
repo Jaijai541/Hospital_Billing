@@ -105,6 +105,9 @@ const filterAndSortDepartments = () => {
     });
 
     console.log(`[UI] Filtered & Sorted: Displaying ${filtered.length} of ${allDepartments.length} departments`);
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(filtered.length, allDepartments.length, "departments");
+    }
     displayDepartmentsTable(filtered);
 };
 
@@ -113,7 +116,9 @@ const displayDepartmentsTable = (departments) => {
     tableDiv.innerHTML = "";
 
     if (!departments || departments.length === 0) {
-        tableDiv.innerHTML = "<p>No matching departments or clinical stations found.</p>";
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("🏥", "No departments or stations found", "Try searching for a different clinical department name or code.")
+            : "<p>No matching departments or clinical stations found.</p>";
         return;
     }
 

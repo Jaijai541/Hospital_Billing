@@ -486,6 +486,9 @@ const filterAndSortRooms = () => {
         }
     });
 
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(filtered.length, allRooms.length, "rooms");
+    }
     displayRoomsTable(filtered);
 };
 
@@ -494,7 +497,9 @@ const displayRoomsTable = (rooms) => {
     tableDiv.innerHTML = "";
 
     if (!rooms || rooms.length === 0) {
-        tableDiv.innerHTML = "<p>No matching rooms found.</p>";
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("🛏️", "No matching rooms or beds found", "Try selecting a different room classification or status filter.")
+            : "<p>No matching rooms found.</p>";
         return;
     }
 

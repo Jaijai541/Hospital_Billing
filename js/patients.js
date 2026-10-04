@@ -1,4 +1,4 @@
-﻿const getApiUrl = "../api/GET";
+const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allPatients = [];
@@ -185,6 +185,9 @@ const filterAndSortPatients = () => {
     });
 
     console.log(`[UI] Displaying ${filtered.length} of ${allPatients.length} patients.`);
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(filtered.length, allPatients.length, "patients");
+    }
     displayPatientsTable(filtered);
 };
 
@@ -193,7 +196,9 @@ const displayPatientsTable = (patients) => {
     tableDiv.innerHTML = "";
 
     if (!patients || patients.length === 0) {
-        tableDiv.innerHTML = "<p>No matching patient records found.</p>";
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("👤", "No matching patient records found", "Try adjusting your search query, status filter, or blood type.")
+            : "<p>No matching patient records found.</p>";
         return;
     }
 

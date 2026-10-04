@@ -465,8 +465,15 @@ const renderDoctorPickerRows = () => {
 const renderAdmissionsTable = (admissions) => {
     const tableDiv = document.getElementById('table-div');
 
+    if (typeof updateFilterCount === "function") {
+        const total = (typeof allAdmissions !== "undefined" && Array.isArray(allAdmissions)) ? allAdmissions.length : (admissions ? admissions.length : 0);
+        updateFilterCount(admissions ? admissions.length : 0, total, "admissions");
+    }
+
     if (!admissions || admissions.length === 0) {
-        tableDiv.innerHTML = '<p><em>No admission records found matching criteria.</em></p>';
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("📋", "No admission records found", "No patient admissions match your current search and filter settings.")
+            : '<p><em>No admission records found matching criteria.</em></p>';
         return;
     }
 

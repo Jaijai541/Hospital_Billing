@@ -84,8 +84,15 @@ const displayArchiveTable = (records) => {
     const entity = document.getElementById("archive_category").value;
     tableDiv.innerHTML = "";
 
+    if (typeof updateFilterCount === "function") {
+        const total = (typeof allArchivedRecords !== "undefined" && Array.isArray(allArchivedRecords)) ? allArchivedRecords.length : (records ? records.length : 0);
+        updateFilterCount(records ? records.length : 0, total, "archived records");
+    }
+
     if (!records || records.length === 0) {
-        tableDiv.innerHTML = `<p>No archived (soft-deleted) records found for this category.</p>`;
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("📁", "No archived records found", "The archive is clear for this category. No soft-deleted records currently exist.")
+            : `<p>No archived (soft-deleted) records found for this category.</p>`;
         return;
     }
 

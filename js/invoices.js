@@ -37,8 +37,15 @@ const openPaymentMethodPicker = () => {
 const renderInvoicesTable = (invoices) => {
     const tableDiv = document.getElementById('table-div');
 
+    if (typeof updateFilterCount === "function") {
+        const total = (typeof allInvoices !== "undefined" && Array.isArray(allInvoices)) ? allInvoices.length : (invoices ? invoices.length : 0);
+        updateFilterCount(invoices ? invoices.length : 0, total, "invoices");
+    }
+
     if (!invoices || invoices.length === 0) {
-        tableDiv.innerHTML = '<p><em>No settled invoices found matching criteria.</em></p>';
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("🧾", "No billing invoices found", "No invoices found matching the current keyword search.")
+            : '<p><em>No settled invoices found matching criteria.</em></p>';
         return;
     }
 

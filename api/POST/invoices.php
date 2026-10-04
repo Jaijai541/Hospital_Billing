@@ -337,9 +337,12 @@ class InvoiceManager
 
             $logStmt = $conn->prepare("
                 INSERT INTO Audit_Log 
-                    (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By, Created_At)
+                    (User_ID, Admission_ID, Action_ID, Module_ID, Record_Reference, Description, Performed_By, Created_At)
                 VALUES 
-                    (:uid, :aid, 'Billing Settled', 'Billing', :ref, :descr, :by, NOW())
+                    (:uid, :aid, 
+                     COALESCE((SELECT Action_ID FROM Enum_Audit_Action WHERE Action_Type = 'Billing Settled' LIMIT 1), 14), 
+                     COALESCE((SELECT Module_ID FROM Enum_Audit_Module WHERE Module_Name = 'Billing' LIMIT 1), 6), 
+                     :ref, :descr, :by, NOW())
             ");
             $logStmt->execute([
                 ':uid' => $userId,
@@ -402,9 +405,12 @@ class InvoiceManager
 
                 $logPn = $conn->prepare("
                     INSERT INTO Audit_Log 
-                        (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By, Created_At)
+                        (User_ID, Admission_ID, Action_ID, Module_ID, Record_Reference, Description, Performed_By, Created_At)
                     VALUES 
-                        (:uid, :aid, 'Promissory Note Executed', 'Billing', :ref, :descr, :by, NOW())
+                        (:uid, :aid, 
+                         COALESCE((SELECT Action_ID FROM Enum_Audit_Action WHERE Action_Type = 'Promissory Note Executed' LIMIT 1), 17), 
+                         COALESCE((SELECT Module_ID FROM Enum_Audit_Module WHERE Module_Name = 'Billing' LIMIT 1), 6), 
+                         :ref, :descr, :by, NOW())
                 ");
                 $logPn->execute([
                     ':uid' => $userId,
@@ -555,9 +561,12 @@ class InvoiceManager
 
             $logStmt = $conn->prepare("
                 INSERT INTO Audit_Log 
-                    (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By, Created_At)
+                    (User_ID, Admission_ID, Action_ID, Module_ID, Record_Reference, Description, Performed_By, Created_At)
                 VALUES 
-                    (:uid, :aid, 'Payment Received', 'Billing', :ref, :descr, :by, NOW())
+                    (:uid, :aid, 
+                     COALESCE((SELECT Action_ID FROM Enum_Audit_Action WHERE Action_Type = 'Payment Received' LIMIT 1), 15), 
+                     COALESCE((SELECT Module_ID FROM Enum_Audit_Module WHERE Module_Name = 'Billing' LIMIT 1), 6), 
+                     :ref, :descr, :by, NOW())
             ");
             $logStmt->execute([
                 ':uid' => !empty($userId) ? $userId : null,
@@ -717,9 +726,12 @@ class InvoiceManager
             $admCode = 'ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT);
             $logStmt = $conn->prepare("
                 INSERT INTO Audit_Log 
-                    (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By, Created_At)
+                    (User_ID, Admission_ID, Action_ID, Module_ID, Record_Reference, Description, Performed_By, Created_At)
                 VALUES 
-                    (:uid, :aid, 'Advance Payment Recorded', 'Billing', :ref, :descr, :by, NOW())
+                    (:uid, :aid, 
+                     COALESCE((SELECT Action_ID FROM Enum_Audit_Action WHERE Action_Type = 'Advance Payment Recorded' LIMIT 1), 16), 
+                     COALESCE((SELECT Module_ID FROM Enum_Audit_Module WHERE Module_Name = 'Billing' LIMIT 1), 6), 
+                     :ref, :descr, :by, NOW())
             ");
             $logStmt->execute([
                 ':uid' => $userId,

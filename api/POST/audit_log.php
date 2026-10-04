@@ -174,7 +174,15 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
         $admissionId = $decodedOut['admission_id'] ?? $data['admission_id'] ?? null;
 
         try {
-            $stmt = $conn->prepare("INSERT INTO Audit_Log (User_ID, Admission_ID, Action_Type, Module_Name, Record_Reference, Description, Performed_By) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("
+                INSERT INTO Audit_Log 
+                    (User_ID, Admission_ID, Action_ID, Module_ID, Record_Reference, Description, Performed_By) 
+                VALUES 
+                    (?, ?, 
+                     COALESCE((SELECT Action_ID FROM Enum_Audit_Action WHERE Action_Type = ? LIMIT 1), 1), 
+                     COALESCE((SELECT Module_ID FROM Enum_Audit_Module WHERE Module_Name = ? LIMIT 1), 1), 
+                     ?, ?, ?)
+            ");
             $stmt->execute([$userId, $admissionId, $actionType, $module, $ref, $desc, $by]);
         } catch (Exception $e) {
         }

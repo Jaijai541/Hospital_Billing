@@ -45,23 +45,29 @@ const updateAuditStats = (logs) => {
     const systemEl = document.getElementById("stat-system-logs");
 
     const clinicalActions = ["ADMIT", "TRANSFER", "DISCHARGE", "ORDER", "ROUND"];
-    const billingActions = ["BILLING", "RETURN"];
+    const billingActions = ["BILLING", "RETURN", "Billing Settled", "Payment Received", "Advance Payment Recorded", "Promissory Note Executed"];
 
     const clinicalCount = logs.filter(l => clinicalActions.includes(l.Action_Type)).length;
-    const billingCount = logs.filter(l => billingActions.includes(l.Action_Type)).length;
+    const billingCount = logs.filter(l => billingActions.includes(l.Action_Type) || l.Module_Name === "Billing" || l.Module_Name === "Billing & Settlement").length;
     const systemCount = logs.length - clinicalCount - billingCount;
 
     if (totalEl) totalEl.textContent = logs.length;
     if (clinicalEl) clinicalEl.textContent = clinicalCount;
     if (billingEl) billingEl.textContent = billingCount;
-    if (systemEl) systemEl.textContent = systemCount;
+    if (systemEl) systemEl.textContent = Math.max(0, systemCount);
 };
 
-const getActionBadgeClass = (actionType) => {
+const getActionBadgeClass = (actionType, badgeClassFromDb) => {
+    if (badgeClassFromDb) {
+        return `badge ${badgeClassFromDb}`;
+    }
     switch (actionType) {
         case "ADMIT":
         case "CREATE":
         case "RESTORE":
+        case "Billing Settled":
+        case "Payment Received":
+        case "Advance Payment Recorded":
             return "badge badge-success";
         case "BILLING":
         case "ORDER":
@@ -72,6 +78,7 @@ const getActionBadgeClass = (actionType) => {
         case "TRANSFER":
         case "UPDATE":
         case "ARCHIVE":
+        case "Promissory Note Executed":
             return "badge badge-warning";
         case "DELETE":
         case "RETURN":
@@ -139,7 +146,7 @@ const renderAuditTable = (logs) => {
     const tbody = document.createElement("tbody");
     logs.forEach(log => {
         const row = document.createElement("tr");
-        const badgeClass = getActionBadgeClass(log.Action_Type);
+        const badgeClass = getActionBadgeClass(log.Action_Type, log.Badge_Class);
         const formattedId = `AUD-${String(log.Audit_ID).padStart(4, "0")}`;
 
         row.innerHTML = `

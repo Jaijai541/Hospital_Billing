@@ -87,6 +87,20 @@ CREATE TABLE IF NOT EXISTS Enum_Promissory_Plan_Type (
     Is_Active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS Enum_Audit_Module (
+    Module_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Module_Name VARCHAR(60) NOT NULL UNIQUE,
+    Module_Code VARCHAR(30) NULL,
+    Is_Active BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS Enum_Audit_Action (
+    Action_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Action_Type VARCHAR(50) NOT NULL UNIQUE,
+    Badge_Class VARCHAR(50) DEFAULT 'badge-secondary',
+    Is_Active BOOLEAN DEFAULT TRUE
+);
+
 
 -- ============================================================
 -- 2. MASTER ENTITIES (Users & Doctors)
@@ -347,14 +361,50 @@ CREATE TABLE IF NOT EXISTS Audit_Log (
     Audit_ID INT AUTO_INCREMENT PRIMARY KEY,
     User_ID INT NULL,
     Admission_ID INT NULL,
-    Action_Type VARCHAR(50) NOT NULL,
-    Module_Name VARCHAR(60) NOT NULL,
+    Module_ID INT NOT NULL,
+    Action_ID INT NOT NULL,
     Record_Reference VARCHAR(60) DEFAULT '-',
     Description TEXT NOT NULL,
     Performed_By VARCHAR(100) DEFAULT 'System Admin',
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (User_ID) REFERENCES System_User(User_ID) ON DELETE SET NULL,
-    FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID) ON DELETE SET NULL
+    FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID) ON DELETE SET NULL,
+    FOREIGN KEY (Module_ID) REFERENCES Enum_Audit_Module(Module_ID),
+    FOREIGN KEY (Action_ID) REFERENCES Enum_Audit_Action(Action_ID)
 );
+
+INSERT IGNORE INTO Enum_Audit_Module (Module_ID, Module_Name, Module_Code) VALUES
+(1, 'System', 'SYS'),
+(2, 'Admissions & Beds', 'ADM_BED'),
+(3, 'Clinical Orders', 'CLIN_ORD'),
+(4, 'Billing & Settlement', 'BIL_SETTLE'),
+(5, 'Billing & Ledger', 'BIL_LEDGER'),
+(6, 'Billing', 'BIL'),
+(7, 'Patients Directory', 'PAT_DIR'),
+(8, 'Doctors & Fees', 'DOC_FEE'),
+(9, 'Rooms & Beds', 'ROOM_BED'),
+(10, 'Charge Catalogs', 'CATALOG'),
+(11, 'Billing Discounts', 'DISCOUNT'),
+(12, 'System Archive', 'ARCHIVE'),
+(13, 'Authentication', 'AUTH');
+
+INSERT IGNORE INTO Enum_Audit_Action (Action_ID, Action_Type, Badge_Class) VALUES
+(1, 'UPDATE', 'badge-warning'),
+(2, 'CREATE', 'badge-success'),
+(3, 'ADMIT', 'badge-success'),
+(4, 'TRANSFER', 'badge-warning'),
+(5, 'DISCHARGE', 'badge-warning'),
+(6, 'ORDER', 'badge-primary'),
+(7, 'ROUND', 'badge-primary'),
+(8, 'BILLING', 'badge-primary'),
+(9, 'RETURN', 'badge-danger'),
+(10, 'ARCHIVE', 'badge-warning'),
+(11, 'RESTORE', 'badge-success'),
+(12, 'DELETE', 'badge-danger'),
+(13, 'AUTH', 'badge-primary'),
+(14, 'Billing Settled', 'badge-success'),
+(15, 'Payment Received', 'badge-success'),
+(16, 'Advance Payment Recorded', 'badge-success'),
+(17, 'Promissory Note Executed', 'badge-warning');
 

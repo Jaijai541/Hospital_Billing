@@ -638,7 +638,7 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById('btnCloseHistoryModal')?.addEventListener('click', () => closeModal('paymentHistoryModal'));
     document.getElementById('btnDismissHistoryModal')?.addEventListener('click', () => closeModal('paymentHistoryModal'));
     document.getElementById('btnBackToOrigin')?.addEventListener('click', () => {
-        if (document.referrer && (document.referrer.includes('invoices.html') || document.referrer.includes('admission_details.html'))) {
+        if (document.referrer && (document.referrer.includes('invoices.html') || document.referrer.includes('admission_details.html') || document.referrer.includes('promissory_notes.html'))) {
             window.location.href = document.referrer;
         } else if (admissionId || (currentInvoice && currentInvoice.Admission_ID)) {
             window.location.href = `admission_details.html?id=${admissionId || currentInvoice.Admission_ID}`;

@@ -129,7 +129,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('btn-back-origin')?.addEventListener('click', () => {
-        if (document.referrer && (document.referrer.includes('invoices.html') || document.referrer.includes('admission_details.html') || document.referrer.includes('invoice_print.html'))) {
+        if (document.referrer && (document.referrer.includes('invoices.html') || document.referrer.includes('admission_details.html') || document.referrer.includes('invoice_print.html') || document.referrer.includes('promissory_notes.html'))) {
             window.location.href = document.referrer;
         } else if (currentPaymentData && currentPaymentData.Admission_ID) {
             window.location.href = `admission_details.html?id=${currentPaymentData.Admission_ID}&tab=5`;

@@ -491,7 +491,7 @@ const submitInstallmentPayment = async () => {
 
             if (data.payment_id) {
                 showPopupConfirm(`Payment successfully registered! Official Receipt ${data.receipt_number || ""} is ready. Would you like to view and print the Official Receipt now?`, () => {
-                    window.open(`payment_receipt.html?payment_id=${data.payment_id}`, "_blank");
+                    window.location.href = `payment_receipt.html?payment_id=${data.payment_id}`;
                 }, null, {
                     title: "Official Receipt Generated",
                     confirmText: "View Receipt",
@@ -533,7 +533,7 @@ const openPaymentHistoryModal = async (note) => {
     const actionsDiv = document.getElementById("hist_modal_actions");
     if (actionsDiv) {
         actionsDiv.innerHTML = `
-            <a href="invoice_print.html?id=${note.Invoice_ID}" target="_blank" class="btn btn-outline btn-sm">🖨 Print Statement & Agreement</a>
+            <a href="invoice_print.html?id=${note.Invoice_ID}" class="btn btn-outline btn-sm">🖨 Print Statement & Agreement</a>
             ${bal > 0 ? `<button type="button" class="btn btn-primary btn-sm" id="btnHistPayNow">💵 Record Installment Payment</button>` : ""}
         `;
         const btnHistPay = document.getElementById("btnHistPayNow");

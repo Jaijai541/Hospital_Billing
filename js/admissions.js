@@ -511,7 +511,7 @@ const renderAdmissionsTable = (admissions) => {
                 if (a.Promissory_Next_Due_Date) {
                     const dueStr = a.Formatted_Promissory_Next_Due_Date || a.Promissory_Next_Due_Date;
                     const dueAmt = parseFloat(a.Promissory_Monthly_Amount || rem);
-                    pnInfo = `<br><span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-size: 11px; margin-top: 4px; display: inline-block;">📅 PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                    pnInfo = `<br><span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-size: 11px; margin-top: 4px; display: inline-block;">PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
                 }
                 statusBadge = `<span class="badge badge-warning" style="background: #f59e0b; color: #fff;">Billed (Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>${pnInfo}`;
             } else {
@@ -524,7 +524,7 @@ const renderAdmissionsTable = (admissions) => {
             : '<span class="badge badge-warning" style="font-size: 0.75rem;">Pending Dx</span>';
 
         const stayBadge = (a.Total_Admissions && parseInt(a.Total_Admissions, 10) > 1)
-            ? `<br><span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px; border: 1px solid #fde68a; margin-top: 3px; display: inline-block;">🔁 Stay #${a.Admission_Sequence || '?'}/${a.Total_Admissions}</span>`
+            ? `<br><span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px; border: 1px solid #fde68a; margin-top: 3px; display: inline-block;">Stay #${a.Admission_Sequence || '?'}/${a.Total_Admissions}</span>`
             : '';
 
         html += `<tr class="clickable-row" onclick="openChart(${a.Admission_ID})" title="Click row to open clinical chart & ledger">`;

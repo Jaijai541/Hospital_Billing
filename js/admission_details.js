@@ -984,13 +984,13 @@ const loadAdmissionDetails = () => {
             const bannerHistoryPill = document.getElementById('banner-history-pill');
             if (bannerHistoryPill) {
                 if (totalAdm <= 1) {
-                    bannerHistoryPill.innerHTML = `🏥 1st Admission (First Visit)`;
+                    bannerHistoryPill.innerHTML = `1st Admission (First Visit)`;
                     bannerHistoryPill.style.background = '#e0f2fe';
                     bannerHistoryPill.style.color = '#0369a1';
                     bannerHistoryPill.style.border = '1px solid #bae6fd';
                     bannerHistoryPill.title = 'Click to view complete patient admission history';
                 } else {
-                    bannerHistoryPill.innerHTML = `🔁 ${formatOrdinal(seqAdm)} of ${totalAdm} Admissions`;
+                    bannerHistoryPill.innerHTML = `${formatOrdinal(seqAdm)} of ${totalAdm} Admissions`;
                     bannerHistoryPill.style.background = '#fef3c7';
                     bannerHistoryPill.style.color = '#92400e';
                     bannerHistoryPill.style.border = '1px solid #fde68a';
@@ -1084,26 +1084,26 @@ const loadAdmissionDetails = () => {
             if (admissionData.Status === 'Admitted') {
                 if (btnTabPB) {
                     btnTabPB.disabled = false;
-                    btnTabPB.innerHTML = '🖨 Print Partial Bill (Interim)';
+                    btnTabPB.innerHTML = 'Print Partial Bill (Interim)';
                     btnTabPB.title = 'Print running interim statement of accumulated charges';
                     btnTabPB.onclick = () => { window.location.href = `partial_bill.html?admission_id=${admissionId}`; };
                 }
                 if (btnTabSOA) {
                     btnTabSOA.disabled = true;
-                    btnTabSOA.innerHTML = '📋 Final SOA (Disabled — Discharge Patient First)';
+                    btnTabSOA.innerHTML = 'Final SOA (Disabled — Discharge Patient First)';
                     btnTabSOA.title = 'Disabled: Patient is still admitted. Discharge patient first to generate Official Statement of Account.';
                     btnTabSOA.onclick = null;
                 }
             } else if (admissionData.Status === 'Discharged') {
                 if (btnTabPB) {
                     btnTabPB.disabled = true;
-                    btnTabPB.innerHTML = '🖨 Partial Bill (Disabled — Patient Discharged)';
+                    btnTabPB.innerHTML = 'Partial Bill (Disabled — Patient Discharged)';
                     btnTabPB.title = 'Disabled: Patient is already discharged.';
                     btnTabPB.onclick = null;
                 }
                 if (btnTabSOA) {
                     btnTabSOA.disabled = false;
-                    btnTabSOA.innerHTML = '📋 Finalize & Issue SOA';
+                    btnTabSOA.innerHTML = 'Finalize & Issue SOA';
                     btnTabSOA.title = 'Proceed to finalize Statement of Account';
                     btnTabSOA.onclick = () => {
                         if (switchClinicalTab) switchClinicalTab('tab-settlement');
@@ -1112,13 +1112,13 @@ const loadAdmissionDetails = () => {
             } else if (admissionData.Status === 'Billed') {
                 if (btnTabPB) {
                     btnTabPB.disabled = true;
-                    btnTabPB.innerHTML = '🖨 Partial Bill (Disabled — Account Billed)';
+                    btnTabPB.innerHTML = 'Partial Bill (Disabled — Account Billed)';
                     btnTabPB.title = 'Disabled: Account is officially finalized and billed.';
                     btnTabPB.onclick = null;
                 }
                 if (btnTabSOA) {
                     btnTabSOA.disabled = false;
-                    btnTabSOA.innerHTML = '📋 View Final Statement of Account (SOA)';
+                    btnTabSOA.innerHTML = 'View Final Statement of Account (SOA)';
                     btnTabSOA.title = 'View and print the official Final Statement of Account';
                     btnTabSOA.onclick = () => { window.location.href = `invoice_print.html?admission_id=${admissionId}`; };
                 }
@@ -2199,7 +2199,7 @@ const renderAdvancePaymentsHistory = (advList) => {
                     <td align="right"><strong style="color: #16a34a;">₱${pAmt}</strong></td>
                     <td>${p.Notes || 'Advance Patient Deposit'}</td>
                     <td align="center">
-                        <button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">🧾 Print OR</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">Print OR</button>
                     </td>
                 </tr>
             `;
@@ -2215,7 +2215,7 @@ const renderAdvancePaymentsHistory = (advList) => {
                     <h3 style="margin: 0; color: #1e293b; font-size: 1.05rem;">Advance Deposits &amp; Official Receipts History</h3>
                     <span class="text-muted" style="font-size: 13px;">Pre-discharge deposit payments credited towards final SOA settlement</span>
                 </div>
-                ${showAddBtn ? `<button type="button" class="btn btn-primary btn-sm" onclick="openAdvancePaymentModal()">💵 Record Advance Payment</button>` : ''}
+                ${showAddBtn ? `<button type="button" class="btn btn-primary btn-sm" onclick="openAdvancePaymentModal()">Record Advance Payment</button>` : ''}
             </div>
             <div class="table-responsive">
                 <table class="data-table" style="font-size: 13.5px;">
@@ -2336,7 +2336,7 @@ const openPatientAdmissionHistoryModal = () => {
                     const netAmt = parseFloat(row.Net_Amount_Due || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
                     const remBal = parseFloat(row.Remaining_Balance || 0);
                     if (row.Payment_Status === 'Paid in Full') {
-                        billingHtml = `<div><strong style="color: #0284c7;">${row.Invoice_Code}</strong> &bull; ₱${netAmt}</div><span class="badge" style="background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700;">✓ Paid in Full</span>`;
+                        billingHtml = `<div><strong style="color: #0284c7;">${row.Invoice_Code}</strong> &bull; ₱${netAmt}</div><span class="badge" style="background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700;">Paid in Full</span>`;
                     } else {
                         billingHtml = `<div><strong style="color: #0284c7;">${row.Invoice_Code}</strong> &bull; ₱${netAmt}</div><span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 700;">Bal: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
                     }
@@ -2445,7 +2445,7 @@ const renderAdmittedDischargeGateCard = (advList) => {
 
             <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
                 <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')" style="font-size: 14px; padding: 10px 20px; font-weight: 700;">
-                    🚪 Process Patient Discharge &amp; Unlock Final SOA
+                    Process Patient Discharge &amp; Unlock Final SOA
                 </button>
                 <span class="text-muted" style="font-size: 13px;">Discharging unlocks statutory discounts (Senior/PWD/PhilHealth) and the Cashier settlement desk.</span>
             </div>
@@ -2528,7 +2528,7 @@ const renderPaymentHistoryTable = (invId, admId, targetEl) => {
                         <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
                         <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>
                         <td>${p.Notes || '-'}</td>
-                        <td align="center"><button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">🧾 Print OR</button></td>
+                        <td align="center"><button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">Print OR</button></td>
                     </tr>
                 `;
             });
@@ -2617,9 +2617,9 @@ const renderBilledSettlementCard = (inv) => {
     if (!inv || inv.error) {
         container.innerHTML = `
             <div class="card p-3" style="background-color: #f0fff4; border: 1px solid #48bb78; border-radius: 8px;">
-                <h3 style="margin-top:0; color: #276749;">✔ THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h3>
+                <h3 style="margin-top:0; color: #276749;">THIS ADMISSION HAS BEEN OFFICIALLY SETTLED & BILLED</h3>
                 <p class="text-muted">The billing invoice and official Statement of Account (SOA) have been generated and finalized.</p>
-                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'">🖨 View / Print Official Statement of Account (SOA)</button>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?admission_id=${admissionId}'">View / Print Official Statement of Account (SOA)</button>
             </div>
         `;
         return;
@@ -2667,7 +2667,7 @@ const renderBilledSettlementCard = (inv) => {
         container.innerHTML = `
             <div class="card p-4" style="background-color: #f0fff4; border: 1px solid #48bb78; border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                    <h3 style="margin: 0; color: #276749;">✔ THIS ADMISSION HAS BEEN FULLY SETTLED & BILLED</h3>
+                    <h3 style="margin: 0; color: #276749;">THIS ADMISSION HAS BEEN FULLY SETTLED & BILLED</h3>
                     <span class="badge badge-success" style="font-size: 14px; padding: 6px 14px;">PAID IN FULL</span>
                 </div>
                 <table class="data-table mb-3">
@@ -2686,7 +2686,7 @@ const renderBilledSettlementCard = (inv) => {
                     </tbody>
                 </table>
                 <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?id=${inv.Invoice_ID}'">🖨 View / Print Official Statement of Account (SOA)</button>
+                    <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?id=${inv.Invoice_ID}'">View / Print Official Statement of Account (SOA)</button>
                 </div>
 
                 <div class="card p-3 mt-4" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
@@ -2711,7 +2711,7 @@ const renderBilledSettlementCard = (inv) => {
     container.innerHTML = `
         <div class="card p-4" style="background-color: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0; color: #92400e;">⚠️ ADMISSION BILLED — OUTSTANDING BALANCE PENDING</h3>
+                <h3 style="margin: 0; color: #92400e;">ADMISSION BILLED — OUTSTANDING BALANCE PENDING</h3>
                 <span class="badge badge-danger" style="font-size: 14px; padding: 6px 14px;">BALANCE DUE: ₱${remainingBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
             </div>
             <p class="text-muted mb-3">This account was settled with a partial or specific-category payment. Follow-up payments can be posted below until the balance is cleared.</p>
@@ -2736,7 +2736,7 @@ const renderBilledSettlementCard = (inv) => {
             ${inv.Promissory_Note ? `
                 <div class="card p-3 mb-3" style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                        <h4 style="margin: 0; color: #166534;">📝 Active Promissory Note Agreement</h4>
+                        <h4 style="margin: 0; color: #166534;">Active Promissory Note Agreement</h4>
                         <span class="badge ${String(inv.Promissory_Note.Status || '').toLowerCase() === 'settled' ? 'badge-success' : (String(inv.Promissory_Note.Status || '').toLowerCase() === 'overdue' ? 'badge-danger' : 'badge-info')}" style="font-size: 13px;">${inv.Promissory_Note.Status || 'Active'}</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 13.5px; color: #1e293b;">
@@ -2780,7 +2780,7 @@ const renderBilledSettlementCard = (inv) => {
             </div>
 
             <div style="margin-top: 16px;">
-                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?id=${inv.Invoice_ID}'">🖨 View / Print Official Statement of Account (SOA)</button>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='invoice_print.html?id=${inv.Invoice_ID}'">View / Print Official Statement of Account (SOA)</button>
             </div>
 
             <div class="card p-3 mt-4" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
@@ -3103,16 +3103,16 @@ const renderSettlementSection = () => {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
                 <div>
                     <h3 style="margin: 0; color: #0f172a; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                        <span>💳</span> Discharge Payment &amp; Settlement Authorization
+                        Discharge Payment &amp; Settlement Authorization
                     </h3>
                     <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Specify payment received today or formalize credit/receivable promissory terms before patient departure</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button type="button" id="btn-quick-full-cash" class="btn btn-outline-primary btn-sm" style="font-weight: 600; padding: 6px 12px;">
-                        💵 Pay Full Cash / Online
+                        Pay Full Cash / Online
                     </button>
                     <button type="button" id="btn-quick-promissory" class="btn btn-outline-warning btn-sm" style="font-weight: 600; padding: 6px 12px;">
-                        📝 Defer via Promissory Note (NR / AR)
+                        Defer via Promissory Note (NR / AR)
                     </button>
                 </div>
             </div>
@@ -3124,7 +3124,7 @@ const renderSettlementSection = () => {
                         <input type="hidden" id="settle_payment_method_id" value="${defaultPm.Payment_Method_ID}">
                         <input type="text" id="settle_payment_method_text" class="form-control" value="${defaultPm.Method_Name} (${defaultPm.Category_Type || 'Payment'})" readonly style="background-color: #f8fafc; cursor: pointer; font-weight: 600;" title="Click to choose payment method in a separate window">
                         <button type="button" id="btn-open-settle-pm-picker" class="btn btn-outline btn-lookup" style="white-space: nowrap; font-weight: 600;">
-                            🔍 Select Method
+                            Select Method
                         </button>
                     </div>
                     <small class="text-muted" id="settle_pm_hint" style="display: block; margin-top: 4px; font-size: 12px;">${defaultPm.Description || 'Standard physical Philippine Peso currency tender'}</small>
@@ -3145,13 +3145,12 @@ const renderSettlementSection = () => {
             </div>
 
             <div id="settle-change-display" style="padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 13.5px; margin-bottom: 16px;">
-                <span style="color: #15803d; font-weight: 700;">✔ Exact Full Settlement (₱0.00 Balance)</span> — Official Receipt and Statement of Account will be generated.
+                <span style="color: #15803d; font-weight: 700;">Exact Full Settlement (₱0.00 Balance)</span> — Official Receipt and Statement of Account will be generated.
             </div>
 
             <div id="promissory-note-settlement-card" class="card p-3" style="display: none; background: #fffdf5; border: 1px solid #f59e0b; border-radius: 8px; margin-top: 4px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 18px;">📝</span>
+                    <div>
                         <strong style="color: #92400e; font-size: 15px;">Promissory Note &amp; Mutual Settlement Agreement</strong>
                     </div>
                     <span class="badge badge-warning" style="font-size: 12.5px;" id="pn_balance_badge">Unsettled Balance: ₱0.00</span>
@@ -3398,18 +3397,18 @@ const renderSettlementSection = () => {
                 lblChange.style.background = '#f0fdf4';
                 lblChange.style.borderColor = '#bbf7d0';
                 lblChange.innerHTML = change > 0 
-                    ? `<span style="color: #15803d; font-weight: 700;">✔ Full Payment Tendered</span> — Customer Change: <strong>₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> (Official Receipt and Statement of Account will be issued)` 
-                    : '<span style="color: #15803d; font-weight: 700;">✔ Exact Full Settlement (₱0.00 Balance)</span> — Official Receipt and Statement of Account will be issued.';
+                    ? `<span style="color: #15803d; font-weight: 700;">Full Payment Tendered</span> — Customer Change: <strong>₱${change.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> (Official Receipt and Statement of Account will be issued)` 
+                    : '<span style="color: #15803d; font-weight: 700;">Exact Full Settlement (₱0.00 Balance)</span> — Official Receipt and Statement of Account will be issued.';
             } else if (paid === 0) {
                 const bal = math.remainingNetToSettle;
                 lblChange.style.background = '#fffdf5';
                 lblChange.style.borderColor = '#f59e0b';
-                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">📝 ₱0.00 Cash Paid Today</span> — Full <strong>₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> balance deferred to Promissory Note (NR / AR)`;
+                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">₱0.00 Cash Paid Today</span> — Full <strong>₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> balance deferred to Promissory Note (NR / AR)`;
             } else {
                 const bal = Math.round((math.remainingNetToSettle - paid) * 100) / 100;
                 lblChange.style.background = '#fffdf5';
                 lblChange.style.borderColor = '#f59e0b';
-                lblChange.innerHTML = `<span style="color: #0369a1; font-weight: 700;">💵 Partial Cash Paid: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span> | <strong style="color: #b45309;">Remaining Balance Deferred to Promissory Note: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>`;
+                lblChange.innerHTML = `<span style="color: #0369a1; font-weight: 700;">Partial Cash Paid: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span> | <strong style="color: #b45309;">Remaining Balance Deferred to Promissory Note: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>`;
             }
         }
 
@@ -3445,13 +3444,13 @@ const renderSettlementSection = () => {
             }
 
             if (paid === 0) {
-                if (btnSettle) btnSettle.textContent = '📝 Process Promissory Note Agreement & Issue Official SOA (₱0 Down)';
+                if (btnSettle) btnSettle.textContent = 'Process Promissory Note Agreement & Issue Official SOA (₱0 Down)';
             } else {
-                if (btnSettle) btnSettle.textContent = '📝 Record Partial Payment & Finalize Promissory Note';
+                if (btnSettle) btnSettle.textContent = 'Record Partial Payment & Finalize Promissory Note';
             }
         } else {
             if (pnCard) pnCard.style.display = 'none';
-            if (btnSettle) btnSettle.textContent = '💵 Finalize Full Payment & Release Patient';
+            if (btnSettle) btnSettle.textContent = 'Finalize Full Payment & Release Patient';
         }
 
         const btnQuickCash = document.getElementById('btn-quick-full-cash');
@@ -3489,7 +3488,7 @@ const renderSettlementSection = () => {
 
         tagsContainer.innerHTML = customVouchersList.map((cv, idx) => `
             <span class="badge" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-size: 12px; padding: 5px 10px; display: inline-flex; align-items: center; gap: 6px;">
-                🎟️ <strong>${cv.name}</strong> (-₱${cv.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})})
+                <strong>${cv.name}</strong> (-₱${cv.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})})
                 <button type="button" class="btn-remove-cv" data-index="${idx}" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; padding: 0 2px;">✕</button>
             </span>
         `).join('');
@@ -3667,9 +3666,9 @@ const renderSettlementSection = () => {
 
         if (hintText) {
             if (isNR) {
-                hintText.innerHTML = '<strong style="color: #b45309;">📝 Notes Receivable: Formal Promissory Note with negotiable installment schedule</strong>';
+                hintText.innerHTML = '<strong style="color: #b45309;">Notes Receivable: Formal Promissory Note with negotiable installment schedule</strong>';
             } else if (isAR) {
-                hintText.innerHTML = '<strong style="color: #b45309;">📝 Accounts Receivable: 30-day deferred credit agreement</strong>';
+                hintText.innerHTML = '<strong style="color: #b45309;">Accounts Receivable: 30-day deferred credit agreement</strong>';
             } else {
                 hintText.innerHTML = pmDesc ? `<span class="text-muted">${pmDesc}</span>` : '<span class="text-muted">Payment tendered and verified today</span>';
             }

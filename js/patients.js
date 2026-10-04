@@ -249,7 +249,7 @@ const displayPatientsTable = (patients) => {
 
         const admCount = parseInt(pat.Total_Admissions || 0, 10);
         const admBadge = admCount > 0
-            ? `<br><span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; margin-top: 3px; display: inline-block;">🏥 ${admCount} Admission${admCount > 1 ? 's' : ''}</span>`
+            ? `<br><span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; margin-top: 3px; display: inline-block;">${admCount} Admission${admCount > 1 ? 's' : ''}</span>`
             : `<br><span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 11px; margin-top: 3px; display: inline-block;">No Prior Admissions</span>`;
 
         const row = document.createElement("tr");

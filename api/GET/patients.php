@@ -12,6 +12,11 @@ class PatientMaster
                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
                        g.Gender_Name, b.Blood_Type_Name,
                        (
+                           SELECT COUNT(*) 
+                           FROM Admission a 
+                           WHERE a.Patient_ID = p.Patient_ID
+                       ) AS Total_Admissions,
+                       (
                            SELECT a.Status 
                             FROM Admission a 
                             WHERE a.Patient_ID = p.Patient_ID 

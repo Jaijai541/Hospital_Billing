@@ -17,6 +17,14 @@ let switchClinicalTab = null;
 let currentPickerConfig = null;
 let currentPickerSelectedItem = null;
 
+const formatOrdinal = (n) => {
+    const num = parseInt(n, 10);
+    if (isNaN(num)) return n;
+    const s = ["th", "st", "nd", "rd"];
+    const v = num % 100;
+    return num + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     console.log("admission_details.js: Initializing Patient Chart...");
 
@@ -387,7 +395,18 @@ const initClinicalModals = () => {
         });
     }
 
-    [orderModal, roundModal, transferModal, returnModal, advanceModal].forEach(m => {
+    const historyModal = document.getElementById('patientHistoryModal');
+    const btnOpenHist = document.getElementById('btnOpenAdmissionHistory');
+    const pillHist = document.getElementById('banner-history-pill');
+    const btnCloseHist = document.getElementById('btnCloseHistoryModal');
+    const btnCloseHistFooter = document.getElementById('btnCloseHistoryModalFooter');
+
+    if (btnOpenHist) btnOpenHist.addEventListener('click', openPatientAdmissionHistoryModal);
+    if (pillHist) pillHist.addEventListener('click', openPatientAdmissionHistoryModal);
+    if (btnCloseHist) btnCloseHist.addEventListener('click', () => closeModal('patientHistoryModal'));
+    if (btnCloseHistFooter) btnCloseHistFooter.addEventListener('click', () => closeModal('patientHistoryModal'));
+
+    [orderModal, roundModal, transferModal, returnModal, advanceModal, historyModal].forEach(m => {
         if (m) {
             m.addEventListener('click', (e) => {
                 if (e.target === m) closeModal(m.id);
@@ -407,6 +426,7 @@ const initClinicalModals = () => {
             if (transferModal && transferModal.style.display === 'flex') closeModal('transferModal');
             if (returnModal && returnModal.style.display === 'flex') closeModal('returnModal');
             if (advanceModal && advanceModal.style.display === 'flex') closeModal('advancePaymentModal');
+            if (historyModal && historyModal.style.display === 'flex') closeModal('patientHistoryModal');
         }
     });
 };
@@ -959,6 +979,25 @@ const loadAdmissionDetails = () => {
             document.getElementById('banner-room').textContent = admissionData.Room_Name ? `${admissionData.Room_Name} (${admissionData.Room_Type})` : 'N/A';
             document.getElementById('banner-rate').textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
 
+            const totalAdm = parseInt(admissionData.Total_Admissions || 1, 10);
+            const seqAdm = parseInt(admissionData.Admission_Sequence || 1, 10);
+            const bannerHistoryPill = document.getElementById('banner-history-pill');
+            if (bannerHistoryPill) {
+                if (totalAdm <= 1) {
+                    bannerHistoryPill.innerHTML = `🏥 1st Admission (First Visit)`;
+                    bannerHistoryPill.style.background = '#e0f2fe';
+                    bannerHistoryPill.style.color = '#0369a1';
+                    bannerHistoryPill.style.border = '1px solid #bae6fd';
+                    bannerHistoryPill.title = 'Click to view complete patient admission history';
+                } else {
+                    bannerHistoryPill.innerHTML = `🔁 ${formatOrdinal(seqAdm)} of ${totalAdm} Admissions`;
+                    bannerHistoryPill.style.background = '#fef3c7';
+                    bannerHistoryPill.style.color = '#92400e';
+                    bannerHistoryPill.style.border = '1px solid #fde68a';
+                    bannerHistoryPill.title = `Patient has ${totalAdm} recorded admissions. Click to view history.`;
+                }
+            }
+
             const remBal = parseFloat(admissionData.Remaining_Balance !== undefined && admissionData.Remaining_Balance !== null ? admissionData.Remaining_Balance : 0);
             let statusDisplay = `<span class="badge badge-primary" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600;">Admitted</span>`;
             if (admissionData.Status === 'Discharged') {
@@ -970,7 +1009,8 @@ const loadAdmissionDetails = () => {
                     statusDisplay = `<span class="badge badge-success" style="font-weight: 600;">Settled (Paid in Full)</span>`;
                 }
             }
-            document.getElementById('banner-status').innerHTML = `${statusDisplay} <small class="text-muted" style="margin-left: 6px;">(Admitted: ${admissionData.Admission_Date})</small>`;
+            const statusSuffix = totalAdm > 1 ? ` &bull; <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600; font-size: 11px; border: 1px solid #cbd5e1;">Lifetime: ${totalAdm} Admissions</span>` : ``;
+            document.getElementById('banner-status').innerHTML = `${statusDisplay} <small class="text-muted" style="margin-left: 6px;">(Admitted: ${admissionData.Admission_Date})</small>${statusSuffix}`;
 
             const badgeSettlement = document.getElementById('badge_tab_settlement');
             if (badgeSettlement) {
@@ -2198,6 +2238,160 @@ const renderAdvancePaymentsHistory = (advList) => {
         </div>
     `;
 };
+
+const openPatientAdmissionHistoryModal = () => {
+    if (!admissionData) {
+        showPopupAlert('Admission profile is still loading. Please wait a moment.', 'info');
+        return;
+    }
+
+    openModal('patientHistoryModal');
+
+    const tableBody = document.getElementById('patientHistoryTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 30px; color: #64748b;">Loading admission history...</td></tr>`;
+    }
+
+    const formData = new FormData();
+    formData.append('operation', 'getPatientAdmissionHistory');
+    formData.append('json', JSON.stringify({
+        patient_id: admissionData.Patient_ID,
+        admission_id: admissionId
+    }));
+
+    axios.post(`${getApiUrl}/admissions.php`, formData)
+        .then(response => {
+            const data = response.data;
+            if (!data || data.error) {
+                const err = (data && data.error) ? data.error : 'Failed to retrieve admission history.';
+                if (tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger" style="padding: 24px;">${err}</td></tr>`;
+                }
+                return;
+            }
+
+            const patient = data.patient || {};
+            const total = parseInt(data.total_admissions || 0, 10);
+            const history = data.history || [];
+
+            const titleEl = document.getElementById('history_modal_title');
+            if (titleEl) {
+                titleEl.textContent = `${patient.Full_Name || admissionData.Full_Name} — Hospital Admission History`;
+            }
+
+            const subEl = document.getElementById('history_modal_subtitle');
+            if (subEl) {
+                const patCode = patient.Patient_Code || admissionData.Patient_Code;
+                const gen = patient.Gender_Name || admissionData.Gender_Name || 'N/A';
+                const age = patient.Age || admissionData.Age || 'N/A';
+                const bld = patient.Blood_Type_Name || admissionData.Blood_Type_Name || 'N/A';
+                subEl.textContent = `${patCode} | ${gen} | Age: ${age} | Blood: ${bld} | Total Admissions on Record: ${total}`;
+            }
+
+            const elTotal = document.getElementById('hist_total_count');
+            if (elTotal) {
+                elTotal.textContent = `${total} Stay${total === 1 ? '' : 's'}`;
+            }
+
+            const elCurr = document.getElementById('hist_current_stay');
+            if (elCurr) {
+                const currMatch = history.find(h => String(h.Admission_ID) === String(admissionId));
+                const currSeq = currMatch ? currMatch.Sequence_Number : (admissionData.Admission_Sequence || 1);
+                elCurr.textContent = `Stay #${currSeq} (ADM-${String(admissionId).padStart(3, '0')})`;
+            }
+
+            const elPrior = document.getElementById('hist_prior_count');
+            if (elPrior) {
+                const priorCount = Math.max(0, total - 1);
+                elPrior.textContent = `${priorCount} Prior Stay${priorCount === 1 ? '' : 's'}`;
+            }
+
+            if (!tableBody) return;
+
+            if (history.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 24px; color: #64748b;">No admissions on record for this patient.</td></tr>`;
+                return;
+            }
+
+            let rowsHtml = '';
+            history.forEach(row => {
+                const isCurrent = String(row.Admission_ID) === String(admissionId);
+                const rowBg = isCurrent ? '#f0fdf4' : '#ffffff';
+                const rowBorder = isCurrent ? '2px solid #22c55e' : '#e2e8f0';
+
+                let statusBadge = `<span class="badge" style="background: #e0f2fe; color: #0284c7; font-weight: 600;">Admitted</span>`;
+                if (row.Status === 'Discharged') {
+                    statusBadge = `<span class="badge" style="background: #fef3c7; color: #92400e; font-weight: 600;">Discharged</span>`;
+                } else if (row.Status === 'Billed') {
+                    const remBal = parseFloat(row.Remaining_Balance || 0);
+                    if (remBal > 0) {
+                        statusBadge = `<span class="badge" style="background: #fed7aa; color: #9a3412; font-weight: 600;">Billed (Bal: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                    } else {
+                        statusBadge = `<span class="badge" style="background: #dcfce7; color: #166534; font-weight: 600;">Settled (Paid)</span>`;
+                    }
+                }
+
+                let billingHtml = '';
+                if (row.Invoice_Code) {
+                    const netAmt = parseFloat(row.Net_Amount_Due || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+                    const remBal = parseFloat(row.Remaining_Balance || 0);
+                    if (row.Payment_Status === 'Paid in Full') {
+                        billingHtml = `<div><strong style="color: #0284c7;">${row.Invoice_Code}</strong> &bull; ₱${netAmt}</div><span class="badge" style="background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700;">✓ Paid in Full</span>`;
+                    } else {
+                        billingHtml = `<div><strong style="color: #0284c7;">${row.Invoice_Code}</strong> &bull; ₱${netAmt}</div><span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 700;">Bal: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
+                    }
+                } else {
+                    billingHtml = `<span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 11px;">Unbilled Stay</span>`;
+                }
+
+                const bedText = row.Bed_Code ? `<strong>${row.Bed_Code}</strong>` : `<span class="text-muted">None</span>`;
+                const roomText = row.Room_Name ? `<br><small class="text-muted">${row.Room_Name} (${row.Room_Type || ''})</small>` : '';
+
+                const complaintText = row.Chief_Complaint ? `<div><strong>Complaint:</strong> ${row.Chief_Complaint}</div>` : `<div class="text-muted">No complaint recorded</div>`;
+                const diagText = row.Diagnosis 
+                    ? `<div><small><strong>Diagnosis:</strong> <span style="color: #0284c7; font-weight: 600;">${row.Diagnosis}</span></small></div>`
+                    : `<div><small class="text-muted">Diagnosis: Pending</small></div>`;
+
+                const stayOut = row.Discharge_Date 
+                    ? `<div><strong>Out:</strong> ${row.Discharge_Date}</div>` 
+                    : `<div><span class="badge" style="background: #e0f2fe; color: #0284c7; font-weight: 600; font-size: 11px;">Active Stay</span></div>`;
+
+                const seqBadge = isCurrent
+                    ? `<span class="badge" style="background: #16a34a; color: #ffffff; font-weight: 700;">#${row.Sequence_Number} CURRENT</span>`
+                    : `<span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 700;">#${row.Sequence_Number}</span>`;
+
+                const actionBtn = isCurrent
+                    ? `<button type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.7; font-size: 12px; cursor: default;">Viewing Now</button>`
+                    : `<a href="admission_details.html?id=${row.Admission_ID}" class="btn btn-outline btn-sm" style="font-size: 12px; text-decoration: none;">Open Chart &rarr;</a>`;
+
+                rowsHtml += `
+                    <tr style="background: ${rowBg}; border-left: ${rowBorder};">
+                        <td>${seqBadge}</td>
+                        <td><strong style="color: #0f172a;">${row.Admission_Code}</strong></td>
+                        <td>
+                            <div><strong>In:</strong> ${row.Admission_Date}</div>
+                            ${stayOut}
+                        </td>
+                        <td>${bedText}${roomText}</td>
+                        <td>${complaintText}${diagText}</td>
+                        <td>${statusBadge}</td>
+                        <td>${billingHtml}</td>
+                        <td style="text-align: center;">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = rowsHtml;
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error fetching admission history:", err);
+            if (tableBody) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger" style="padding: 24px;">Network error loading admission history.</td></tr>`;
+            }
+        });
+};
+
+window.openPatientAdmissionHistoryModal = openPatientAdmissionHistoryModal;
 
 const renderAdmittedDischargeGateCard = (advList) => {
     const container = document.getElementById('settlement-container');

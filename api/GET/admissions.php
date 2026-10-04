@@ -36,6 +36,8 @@ class AdmissionManager
                     fi.Net_Amount_Due,
                     fi.Amount_Paid,
                     GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance,
+                    (SELECT COUNT(*) FROM Admission WHERE Patient_ID = a.Patient_ID) AS Total_Admissions,
+                    (SELECT COUNT(*) FROM Admission WHERE Patient_ID = a.Patient_ID AND Admission_ID <= a.Admission_ID) AS Admission_Sequence,
                     pn.Note_ID AS Promissory_Note_ID,
                     ppt.Plan_Type_Code AS Promissory_Plan_Code,
                     ppt.Plan_Type_Name AS Promissory_Plan_Name,
@@ -132,7 +134,9 @@ class AdmissionManager
                     fi.Invoice_ID,
                     fi.Net_Amount_Due,
                     fi.Amount_Paid,
-                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance
+                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance,
+                    (SELECT COUNT(*) FROM Admission WHERE Patient_ID = a.Patient_ID) AS Total_Admissions,
+                    (SELECT COUNT(*) FROM Admission WHERE Patient_ID = a.Patient_ID AND Admission_ID <= a.Admission_ID) AS Admission_Sequence
                 FROM Admission a
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
@@ -336,6 +340,111 @@ class AdmissionManager
 
         return json_encode($transfers);
     }
+
+    function getPatientAdmissionHistory($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $patientId = intval($json['patient_id'] ?? 0);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        if (empty($patientId) && !empty($admissionId)) {
+            $pStmt = $conn->prepare("SELECT Patient_ID FROM Admission WHERE Admission_ID = :aid");
+            $pStmt->execute([':aid' => $admissionId]);
+            $patientId = intval($pStmt->fetchColumn() ?: 0);
+        }
+
+        if (empty($patientId)) {
+            return json_encode(['error' => 'Patient ID or Admission ID is required.']);
+        }
+
+        $pQuery = "SELECT 
+                        p.Patient_ID,
+                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                        CONCAT(p.Last_Name, ', ', p.First_Name) AS Full_Name,
+                        TIMESTAMPDIFF(YEAR, p.Date_Of_Birth, CURDATE()) AS Age,
+                        g.Gender_Name,
+                        bt.Blood_Type_Name
+                   FROM Patient p
+                   LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
+                   LEFT JOIN Enum_Blood_Type bt ON p.Blood_Type_ID = bt.Blood_Type_ID
+                   WHERE p.Patient_ID = :pid";
+        $stmtP = $conn->prepare($pQuery);
+        $stmtP->execute([':pid' => $patientId]);
+        $patient = $stmtP->fetch(PDO::FETCH_ASSOC);
+
+        if (!$patient) {
+            return json_encode(['error' => 'Patient not found.']);
+        }
+
+        $sql = "SELECT 
+                    a.Admission_ID,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
+                    DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Discharge_Date,
+                    a.Chief_Complaint,
+                    a.Diagnosis,
+                    a.Status,
+                    (
+                        SELECT rb.Bed_Code
+                        FROM Room_Transfer_Log rtl
+                        INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                        WHERE rtl.Admission_ID = a.Admission_ID
+                        ORDER BY rtl.Transfer_ID DESC
+                        LIMIT 1
+                    ) AS Bed_Code,
+                    (
+                        SELECT r.Room_Name
+                        FROM Room_Transfer_Log rtl
+                        INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                        INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                        WHERE rtl.Admission_ID = a.Admission_ID
+                        ORDER BY rtl.Transfer_ID DESC
+                        LIMIT 1
+                    ) AS Room_Name,
+                    (
+                        SELECT rt.Type_Name
+                        FROM Room_Transfer_Log rtl
+                        INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                        INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                        INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                        WHERE rtl.Admission_ID = a.Admission_ID
+                        ORDER BY rtl.Transfer_ID DESC
+                        LIMIT 1
+                    ) AS Room_Type,
+                    fi.Invoice_ID,
+                    CONCAT('INV-', LPAD(fi.Invoice_ID, 4, '0')) AS Invoice_Code,
+                    fi.Gross_Total,
+                    fi.Net_Amount_Due,
+                    fi.Amount_Paid,
+                    GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) AS Remaining_Balance,
+                    CASE 
+                        WHEN fi.Invoice_ID IS NULL THEN 'Unbilled'
+                        WHEN fi.Net_Amount_Due <= fi.Amount_Paid THEN 'Paid in Full'
+                        ELSE 'Balance Pending'
+                    END AS Payment_Status
+                FROM Admission a
+                LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
+                WHERE a.Patient_ID = :pid
+                ORDER BY a.Admission_ID DESC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':pid' => $patientId]);
+        $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $totalCount = count($history);
+        $seq = $totalCount;
+        foreach ($history as &$row) {
+            $row['Sequence_Number'] = $seq--;
+        }
+
+        return json_encode([
+            'patient' => $patient,
+            'total_admissions' => $totalCount,
+            'history' => $history
+        ]);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -353,6 +462,9 @@ switch ($operation) {
         break;
     case 'getAdmissionById':
         echo $admission->getAdmissionById($json);
+        break;
+    case 'getPatientAdmissionHistory':
+        echo $admission->getPatientAdmissionHistory($json);
         break;
     case 'getAvailableBeds':
         echo $admission->getAvailableBeds();

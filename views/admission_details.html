@@ -280,8 +280,12 @@
 
             <div class="content-body">
                 <div class="card mb-4" id="patient-banner">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <h2>Patient & Admission Summary</h2>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="banner-history-pill" class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 13px; font-weight: 700; padding: 6px 12px; cursor: pointer;">Loading stays...</span>
+                            <button type="button" class="btn btn-outline btn-sm" id="btnOpenAdmissionHistory">📜 View Admission History</button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="form-grid">
@@ -732,6 +736,59 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btnCancelAdvancePayment">Cancel</button>
                 <button type="button" class="btn btn-primary" id="btnSubmitAdvancePayment">Post Advance Payment & Issue OR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="patientHistoryModal" style="display: none;">
+        <div class="modal-container" style="max-width: 960px; width: 95%;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="history_modal_title" style="margin: 0;">Patient Hospital Admission History</h3>
+                    <p class="text-muted" id="history_modal_subtitle" style="margin: 4px 0 0; font-size: 13px;">Full chronological record of hospital admissions for this patient</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseHistoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="history-summary-strip" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; border-left: 4px solid #0284c7;">
+                        <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Admissions</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #1e293b; margin-top: 2px;" id="hist_total_count">0</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; border-left: 4px solid #16a34a;">
+                        <div style="font-size: 11.5px; font-weight: 700; color: #16a34a; text-transform: uppercase;">Current Admission</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #16a34a; margin-top: 2px;" id="hist_current_stay">-</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; border-left: 4px solid #f59e0b;">
+                        <div style="font-size: 11.5px; font-weight: 700; color: #b45309; text-transform: uppercase;">Prior Admissions</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #b45309; margin-top: 2px;" id="hist_prior_count">0</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 440px; overflow-y: auto;">
+                    <table class="data-table" style="font-size: 13.5px;" id="patientHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Admission Code</th>
+                                <th>Stay Duration / Dates</th>
+                                <th>Room &amp; Bed</th>
+                                <th>Chief Complaint &amp; Diagnosis</th>
+                                <th>Status</th>
+                                <th>Billing Settlement</th>
+                                <th style="text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientHistoryTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center" style="padding: 24px;">Loading admission history...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCloseHistoryModalFooter">Close</button>
             </div>
         </div>
     </div>

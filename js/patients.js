@@ -247,12 +247,17 @@ const displayPatientsTable = (patients) => {
             ? `Current Bed: ${pat.Current_Bed_Code} (${pat.Current_Room_Name || ''}) — Click to view patient details` 
             : "Click to view / edit patient details";
 
+        const admCount = parseInt(pat.Total_Admissions || 0, 10);
+        const admBadge = admCount > 0
+            ? `<br><span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; margin-top: 3px; display: inline-block;">🏥 ${admCount} Admission${admCount > 1 ? 's' : ''}</span>`
+            : `<br><span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 11px; margin-top: 3px; display: inline-block;">No Prior Admissions</span>`;
+
         const row = document.createElement("tr");
         row.className = "clickable-row";
         row.title = bedInfoTitle;
         row.innerHTML = `
             <td><strong>${pat.Patient_Code}</strong></td>
-            <td><strong>${fullName}</strong></td>
+            <td><strong>${fullName}</strong>${admBadge}</td>
             <td>${pat.Date_Of_Birth}</td>
             <td>${genderDisplay}</td>
             <td><span class="badge badge-info">${pat.Blood_Type_Name}</span></td>

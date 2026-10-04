@@ -109,13 +109,6 @@
     box-shadow: 0 3px 8px rgba(2, 132, 199, 0.22) !important;
 }
 
-.quick-actions-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
 .dashboard-split-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));

@@ -3203,7 +3203,7 @@ const renderSettlementSection = () => {
         tagsContainer.innerHTML = customVouchersList.map((cv, idx) => `
             <span class="badge" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-size: 12px; padding: 5px 10px; display: inline-flex; align-items: center; gap: 6px;">
                 🎟️ <strong>${cv.name}</strong> (-₱${cv.amount.toLocaleString('en-PH', {minimumFractionDigits: 2})})
-                <button type="button" class="btn-remove-cv" data-index="${idx}" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; padding: 0 2px;">&times;</button>
+                <button type="button" class="btn-remove-cv" data-index="${idx}" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; padding: 0 2px;">✕</button>
             </span>
         `).join('');
 

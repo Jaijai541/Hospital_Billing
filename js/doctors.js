@@ -152,6 +152,11 @@ document.addEventListener("DOMContentLoaded", () => {
         btnSubmitSpec.addEventListener("click", submitNewSpecialty);
     }
 
+    const btnCancelEditSpec = document.getElementById("btnCancelEditSpecialty");
+    if (btnCancelEditSpec) {
+        btnCancelEditSpec.addEventListener("click", cancelEditSpecialty);
+    }
+
     const specModal = document.getElementById("specialtyModal");
     if (specModal) {
         specModal.addEventListener("click", (e) => {
@@ -866,7 +871,7 @@ const resetForm = () => {
 const openSpecialtyModal = () => {
     const specModal = document.getElementById("specialtyModal");
     if (specModal) {
-        document.getElementById("new_specialty_name").value = "";
+        cancelEditSpecialty();
         renderSpecialtiesManageList();
         specModal.style.display = "flex";
         document.getElementById("new_specialty_name").focus();
@@ -877,16 +882,67 @@ const closeSpecialtyModal = () => {
     const specModal = document.getElementById("specialtyModal");
     if (specModal) {
         specModal.style.display = "none";
+        cancelEditSpecialty();
+    }
+};
+
+const startEditSpecialty = (s) => {
+    document.getElementById("edit_specialty_id").value = s.Specialty_ID;
+    document.getElementById("new_specialty_name").value = s.Specialty_Name;
+
+    const modeTitle = document.getElementById("spec_form_mode_title");
+    if (modeTitle) {
+        modeTitle.innerHTML = `<span>✎</span> Edit Specialty: <strong>${s.Specialty_Name}</strong>`;
+    }
+    const btnSubmit = document.getElementById("btnSubmitSpecialty");
+    if (btnSubmit) {
+        btnSubmit.textContent = "💾 Save Changes";
+    }
+    const btnCancelEdit = document.getElementById("btnCancelEditSpecialty");
+    if (btnCancelEdit) {
+        btnCancelEdit.style.display = "inline-block";
+    }
+
+    document.getElementById("new_specialty_name").focus();
+};
+
+const cancelEditSpecialty = () => {
+    const editIdInput = document.getElementById("edit_specialty_id");
+    if (editIdInput) editIdInput.value = "";
+    const nameInput = document.getElementById("new_specialty_name");
+    if (nameInput) nameInput.value = "";
+
+    const modeTitle = document.getElementById("spec_form_mode_title");
+    if (modeTitle) {
+        modeTitle.innerHTML = `<span>➕</span> Add New Specialty`;
+    }
+    const btnSubmit = document.getElementById("btnSubmitSpecialty");
+    if (btnSubmit) {
+        btnSubmit.textContent = "+ Add Specialty";
+    }
+    const btnCancelEdit = document.getElementById("btnCancelEditSpecialty");
+    if (btnCancelEdit) {
+        btnCancelEdit.style.display = "none";
     }
 };
 
 const renderSpecialtiesManageList = () => {
     const listContainer = document.getElementById("specialties-manage-list");
+    const countBadge = document.getElementById("specialties_badge_count");
+    if (countBadge) {
+        countBadge.textContent = `${allSpecialties ? allSpecialties.length : 0} Active`;
+    }
     if (!listContainer) return;
     listContainer.innerHTML = "";
 
     if (!allSpecialties || allSpecialties.length === 0) {
-        listContainer.innerHTML = `<span style="font-size: 13px; color: var(--text-muted);">No active specialties.</span>`;
+        listContainer.innerHTML = `
+            <div style="text-align: center; padding: 25px 15px; color: var(--text-muted); background: #ffffff; border-radius: 6px; border: 1px dashed var(--border-color);">
+                <div style="font-size: 24px; margin-bottom: 6px;">🩺</div>
+                <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">No medical specialties found</div>
+                <div style="font-size: 12px; margin-top: 2px;">Add your first specialty using the form above.</div>
+            </div>
+        `;
         return;
     }
 
@@ -895,14 +951,30 @@ const renderSpecialtiesManageList = () => {
         item.style.display = "flex";
         item.style.justifyContent = "space-between";
         item.style.alignItems = "center";
-        item.style.padding = "6px 10px";
+        item.style.padding = "10px 12px";
         item.style.background = "#ffffff";
         item.style.border = "1px solid var(--border-color)";
-        item.style.borderRadius = "var(--radius-sm)";
+        item.style.borderRadius = "6px";
+        item.style.boxShadow = "0 1px 2px rgba(0,0,0,0.02)";
+        item.style.transition = "all 0.15s ease";
         item.innerHTML = `
-            <span style="font-size: 13.5px; font-weight: 500;">${s.Specialty_Name}</span>
-            <button type="button" class="btn btn-sm btn-outline btn-remove-spec" style="padding: 2px 7px; font-size: 12px; color: var(--danger);" title="Remove Specialty">&times; Remove</button>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 14px; font-weight: 700; color: var(--text-main);">${s.Specialty_Name}</span>
+                    <span class="badge" style="background: #f0fdf4; color: #15803d; font-weight: 600; font-size: 11px; padding: 2px 7px; border-radius: 4px; border: 1px solid #bbf7d0;">Active</span>
+                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted);">Clinical practice credential</div>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn btn-sm btn-outline btn-edit-spec" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; border-radius: 5px; color: var(--text-main);" title="Edit Specialty" aria-label="Edit">✎</button>
+                <button type="button" class="btn btn-sm btn-outline btn-remove-spec" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--danger); border-color: #fecaca; border-radius: 5px;" title="Remove Specialty" aria-label="Remove">✕</button>
+            </div>
         `;
+
+        const btnEdit = item.querySelector(".btn-edit-spec");
+        btnEdit.addEventListener("click", () => {
+            startEditSpecialty(s);
+        });
 
         const btnRemove = item.querySelector(".btn-remove-spec");
         btnRemove.addEventListener("click", () => {
@@ -933,6 +1005,7 @@ const promptRemoveSpecialty = (specialtyId, specialtyName) => {
                     if (filterOpt) filterOpt.remove();
                 }
 
+                cancelEditSpecialty();
                 renderSpecialtiesManageList();
                 alert(response.data.message);
             } else {
@@ -950,24 +1023,33 @@ const promptRemoveSpecialty = (specialtyId, specialtyName) => {
 };
 
 const submitNewSpecialty = async () => {
+    const editIdInput = document.getElementById("edit_specialty_id");
+    const editId = editIdInput ? editIdInput.value.trim() : "";
+
     const specInput = document.getElementById("new_specialty_name");
     const name = specInput.value.trim();
 
     if (!name) {
         alert("Please enter a specialty name.");
+        specInput.focus();
         return;
     }
 
     try {
         const formData = new FormData();
-        formData.append("operation", "insertSpecialty");
-        formData.append("json", JSON.stringify({ specialty_name: name }));
+        const isEdit = Boolean(editId);
+        formData.append("operation", isEdit ? "updateSpecialty" : "insertSpecialty");
+        const payload = { specialty_name: name };
+        if (isEdit) {
+            payload.specialty_id = parseInt(editId);
+        }
+        formData.append("json", JSON.stringify(payload));
 
         const response = await axios.post(`${postApiUrl}/specialties.php`, formData);
 
         if (response.data) {
-            const specId = response.data.specialty_id;
-            const specName = response.data.specialty_name;
+            const specId = response.data.specialty_id || editId;
+            const specName = response.data.specialty_name || name;
 
             if (response.data.already_existed && !response.data.reactivated) {
                 if (!selectedDoctorSpecialties.includes(String(specId))) {
@@ -980,35 +1062,45 @@ const submitNewSpecialty = async () => {
             }
 
             if (response.data.success) {
-                const exists = allSpecialties.some(s => parseInt(s.Specialty_ID) === parseInt(specId));
-                if (!exists) {
+                const existsIndex = allSpecialties.findIndex(s => parseInt(s.Specialty_ID) === parseInt(specId));
+                if (existsIndex >= 0) {
+                    allSpecialties[existsIndex].Specialty_Name = specName;
+                } else {
                     allSpecialties.push({ Specialty_ID: specId, Specialty_Name: specName, Is_Active: 1 });
                     allSpecialties.sort((a, b) => a.Specialty_Name.localeCompare(b.Specialty_Name));
                 }
 
-                if (!selectedDoctorSpecialties.includes(String(specId))) {
-                    selectedDoctorSpecialties.push(String(specId));
-                    updateSpecialtiesText();
-                }
+                updateSpecialtiesText();
 
                 const filterSpec = document.getElementById("filter_specialty");
-                if (filterSpec && !filterSpec.querySelector(`option[value="${specId}"]`)) {
-                    const opt = document.createElement("option");
-                    opt.value = specId;
-                    opt.textContent = specName;
-                    filterSpec.appendChild(opt);
+                if (filterSpec) {
+                    const opt = filterSpec.querySelector(`option[value="${specId}"]`);
+                    if (opt) {
+                        opt.textContent = specName;
+                    } else {
+                        const newOpt = document.createElement("option");
+                        newOpt.value = specId;
+                        newOpt.textContent = specName;
+                        filterSpec.appendChild(newOpt);
+                    }
                 }
 
+                cancelEditSpecialty();
                 renderSpecialtiesManageList();
-                closeSpecialtyModal();
+                if (!isEdit) {
+                    if (!selectedDoctorSpecialties.includes(String(specId))) {
+                        selectedDoctorSpecialties.push(String(specId));
+                        updateSpecialtiesText();
+                    }
+                }
                 alert(response.data.message);
             } else {
-                alert(response.data.error || response.data.message || "Failed to add specialty.");
+                alert(response.data.error || response.data.message || "Failed to save specialty.");
             }
         }
     } catch (error) {
-        console.error("[API] Error adding specialty:", error);
-        alert("Server error adding specialty.");
+        console.error("[API] Error saving specialty:", error);
+        alert("Server error saving specialty.");
     }
 };
 

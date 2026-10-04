@@ -147,29 +147,49 @@
                     </div>
                 </div>
             </div>
-            <div id="specialtyModal" class="modal-overlay" style="z-index: 1050;">
-                <div class="modal-container" style="max-width: 460px;">
-                    <div class="modal-header">
-                        <h3 id="specialty-modal-title">Medical Specialties Management</h3>
+            <div id="specialtyModal" class="modal-overlay" style="z-index: 1050; display: none;">
+                <div class="modal-container" style="max-width: 520px;">
+                    <div class="modal-header" style="align-items: flex-start; padding: 16px 20px 14px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h3 id="specialty-modal-title" style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-main);">Medical Specialties</h3>
+                                <span id="specialties_badge_count" class="badge badge-info" style="font-size: 11px; padding: 2px 7px;">0 Active</span>
+                            </div>
+                            <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">Manage recognized medical disciplines, clinical specialties, and physician credentials.</p>
+                        </div>
                         <button type="button" class="modal-close" id="btnCloseSpecialtyModal" aria-label="Close modal">&times;</button>
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="form-label" for="new_specialty_name">Add New Medical Specialty</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" id="new_specialty_name" class="form-control" placeholder="e.g. Dermatology, Oncology" required>
-                                <button type="button" id="btnSubmitSpecialty" class="btn btn-primary" style="white-space: nowrap;">Add Specialty</button>
+                    <div class="modal-body" style="padding: 16px 20px;">
+                        <input type="hidden" id="edit_specialty_id" value="">
+                        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span id="spec_form_mode_title" style="font-weight: 700; font-size: 13px; color: var(--text-main); display: inline-flex; align-items: center; gap: 5px;">
+                                    <span>➕</span> Add New Specialty
+                                </span>
+                                <button type="button" id="btnCancelEditSpecialty" class="btn btn-sm btn-outline" style="display: none; padding: 2px 8px; font-size: 11.5px;">Cancel Edit</button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div>
+                                    <label class="form-label" for="new_specialty_name" style="font-size: 12px; margin-bottom: 4px; font-weight: 600;">Specialty Name *</label>
+                                    <input type="text" id="new_specialty_name" class="form-control" placeholder="e.g. Dermatology, Cardiology, Oncology" required>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                                    <button type="button" id="btnSubmitSpecialty" class="btn btn-primary" style="white-space: nowrap; font-size: 13px; padding: 7px 16px; font-weight: 600;">+ Add Specialty</button>
+                                </div>
                             </div>
                         </div>
 
-                        <div style="margin-top: 18px; border-top: 1px solid var(--border-color); padding-top: 14px;">
-                            <label class="form-label" style="margin-bottom: 8px; font-weight: 600;">Active Specialties:</label>
-                            <div id="specialties-manage-list" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; font-size: 13px; color: var(--text-main);">Active Specialties</label>
+                                <span style="font-size: 11.5px; color: var(--text-muted);">Clinical Practice Disciplines</span>
+                            </div>
+                            <div id="specialties-manage-list" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" id="btnCancelSpecialty" class="btn btn-secondary">Close</button>
+                    <div class="modal-footer" style="padding: 12px 20px; background-color: #f8fafc; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                        <button type="button" id="btnCancelSpecialty" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">Close</button>
                     </div>
                 </div>
             </div>
@@ -281,8 +301,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
-    <script src="../js/common.js?v=8.0"></script>
-    <script src="../js/doctors.js?v=6.1"></script>
+    <script src="../js/common.js?v=8.1"></script>
+    <script src="../js/doctors.js?v=7.0"></script>
 </body>
 </html>
 

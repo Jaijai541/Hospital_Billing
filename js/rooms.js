@@ -201,7 +201,7 @@ const startEditRoomType = (rt) => {
 
     const modeTitle = document.getElementById("rt_form_mode_title");
     if (modeTitle) {
-        modeTitle.innerHTML = `<span>✏️</span> Edit Classification: <strong>${rt.Type_Name}</strong>`;
+        modeTitle.innerHTML = `<span>✎</span> Edit Classification: <strong>${rt.Type_Name}</strong>`;
     }
     const btnSubmit = document.getElementById("btnSubmitRoomType");
     if (btnSubmit) {

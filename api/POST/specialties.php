@@ -106,6 +106,51 @@ class SpecialtyMaster
         }
     }
 
+    function updateSpecialty($json)
+    {
+        include "connection.php";
+
+        $json = json_decode($json, true);
+        $specialtyId = intval($json['specialty_id'] ?? 0);
+        $specialtyName = trim($json['specialty_name'] ?? '');
+
+        if ($specialtyId <= 0) {
+            return json_encode([
+                "success" => false,
+                "message" => "Invalid specialty ID."
+            ]);
+        }
+
+        if (empty($specialtyName)) {
+            return json_encode([
+                "success" => false,
+                "message" => "Specialty name is required."
+            ]);
+        }
+
+        $checkStmt = $conn->prepare("SELECT Specialty_ID FROM Enum_Specialty WHERE LOWER(Specialty_Name) = LOWER(:name) AND Specialty_ID != :id");
+        $checkStmt->execute([':name' => $specialtyName, ':id' => $specialtyId]);
+        if ($checkStmt->fetch(PDO::FETCH_ASSOC)) {
+            return json_encode([
+                "success" => false,
+                "message" => "Another medical specialty with this name already exists."
+            ]);
+        }
+
+        $stmt = $conn->prepare("UPDATE Enum_Specialty SET Specialty_Name = :name WHERE Specialty_ID = :id");
+        $stmt->execute([
+            ':name' => $specialtyName,
+            ':id' => $specialtyId
+        ]);
+
+        return json_encode([
+            "success" => true,
+            "specialty_id" => $specialtyId,
+            "specialty_name" => $specialtyName,
+            "message" => "Medical specialty '" . $specialtyName . "' updated successfully."
+        ]);
+    }
+
     function getAllSpecialties()
     {
         include "connection.php";
@@ -129,6 +174,9 @@ $specialty = new SpecialtyMaster();
 switch ($operation) {
     case "insertSpecialty":
         echo $specialty->insertSpecialty($json);
+        break;
+    case "updateSpecialty":
+        echo $specialty->updateSpecialty($json);
         break;
     case "removeSpecialty":
         echo $specialty->removeSpecialty($json);

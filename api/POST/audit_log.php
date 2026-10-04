@@ -12,8 +12,16 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
         if (empty($op)) return;
 
         $decodedOut = json_decode($output, true);
+        $userObj = is_array($decodedOut) ? ($decodedOut['user'] ?? []) : [];
         $isSuccess = ($output === "1")
-            || (is_array($decodedOut) && (($decodedOut['status'] ?? '') === 'success' || ($decodedOut['success'] ?? false) === true || isset($decodedOut['user_id'])));
+            || (is_array($decodedOut) && (
+                ($decodedOut['status'] ?? '') === 'success' ||
+                ($decodedOut['status'] ?? 0) === 1 ||
+                ($decodedOut['status'] ?? '') === '1' ||
+                ($decodedOut['success'] ?? false) === true ||
+                isset($decodedOut['user_id']) ||
+                isset($userObj['user_id'])
+            ));
 
         if (!$isSuccess) return;
 
@@ -27,9 +35,19 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
             case 'login':
                 $actionType = 'AUTH';
                 $module = 'Authentication';
-                $ref = 'USR-' . str_pad($decodedOut['user_id'] ?? 1, 3, '0', STR_PAD_LEFT);
-                $by = $decodedOut['full_name'] ?? ($data['username'] ?? 'User');
-                $desc = "User logged into active session: " . ($decodedOut['full_name'] ?? $data['username']);
+                $uid = $userObj['user_id'] ?? ($decodedOut['user_id'] ?? 1);
+                $ref = 'USR-' . str_pad($uid, 3, '0', STR_PAD_LEFT);
+                $by = $userObj['full_name'] ?? ($decodedOut['full_name'] ?? ($data['username'] ?? 'User'));
+                $desc = "User logged into active session: " . $by;
+                break;
+
+            case 'logout':
+                $actionType = 'AUTH';
+                $module = 'Authentication';
+                $uid = $data['user_id'] ?? 1;
+                $ref = 'USR-' . str_pad($uid, 3, '0', STR_PAD_LEFT);
+                $by = $data['full_name'] ?? ($data['username'] ?? 'User');
+                $desc = "User logged out of active session: " . $by;
                 break;
 
             case 'admitPatient':
@@ -152,7 +170,7 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
                 break;
         }
 
-        $userId = $data['user_id'] ?? $data['processed_by_user_id'] ?? $decodedOut['user_id'] ?? 1;
+        $userId = $userObj['user_id'] ?? ($data['user_id'] ?? ($data['processed_by_user_id'] ?? ($decodedOut['user_id'] ?? 1)));
         $admissionId = $decodedOut['admission_id'] ?? $data['admission_id'] ?? null;
 
         try {

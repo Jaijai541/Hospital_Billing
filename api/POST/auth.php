@@ -46,6 +46,15 @@ class Auth
             ]);
         }
     }
+
+    function logout()
+    {
+        include "connection.php";
+        return json_encode([
+            "status" => 1,
+            "message" => "Logged out successfully."
+        ]);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -60,6 +69,9 @@ $auth = new Auth();
 switch ($operation) {
     case "login":
         echo $auth->login($json);
+        break;
+    case "logout":
+        echo $auth->logout();
         break;
 }
 ?>

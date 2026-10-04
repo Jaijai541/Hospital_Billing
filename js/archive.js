@@ -175,11 +175,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
+    if (logoutBtn && !logoutBtn.dataset.wired) {
+        logoutBtn.dataset.wired = "true";
         logoutBtn.addEventListener("click", () => {
             showPopupConfirm("Are you sure you want to log out of your active session?", () => {
-                sessionStorage.removeItem("hospital_user");
-                window.location.href = "login.html";
+                if (typeof handleUserLogout === "function") {
+                    handleUserLogout();
+                } else {
+                    sessionStorage.removeItem("hospital_user");
+                    window.location.href = "login.html";
+                }
             }, null, {
                 title: "Confirm Logout",
                 confirmText: "Logout",

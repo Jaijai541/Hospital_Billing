@@ -6,6 +6,20 @@
     } catch (e) {}
 })();
 
+const handleUserLogout = async () => {
+    try {
+        const u = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+        if (u.user_id) {
+            const fd = new FormData();
+            fd.append("operation", "logout");
+            fd.append("json", JSON.stringify({ user_id: u.user_id, full_name: u.full_name, username: u.username }));
+            await axios.post("../api/POST/auth.php", fd);
+        }
+    } catch (e) {}
+    sessionStorage.removeItem("hospital_user");
+    window.location.href = "login.html";
+};
+
 const initAppSession = () => {
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
@@ -28,8 +42,7 @@ const initAppSession = () => {
         logoutBtn.dataset.wired = "true";
         logoutBtn.addEventListener("click", () => {
             showPopupConfirm("Are you sure you want to log out of your active session?", () => {
-                sessionStorage.removeItem("hospital_user");
-                window.location.href = "login.html";
+                handleUserLogout();
             }, null, {
                 title: "Confirm Logout",
                 confirmText: "Logout",

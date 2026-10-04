@@ -691,11 +691,21 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) {
+    if (btnLogout && !btnLogout.dataset.wired) {
+        btnLogout.dataset.wired = "true";
         btnLogout.addEventListener('click', () => {
-            console.log("admissions.js: Logging out...");
-            sessionStorage.removeItem("hospital_user");
-            window.location.href = "login.html";
+            showPopupConfirm("Are you sure you want to log out of your active session?", () => {
+                if (typeof handleUserLogout === "function") {
+                    handleUserLogout();
+                } else {
+                    sessionStorage.removeItem("hospital_user");
+                    window.location.href = "login.html";
+                }
+            }, null, {
+                title: "Confirm Logout",
+                confirmText: "Logout",
+                type: "warning"
+            });
         });
     }
 

@@ -283,8 +283,8 @@ const renderRoomTypesManageList = () => {
                 </div>
             </div>
             <div style="display: flex; gap: 6px; align-items: center;">
-                <button type="button" class="btn btn-sm btn-outline btn-edit-rt" style="padding: 4px 9px; font-size: 12px; font-weight: 600;" title="Edit Classification">✏️ Edit</button>
-                <button type="button" class="btn btn-sm btn-outline btn-remove-rt" style="padding: 4px 9px; font-size: 12px; color: var(--danger); border-color: #fecaca;" title="Remove Classification">&times; Remove</button>
+                <button type="button" class="btn btn-sm btn-outline btn-edit-rt" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; border-radius: 5px; color: var(--text-main);" title="Edit Classification" aria-label="Edit">✎</button>
+                <button type="button" class="btn btn-sm btn-outline btn-remove-rt" style="width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--danger); border-color: #fecaca; border-radius: 5px;" title="Remove Classification" aria-label="Remove">✕</button>
             </div>
         `;
 

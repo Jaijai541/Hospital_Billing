@@ -34,6 +34,17 @@
                                 <input type="text" id="search_input" class="form-control" placeholder="Search patient name, invoice #, admission code or cashier...">
                             </div>
 
+                            <div class="form-group" style="min-width: 220px;">
+                                <label class="form-label" for="status_filter">Payment Status</label>
+                                <select id="status_filter" class="form-control">
+                                    <option value="all">All Payment Statuses</option>
+                                    <option value="paid">Paid in Full</option>
+                                    <option value="partial">Partially Paid</option>
+                                    <option value="pn">Promissory Note Active</option>
+                                    <option value="unpaid">Pending / Unpaid</option>
+                                </select>
+                            </div>
+
                             <div class="form-group" style="align-self: flex-end;">
                                 <button id="btnRefresh" class="btn btn-primary">Refresh Invoices</button>
                             </div>
@@ -150,7 +161,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.2"></script>
-    <script src="../js/invoices.js?v=7.2"></script>
+    <script src="../js/invoices.js?v=7.3"></script>
 </body>
 </html>
 

@@ -5,22 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Billing System — Executive Dashboard</title>
     <link rel="stylesheet" href="../css/common.css?v=8.2">
-    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/dashboard.css?v=7.0">
 </head>
 <body>
 
     <div class="app-wrapper">
         <aside id="sidebar-container" class="sidebar"></aside>
         <main class="main-content">
-            <div class="page-header">
+            <div class="page-header" style="flex-wrap: wrap; gap: 12px;">
                 <div class="page-title">
                     <h2>Executive Hospital Dashboard</h2>
                     <p>Overview of in-patient admissions, bed capacity, and billing activity.</p>
                 </div>
-                <div>
-                    <a href="admissions.html" class="btn btn-primary">+ Admit New Patient</a>
+                <div class="quick-actions-bar">
+                    <a href="admissions.html" class="btn btn-primary">+ Admit Patient</a>
+                    <a href="patients.html" class="btn btn-outline">+ New Patient</a>
+                    <a href="rooms.html" class="btn btn-outline">🛏️ Bed Ward Map</a>
+                    <a href="invoices.html" class="btn btn-outline">💳 Invoices &amp; SOA</a>
+                    <a href="promissory_notes.html" class="btn btn-outline">📝 Promissory Notes</a>
                 </div>
             </div>
+
             <div class="stats-grid">
                 <div class="stat-card" style="border-left: 4px solid var(--primary);">
                     <div class="stat-info">
@@ -36,20 +41,87 @@
                     </div>
                 </div>
 
-                <div class="stat-card" style="border-left: 4px solid var(--warning);">
+                <div class="stat-card" style="border-left: 4px solid #16a34a;">
                     <div class="stat-info">
-                        <h4>Registered Patients</h4>
-                        <div class="stat-value" id="stat-total-patients">0</div>
+                        <h4>Collections Received</h4>
+                        <div class="stat-value" id="stat-total-collections" style="color: #16a34a; font-size: 24px;">₱0.00</div>
                     </div>
                 </div>
 
                 <div class="stat-card" style="border-left: 4px solid var(--danger);">
                     <div class="stat-info">
-                        <h4>Settled Invoices</h4>
-                        <div class="stat-value" id="stat-total-invoices">0</div>
+                        <h4>Accounts Receivable (AR)</h4>
+                        <div class="stat-value" id="stat-total-ar" style="color: #dc2626; font-size: 24px;">₱0.00</div>
                     </div>
                 </div>
             </div>
+
+            <div class="dashboard-split-grid">
+                <div class="occupancy-gauge-card">
+                    <div class="occupancy-card-header">
+                        <h3>🛏️ Bed Capacity &amp; Occupancy</h3>
+                        <span id="occupancy-rate-badge" class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">0% Occupied</span>
+                    </div>
+                    <div class="occupancy-card-body">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; margin-bottom: 6px;">
+                                <span id="occupancy-summary-text">0 of 0 Beds in Active Use</span>
+                                <span id="occupancy-pct-text">0%</span>
+                            </div>
+                            <div class="occupancy-progress-wrap">
+                                <div id="occupancy-progress-bar" class="occupancy-progress-bar low"></div>
+                            </div>
+                        </div>
+
+                        <div class="occupancy-stats-row">
+                            <div class="occupancy-stat-box">
+                                <div class="stat-label">Total Beds</div>
+                                <div class="stat-num" id="gauge-total-beds">0</div>
+                            </div>
+                            <div class="occupancy-stat-box">
+                                <div class="stat-label">Occupied</div>
+                                <div class="stat-num" id="gauge-occupied-beds" style="color: #92400e;">0</div>
+                            </div>
+                            <div class="occupancy-stat-box">
+                                <div class="stat-label">Available</div>
+                                <div class="stat-num" id="gauge-vacant-beds" style="color: #166534;">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="occupancy-card-footer">
+                        <a href="rooms.html" class="btn btn-sm btn-outline">Manage Beds &amp; View Ward Map &raquo;</a>
+                    </div>
+                </div>
+
+                <div class="ar-health-card">
+                    <div class="ar-card-header">
+                        <h3>💳 Accounts Receivable &amp; PN Health</h3>
+                        <span id="ar-status-badge" class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">Loading AR...</span>
+                    </div>
+                    <div class="ar-card-body">
+                        <div class="ar-stats-row">
+                            <div class="ar-stat-box">
+                                <div class="ar-label">Total Invoiced Billing</div>
+                                <div class="ar-num" id="health-invoiced-total" style="color: var(--primary);">₱0.00</div>
+                            </div>
+                            <div class="ar-stat-box">
+                                <div class="ar-label">Active Promissory Notes</div>
+                                <div class="ar-num" id="health-pn-count" style="color: #4338ca;">0 Notes</div>
+                            </div>
+                        </div>
+
+                        <div id="ar-alert-banner" class="ar-alert-banner">
+                            <span style="font-size: 16px;">ℹ️</span>
+                            <span id="ar-alert-text">Analyzing billing settlement history...</span>
+                        </div>
+                    </div>
+                    <div class="ar-card-footer">
+                        <a href="invoices.html" class="btn btn-sm btn-outline" style="margin-right: 6px;">Invoices Directory</a>
+                        <a href="promissory_notes.html" class="btn btn-sm btn-primary">Review Promissory Notes &raquo;</a>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h3>Currently Admitted Patients</h3>
@@ -69,6 +141,6 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.2"></script>
-    <script src="../js/dashboard.js?v=6.8"></script>
+    <script src="../js/dashboard.js?v=7.0"></script>
 </body>
 </html>

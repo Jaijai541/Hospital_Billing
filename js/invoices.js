@@ -93,17 +93,21 @@ const renderInvoicesTable = (invoices) => {
 
         let statusBadge = '';
         if (balVal <= 0) {
-            statusBadge = '<span class="badge badge-success">PAID IN FULL</span>';
-        } else if (paidVal > 0) {
-            statusBadge = '<span class="badge badge-warning">PARTIALLY PAID</span>';
-        } else {
-            statusBadge = '<span class="badge badge-danger">PENDING PAYMENT</span>';
-        }
-
-        if (balVal > 0 && inv.Promissory_Next_Due_Date) {
+            statusBadge = '<span class="badge badge-success" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">✓ PAID IN FULL</span>';
+        } else if (inv.Promissory_Note_ID && inv.Promissory_Status === 'Active') {
             const dueStr = inv.Formatted_Promissory_Next_Due_Date || inv.Promissory_Next_Due_Date;
             const dueAmt = parseFloat(inv.Promissory_Monthly_Amount || balVal);
-            statusBadge += `<br><span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-size: 11px; margin-top: 4px; display: inline-block;">📅 PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+            statusBadge = `
+                <span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; padding: 4px 8px; font-size: 11px;">📝 PROMISSORY NOTE</span>
+                <div style="font-size: 11px; color: #4338ca; margin-top: 3px; font-weight: 600;">Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</div>
+            `;
+        } else if (paidVal > 0) {
+            statusBadge = `
+                <span class="badge badge-warning" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">⏳ PARTIALLY PAID</span>
+                <div style="font-size: 11px; color: #92400e; margin-top: 3px; font-weight: 600;">Bal: ₱${bal}</div>
+            `;
+        } else {
+            statusBadge = '<span class="badge badge-danger" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">⚠ PENDING PAYMENT</span>';
         }
 
         html += `<tr class="clickable-row" onclick="openPaymentHistoryModal(${inv.Invoice_ID})" title="Click row to view payment history, official receipts, SOA, or pay balance">`;
@@ -127,18 +131,30 @@ const renderInvoicesTable = (invoices) => {
 };
 
 const filterAndRenderInvoices = () => {
-    const query = document.getElementById('search_input').value.toLowerCase().trim();
+    const searchEl = document.getElementById('search_input');
+    const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
 
-    if (!query) {
-        renderInvoicesTable(allInvoices);
-        return;
-    }
+    const statusEl = document.getElementById('status_filter');
+    const statusFilter = statusEl ? statusEl.value : 'all';
 
     const filtered = allInvoices.filter(inv => {
-        return (inv.Patient_Name && inv.Patient_Name.toLowerCase().includes(query)) ||
-               (inv.Invoice_Code && inv.Invoice_Code.toLowerCase().includes(query)) ||
-               (inv.Admission_Code && inv.Admission_Code.toLowerCase().includes(query)) ||
-               (inv.Cashier_Name && inv.Cashier_Name.toLowerCase().includes(query));
+        const matchesQuery = !query || 
+            (inv.Patient_Name && inv.Patient_Name.toLowerCase().includes(query)) ||
+            (inv.Invoice_Code && inv.Invoice_Code.toLowerCase().includes(query)) ||
+            (inv.Admission_Code && inv.Admission_Code.toLowerCase().includes(query)) ||
+            (inv.Cashier_Name && inv.Cashier_Name.toLowerCase().includes(query));
+
+        if (!matchesQuery) return false;
+
+        const balVal = parseFloat(inv.Remaining_Balance !== undefined && inv.Remaining_Balance !== null ? inv.Remaining_Balance : Math.max(0, parseFloat(inv.Net_Amount_Due || 0) - parseFloat(inv.Amount_Paid || 0)));
+        const paidVal = parseFloat(inv.Amount_Paid || 0);
+        const hasPN = Boolean(inv.Promissory_Note_ID && inv.Promissory_Status === 'Active');
+
+        if (statusFilter === 'paid') return balVal <= 0;
+        if (statusFilter === 'partial') return balVal > 0 && paidVal > 0;
+        if (statusFilter === 'pn') return hasPN && balVal > 0;
+        if (statusFilter === 'unpaid') return balVal > 0 && paidVal <= 0;
+        return true;
     });
 
     renderInvoicesTable(filtered);
@@ -489,6 +505,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
+    document.getElementById('status_filter')?.addEventListener('change', filterAndRenderInvoices);
     document.getElementById('btnRefresh').addEventListener('click', loadInvoices);
 
     document.getElementById('btnClosePaymentModal')?.addEventListener('click', () => closeModal('recordPaymentModal'));

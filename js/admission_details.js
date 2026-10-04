@@ -91,6 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadLedgerSummary();
     loadDispensedMedicines();
     loadDiscounts();
+    loadAdvancePayments();
 });
 
 const initClinicalTabs = () => {
@@ -210,27 +211,27 @@ const updateWorkflowStepper = (status, remainingBalance) => {
 
     if (status === 'Admitted') {
         s1.classList.add('completed');
-        if (b1) b1.textContent = '✏“';
+        if (b1) b1.textContent = '✓';
         if (sub1) sub1.textContent = 'Bed Occupied';
 
         s2.classList.add('active');
         if (b2) b2.textContent = '2';
-        if (sub2) sub2.textContent = 'Partial Bill Available';
+        if (sub2) sub2.textContent = 'Ledger & Advance Deposits';
 
         s3.classList.add('pending');
         if (b3) b3.textContent = '3';
-        if (sub3) sub3.textContent = 'In Care (Not Discharged)';
+        if (sub3) sub3.textContent = 'Discharge Pending';
 
         s4.classList.add('pending');
         if (b4) b4.textContent = '4';
-        if (sub4) sub4.textContent = 'Pending Settlement';
+        if (sub4) sub4.textContent = 'Final Settlement';
     } else if (status === 'Discharged') {
         s1.classList.add('completed');
-        if (b1) b1.textContent = '✏“';
+        if (b1) b1.textContent = '✓';
         if (sub1) sub1.textContent = 'Bed Released';
 
         s2.classList.add('completed');
-        if (b2) b2.textContent = '✏“';
+        if (b2) b2.textContent = '✓';
         if (sub2) sub2.textContent = 'Charges Finalized';
 
         s3.classList.add('active');
@@ -242,15 +243,15 @@ const updateWorkflowStepper = (status, remainingBalance) => {
         if (sub4) sub4.textContent = 'Pending Settlement';
     } else if (status === 'Billed') {
         s1.classList.add('completed');
-        if (b1) b1.textContent = '✏“';
+        if (b1) b1.textContent = '✓';
         if (sub1) sub1.textContent = 'Bed Released';
 
         s2.classList.add('completed');
-        if (b2) b2.textContent = '✏“';
+        if (b2) b2.textContent = '✓';
         if (sub2) sub2.textContent = 'Charges Finalized';
 
         s3.classList.add('completed');
-        if (b3) b3.textContent = '✏“';
+        if (b3) b3.textContent = '✓';
         if (sub3) sub3.textContent = 'SOA Finalized';
 
         const rem = parseFloat(remainingBalance !== undefined && remainingBalance !== null ? remainingBalance : 0);
@@ -260,7 +261,7 @@ const updateWorkflowStepper = (status, remainingBalance) => {
             if (sub4) sub4.textContent = `Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
         } else {
             s4.classList.add('completed');
-            if (b4) b4.textContent = '✏“';
+            if (b4) b4.textContent = '✓';
             if (sub4) sub4.textContent = 'Paid in Full';
         }
     }
@@ -977,7 +978,7 @@ const loadAdmissionDetails = () => {
                     badgeSettlement.className = 'tab-count-badge';
                     badgeSettlement.style.background = '#fef3c7';
                     badgeSettlement.style.color = '#92400e';
-                    badgeSettlement.textContent = 'Discharged';
+                    badgeSettlement.textContent = 'Ready for SOA';
                 } else if (admissionData.Status === 'Billed') {
                     if (remBal > 0) {
                         badgeSettlement.className = 'tab-count-badge';
@@ -994,7 +995,7 @@ const loadAdmissionDetails = () => {
                     badgeSettlement.className = 'tab-count-badge';
                     badgeSettlement.style.background = '#e0f2fe';
                     badgeSettlement.style.color = '#0284c7';
-                    badgeSettlement.textContent = 'Admitted';
+                    badgeSettlement.textContent = 'Pending Discharge';
                 }
             }
 
@@ -2116,6 +2117,7 @@ const submitAdvancePayment = () => {
                     loadLedger();
                     loadLedgerSummary();
                     loadAdmissionDetails();
+                    loadAdvancePayments();
 
                     showPopupAlert(alertMsg, 'success', 'Advance Payment Accepted', () => {
                         if (payId) {
@@ -2137,20 +2139,12 @@ const submitAdvancePayment = () => {
     });
 };
 
-const renderAdmittedAdvanceBillingCard = (advList) => {
-    const container = document.getElementById('settlement-container');
+const renderAdvancePaymentsHistory = (advList) => {
+    const container = document.getElementById('advance-payments-history-div');
     if (!container) return;
 
-    const runningGross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
-    const totalAdvPaid = advList.reduce((acc, p) => acc + parseFloat(p.Amount_Paid || 0), 0);
-    const unpaidBal = Math.max(0, runningGross - totalAdvPaid);
-
-    const formattedRunning = runningGross.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    const formattedAdv = totalAdvPaid.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    const formattedBal = unpaidBal.toLocaleString('en-PH', {minimumFractionDigits: 2});
-
     let advRowsHtml = '';
-    if (advList.length === 0) {
+    if (!advList || advList.length === 0) {
         advRowsHtml = '<tr><td colspan="7" class="text-muted text-center" style="padding: 16px;"><em>No advance payments recorded yet for this admission. The patient or relatives may make advance deposits at any time.</em></td></tr>';
     } else {
         advList.forEach(p => {
@@ -2172,69 +2166,140 @@ const renderAdmittedAdvanceBillingCard = (advList) => {
         });
     }
 
+    const showAddBtn = admissionData && admissionData.Status === 'Admitted';
+
     container.innerHTML = `
-        <div class="card p-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-                <h3 style="margin: 0; color: #0f172a;">Stage 3: Advance Billing &amp; Pre-Discharge Deposits</h3>
-                <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">PATIENT CURRENTLY ADMITTED</span>
+        <div class="card p-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <h3 style="margin: 0; color: #1e293b; font-size: 1.05rem;">Advance Deposits &amp; Official Receipts History</h3>
+                    <span class="text-muted" style="font-size: 13px;">Pre-discharge deposit payments credited towards final SOA settlement</span>
+                </div>
+                ${showAddBtn ? `<button type="button" class="btn btn-primary btn-sm" onclick="openAdvancePaymentModal()">💵 Record Advance Payment</button>` : ''}
             </div>
-            <p class="text-muted mb-3">This patient is currently staying in Bed <strong>${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Bed board & lodging and clinical charges continue to accumulate daily.</p>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #3b82f6;">
-                    <div style="font-size: 12.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Running Charges To Date</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #1e293b; margin-top: 4px;">₱${formattedRunning}</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Net of medicine returns</div>
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #16a34a;">
-                    <div style="font-size: 12.5px; font-weight: 700; color: #16a34a; text-transform: uppercase;">Total Advance Deposits Paid</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #16a34a; margin-top: 4px;">₱${formattedAdv}</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Official Receipts issued</div>
-                </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #f59e0b;">
-                    <div style="font-size: 12.5px; font-weight: 700; color: #b45309; text-transform: uppercase;">Estimated Unpaid Balance</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #b45309; margin-top: 4px;">₱${formattedBal}</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Running charges less deposits</div>
-                </div>
-            </div>
-
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; margin-bottom: 18px;">
-                <strong style="color: #1e40af;">Pre-Discharge Advance Payment Policy</strong>
-                <p style="margin: 4px 0 0; font-size: 13.5px; color: #1e3a8a;">Patients and relatives may make deposits at any time during admission. All advance payments immediately produce Official Receipts (OR) and will be automatically credited against the final bill upon clinical discharge.</p>
-            </div>
-
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
-                <button type="button" class="btn btn-primary" onclick="openAdvancePaymentModal()">💵 Record Advance Payment</button>
-                <button type="button" class="btn btn-outline" onclick="window.location.href='partial_bill.html?admission_id=${admissionId}'">🖨 Print Interim Partial Bill</button>
-                <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')">🚪 Discharge Patient Now &amp; Unlock SOA</button>
-            </div>
-
-            <div class="card p-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <h4 style="margin: 0; color: #1e293b;">Advance Deposits &amp; Official Receipts History</h4>
-                    <span class="text-muted" style="font-size: 13px;">Pre-discharge payments recorded for this admission</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="data-table" style="font-size: 13.5px;">
-                        <thead>
-                            <tr>
-                                <th>Official Receipt #</th>
-                                <th>Date &amp; Time</th>
-                                <th>Payment Method</th>
-                                <th>Cashier</th>
-                                <th style="text-align: right;">Amount Paid</th>
-                                <th>Particulars / Notes</th>
-                                <th style="text-align: center;">Official Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${advRowsHtml}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="data-table" style="font-size: 13.5px;">
+                    <thead>
+                        <tr>
+                            <th>Official Receipt #</th>
+                            <th>Date &amp; Time</th>
+                            <th>Payment Method</th>
+                            <th>Cashier</th>
+                            <th style="text-align: right;">Amount Paid</th>
+                            <th>Particulars / Notes</th>
+                            <th style="text-align: center;">Official Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${advRowsHtml}
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
+};
+
+const renderAdmittedDischargeGateCard = (advList) => {
+    const container = document.getElementById('settlement-container');
+    if (!container) return;
+
+    const runningGross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
+    const totalAdvPaid = (advList || []).reduce((acc, p) => acc + parseFloat(p.Amount_Paid || 0), 0);
+    const unpaidBal = Math.max(0, runningGross - totalAdvPaid);
+
+    const formattedRunning = runningGross.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const formattedAdv = totalAdvPaid.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const formattedBal = unpaidBal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    container.innerHTML = `
+        <div class="card p-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <h3 style="margin: 0; color: #0f172a;">Stage 3: Patient Discharge Clearance &amp; Final SOA</h3>
+                    <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Official medical discharge clearance, bed release, and Final Statement of Account preparation</p>
+                </div>
+                <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px; font-weight: 700;">PATIENT CURRENTLY ADMITTED</span>
+            </div>
+
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 6px; color: #1e293b; font-size: 14.5px;">Active Bed Stay &amp; Medical Clearance Status</h4>
+                <p style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.5;">
+                    The patient is currently occupying <strong>Bed ${admissionData.Bed_Code || 'Assigned Bed'}</strong> under active hospital admission. Room board & lodging and physician orders are ongoing.
+                </p>
+                <p style="margin: 8px 0 0; font-size: 13.5px; color: #475569; line-height: 1.5;">
+                    When the attending physician clears the patient for discharge, click <strong>Process Patient Discharge</strong> below. Discharging will stop room lodging charges, release the bed, and unlock the <strong>Final SOA Settlement Desk</strong> where PhilHealth, Senior/PWD discounts, and cashier clearance are processed.
+                </p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #3b82f6;">
+                    <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Accumulated Net Charges</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #1e293b; margin-top: 4px;">₱${formattedRunning}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Net running charges to date</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #16a34a;">
+                    <div style="font-size: 12px; font-weight: 700; color: #16a34a; text-transform: uppercase;">Pre-Discharge Advance Deposits</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #16a34a; margin-top: 4px;">₱${formattedAdv}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Will be credited towards final bill</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #f59e0b;">
+                    <div style="font-size: 12px; font-weight: 700; color: #b45309; text-transform: uppercase;">Est. Settlement Balance Due</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #b45309; margin-top: 4px;">₱${formattedBal}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Subject to statutory discounts at SOA</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')" style="font-size: 14px; padding: 10px 20px; font-weight: 700;">
+                    🚪 Process Patient Discharge &amp; Unlock Final SOA
+                </button>
+                <span class="text-muted" style="font-size: 13px;">Discharging unlocks statutory discounts (Senior/PWD/PhilHealth) and the Cashier settlement desk.</span>
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <strong style="color: #1e40af; font-size: 13.5px;">Looking to record an advance payment or view interim partial bills?</strong>
+                    <p style="margin: 2px 0 0; font-size: 13px; color: #1e3a8a;">Partial bills, running ledger breakdowns, and pre-discharge deposit receipts are managed in the Live Ledger tab.</p>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="switchClinicalTab('tab-ledger')" style="white-space: nowrap; font-weight: 600;">
+                    Go to Live Ledger &amp; Advance Deposits &rarr;
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+const renderAdmittedAdvanceBillingCard = (advList) => {
+    renderAdmittedDischargeGateCard(advList);
+};
+
+const loadAdvancePayments = () => {
+    const formData = new FormData();
+    formData.append('operation', 'getAdvancePayments');
+    formData.append('json', JSON.stringify({ admission_id: admissionId }));
+
+    axios.post(`${getApiUrl}/invoices.php`, formData)
+        .then(res => {
+            let list = res.data;
+            if (typeof list === 'string') {
+                try { list = JSON.parse(list); } catch (e) {}
+            }
+            if (list && list.payments && Array.isArray(list.payments)) {
+                list = list.payments;
+            } else if (!Array.isArray(list)) {
+                list = [];
+            }
+            renderAdvancePaymentsHistory(list);
+            if (admissionData && admissionData.Status === 'Admitted') {
+                renderAdmittedDischargeGateCard(list);
+            }
+        })
+        .catch(() => {
+            renderAdvancePaymentsHistory([]);
+            if (admissionData && admissionData.Status === 'Admitted') {
+                renderAdmittedDischargeGateCard([]);
+            }
+        });
 };
 
 const renderPaymentHistoryTable = (invId, admId, targetEl) => {
@@ -2670,26 +2735,7 @@ const renderSettlementSection = () => {
     }
 
     if (admissionData.Status === 'Admitted') {
-        const formData = new FormData();
-        formData.append('operation', 'getAdvancePayments');
-        formData.append('json', JSON.stringify({ admission_id: admissionId }));
-
-        axios.post(`${getApiUrl}/invoices.php`, formData)
-            .then(res => {
-                let list = res.data;
-                if (typeof list === 'string') {
-                    try { list = JSON.parse(list); } catch (e) {}
-                }
-                if (list && list.payments && Array.isArray(list.payments)) {
-                    list = list.payments;
-                } else if (!Array.isArray(list)) {
-                    list = [];
-                }
-                renderAdmittedAdvanceBillingCard(list);
-            })
-            .catch(() => {
-                renderAdmittedAdvanceBillingCard([]);
-            });
+        loadAdvancePayments();
         return;
     }
 

@@ -349,7 +349,7 @@
                     <div class="step-item" id="step-charges">
                         <div class="step-badge" id="badge-charges">2</div>
                         <div class="step-text">
-                            <strong>2. Clinical Charges & Partial Bill</strong>
+                            <strong>2. Clinical Charges & Advance Deposits</strong>
                             <span id="step-sub-charges">Running Ledger Active</span>
                         </div>
                     </div>
@@ -376,11 +376,11 @@
                         <span class="tab-title">1. Clinical Care & Charges</span>
                     </button>
                     <button type="button" class="tab-btn" data-tab="tab-ledger">
-                        <span class="tab-title">2. Live Ledger & Partial Bill</span>
+                        <span class="tab-title">2. Live Ledger & Advance Deposits</span>
                         <span id="badge_tab_ledger" class="tab-count-badge">0 items</span>
                     </button>
                     <button type="button" class="tab-btn" data-tab="tab-settlement">
-                        <span class="tab-title">3. Discharge, Final SOA & Cashier</span>
+                        <span class="tab-title">3. Discharge Clearance & Final SOA</span>
                         <span id="badge_tab_settlement" class="tab-count-badge">Admitted</span>
                     </button>
                 </div>
@@ -457,7 +457,7 @@
                 <div class="tab-content-panel" id="tab-ledger" style="display: none;">
                     <div class="card mb-4">
                         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                            <h2 style="margin: 0;">2. Live Itemized Billing Ledger & Running Account</h2>
+                            <h2 style="margin: 0;">2. Live Itemized Billing Ledger & Advance Deposits</h2>
                             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-secondary btn-sm" id="btnOpenReturnModal">+ Return Medicine</button>
                                 <button type="button" class="btn btn-outline btn-sm" id="btnTabLedgerPartialBill">🖨 Print Partial Bill (Interim)</button>
@@ -465,12 +465,15 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted mb-3">Real-time running statement of all accumulated room stays, physician fees, medications, and diagnostics.</p>
+                            <p class="text-muted mb-3">Real-time running statement of all accumulated room stays, physician fees, medications, diagnostics, and pre-discharge advance payments.</p>
                             <div id="ledger-summary-div" class="mb-4">
                             </div>
 
                             <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Itemized Charges Statement</h3>
-                            <div class="table-responsive" id="ledger-table-div">
+                            <div class="table-responsive mb-4" id="ledger-table-div">
+                            </div>
+
+                            <div id="advance-payments-history-div">
                             </div>
                         </div>
                     </div>
@@ -479,11 +482,11 @@
                 <div class="tab-content-panel" id="tab-settlement" style="display: none;">
                     <div class="card mb-4">
                         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                            <h2 style="margin: 0;">3. Discharge, Final SOA & Cashier Settlement</h2>
+                            <h2 style="margin: 0;">3. Discharge Clearance & Final SOA Settlement</h2>
                             <button type="button" class="btn btn-primary btn-sm" id="btnTabSettlementSOA">📋 View Final Statement of Account (SOA)</button>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted mb-3">Finalize the in-patient account, apply statutory discounts (Senior Citizen, PWD, Government), discharge the bed, and generate the Official Statement of Account (SOA).</p>
+                            <p class="text-muted mb-3">Official patient discharge, statutory discounts (Senior Citizen, PWD, PhilHealth), bed release clearance, and Final Statement of Account (SOA) settlement.</p>
 
                             <div id="settlement-container">
                                 <p>Loading settlement section...</p>

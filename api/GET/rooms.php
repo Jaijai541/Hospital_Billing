@@ -32,10 +32,17 @@ class RoomMaster
 
         $sql = "SELECT b.Bed_ID, b.Room_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
                        r.Room_Name, rt.Type_Name, 
-                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate 
+                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
+                       p.First_Name, p.Last_Name,
+                       CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                       CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                       a.Admission_ID
                 FROM Room_Bed b 
                 INNER JOIN Room r ON b.Room_ID = r.Room_ID 
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
+                LEFT JOIN Room_Transfer_Log rtl ON b.Bed_ID = rtl.Bed_ID AND rtl.Date_Out IS NULL
+                LEFT JOIN Admission a ON rtl.Admission_ID = a.Admission_ID AND a.Status = 'Admitted'
+                LEFT JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 ORDER BY b.Is_Active DESC, r.Room_Name ASC, b.Bed_Code ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();

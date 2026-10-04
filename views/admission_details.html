@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=8.2">
-    <link rel="stylesheet" href="../css/admission_details.css?v=7.1">
+    <link rel="stylesheet" href="../css/admission_details.css?v=7.2">
     <style>
         .workflow-stepper {
             display: flex;
@@ -377,9 +377,11 @@
                     </button>
                     <button type="button" class="tab-btn" data-tab="tab-ledger">
                         <span class="tab-title">2. Live Ledger & Partial Bill</span>
+                        <span id="badge_tab_ledger" class="tab-count-badge">0 items</span>
                     </button>
                     <button type="button" class="tab-btn" data-tab="tab-settlement">
                         <span class="tab-title">3. Discharge, Final SOA & Cashier</span>
+                        <span id="badge_tab_settlement" class="tab-count-badge">Admitted</span>
                     </button>
                 </div>
 
@@ -389,14 +391,17 @@
                         <button type="button" class="slide-tab-item subnav-btn active" data-sub="sub-orders" role="tab" aria-selected="true">
                             <span class="slide-icon">💊</span>
                             <span class="slide-label">Pharmacy Orders & Requests</span>
+                            <span id="badge_sub_orders" class="subnav-count-badge">0</span>
                         </button>
                         <button type="button" class="slide-tab-item subnav-btn" data-sub="sub-rounds" role="tab" aria-selected="false">
                             <span class="slide-icon">🩺</span>
                             <span class="slide-label">Doctors Bedside Visits & Fees</span>
+                            <span id="badge_sub_rounds" class="subnav-count-badge">0</span>
                         </button>
                         <button type="button" class="slide-tab-item subnav-btn" data-sub="sub-stays" role="tab" aria-selected="false">
                             <span class="slide-icon">🛏️</span>
                             <span class="slide-label">Bed Stays & Transfers</span>
+                            <span id="badge_sub_stays" class="subnav-count-badge">0</span>
                         </button>
                     </div>
 
@@ -731,7 +736,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.2"></script>
-    <script src="../js/admission_details.js?v=7.5"></script>
+    <script src="../js/admission_details.js?v=7.6"></script>
 </body>
 </html>
 

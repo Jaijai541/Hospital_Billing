@@ -5,8 +5,29 @@ let allRooms = [];
 let allBeds = [];
 let roomTypes = [];
 let currentLoadedRoom = null;
+let currentRoomViewMode = "grid";
+
+const initRoomViewToggles = () => {
+    const btnGrid = document.getElementById("btnViewGrid");
+    const btnTable = document.getElementById("btnViewTable");
+    if (btnGrid && btnTable) {
+        btnGrid.addEventListener("click", () => {
+            currentRoomViewMode = "grid";
+            btnGrid.classList.add("active");
+            btnTable.classList.remove("active");
+            filterAndSortRooms();
+        });
+        btnTable.addEventListener("click", () => {
+            currentRoomViewMode = "table";
+            btnTable.classList.add("active");
+            btnGrid.classList.remove("active");
+            filterAndSortRooms();
+        });
+    }
+};
 
 document.addEventListener("DOMContentLoaded", () => {
+    initRoomViewToggles();
     loadRoomTypes();
     displayRoomsAndBeds();
 
@@ -486,10 +507,138 @@ const filterAndSortRooms = () => {
         }
     });
 
+    const totalCapacity = allRooms.reduce((acc, r) => acc + parseInt(r.Capacity || 0), 0);
+    const totalOccupied = allRooms.reduce((acc, r) => acc + parseInt(r.Occupied_Beds || 0), 0);
+    const totalVacant = allRooms.reduce((acc, r) => acc + parseInt(r.Vacant_Beds || 0), 0);
+    const statEl = document.getElementById("rooms_capacity_stat");
+    if (statEl) {
+        statEl.style.display = "inline-flex";
+        statEl.textContent = `${totalOccupied}/${totalCapacity} Beds Occupied (${totalVacant} Vacant)`;
+    }
+
     if (typeof updateFilterCount === "function") {
         updateFilterCount(filtered.length, allRooms.length, "rooms");
     }
-    displayRoomsTable(filtered);
+
+    const gridDiv = document.getElementById("grid-div");
+    const tableWrap = document.getElementById("table-wrap-div");
+
+    if (currentRoomViewMode === "grid") {
+        if (gridDiv) gridDiv.style.display = "grid";
+        if (tableWrap) tableWrap.style.display = "none";
+        displayRoomsGrid(filtered);
+    } else {
+        if (gridDiv) gridDiv.style.display = "none";
+        if (tableWrap) tableWrap.style.display = "block";
+        displayRoomsTable(filtered);
+    }
+};
+
+const displayRoomsGrid = (rooms) => {
+    const gridDiv = document.getElementById("grid-div");
+    if (!gridDiv) return;
+    gridDiv.innerHTML = "";
+
+    if (!rooms || rooms.length === 0) {
+        gridDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("🛏️", "No matching rooms or beds found", "Try selecting a different room classification or status filter.")
+            : "<p>No matching rooms found.</p>";
+        return;
+    }
+
+    rooms.forEach(r => {
+        const roomBeds = allBeds.filter(b => parseInt(b.Room_ID) === parseInt(r.Room_ID) && b.Is_Active == 1);
+        const card = document.createElement("div");
+        card.className = "room-card";
+
+        const occBeds = parseInt(r.Occupied_Beds || 0);
+        const cap = parseInt(r.Capacity || 0);
+        let occBadgeCls = "badge-success";
+        let occBadgeText = "All Vacant";
+        if (occBeds >= cap && cap > 0) {
+            occBadgeCls = "badge-danger";
+            occBadgeText = "100% Full";
+        } else if (occBeds > 0) {
+            occBadgeCls = "badge-warning";
+            occBadgeText = `${occBeds}/${cap} Occupied`;
+        }
+
+        let bedsHtml = "";
+        if (roomBeds.length === 0) {
+            bedsHtml = `<div style="grid-column: 1 / -1; font-size: 12px; color: var(--text-muted); font-style: italic; padding: 8px 0;">No individual beds registered yet.</div>`;
+        } else {
+            bedsHtml = roomBeds.map(b => {
+                const isAvail = (b.Is_Available == 1);
+                const tileCls = isAvail ? "bed-vacant-tile" : "bed-occupied-tile";
+                const icon = isAvail ? "🟢" : "🔴";
+                const statusText = isAvail ? "Vacant" : "Occupied";
+                const patientName = b.Last_Name ? `${b.Last_Name}, ${b.First_Name}` : (isAvail ? "Available for Intake" : "Admitted Patient");
+                const admCode = b.Admission_Code ? ` (${b.Admission_Code})` : "";
+
+                return `
+                    <div class="bed-tile ${tileCls}" data-bed-id="${b.Bed_ID}" title="${b.Bed_Code}: ${patientName}${admCode} — Click to view stay details">
+                        <div class="bed-tile-header">
+                            <span>${b.Bed_Code}</span>
+                            <span>${icon}</span>
+                        </div>
+                        <div class="bed-tile-patient">${patientName}</div>
+                        <div style="font-size: 10px; opacity: 0.85;">${statusText}</div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        card.innerHTML = `
+            <div class="room-card-header">
+                <div>
+                    <div class="room-card-title">
+                        <span>${r.Room_Name}</span>
+                    </div>
+                    <div class="room-card-meta">
+                        <span class="badge badge-info" style="font-size: 11px; padding: 2px 7px;">${r.Type_Name}</span>
+                        <span>₱ ${parseFloat(r.Daily_Rate || 0).toFixed(2)}/day</span>
+                    </div>
+                </div>
+                <span class="badge ${occBadgeCls}" style="font-size: 11.5px; padding: 3px 8px;">${occBadgeText}</span>
+            </div>
+            <div class="room-card-body">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">Beds Inventory (${roomBeds.length}/${r.Capacity})</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">${r.Vacant_Beds} vacant</span>
+                </div>
+                <div class="room-beds-grid">
+                    ${bedsHtml}
+                </div>
+            </div>
+            <div class="room-card-footer">
+                <span style="font-size: 11.5px; color: var(--text-muted);">${getStatusBadge(r.Is_Active)}</span>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn btn-sm btn-outline btn-card-view-room" data-room-id="${r.Room_ID}" style="padding: 3px 10px; font-size: 11.5px; font-weight: 600;">Details</button>
+                    <button type="button" class="btn btn-sm btn-outline btn-card-edit-room" data-room-id="${r.Room_ID}" style="width: 26px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;" title="Edit Room">✎</button>
+                </div>
+            </div>
+        `;
+
+        card.querySelectorAll(".bed-tile").forEach(tile => {
+            tile.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const bedId = tile.dataset.bedId;
+                openBedOccupancyModal(bedId);
+            });
+        });
+
+        const btnView = card.querySelector(".btn-card-view-room");
+        if (btnView) {
+            btnView.addEventListener("click", () => openViewRoomModal(r.Room_ID));
+        }
+
+        const btnEdit = card.querySelector(".btn-card-edit-room");
+        if (btnEdit) {
+            btnEdit.addEventListener("click", () => loadRoomForEdit(r.Room_ID));
+        }
+
+        gridDiv.appendChild(card);
+    });
 };
 
 const displayRoomsTable = (rooms) => {

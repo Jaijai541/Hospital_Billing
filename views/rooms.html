@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Rooms & Beds Directory — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=8.2">
-    <link rel="stylesheet" href="../css/rooms.css">
+    <link rel="stylesheet" href="../css/rooms.css?v=8.3">
 </head>
 <body>
 
@@ -259,8 +259,15 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">
-                    <h3>1. Hospital Rooms & Board Rates</h3>
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3 style="margin: 0;">1. Hospital Rooms & Bed Map</h3>
+                        <span id="rooms_capacity_stat" class="badge badge-info" style="font-size: 11.5px; padding: 3px 8px; display: none;"></span>
+                    </div>
+                    <div class="view-mode-toggle">
+                        <button type="button" id="btnViewGrid" class="btn active">🛏️ Bed Grid Map</button>
+                        <button type="button" id="btnViewTable" class="btn">📋 Table View</button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="filter-bar">
@@ -296,7 +303,8 @@
                             </select>
                         </div>
                     </div>
-                    <div class="table-responsive">
+                    <div id="grid-div" class="rooms-grid-container"></div>
+                    <div id="table-wrap-div" class="table-responsive" style="display: none;">
                         <div id="table-div">
                             <p style="padding: 20px;">Loading rooms...</p>
                         </div>
@@ -321,7 +329,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.2"></script>
-    <script src="../js/rooms.js?v=8.2"></script>
+    <script src="../js/rooms.js?v=8.3"></script>
 </body>
 </html>
 

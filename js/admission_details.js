@@ -971,6 +971,33 @@ const loadAdmissionDetails = () => {
             }
             document.getElementById('banner-status').innerHTML = `${statusDisplay} <small class="text-muted" style="margin-left: 6px;">(Admitted: ${admissionData.Admission_Date})</small>`;
 
+            const badgeSettlement = document.getElementById('badge_tab_settlement');
+            if (badgeSettlement) {
+                if (admissionData.Status === 'Discharged') {
+                    badgeSettlement.className = 'tab-count-badge';
+                    badgeSettlement.style.background = '#fef3c7';
+                    badgeSettlement.style.color = '#92400e';
+                    badgeSettlement.textContent = 'Discharged';
+                } else if (admissionData.Status === 'Billed') {
+                    if (remBal > 0) {
+                        badgeSettlement.className = 'tab-count-badge';
+                        badgeSettlement.style.background = '#fef3c7';
+                        badgeSettlement.style.color = '#92400e';
+                        badgeSettlement.textContent = `Billed (Bal: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 0})})`;
+                    } else {
+                        badgeSettlement.className = 'tab-count-badge';
+                        badgeSettlement.style.background = '#dcfce7';
+                        badgeSettlement.style.color = '#166534';
+                        badgeSettlement.textContent = 'Settled';
+                    }
+                } else {
+                    badgeSettlement.className = 'tab-count-badge';
+                    badgeSettlement.style.background = '#e0f2fe';
+                    badgeSettlement.style.color = '#0284c7';
+                    badgeSettlement.textContent = 'Admitted';
+                }
+            }
+
             document.getElementById('banner-complaint').textContent = admissionData.Chief_Complaint || 'None Recorded';
 
             const diagEl = document.getElementById('banner-diagnosis');
@@ -1283,6 +1310,11 @@ const loadOrders = () => {
 const renderOrdersTable = (orders) => {
     const container = document.getElementById('orders-table-div');
 
+    const badgeOrders = document.getElementById('badge_sub_orders');
+    if (badgeOrders) {
+        badgeOrders.textContent = orders ? orders.length : 0;
+    }
+
     if (!orders || orders.length === 0) {
         container.innerHTML = '<p><em>No doctor orders requested yet for this admission.</em></p>';
         return;
@@ -1472,6 +1504,11 @@ const loadRounds = () => {
 const renderRoundsTable = (rounds) => {
     const container = document.getElementById('rounds-table-div');
 
+    const badgeRounds = document.getElementById('badge_sub_rounds');
+    if (badgeRounds) {
+        badgeRounds.textContent = rounds ? rounds.length : 0;
+    }
+
     if (!rounds || rounds.length === 0) {
         container.innerHTML = '<p><em>No doctor bedside visits logged yet.</em></p>';
         return;
@@ -1571,6 +1608,11 @@ window.loadBedHistory = loadTransfers;
 
 const renderTransfersTable = (transfers) => {
     const container = document.getElementById('transfers-table-div');
+
+    const badgeStays = document.getElementById('badge_sub_stays');
+    if (badgeStays) {
+        badgeStays.textContent = transfers ? transfers.length : 0;
+    }
 
     if (!transfers || transfers.length === 0) {
         container.innerHTML = '<p><em>No bed stay logs found.</em></p>';
@@ -1734,6 +1776,11 @@ const loadLedger = () => {
 
 const renderLedgerTable = (ledger) => {
     const container = document.getElementById('ledger-table-div');
+
+    const badgeLedger = document.getElementById('badge_tab_ledger');
+    if (badgeLedger) {
+        badgeLedger.textContent = `${ledger ? ledger.length : 0} items`;
+    }
 
     if (!ledger || ledger.length === 0) {
         container.innerHTML = '<p><em>No charges have been accumulated yet in the ledger for this admission.</em></p>';

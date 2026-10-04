@@ -523,12 +523,8 @@ const renderAdmissionsTable = (admissions) => {
             ? `<strong>${a.Diagnosis}</strong>` 
             : '<span class="badge badge-warning" style="font-size: 0.75rem;">Pending Dx</span>';
 
-        const stayBadge = (a.Total_Admissions && parseInt(a.Total_Admissions, 10) > 1)
-            ? `<br><span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px; border: 1px solid #fde68a; margin-top: 3px; display: inline-block;">Stay #${a.Admission_Sequence || '?'}/${a.Total_Admissions}</span>`
-            : '';
-
         html += `<tr class="clickable-row" onclick="openChart(${a.Admission_ID})" title="Click row to open clinical chart & ledger">`;
-        html += `<td><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong>${stayBadge}</td>`;
+        html += `<td><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
         html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}<br><small class="text-muted">Contact: ${a.Contact_Number || 'N/A'}</small></td>`;
         html += `<td>${bedInfo}</td>`;
         html += `<td>${a.Chief_Complaint}</td>`;

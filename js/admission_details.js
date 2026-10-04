@@ -1662,7 +1662,7 @@ const renderTransfersTable = (transfers) => {
 
     let html = '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>Stay #</th>';
+    html += '<th>#</th>';
     html += '<th>Bed & Room</th>';
     html += '<th>Classification</th>';
     html += '<th>Daily Rate</th>';
@@ -2290,20 +2290,20 @@ const openPatientAdmissionHistoryModal = () => {
 
             const elTotal = document.getElementById('hist_total_count');
             if (elTotal) {
-                elTotal.textContent = `${total} Stay${total === 1 ? '' : 's'}`;
+                elTotal.textContent = `${total} Admission${total === 1 ? '' : 's'}`;
             }
 
             const elCurr = document.getElementById('hist_current_stay');
             if (elCurr) {
                 const currMatch = history.find(h => String(h.Admission_ID) === String(admissionId));
                 const currSeq = currMatch ? currMatch.Sequence_Number : (admissionData.Admission_Sequence || 1);
-                elCurr.textContent = `Stay #${currSeq} (ADM-${String(admissionId).padStart(3, '0')})`;
+                elCurr.textContent = `Admission #${currSeq} (ADM-${String(admissionId).padStart(3, '0')})`;
             }
 
             const elPrior = document.getElementById('hist_prior_count');
             if (elPrior) {
                 const priorCount = Math.max(0, total - 1);
-                elPrior.textContent = `${priorCount} Prior Stay${priorCount === 1 ? '' : 's'}`;
+                elPrior.textContent = `${priorCount} Prior Admission${priorCount === 1 ? '' : 's'}`;
             }
 
             if (!tableBody) return;
@@ -2341,7 +2341,7 @@ const openPatientAdmissionHistoryModal = () => {
                         billingHtml = `<div><strong style="color: #0284c7;">${row.Invoice_Code}</strong> &bull; ₱${netAmt}</div><span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 700;">Bal: ₱${remBal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
                     }
                 } else {
-                    billingHtml = `<span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 11px;">Unbilled Stay</span>`;
+                    billingHtml = `<span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 11px;">Unbilled</span>`;
                 }
 
                 const bedText = row.Bed_Code ? `<strong>${row.Bed_Code}</strong>` : `<span class="text-muted">None</span>`;
@@ -2354,7 +2354,7 @@ const openPatientAdmissionHistoryModal = () => {
 
                 const stayOut = row.Discharge_Date 
                     ? `<div><strong>Out:</strong> ${row.Discharge_Date}</div>` 
-                    : `<div><span class="badge" style="background: #e0f2fe; color: #0284c7; font-weight: 600; font-size: 11px;">Active Stay</span></div>`;
+                    : `<div><span class="badge" style="background: #e0f2fe; color: #0284c7; font-weight: 600; font-size: 11px;">Active</span></div>`;
 
                 const seqBadge = isCurrent
                     ? `<span class="badge" style="background: #16a34a; color: #ffffff; font-weight: 700;">#${row.Sequence_Number} CURRENT</span>`

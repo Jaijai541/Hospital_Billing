@@ -29,27 +29,12 @@
             <div class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <h3>Promissory Notes Ledger & Aging Portfolio</h3>
-                    <span id="record-count-badge" class="badge badge-secondary" style="font-size: 13px;">0 Notes Total</span>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <span id="record-count-badge" class="badge badge-secondary" style="font-size: 13px;">0 Notes Total</span>
+                        <span id="record-balance-badge" class="badge" style="font-size: 13px; font-weight: 700; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;">Outstanding AR: ₱0.00</span>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="filter-pills-bar">
-                        <button type="button" class="filter-pill-btn active" data-status="ALL">
-                            All Notes <span class="filter-pill-count" id="pill-count-all">0</span>
-                        </button>
-                        <button type="button" class="filter-pill-btn pill-danger" data-status="Overdue">
-                            🔴 Overdue <span class="filter-pill-count" id="pill-count-overdue">0</span>
-                        </button>
-                        <button type="button" class="filter-pill-btn pill-warning" data-status="Active">
-                            🟡 Active AR <span class="filter-pill-count" id="pill-count-active">0</span>
-                        </button>
-                        <button type="button" class="filter-pill-btn pill-success" data-status="Settled">
-                            🟢 Fully Settled <span class="filter-pill-count" id="pill-count-settled">0</span>
-                        </button>
-                        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13.5px; background: #fef2f2; border: 1px solid #fecaca; padding: 5px 14px; border-radius: 9999px;">
-                            <span style="color: #64748b; font-weight: 600;">Total Outstanding AR:</span>
-                            <strong id="summary-total-ar" style="color: #dc2626; font-size: 14.5px;">₱0.00</strong>
-                        </div>
-                    </div>
                     <div class="filter-bar">
                         <div class="form-group" style="flex: 2; min-width: 260px;">
                             <label class="form-label" for="search_input">Search Promissory Notes</label>
@@ -198,6 +183,6 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.0"></script>
-    <script src="../js/promissory_notes.js?v=1.3"></script>
+    <script src="../js/promissory_notes.js?v=1.4"></script>
 </body>
 </html>

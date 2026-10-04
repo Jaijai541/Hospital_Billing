@@ -23,34 +23,9 @@ const initEvents = () => {
         searchInput.addEventListener("input", filterAndRenderPromissoryNotes);
     }
 
-    const setActiveFilterPill = (statusVal) => {
-        document.querySelectorAll(".filter-pill-btn").forEach(btn => {
-            if (btn.getAttribute("data-status") === statusVal) {
-                btn.classList.add("active");
-            } else {
-                btn.classList.remove("active");
-            }
-        });
-    };
-
-    document.querySelectorAll(".filter-pill-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const status = btn.getAttribute("data-status");
-            const filterStatus = document.getElementById("filter_status");
-            if (filterStatus) {
-                filterStatus.value = status;
-            }
-            setActiveFilterPill(status);
-            filterAndRenderPromissoryNotes();
-        });
-    });
-
     const filterStatus = document.getElementById("filter_status");
     if (filterStatus) {
-        filterStatus.addEventListener("change", () => {
-            setActiveFilterPill(filterStatus.value);
-            filterAndRenderPromissoryNotes();
-        });
+        filterStatus.addEventListener("change", filterAndRenderPromissoryNotes);
     }
 
     const filterPlan = document.getElementById("filter_plan");
@@ -70,7 +45,6 @@ const initEvents = () => {
             if (filterStatus) filterStatus.value = "ALL";
             if (filterPlan) filterPlan.value = "0";
             if (filterDue) filterDue.value = "ALL";
-            setActiveFilterPill("ALL");
             filterAndRenderPromissoryNotes();
         });
     }
@@ -187,41 +161,20 @@ const loadPromissoryNotes = async () => {
 };
 
 const updateStats = (notes) => {
-    const pillAll = document.getElementById("pill-count-all");
-    const pillActive = document.getElementById("pill-count-active");
-    const pillOverdue = document.getElementById("pill-count-overdue");
-    const pillSettled = document.getElementById("pill-count-settled");
-    const summaryAR = document.getElementById("summary-total-ar");
     const recordBadge = document.getElementById("record-count-badge");
+    const recordBalance = document.getElementById("record-balance-badge");
 
     let totalAR = 0;
-    let activeCount = 0;
-    let overdueCount = 0;
-    let settledCount = 0;
 
     notes.forEach(n => {
         const bal = parseFloat(n.Remaining_Balance) || 0;
-        const status = n.Computed_Status;
-
         if (bal > 0) {
             totalAR += bal;
         }
-
-        if (status === "Settled") {
-            settledCount++;
-        } else if (status === "Overdue") {
-            overdueCount++;
-        } else {
-            activeCount++;
-        }
     });
 
-    if (pillAll) pillAll.textContent = notes.length;
-    if (pillActive) pillActive.textContent = activeCount;
-    if (pillOverdue) pillOverdue.textContent = overdueCount;
-    if (pillSettled) pillSettled.textContent = settledCount;
-    if (summaryAR) summaryAR.textContent = `₱${totalAR.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if (recordBadge) recordBadge.textContent = `${notes.length} Note${notes.length === 1 ? "" : "s"} Total`;
+    if (recordBalance) recordBalance.textContent = `Outstanding AR: ₱${totalAR.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const filterAndRenderPromissoryNotes = () => {

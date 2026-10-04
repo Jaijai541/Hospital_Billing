@@ -658,6 +658,9 @@ const openViewDoctorModal = async (doctorId) => {
                     if (emptyElem) emptyElem.style.display = "none";
                     assigned.forEach(p => {
                         const tr = document.createElement("tr");
+                        tr.className = "clickable-row";
+                        tr.title = `Click to open clinical chart & ledger for ${p.First_Name} ${p.Last_Name} (${p.Admission_Code || 'ADM-' + String(p.Admission_ID).padStart(3, '0')})`;
+
                         const isAdmitted = (p.Admission_Status === "Admitted");
                         const statusBadge = isAdmitted
                             ? '<span class="badge badge-success">Admitted</span>'
@@ -674,13 +677,18 @@ const openViewDoctorModal = async (doctorId) => {
                         const admDate = p.Formatted_Admission_Date || "N/A";
 
                         tr.innerHTML = `
-                            <td><strong>${patName}</strong></td>
+                            <td><strong style="color: var(--primary);">${patName}</strong></td>
                             <td>${admCode}</td>
                             <td><span class="${bedBadgeClass}">${bedLocation}</span></td>
                             <td>${diagnosis}</td>
                             <td>${admDate}</td>
                             <td>${statusBadge}</td>
                         `;
+
+                        tr.addEventListener("click", () => {
+                            window.location.href = `admission_details.html?id=${p.Admission_ID}`;
+                        });
+
                         tbody.appendChild(tr);
                     });
                 }

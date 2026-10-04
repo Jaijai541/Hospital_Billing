@@ -7,8 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Accounts Receivable & Promissory Notes Monitor — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.0">
-    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/common.css?v=8.1">
     <link rel="stylesheet" href="../css/invoices.css?v=7.1">
     <link rel="stylesheet" href="../css/archive.css">
 </head>
@@ -27,42 +26,30 @@
                 </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card" style="border-left: 4px solid var(--danger);">
-                    <div class="stat-info">
-                        <h4>Total Outstanding AR Balance</h4>
-                        <div class="stat-value" id="stat-total-ar-balance" style="color: var(--danger);">₱0.00</div>
-                    </div>
-                </div>
-
-                <div class="stat-card" style="border-left: 4px solid var(--warning);">
-                    <div class="stat-info">
-                        <h4>Active Promissory Notes</h4>
-                        <div class="stat-value" id="stat-active-notes" style="color: var(--warning);">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card" style="border-left: 4px solid #dc2626;">
-                    <div class="stat-info">
-                        <h4>Overdue Accounts</h4>
-                        <div class="stat-value" id="stat-overdue-notes" style="color: #dc2626;">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card" style="border-left: 4px solid var(--success);">
-                    <div class="stat-info">
-                        <h4>Fully Settled Notes</h4>
-                        <div class="stat-value" id="stat-settled-notes" style="color: var(--success);">0</div>
-                    </div>
-                </div>
-            </div>
-
             <div class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <h3>Promissory Notes Ledger & Aging Portfolio</h3>
                     <span id="record-count-badge" class="badge badge-secondary" style="font-size: 13px;">0 Notes Total</span>
                 </div>
                 <div class="card-body">
+                    <div class="filter-pills-bar">
+                        <button type="button" class="filter-pill-btn active" data-status="ALL">
+                            All Notes <span class="filter-pill-count" id="pill-count-all">0</span>
+                        </button>
+                        <button type="button" class="filter-pill-btn pill-danger" data-status="Overdue">
+                            🔴 Overdue <span class="filter-pill-count" id="pill-count-overdue">0</span>
+                        </button>
+                        <button type="button" class="filter-pill-btn pill-warning" data-status="Active">
+                            🟡 Active AR <span class="filter-pill-count" id="pill-count-active">0</span>
+                        </button>
+                        <button type="button" class="filter-pill-btn pill-success" data-status="Settled">
+                            🟢 Fully Settled <span class="filter-pill-count" id="pill-count-settled">0</span>
+                        </button>
+                        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13.5px; background: #fef2f2; border: 1px solid #fecaca; padding: 5px 14px; border-radius: 9999px;">
+                            <span style="color: #64748b; font-weight: 600;">Total Outstanding AR:</span>
+                            <strong id="summary-total-ar" style="color: #dc2626; font-size: 14.5px;">₱0.00</strong>
+                        </div>
+                    </div>
                     <div class="filter-bar">
                         <div class="form-group" style="flex: 2; min-width: 260px;">
                             <label class="form-label" for="search_input">Search Promissory Notes</label>
@@ -211,6 +198,6 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.0"></script>
-    <script src="../js/promissory_notes.js?v=1.2"></script>
+    <script src="../js/promissory_notes.js?v=1.3"></script>
 </body>
 </html>

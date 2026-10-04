@@ -23,9 +23,34 @@ const initEvents = () => {
         searchInput.addEventListener("input", filterAndRenderPromissoryNotes);
     }
 
+    const setActiveFilterPill = (statusVal) => {
+        document.querySelectorAll(".filter-pill-btn").forEach(btn => {
+            if (btn.getAttribute("data-status") === statusVal) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+    };
+
+    document.querySelectorAll(".filter-pill-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const status = btn.getAttribute("data-status");
+            const filterStatus = document.getElementById("filter_status");
+            if (filterStatus) {
+                filterStatus.value = status;
+            }
+            setActiveFilterPill(status);
+            filterAndRenderPromissoryNotes();
+        });
+    });
+
     const filterStatus = document.getElementById("filter_status");
     if (filterStatus) {
-        filterStatus.addEventListener("change", filterAndRenderPromissoryNotes);
+        filterStatus.addEventListener("change", () => {
+            setActiveFilterPill(filterStatus.value);
+            filterAndRenderPromissoryNotes();
+        });
     }
 
     const filterPlan = document.getElementById("filter_plan");
@@ -45,6 +70,7 @@ const initEvents = () => {
             if (filterStatus) filterStatus.value = "ALL";
             if (filterPlan) filterPlan.value = "0";
             if (filterDue) filterDue.value = "ALL";
+            setActiveFilterPill("ALL");
             filterAndRenderPromissoryNotes();
         });
     }
@@ -161,10 +187,11 @@ const loadPromissoryNotes = async () => {
 };
 
 const updateStats = (notes) => {
-    const statBal = document.getElementById("stat-total-ar-balance");
-    const statActive = document.getElementById("stat-active-notes");
-    const statOverdue = document.getElementById("stat-overdue-notes");
-    const statSettled = document.getElementById("stat-settled-notes");
+    const pillAll = document.getElementById("pill-count-all");
+    const pillActive = document.getElementById("pill-count-active");
+    const pillOverdue = document.getElementById("pill-count-overdue");
+    const pillSettled = document.getElementById("pill-count-settled");
+    const summaryAR = document.getElementById("summary-total-ar");
     const recordBadge = document.getElementById("record-count-badge");
 
     let totalAR = 0;
@@ -189,10 +216,11 @@ const updateStats = (notes) => {
         }
     });
 
-    if (statBal) statBal.textContent = `₱${totalAR.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (statActive) statActive.textContent = activeCount;
-    if (statOverdue) statOverdue.textContent = overdueCount;
-    if (statSettled) statSettled.textContent = settledCount;
+    if (pillAll) pillAll.textContent = notes.length;
+    if (pillActive) pillActive.textContent = activeCount;
+    if (pillOverdue) pillOverdue.textContent = overdueCount;
+    if (pillSettled) pillSettled.textContent = settledCount;
+    if (summaryAR) summaryAR.textContent = `₱${totalAR.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if (recordBadge) recordBadge.textContent = `${notes.length} Note${notes.length === 1 ? "" : "s"} Total`;
 };
 

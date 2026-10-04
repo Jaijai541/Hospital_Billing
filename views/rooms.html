@@ -20,7 +20,10 @@
                     <h2>Rooms, Wards & Beds Directory</h2>
                     <p>Configure room classifications, bed capacity, uniform board & lodging rates, and bed codes.</p>
                 </div>
-                <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Room</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" id="btnManageClassificationsHeader" class="btn btn-outline" style="font-weight: 600;">+ Manage Classifications</button>
+                    <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Room</button>
+                </div>
             </div>
             <div id="viewRoomModal" class="modal-overlay">
                 <div class="modal-container" style="max-width: 760px;">
@@ -115,7 +118,10 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="room_type_id">Room Classification *</label>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <label class="form-label" style="margin-bottom: 0;" for="room_type_id">Room Classification *</label>
+                                    <button type="button" id="btnOpenAddRoomTypeModal" class="btn btn-sm btn-outline" style="padding: 3px 10px; font-size: 12.5px; font-weight: 600;">+ Manage Classifications</button>
+                                </div>
                                 <div class="input-lookup-group">
                                     <input type="hidden" id="room_type_id" required>
                                     <input type="text" id="room_type_id_text" class="form-control" placeholder="Click to select classification..." readonly>
@@ -141,6 +147,48 @@
                         <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
                         <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
                         <button type="button" id="btnSubmit" class="btn btn-primary">Submit Room</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="roomTypeModal" class="modal-overlay" style="z-index: 1050; display: none;">
+                <div class="modal-container" style="max-width: 480px;">
+                    <div class="modal-header">
+                        <h3 id="room-type-modal-title">Room Classifications Management</h3>
+                        <button type="button" class="modal-close" id="btnCloseRoomTypeModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px;">
+                            <label class="form-label" style="font-weight: 700; margin-bottom: 10px; color: var(--text-main);">Add New Room Classification</label>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div>
+                                    <label class="form-label" for="new_room_type_name" style="font-size: 12px; margin-bottom: 3px;">Classification Name *</label>
+                                    <input type="text" id="new_room_type_name" class="form-control" placeholder="e.g. Isolation Ward, Pediatric Suite" required>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div>
+                                        <label class="form-label" for="new_room_type_prefix" style="font-size: 12px; margin-bottom: 3px;">Bed Prefix *</label>
+                                        <input type="text" id="new_room_type_prefix" class="form-control" placeholder="e.g. ISO, PED" maxlength="10" style="text-transform: uppercase;" required>
+                                    </div>
+                                    <div>
+                                        <label class="form-label" for="new_room_type_rate" style="font-size: 12px; margin-bottom: 3px;">Default Daily Rate (₱) *</label>
+                                        <input type="number" step="0.01" min="0" id="new_room_type_rate" class="form-control" placeholder="0.00" required>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                                    <button type="button" id="btnSubmitRoomType" class="btn btn-primary" style="white-space: nowrap; font-size: 13px; padding: 7px 16px;">+ Add Classification</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label" style="margin-bottom: 8px; font-weight: 600;">Active Classifications:</label>
+                            <div id="room-types-manage-list" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCancelRoomType" class="btn btn-secondary">Close</button>
                     </div>
                 </div>
             </div>
@@ -258,7 +306,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=8.0"></script>
     <script src="../js/common.js?v=8.0"></script>
-    <script src="../js/rooms.js?v=6.0"></script>
+    <script src="../js/rooms.js?v=7.0"></script>
 </body>
 </html>
 

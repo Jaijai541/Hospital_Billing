@@ -33,6 +33,46 @@ document.addEventListener("DOMContentLoaded", () => {
         btnBrowseRoomType.addEventListener("click", openRoomTypePicker);
     }
 
+    const btnOpenAddRoomType = document.getElementById("btnOpenAddRoomTypeModal");
+    if (btnOpenAddRoomType) {
+        btnOpenAddRoomType.addEventListener("click", openRoomTypeModal);
+    }
+    const btnManageClassificationsHeader = document.getElementById("btnManageClassificationsHeader");
+    if (btnManageClassificationsHeader) {
+        btnManageClassificationsHeader.addEventListener("click", openRoomTypeModal);
+    }
+    const btnCloseRoomTypeModal = document.getElementById("btnCloseRoomTypeModal");
+    if (btnCloseRoomTypeModal) {
+        btnCloseRoomTypeModal.addEventListener("click", closeRoomTypeModal);
+    }
+    const btnCancelRoomType = document.getElementById("btnCancelRoomType");
+    if (btnCancelRoomType) {
+        btnCancelRoomType.addEventListener("click", closeRoomTypeModal);
+    }
+    const btnSubmitRoomType = document.getElementById("btnSubmitRoomType");
+    if (btnSubmitRoomType) {
+        btnSubmitRoomType.addEventListener("click", submitNewRoomType);
+    }
+    const roomTypeModal = document.getElementById("roomTypeModal");
+    if (roomTypeModal) {
+        roomTypeModal.addEventListener("click", (e) => {
+            if (e.target === roomTypeModal) closeRoomTypeModal();
+        });
+    }
+
+    const newRtInputs = ["new_room_type_name", "new_room_type_prefix", "new_room_type_rate"];
+    newRtInputs.forEach(id => {
+        const inp = document.getElementById(id);
+        if (inp) {
+            inp.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    submitNewRoomType();
+                }
+            });
+        }
+    });
+
     document.getElementById("search_input").addEventListener("input", filterAndSortRooms);
     document.getElementById("filter_status").addEventListener("change", filterAndSortRooms);
     const filterRoomType = document.getElementById("filter_room_type") || document.getElementById("filter_type");
@@ -65,6 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
+            const rtModal = document.getElementById("roomTypeModal");
+            if (rtModal && rtModal.style.display === "flex") {
+                e.stopPropagation();
+                closeRoomTypeModal();
+                return;
+            }
             const viewRoomModal = document.getElementById("viewRoomModal");
             if (viewRoomModal && viewRoomModal.style.display === "flex") {
                 e.stopPropagation();
@@ -127,6 +173,179 @@ const openRoomTypePicker = async () => {
             }
         }
     });
+};
+
+const openRoomTypeModal = () => {
+    const modal = document.getElementById("roomTypeModal");
+    if (modal) {
+        document.getElementById("new_room_type_name").value = "";
+        document.getElementById("new_room_type_prefix").value = "";
+        document.getElementById("new_room_type_rate").value = "";
+        renderRoomTypesManageList();
+        modal.style.display = "flex";
+        document.getElementById("new_room_type_name").focus();
+    }
+};
+
+const closeRoomTypeModal = () => {
+    const modal = document.getElementById("roomTypeModal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+};
+
+const renderRoomTypesManageList = () => {
+    const listContainer = document.getElementById("room-types-manage-list");
+    if (!listContainer) return;
+    listContainer.innerHTML = "";
+
+    if (!roomTypes || roomTypes.length === 0) {
+        listContainer.innerHTML = `<span style="font-size: 13px; color: var(--text-muted);">No active classifications.</span>`;
+        return;
+    }
+
+    roomTypes.forEach(rt => {
+        const item = document.createElement("div");
+        item.style.display = "flex";
+        item.style.justifyContent = "space-between";
+        item.style.alignItems = "center";
+        item.style.padding = "7px 10px";
+        item.style.background = "#ffffff";
+        item.style.border = "1px solid var(--border-color)";
+        item.style.borderRadius = "var(--radius-sm)";
+        const rateFormatted = parseFloat(rt.Daily_Rate || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        item.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 13.5px; font-weight: 600; color: var(--text-main);">${rt.Type_Name}</span>
+                    <span class="badge badge-info" style="font-size: 11px; padding: 2px 7px;">Prefix: ${rt.Code_Prefix}</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">
+                    Daily Rate: ₱${rateFormatted} / day
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline btn-remove-rt" style="padding: 2px 8px; font-size: 12px; color: var(--danger);" title="Remove Classification">&times; Remove</button>
+        `;
+
+        const btnRemove = item.querySelector(".btn-remove-rt");
+        btnRemove.addEventListener("click", () => {
+            promptRemoveRoomType(rt.Room_Type_ID, rt.Type_Name);
+        });
+
+        listContainer.appendChild(item);
+    });
+};
+
+const promptRemoveRoomType = (roomTypeId, typeName) => {
+    showPopupConfirm(`Are you sure you want to remove the room classification "${typeName}"?\n\nIf any existing rooms are assigned to this classification, it will be safely deactivated so existing records and billing logs remain accurate.`, async () => {
+        try {
+            const formData = new FormData();
+            formData.append("operation", "removeRoomType");
+            formData.append("json", JSON.stringify({ room_type_id: roomTypeId }));
+
+            const response = await axios.post(`${postApiUrl}/rooms.php`, formData);
+            if (response.data && response.data.success) {
+                await loadRoomTypes();
+
+                const currentSelectedId = document.getElementById("room_type_id").value;
+                if (parseInt(currentSelectedId) === parseInt(roomTypeId)) {
+                    document.getElementById("room_type_id").value = "";
+                    document.getElementById("room_type_id_text").value = "";
+                    document.getElementById("daily_rate").value = "";
+                }
+
+                renderRoomTypesManageList();
+                displayRoomsAndBeds();
+                alert(response.data.message);
+            } else {
+                alert(response.data?.message || "Failed to remove room classification.");
+            }
+        } catch (error) {
+            console.error("[API] Error removing room classification:", error);
+            alert("Server error while removing room classification.");
+        }
+    }, null, {
+        title: "Remove Room Classification",
+        confirmText: "Remove Classification",
+        type: "warning"
+    });
+};
+
+const submitNewRoomType = async () => {
+    const nameInput = document.getElementById("new_room_type_name");
+    const prefixInput = document.getElementById("new_room_type_prefix");
+    const rateInput = document.getElementById("new_room_type_rate");
+
+    const name = nameInput.value.trim();
+    const prefix = prefixInput.value.trim().toUpperCase();
+    const rate = rateInput.value.trim();
+
+    if (!name) {
+        alert("Please enter a classification name.");
+        nameInput.focus();
+        return;
+    }
+
+    if (!prefix) {
+        alert("Please enter a bed prefix.");
+        prefixInput.focus();
+        return;
+    }
+
+    if (rate === "" || isNaN(parseFloat(rate)) || parseFloat(rate) < 0) {
+        alert("Please enter a valid daily rate (0 or higher).");
+        rateInput.focus();
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append("operation", "insertRoomType");
+        formData.append("json", JSON.stringify({
+            type_name: name,
+            code_prefix: prefix,
+            daily_rate: parseFloat(rate)
+        }));
+
+        const response = await axios.post(`${postApiUrl}/rooms.php`, formData);
+        if (response.data) {
+            if (response.data.already_existed && !response.data.reactivated) {
+                const existingId = response.data.room_type_id;
+                if (existingId) {
+                    document.getElementById("room_type_id").value = existingId;
+                    document.getElementById("room_type_id_text").value = response.data.type_name;
+                    const found = roomTypes.find(rt => parseInt(rt.Room_Type_ID) === parseInt(existingId));
+                    if (found) {
+                        document.getElementById("daily_rate").value = found.Daily_Rate;
+                    }
+                }
+                closeRoomTypeModal();
+                alert(response.data.message);
+                return;
+            }
+
+            if (response.data.success) {
+                await loadRoomTypes();
+
+                const typeId = response.data.room_type_id;
+                const typeName = response.data.type_name;
+                const typeRate = response.data.daily_rate !== undefined ? response.data.daily_rate : parseFloat(rate);
+
+                document.getElementById("room_type_id").value = typeId;
+                document.getElementById("room_type_id_text").value = typeName;
+                document.getElementById("daily_rate").value = parseFloat(typeRate).toFixed(2);
+
+                renderRoomTypesManageList();
+                closeRoomTypeModal();
+                alert(response.data.message);
+            } else {
+                alert(response.data.message || "Failed to add room classification.");
+            }
+        }
+    } catch (error) {
+        console.error("[API] Error adding room classification:", error);
+        alert("Server error adding room classification.");
+    }
 };
 
 const displayRoomsAndBeds = async () => {

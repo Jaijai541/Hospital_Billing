@@ -356,7 +356,6 @@ const openPaymentHistoryModal = (invoiceId) => {
                         <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
                         <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>
                         <td>${p.Notes || '-'}</td>
-                        <td align="center"><button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">🧾 Print OR</button></td>
                     </tr>
                 `;
             });
@@ -372,7 +371,6 @@ const openPaymentHistoryModal = (invoiceId) => {
                             <th style="text-align: right;">Amount Paid</th>
                             <th style="text-align: right;">Remaining Bal</th>
                             <th>Particulars / Notes</th>
-                            <th style="text-align: center;">Official Receipt</th>
                         </tr>
                     </thead>
                     <tbody>

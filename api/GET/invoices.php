@@ -634,6 +634,101 @@ class InvoiceManager
             'count' => count($payments)
         ]);
     }
+
+    function getPromissoryNotes($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $search = trim($json['search'] ?? '');
+        $statusFilter = trim($json['status'] ?? 'ALL');
+        $planFilter = intval($json['plan_type_id'] ?? 0);
+
+        $sql = "SELECT 
+                    pn.Note_ID,
+                    CONCAT('PN-', LPAD(pn.Note_ID, 4, '0')) AS Note_Code,
+                    pn.Invoice_ID,
+                    CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
+                    pn.Admission_ID,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    p.Patient_ID,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                    CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
+                    COALESCE(p.Contact_Number, '-') AS Patient_Contact,
+                    COALESCE(pn.Guarantor_Name, CONCAT(p.Last_Name, ', ', p.First_Name)) AS Guarantor_Name,
+                    COALESCE(pn.Guarantor_Contact, p.Contact_Number, '-') AS Guarantor_Contact,
+                    pn.Plan_Type_ID,
+                    COALESCE(ppt.Plan_Type_Name, 'Promissory Note') AS Plan_Type_Name,
+                    COALESCE(ppt.Plan_Type_Code, 'PN') AS Plan_Type_Code,
+                    COALESCE(pn.Installment_Months, 1) AS Installment_Months,
+                    COALESCE(pn.Monthly_Amount, 0.00) AS Monthly_Amount,
+                    fi.Net_Amount_Due,
+                    COALESCE(fi.Amount_Paid, 0.00) AS Total_Paid_To_Date,
+                    GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) AS Remaining_Balance,
+                    pn.Total_Balance_Owed,
+                    pn.Next_Due_Date,
+                    DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Next_Due_Date_Raw,
+                    DATE_FORMAT(pn.Next_Due_Date, '%b %d, %Y') AS Formatted_Next_Due_Date,
+                    DATEDIFF(CURDATE(), pn.Next_Due_Date) AS Days_Overdue,
+                    CASE 
+                        WHEN GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) <= 0.00 THEN 'Settled'
+                        WHEN pn.Next_Due_Date < CURDATE() THEN 'Overdue'
+                        ELSE 'Active'
+                    END AS Computed_Status,
+                    pn.Status AS Stored_Status,
+                    COALESCE(pn.Notes, '') AS Notes,
+                    DATE_FORMAT(pn.Created_At, '%Y-%m-%d %h:%i %p') AS Formatted_Created_At,
+                    (SELECT COUNT(*) FROM Invoice_Payment ip WHERE ip.Invoice_ID = fi.Invoice_ID AND ip.Is_Advance = 0) AS Installment_Payment_Count,
+                    (SELECT DATE_FORMAT(MAX(Payment_Date), '%Y-%m-%d %h:%i %p') FROM Invoice_Payment ip WHERE ip.Invoice_ID = fi.Invoice_ID AND ip.Is_Advance = 0) AS Last_Payment_Date
+                FROM Promissory_Note pn
+                INNER JOIN Final_Invoice fi ON pn.Invoice_ID = fi.Invoice_ID
+                INNER JOIN Admission a ON pn.Admission_ID = a.Admission_ID
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                LEFT JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                WHERE 1=1";
+
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " AND (p.First_Name LIKE :s 
+                           OR p.Last_Name LIKE :s 
+                           OR pn.Guarantor_Name LIKE :s 
+                           OR pn.Guarantor_Contact LIKE :s 
+                           OR fi.Invoice_ID = :sid 
+                           OR a.Admission_ID = :said 
+                           OR pn.Note_ID = :snid)";
+            $params[':s'] = "%{$search}%";
+            $params[':sid'] = is_numeric($search) ? intval($search) : 0;
+            $params[':said'] = is_numeric($search) ? intval($search) : 0;
+            $params[':snid'] = is_numeric($search) ? intval($search) : 0;
+        }
+
+        if (!empty($planFilter)) {
+            $sql .= " AND pn.Plan_Type_ID = :plan_id";
+            $params[':plan_id'] = $planFilter;
+        }
+
+        if ($statusFilter === 'Active') {
+            $sql .= " AND GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) > 0 AND pn.Next_Due_Date >= CURDATE()";
+        } else if ($statusFilter === 'Overdue') {
+            $sql .= " AND GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) > 0 AND pn.Next_Due_Date < CURDATE()";
+        } else if ($statusFilter === 'Settled') {
+            $sql .= " AND GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) <= 0";
+        }
+
+        $sql .= " ORDER BY 
+                    CASE 
+                        WHEN GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) > 0 AND pn.Next_Due_Date < CURDATE() THEN 1
+                        WHEN GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) > 0 THEN 2
+                        ELSE 3
+                    END ASC,
+                    pn.Next_Due_Date ASC,
+                    pn.Note_ID DESC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -669,6 +764,9 @@ switch ($operation) {
         break;
     case 'getAdvancePayments':
         echo $invoice->getAdvancePayments($json);
+        break;
+    case 'getPromissoryNotes':
+        echo $invoice->getPromissoryNotes($json);
         break;
 }
 

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Accounts Receivable & Promissory Notes Monitor — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=8.0">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/invoices.css?v=7.1">
+    <link rel="stylesheet" href="../css/archive.css">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside id="sidebar-container" class="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+                <div class="page-title">
+                    <h2>Accounts Receivable & Promissory Notes Monitor</h2>
+                    <p>Centralized tracking of deferred post-discharge patient balances, installment agreements, and aging receivables.</p>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="invoices.html" class="btn btn-outline">&laquo; Invoices Directory</a>
+                    <button type="button" id="btnRefreshAR" class="btn btn-primary">Refresh AR Monitor</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left: 4px solid var(--danger);">
+                    <div class="stat-info">
+                        <h4>Total Outstanding AR Balance</h4>
+                        <div class="stat-value" id="stat-total-ar-balance" style="color: var(--danger);">₱0.00</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid var(--warning);">
+                    <div class="stat-info">
+                        <h4>Active Promissory Notes</h4>
+                        <div class="stat-value" id="stat-active-notes" style="color: var(--warning);">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid #dc2626;">
+                    <div class="stat-info">
+                        <h4>Overdue Accounts</h4>
+                        <div class="stat-value" id="stat-overdue-notes" style="color: #dc2626;">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid var(--success);">
+                    <div class="stat-info">
+                        <h4>Fully Settled Notes</h4>
+                        <div class="stat-value" id="stat-settled-notes" style="color: var(--success);">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h3>Promissory Notes Ledger & Aging Portfolio</h3>
+                    <span id="record-count-badge" class="badge badge-secondary" style="font-size: 13px;">0 Notes Total</span>
+                </div>
+                <div class="card-body">
+                    <div class="filter-bar">
+                        <div class="form-group" style="flex: 2; min-width: 260px;">
+                            <label class="form-label" for="search_input">Search Promissory Notes</label>
+                            <input type="text" id="search_input" class="form-control" placeholder="Search patient, guarantor, PN code (PN-0002), invoice, or contact...">
+                        </div>
+
+                        <div class="form-group" style="flex: 1; min-width: 160px;">
+                            <label class="form-label" for="filter_status">Status</label>
+                            <select id="filter_status" class="form-select">
+                                <option value="ALL">All Statuses</option>
+                                <option value="Active">Active Only</option>
+                                <option value="Overdue">Overdue Only</option>
+                                <option value="Settled">Settled Only</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex: 1; min-width: 180px;">
+                            <label class="form-label" for="filter_plan">Plan Terms</label>
+                            <select id="filter_plan" class="form-select">
+                                <option value="0">All Payment Plans</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex: 1; min-width: 170px;">
+                            <label class="form-label" for="filter_due">Due Date Schedule</label>
+                            <select id="filter_due" class="form-select">
+                                <option value="ALL">All Due Dates</option>
+                                <option value="OVERDUE">Past Due / Overdue</option>
+                                <option value="DUE_7">Due within 7 Days</option>
+                                <option value="DUE_30">Due within 30 Days</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="align-self: flex-end;">
+                            <button type="button" id="btnResetFilters" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <div id="table-div">
+                            <p style="padding: 20px;">Loading accounts receivable & promissory notes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="recordPaymentModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Record Promissory Note Installment</h3>
+                <button type="button" class="modal-close" id="btnClosePaymentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pay_invoice_id">
+                <input type="hidden" id="pay_note_id">
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                        <div><strong style="color: #64748b;">Note Code:</strong> <span id="pay_note_code" style="font-weight: 700; color: var(--primary);"></span></div>
+                        <div><strong style="color: #64748b;">Invoice Reference:</strong> <span id="pay_invoice_code" style="font-weight: 700;"></span></div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient Name:</strong> <span id="pay_patient_name" style="font-weight: 700;"></span></div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Guarantor / Contact:</strong> <span id="pay_guarantor_name" style="font-weight: 600;"></span></div>
+                        <div><strong style="color: #64748b;">Net Total Incurred:</strong> ₱<span id="pay_net_due"></span></div>
+                        <div><strong style="color: #64748b;">Total Paid to Date:</strong> ₱<span id="pay_amount_paid"></span></div>
+                        <div><strong style="color: #64748b;">Monthly Target:</strong> ₱<span id="pay_monthly_amount"></span></div>
+                        <div><strong style="color: #64748b;">Next Due Date:</strong> <span id="pay_next_due"></span></div>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; color: #dc2626; font-size: 15px;">REMAINING AR BALANCE OWED:</span>
+                        <strong style="font-size: 19px; color: #dc2626;">₱<span id="pay_remaining_balance"></span></strong>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="pay_method_id">Payment Method *</label>
+                    <div class="input-lookup-group">
+                        <input type="hidden" id="pay_method_id" required>
+                        <input type="text" id="pay_method_id_text" class="form-control" placeholder="Click to select payment method..." readonly>
+                        <button type="button" id="btnBrowse_pay_method_id" class="btn btn-outline btn-lookup">Select</button>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="pay_amount_input">Payment Tendered / Received (₱) *</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="pay_amount_input" class="form-control" step="0.01" min="0.01" placeholder="0.00" style="font-weight: 700; font-size: 16px;" required>
+                        <button type="button" class="btn btn-outline btn-sm" id="btnPayMonthlyTarget" style="white-space: nowrap;">Pay 1 Month</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnPayFullBalance" style="white-space: nowrap;">Pay Full Balance</button>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="pay_notes_input">Particulars / Payment Remarks</label>
+                    <input type="text" id="pay_notes_input" class="form-control" placeholder="e.g. Installment #2 / Promissory Note Settlement">
+                </div>
+
+                <div style="background-color: #f1f5f9; padding: 12px 16px; border-radius: 6px; font-size: 14px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>New Remaining Balance:</span>
+                        <strong id="pay_new_balance_display" style="color: #16a34a;">₱0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Customer Change Given:</span>
+                        <strong id="pay_change_display" style="color: #16a34a;">₱0.00</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelPayment">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitPayment">Post Installment & Issue Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="paymentHistoryModal" style="display: none;">
+        <div class="modal-container" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Promissory Note Installments & Transaction History</h3>
+                <button type="button" class="modal-close" id="btnCloseHistoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 13.5px;">
+                        <div><strong style="color: #64748b;">Note Code:</strong><br><span id="hist_note_code" style="font-weight: 700; color: var(--primary);"></span></div>
+                        <div><strong style="color: #64748b;">Invoice Code:</strong><br><span id="hist_invoice_code" style="font-weight: 700;"></span></div>
+                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient:</strong><br><span id="hist_patient_name" style="font-weight: 700;"></span></div>
+                        <div><strong style="color: #64748b;">Net Due at Discharge:</strong><br><strong style="color: var(--primary);">₱<span id="hist_net_due">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">Total Paid to Date:</strong><br><strong style="color: #16a34a;">₱<span id="hist_amount_paid">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">Remaining Balance:</strong><br><strong id="hist_remaining_balance_wrap" style="color: #dc2626; font-size: 15px;">₱<span id="hist_remaining_balance">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">Schedule Terms:</strong><br><span id="hist_plan_terms"></span></div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" id="history-modal-table-div">
+                    <p class="text-muted">Loading transactions...</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div id="hist_modal_actions"></div>
+                <button type="button" class="btn btn-secondary" id="btnDismissHistoryModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="paymentMethodLookupModal" style="display: none;">
+        <div class="modal-container" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3>Select Payment Method</h3>
+                <button type="button" class="modal-close" id="btnCloseMethodLookupModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <input type="text" id="method_search_input" class="form-control" placeholder="Search payment method name or category...">
+                </div>
+                <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Method Name</th>
+                                <th>Category</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentMethodTableBody">
+                            <tr><td colspan="3" class="text-center">Loading payment methods...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelMethodLookup">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/sidebar.js?v=6.9"></script>
+    <script src="../js/common.js?v=8.0"></script>
+    <script src="../js/promissory_notes.js?v=1.0"></script>
+</body>
+</html>

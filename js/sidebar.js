@@ -61,6 +61,7 @@ const renderSidebar = () => {
             <div class="nav-section-title">Billing & Settlement</div>
             <ul class="sidebar-nav">
                 <li><a href="invoices.html"${isActive("invoices.html")}>Invoices & Settlement</a></li>
+                <li><a href="promissory_notes.html"${isActive("promissory_notes.html")}>Promissory Notes & AR</a></li>
             </ul>
 
             <div class="nav-section-title">System & Tools</div>

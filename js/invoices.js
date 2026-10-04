@@ -93,21 +93,21 @@ const renderInvoicesTable = (invoices) => {
 
         let statusBadge = '';
         if (balVal <= 0) {
-            statusBadge = '<span class="badge badge-success" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">✓ PAID IN FULL</span>';
+            statusBadge = '<span class="badge badge-success" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">PAID IN FULL</span>';
         } else if (inv.Promissory_Note_ID && inv.Promissory_Status === 'Active') {
             const dueStr = inv.Formatted_Promissory_Next_Due_Date || inv.Promissory_Next_Due_Date;
             const dueAmt = parseFloat(inv.Promissory_Monthly_Amount || balVal);
             statusBadge = `
-                <span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; padding: 4px 8px; font-size: 11px;">📝 PROMISSORY NOTE</span>
+                <span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; padding: 4px 8px; font-size: 11px;">PROMISSORY NOTE</span>
                 <div style="font-size: 11px; color: #4338ca; margin-top: 3px; font-weight: 600;">Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</div>
             `;
         } else if (paidVal > 0) {
             statusBadge = `
-                <span class="badge badge-warning" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">⏳ PARTIALLY PAID</span>
+                <span class="badge badge-warning" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">PARTIALLY PAID</span>
                 <div style="font-size: 11px; color: #92400e; margin-top: 3px; font-weight: 600;">Bal: ₱${bal}</div>
             `;
         } else {
-            statusBadge = '<span class="badge badge-danger" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">⚠ PENDING PAYMENT</span>';
+            statusBadge = '<span class="badge badge-danger" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">PENDING PAYMENT</span>';
         }
 
         html += `<tr class="clickable-row" onclick="openPaymentHistoryModal(${inv.Invoice_ID})" title="Click row to view payment history, official receipts, SOA, or pay balance">`;

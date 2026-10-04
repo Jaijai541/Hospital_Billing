@@ -222,11 +222,11 @@ const startEditRoomType = (rt) => {
 
     const modeTitle = document.getElementById("rt_form_mode_title");
     if (modeTitle) {
-        modeTitle.innerHTML = `<span>✎</span> Edit Classification: <strong>${rt.Type_Name}</strong>`;
+        modeTitle.innerHTML = `Edit Classification: <strong>${rt.Type_Name}</strong>`;
     }
     const btnSubmit = document.getElementById("btnSubmitRoomType");
     if (btnSubmit) {
-        btnSubmit.textContent = "💾 Save Changes";
+        btnSubmit.textContent = "Save Changes";
     }
     const btnCancelEdit = document.getElementById("btnCancelEditRoomType");
     if (btnCancelEdit) {
@@ -248,7 +248,7 @@ const cancelEditRoomType = () => {
 
     const modeTitle = document.getElementById("rt_form_mode_title");
     if (modeTitle) {
-        modeTitle.innerHTML = `<span>➕</span> Add New Classification`;
+        modeTitle.textContent = "Add New Classification";
     }
     const btnSubmit = document.getElementById("btnSubmitRoomType");
     if (btnSubmit) {
@@ -570,7 +570,7 @@ const displayRoomsGrid = (rooms) => {
             bedsHtml = roomBeds.map(b => {
                 const isAvail = (b.Is_Available == 1);
                 const tileCls = isAvail ? "bed-vacant-tile" : "bed-occupied-tile";
-                const icon = isAvail ? "🟢" : "🔴";
+                const dotCls = isAvail ? "dot-vacant" : "dot-occupied";
                 const statusText = isAvail ? "Vacant" : "Occupied";
                 const patientName = b.Last_Name ? `${b.Last_Name}, ${b.First_Name}` : (isAvail ? "Available for Intake" : "Admitted Patient");
                 const admCode = b.Admission_Code ? ` (${b.Admission_Code})` : "";
@@ -579,7 +579,7 @@ const displayRoomsGrid = (rooms) => {
                     <div class="bed-tile ${tileCls}" data-bed-id="${b.Bed_ID}" title="${b.Bed_Code}: ${patientName}${admCode} — Click to view stay details">
                         <div class="bed-tile-header">
                             <span>${b.Bed_Code}</span>
-                            <span>${icon}</span>
+                            <span class="bed-status-dot ${dotCls}"></span>
                         </div>
                         <div class="bed-tile-patient">${patientName}</div>
                         <div style="font-size: 10px; opacity: 0.85;">${statusText}</div>
@@ -741,7 +741,7 @@ const openViewRoomModal = async (roomId) => {
                         const tr = document.createElement("tr");
                         const isAvail = (b.Is_Available == 1);
                         const availBadge = isAvail
-                            ? '<span class="badge badge-success">✔ Vacant</span>'
+                            ? '<span class="badge badge-success">Vacant</span>'
                             : '<span class="badge badge-warning">Occupied</span>';
                         const occupantText = isAvail
                             ? '<span style="color: var(--text-muted); font-size: 12.5px;">None</span>'
@@ -857,7 +857,7 @@ const displayBedsTable = (beds) => {
     beds.forEach(b => {
         const isAvail = (b.Is_Available == 1);
         const availBadge = isAvail 
-            ? '<span class="badge badge-success">✔ Vacant</span>' 
+            ? '<span class="badge badge-success">Vacant</span>' 
             : '<span class="badge badge-warning">Occupied</span>';
         const isActive = (b.Is_Active == 1);
         const statusBadge = isActive 
@@ -1031,7 +1031,7 @@ const renderBedOccupancyData = (data) => {
     const bannerBadge = document.getElementById("bed_banner_badge");
     if (bannerBadge) {
         bannerBadge.className = isAvail ? "badge badge-success" : "badge badge-warning";
-        bannerBadge.textContent = isAvail ? "✔ Vacant" : "Occupied";
+        bannerBadge.textContent = isAvail ? "Vacant" : "Occupied";
     }
 
     const occupantCard = document.getElementById("bed_current_occupant_card");
@@ -1062,7 +1062,7 @@ const renderBedOccupancyData = (data) => {
         } else {
             occupantCard.innerHTML = `
                 <div style="text-align: center; padding: 10px 0; color: #16a34a; font-weight: 600; font-size: 13.5px;">
-                    ✔ This bed is currently vacant and available for admission.
+                    This bed is currently vacant and available for admission.
                 </div>
             `;
         }

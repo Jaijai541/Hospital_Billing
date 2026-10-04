@@ -49,6 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnSubmitRoomType) {
         btnSubmitRoomType.addEventListener("click", submitNewRoomType);
     }
+    const btnCancelEditRoomType = document.getElementById("btnCancelEditRoomType");
+    if (btnCancelEditRoomType) {
+        btnCancelEditRoomType.addEventListener("click", cancelEditRoomType);
+    }
     const roomTypeModal = document.getElementById("roomTypeModal");
     if (roomTypeModal) {
         roomTypeModal.addEventListener("click", (e) => {
@@ -174,9 +178,7 @@ const openRoomTypePicker = async () => {
 const openRoomTypeModal = () => {
     const modal = document.getElementById("roomTypeModal");
     if (modal) {
-        document.getElementById("new_room_type_name").value = "";
-        document.getElementById("new_room_type_prefix").value = "";
-        document.getElementById("new_room_type_rate").value = "";
+        cancelEditRoomType();
         renderRoomTypesManageList();
         modal.style.display = "flex";
         document.getElementById("new_room_type_name").focus();
@@ -187,16 +189,73 @@ const closeRoomTypeModal = () => {
     const modal = document.getElementById("roomTypeModal");
     if (modal) {
         modal.style.display = "none";
+        cancelEditRoomType();
+    }
+};
+
+const startEditRoomType = (rt) => {
+    document.getElementById("edit_room_type_id").value = rt.Room_Type_ID;
+    document.getElementById("new_room_type_name").value = rt.Type_Name;
+    document.getElementById("new_room_type_prefix").value = rt.Code_Prefix;
+    document.getElementById("new_room_type_rate").value = parseFloat(rt.Daily_Rate || 0).toFixed(2);
+
+    const modeTitle = document.getElementById("rt_form_mode_title");
+    if (modeTitle) {
+        modeTitle.innerHTML = `<span>✏️</span> Edit Classification: <strong>${rt.Type_Name}</strong>`;
+    }
+    const btnSubmit = document.getElementById("btnSubmitRoomType");
+    if (btnSubmit) {
+        btnSubmit.textContent = "💾 Save Changes";
+    }
+    const btnCancelEdit = document.getElementById("btnCancelEditRoomType");
+    if (btnCancelEdit) {
+        btnCancelEdit.style.display = "inline-block";
+    }
+
+    document.getElementById("new_room_type_name").focus();
+};
+
+const cancelEditRoomType = () => {
+    const editIdInput = document.getElementById("edit_room_type_id");
+    if (editIdInput) editIdInput.value = "";
+    const nameInput = document.getElementById("new_room_type_name");
+    if (nameInput) nameInput.value = "";
+    const prefixInput = document.getElementById("new_room_type_prefix");
+    if (prefixInput) prefixInput.value = "";
+    const rateInput = document.getElementById("new_room_type_rate");
+    if (rateInput) rateInput.value = "";
+
+    const modeTitle = document.getElementById("rt_form_mode_title");
+    if (modeTitle) {
+        modeTitle.innerHTML = `<span>➕</span> Add New Classification`;
+    }
+    const btnSubmit = document.getElementById("btnSubmitRoomType");
+    if (btnSubmit) {
+        btnSubmit.textContent = "+ Add Classification";
+    }
+    const btnCancelEdit = document.getElementById("btnCancelEditRoomType");
+    if (btnCancelEdit) {
+        btnCancelEdit.style.display = "none";
     }
 };
 
 const renderRoomTypesManageList = () => {
     const listContainer = document.getElementById("room-types-manage-list");
+    const countBadge = document.getElementById("room_types_badge_count");
+    if (countBadge) {
+        countBadge.textContent = `${roomTypes ? roomTypes.length : 0} Active`;
+    }
     if (!listContainer) return;
     listContainer.innerHTML = "";
 
     if (!roomTypes || roomTypes.length === 0) {
-        listContainer.innerHTML = `<span style="font-size: 13px; color: var(--text-muted);">No active classifications.</span>`;
+        listContainer.innerHTML = `
+            <div style="text-align: center; padding: 25px 15px; color: var(--text-muted); background: #ffffff; border-radius: 6px; border: 1px dashed var(--border-color);">
+                <div style="font-size: 24px; margin-bottom: 6px;">🏷️</div>
+                <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">No room classifications found</div>
+                <div style="font-size: 12px; margin-top: 2px;">Add your first classification using the form above.</div>
+            </div>
+        `;
         return;
     }
 
@@ -205,23 +264,34 @@ const renderRoomTypesManageList = () => {
         item.style.display = "flex";
         item.style.justifyContent = "space-between";
         item.style.alignItems = "center";
-        item.style.padding = "7px 10px";
+        item.style.padding = "10px 12px";
         item.style.background = "#ffffff";
         item.style.border = "1px solid var(--border-color)";
-        item.style.borderRadius = "var(--radius-sm)";
+        item.style.borderRadius = "6px";
+        item.style.boxShadow = "0 1px 2px rgba(0,0,0,0.02)";
+        item.style.transition = "all 0.15s ease";
         const rateFormatted = parseFloat(rt.Daily_Rate || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         item.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 13.5px; font-weight: 600; color: var(--text-main);">${rt.Type_Name}</span>
-                    <span class="badge badge-info" style="font-size: 11px; padding: 2px 7px;">Prefix: ${rt.Code_Prefix}</span>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 14px; font-weight: 700; color: var(--text-main);">${rt.Type_Name}</span>
+                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 600; font-size: 11px; padding: 2px 7px; border-radius: 4px; border: 1px solid #bae6fd;">Prefix: ${rt.Code_Prefix}</span>
                 </div>
-                <div style="font-size: 12px; color: var(--text-muted);">
-                    Daily Rate: ₱${rateFormatted} / day
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="badge" style="background: #f0fdf4; color: #15803d; font-weight: 700; font-size: 11.5px; padding: 2px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">₱ ${rateFormatted} / day</span>
+                    <span style="font-size: 11.5px; color: var(--text-muted);">Standard board rate</span>
                 </div>
             </div>
-            <button type="button" class="btn btn-sm btn-outline btn-remove-rt" style="padding: 2px 8px; font-size: 12px; color: var(--danger);" title="Remove Classification">&times; Remove</button>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn btn-sm btn-outline btn-edit-rt" style="padding: 4px 9px; font-size: 12px; font-weight: 600;" title="Edit Classification">✏️ Edit</button>
+                <button type="button" class="btn btn-sm btn-outline btn-remove-rt" style="padding: 4px 9px; font-size: 12px; color: var(--danger); border-color: #fecaca;" title="Remove Classification">&times; Remove</button>
+            </div>
         `;
+
+        const btnEdit = item.querySelector(".btn-edit-rt");
+        btnEdit.addEventListener("click", () => {
+            startEditRoomType(rt);
+        });
 
         const btnRemove = item.querySelector(".btn-remove-rt");
         btnRemove.addEventListener("click", () => {
@@ -250,6 +320,7 @@ const promptRemoveRoomType = (roomTypeId, typeName) => {
                     document.getElementById("daily_rate").value = "";
                 }
 
+                cancelEditRoomType();
                 renderRoomTypesManageList();
                 displayRoomsAndBeds();
                 alert(response.data.message);
@@ -268,6 +339,9 @@ const promptRemoveRoomType = (roomTypeId, typeName) => {
 };
 
 const submitNewRoomType = async () => {
+    const editIdInput = document.getElementById("edit_room_type_id");
+    const editId = editIdInput ? editIdInput.value.trim() : "";
+
     const nameInput = document.getElementById("new_room_type_name");
     const prefixInput = document.getElementById("new_room_type_prefix");
     const rateInput = document.getElementById("new_room_type_rate");
@@ -296,12 +370,17 @@ const submitNewRoomType = async () => {
 
     try {
         const formData = new FormData();
-        formData.append("operation", "insertRoomType");
-        formData.append("json", JSON.stringify({
+        const isEdit = Boolean(editId);
+        formData.append("operation", isEdit ? "updateRoomType" : "insertRoomType");
+        const payload = {
             type_name: name,
             code_prefix: prefix,
             daily_rate: parseFloat(rate)
-        }));
+        };
+        if (isEdit) {
+            payload.room_type_id = parseInt(editId);
+        }
+        formData.append("json", JSON.stringify(payload));
 
         const response = await axios.post(`${postApiUrl}/rooms.php`, formData);
         if (response.data) {
@@ -323,24 +402,28 @@ const submitNewRoomType = async () => {
             if (response.data.success) {
                 await loadRoomTypes();
 
-                const typeId = response.data.room_type_id;
+                const typeId = response.data.room_type_id || editId;
                 const typeName = response.data.type_name;
                 const typeRate = response.data.daily_rate !== undefined ? response.data.daily_rate : parseFloat(rate);
 
-                document.getElementById("room_type_id").value = typeId;
-                document.getElementById("room_type_id_text").value = typeName;
-                document.getElementById("daily_rate").value = parseFloat(typeRate).toFixed(2);
+                const currentSelectedId = document.getElementById("room_type_id").value;
+                if (!currentSelectedId || parseInt(currentSelectedId) === parseInt(typeId)) {
+                    document.getElementById("room_type_id").value = typeId;
+                    document.getElementById("room_type_id_text").value = typeName;
+                    document.getElementById("daily_rate").value = parseFloat(typeRate).toFixed(2);
+                }
 
+                cancelEditRoomType();
                 renderRoomTypesManageList();
-                closeRoomTypeModal();
+                displayRoomsAndBeds();
                 alert(response.data.message);
             } else {
-                alert(response.data.message || "Failed to add room classification.");
+                alert(response.data.message || "Failed to save room classification.");
             }
         }
     } catch (error) {
-        console.error("[API] Error adding room classification:", error);
-        alert("Server error adding room classification.");
+        console.error("[API] Error saving room classification:", error);
+        alert("Server error saving room classification.");
     }
 };
 

@@ -2,29 +2,29 @@ body.print-body {
     background-color: #f8fafc;
     color: #1e293b;
     font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-    font-size: 14px;
-    line-height: 1.5;
-    padding: 30px;
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 20px;
     margin: 0;
 }
 
 .invoice-sheet {
-    max-width: 960px;
+    max-width: 920px;
     margin: 0 auto;
     background-color: #ffffff;
-    padding: 40px;
-    border-radius: var(--radius-lg, 10px);
+    padding: 24px 30px;
+    border-radius: var(--radius-lg, 8px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     border: 1px solid var(--border-color, #e2e8f0);
 }
 
 .print-toolbar {
-    max-width: 960px;
-    margin: 0 auto 24px auto;
-    padding: 14px 20px;
+    max-width: 920px;
+    margin: 0 auto 16px auto;
+    padding: 10px 16px;
     background-color: #ffffff;
     border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: var(--radius-md, 8px);
+    border-radius: var(--radius-md, 6px);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -33,50 +33,50 @@ body.print-body {
 
 .print-toolbar-actions {
     display: flex;
-    gap: 12px;
+    gap: 10px;
 }
 
 .hospital-header {
     text-align: center;
     border-bottom: 2px solid var(--primary, #0284c7);
-    padding-bottom: 20px;
-    margin-bottom: 24px;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .hospital-header h2 {
-    font-size: 22px;
+    font-size: 19px;
     font-weight: 800;
     color: var(--text-main, #0f172a);
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .hospital-header p {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted, #64748b);
-    margin: 2px 0;
+    margin: 1px 0;
 }
 
 .doc-title {
-    margin-top: 14px;
-    font-size: 16px;
+    margin-top: 8px;
+    font-size: 14.5px;
     font-weight: 700;
     color: var(--primary, #0284c7);
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
 }
 
 .soa-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
-    font-size: 13.5px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
 }
 
 .soa-table th, 
 .soa-table td {
     border: 1px solid #cbd5e1;
-    padding: 8px 12px;
+    padding: 5px 8px;
     vertical-align: middle;
 }
 
@@ -85,7 +85,7 @@ body.print-body {
     background-color: #f1f5f9;
     color: #0f172a;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px;
     letter-spacing: 0.3px;
 }
 
@@ -93,44 +93,65 @@ body.print-body {
     background-color: #e0f2fe;
     color: #0369a1;
     font-weight: 700;
-    font-size: 13.5px;
+    font-size: 12.5px;
 }
 
 .soa-table td.label-cell {
     background-color: #f8fafc;
     font-weight: 600;
-    width: 25%;
+    width: 22%;
     color: #334155;
 }
 
 .soa-table td.value-cell {
-    width: 25%;
+    width: 28%;
+}
+
+.compact-profile-table {
+    margin-bottom: 10px;
+}
+
+.compact-profile-table td {
+    padding: 4.5px 8px;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.compact-profile-table td.label-cell {
+    width: 22%;
+    font-weight: 600;
+    color: #334155;
+    background-color: #f8fafc;
+}
+
+.compact-profile-table td.value-cell {
+    width: 28%;
 }
 
 .billing-section-header {
     text-align: center;
-    font-size: 15px;
+    font-size: 13.5px;
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     color: #0f172a;
     text-transform: uppercase;
-    margin-top: 24px;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
+    margin-top: 16px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
     border-bottom: 1.5px solid #334155;
 }
 
 .charges-breakdown-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 8px;
-    font-size: 13.5px;
+    margin-bottom: 6px;
+    font-size: 12.5px;
 }
 
 .charges-breakdown-table th, 
 .charges-breakdown-table td {
     border: 1px solid #cbd5e1;
-    padding: 7px 12px;
+    padding: 5px 8px;
     vertical-align: middle;
 }
 
@@ -138,41 +159,41 @@ body.print-body {
     background-color: #f1f5f9;
     color: #0f172a;
     font-weight: 700;
-    font-size: 12.5px;
+    font-size: 11.5px;
     letter-spacing: 0.5px;
 }
 
 .charges-breakdown-table tfoot .subtotal-row {
     background-color: #f8fafc;
     font-weight: 800;
-    font-size: 13.5px;
+    font-size: 12.5px;
     border-top: 2px solid #0f172a;
     border-bottom: 2px solid #0f172a;
 }
 
 .particular-subtitle {
     display: block;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 500;
     color: #64748b;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 .particular-item-list {
-    margin-top: 5px;
-    padding: 4px 8px;
+    margin-top: 3px;
+    padding: 3px 6px;
     background-color: #f8fafc;
     border-radius: 4px;
     border-left: 2px solid #94a3b8;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
 }
 
 .particular-sub-item {
     display: flex;
     justify-content: space-between;
-    font-size: 11.5px;
+    font-size: 11px;
     color: #334155;
 }
 
@@ -182,12 +203,18 @@ body.print-body {
 }
 
 .settlement-summary-box {
-    margin-top: 20px;
-    margin-bottom: 14px;
+    margin-top: 14px;
+    margin-bottom: 8px;
 }
 
 .summary-detail-table {
     margin-bottom: 0;
+}
+
+.summary-detail-table th,
+.summary-detail-table td {
+    padding: 4px 8px;
+    font-size: 12px;
 }
 
 .summary-gross-line {
@@ -198,6 +225,11 @@ body.print-body {
 .summary-discount-line {
     background-color: #f0fdf4;
     color: #166534;
+    font-weight: 600;
+}
+
+.summary-subtotal-line {
+    background-color: #f8fafc;
     font-weight: 600;
 }
 
@@ -219,12 +251,12 @@ body.print-body {
 }
 
 .payment-status-badge {
-    padding: 3px 10px;
+    padding: 2px 8px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.5px;
-    margin-left: 14px;
+    margin-left: 10px;
     display: inline-block;
     border: 1.5px solid transparent;
 }
@@ -242,8 +274,8 @@ body.print-body {
 }
 
 .grand-balance-container {
-    margin-top: 14px;
-    margin-bottom: 24px;
+    margin-top: 10px;
+    margin-bottom: 16px;
 }
 
 .grand-balance-banner {
@@ -252,19 +284,19 @@ body.print-body {
     align-items: center;
     background-color: #f8fafc;
     border: 2px solid #0f172a;
-    padding: 10px 18px;
+    padding: 8px 14px;
 }
 
 .grand-balance-label {
-    font-size: 14.5px;
+    font-size: 13.5px;
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     color: #0f172a;
-    margin-right: 18px;
+    margin-right: 14px;
 }
 
 .grand-balance-amount {
-    font-size: 18px;
+    font-size: 16.5px;
     font-weight: 900;
     color: #0f172a;
 }
@@ -272,44 +304,44 @@ body.print-body {
 .signatures-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 36px;
-    margin-bottom: 24px;
+    margin-top: 20px;
+    margin-bottom: 12px;
 }
 
 .signatures-table td {
     border: none;
-    padding: 10px;
+    padding: 6px;
     text-align: center;
     vertical-align: top;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .sig-line {
     display: inline-block;
-    width: 80%;
+    width: 75%;
     border-top: 1px solid #334155;
-    margin-bottom: 6px;
-    padding-top: 4px;
+    margin-bottom: 4px;
+    padding-top: 2px;
 }
 
 .sig-name {
     font-weight: 700;
     color: #0f172a;
-    font-size: 13.5px;
+    font-size: 12px;
 }
 
 .sig-title {
     color: #64748b;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .soa-footer-note {
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     color: #94a3b8;
-    margin-top: 20px;
+    margin-top: 12px;
     border-top: 1px dashed #cbd5e1;
-    padding-top: 12px;
+    padding-top: 8px;
 }
 
 @media print {
@@ -328,76 +360,101 @@ body.print-body {
     .invoice-sheet {
         max-width: 100% !important;
         margin: 0 !important;
-        padding: 12px !important;
+        padding: 8px !important;
         border: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;
     }
 
+    .hospital-header {
+        padding-bottom: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
     .hospital-header h2 {
-        font-size: 18px !important;
+        font-size: 17px !important;
+        margin-bottom: 1px !important;
     }
 
     .doc-title {
-        font-size: 14px !important;
+        font-size: 13px !important;
+        margin-top: 4px !important;
     }
 
     .soa-table th, .soa-table td,
     .charges-breakdown-table th, .charges-breakdown-table td,
     .formula-table th, .formula-table td {
-        padding: 5px 8px !important;
-        font-size: 11.5px !important;
+        padding: 3.5px 6px !important;
+        font-size: 11px !important;
+        border-color: #475569 !important;
+    }
+
+    .compact-profile-table td {
+        padding: 3px 5px !important;
+        font-size: 10.5px !important;
     }
 
     .particular-item-list {
-        padding: 2px 5px !important;
-        margin-top: 3px !important;
+        padding: 2px 4px !important;
+        margin-top: 2px !important;
         gap: 1px !important;
     }
 
     .particular-sub-item {
-        font-size: 10.5px !important;
+        font-size: 10px !important;
     }
 
     .billing-section-header {
-        font-size: 13px !important;
-        margin-top: 14px !important;
-        margin-bottom: 6px !important;
+        font-size: 12px !important;
+        margin-top: 10px !important;
+        margin-bottom: 4px !important;
         padding-bottom: 2px !important;
     }
 
     .settlement-summary-box {
-        margin-top: 12px !important;
-        margin-bottom: 10px !important;
+        margin-top: 8px !important;
+        margin-bottom: 6px !important;
         page-break-inside: avoid !important;
     }
 
     .summary-detail-table th, .summary-detail-table td {
-        padding: 4px 6px !important;
-        font-size: 11px !important;
+        padding: 3px 5px !important;
+        font-size: 10.5px !important;
     }
 
     .grand-balance-container {
-        margin-top: 12px !important;
-        margin-bottom: 14px !important;
+        margin-top: 8px !important;
+        margin-bottom: 10px !important;
     }
 
     .grand-balance-banner {
-        padding: 6px 12px !important;
+        padding: 5px 10px !important;
         background-color: #f8fafc !important;
         border: 1.5px solid #000000 !important;
     }
 
     .grand-balance-label {
-        font-size: 13px !important;
+        font-size: 12px !important;
     }
 
     .grand-balance-amount {
-        font-size: 15px !important;
+        font-size: 14.5px !important;
     }
 
     .signatures-table {
-        margin-top: 20px !important;
-        margin-bottom: 12px !important;
+        margin-top: 12px !important;
+        margin-bottom: 8px !important;
+        page-break-inside: avoid !important;
+    }
+
+    .signatures-table td {
+        padding: 4px !important;
+        font-size: 10.5px !important;
+    }
+
+    .soa-footer-note {
+        margin-top: 8px !important;
+        padding-top: 4px !important;
+        font-size: 10px !important;
     }
 }

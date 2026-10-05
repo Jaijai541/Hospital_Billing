@@ -66,15 +66,52 @@ class Catalog
         include "connection.php";
 
         $json = json_decode($json, true);
+        $catalogId = intval($json['catalog_id'] ?? 0);
+
+        if ($catalogId <= 0) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Invalid catalog ID."
+            ]);
+        }
+
+        $checkStmt = $conn->prepare("SELECT Is_Active FROM Charge_Catalogs WHERE Catalog_ID = :id");
+        $checkStmt->execute([':id' => $catalogId]);
+        $cat = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$cat) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Catalog item not found."
+            ]);
+        }
+
+        if (intval($cat['Is_Active']) === 1) {
+            $ordStmt = $conn->prepare("
+                SELECT COUNT(*) AS total
+                FROM Doctor_Order_Request dor
+                INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+                INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID AND a.Status = 'Admitted'
+                WHERE dor.Catalog_ID = :id AND dor.Status = 'Pending'
+            ");
+            $ordStmt->execute([':id' => $catalogId]);
+            $ord = $ordStmt->fetch(PDO::FETCH_ASSOC);
+            if ($ord && intval($ord['total']) > 0) {
+                return json_encode([
+                    "status" => 0,
+                    "message" => "Cannot archive catalog item: There are pending doctor orders for this item for active in-patients. Please fulfill or cancel those orders before archiving."
+                ]);
+            }
+        }
 
         $sql = "UPDATE Charge_Catalogs 
                 SET Is_Active = CASE WHEN Is_Active = 1 THEN 0 ELSE 1 END 
                 WHERE Catalog_ID = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['catalog_id']);
+        $stmt->bindParam(":id", $catalogId);
         $stmt->execute();
 
-        return json_encode($stmt->rowCount() > 0 ? 1 : 0);
+        return json_encode(1);
     }
 
     function hardDeleteCatalog($json)

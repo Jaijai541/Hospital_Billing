@@ -70,15 +70,46 @@ class DepartmentMaster
         include "connection.php";
 
         $json = json_decode($json, true);
+        $stationId = intval($json['station_id'] ?? 0);
+
+        if ($stationId <= 0) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Invalid department ID."
+            ]);
+        }
+
+        $checkStmt = $conn->prepare("SELECT Is_Active FROM Enum_Department_Station WHERE Station_ID = :id");
+        $checkStmt->execute([':id' => $stationId]);
+        $dept = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$dept) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Department not found."
+            ]);
+        }
+
+        if (intval($dept['Is_Active']) === 1) {
+            $docStmt = $conn->prepare("SELECT COUNT(*) AS total FROM Doctor WHERE Station_ID = :id AND Is_Active = 1");
+            $docStmt->execute([':id' => $stationId]);
+            $docRow = $docStmt->fetch(PDO::FETCH_ASSOC);
+            if ($docRow && intval($docRow['total']) > 0) {
+                return json_encode([
+                    "status" => 0,
+                    "message" => "Cannot archive department/station: There are currently active doctors assigned to this station. Please reassign those doctors before archiving."
+                ]);
+            }
+        }
 
         $sql = "UPDATE Enum_Department_Station 
                 SET Is_Active = CASE WHEN Is_Active = 1 THEN 0 ELSE 1 END 
                 WHERE Station_ID = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['station_id']);
+        $stmt->bindParam(":id", $stationId);
         $stmt->execute();
 
-        return json_encode($stmt->rowCount() > 0 ? 1 : 0);
+        return json_encode(1);
     }
 
     function hardDeleteDepartment($json)

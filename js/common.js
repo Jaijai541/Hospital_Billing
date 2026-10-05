@@ -425,18 +425,29 @@ const toggleRecordStatus = (apiFile, idKey, idVal, currentStatus, recordName, on
         try {
             const postUrl = (typeof postApiUrl !== "undefined") ? postApiUrl : "../api/POST";
             const response = await axios.post(`${postUrl}/${apiFile}`, formData);
-            if (response.data == 1) {
+            let resData = response.data;
+            if (typeof resData === "string") {
+                try {
+                    resData = JSON.parse(resData);
+                } catch (e) {
+                    resData = response.data;
+                }
+            }
+
+            if (resData === 1 || resData == 1 || (resData && resData.status === 1)) {
                 const pastAction = isArchiving ? "sent to the System Archive" : "restored from the System Archive";
-                alert(`"${recordName}" was successfully ${pastAction}.`, () => {
+                showPopupAlert(`"${recordName}" was successfully ${pastAction}.`, "success", "Status Updated", () => {
                     if (onDone) {
                         onDone();
                     }
                 });
+            } else if (resData && resData.message) {
+                showPopupAlert(resData.message, "warning", "Archive Action Blocked");
             } else {
-                alert("Error updating record status.");
+                showPopupAlert("Error updating record status.", "danger", "Status Update Failed");
             }
         } catch (err) {
-            alert("Server error during status update.");
+            showPopupAlert("Server error during status update.", "danger", "Server Error");
         }
     }, null, {
         title: isArchiving ? "Archive Record" : "Restore Record",

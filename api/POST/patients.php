@@ -70,15 +70,46 @@ class PatientMaster
         include "connection.php";
 
         $json = json_decode($json, true);
+        $patientId = intval($json['patient_id'] ?? 0);
+
+        if ($patientId <= 0) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Invalid patient ID."
+            ]);
+        }
+
+        $checkStmt = $conn->prepare("SELECT Is_Active FROM Patient WHERE Patient_ID = :id");
+        $checkStmt->execute([':id' => $patientId]);
+        $pat = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$pat) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Patient record not found."
+            ]);
+        }
+
+        if (intval($pat['Is_Active']) === 1) {
+            $admStmt = $conn->prepare("SELECT COUNT(*) AS total FROM Admission WHERE Patient_ID = :id AND Status = 'Admitted'");
+            $admStmt->execute([':id' => $patientId]);
+            $adm = $admStmt->fetch(PDO::FETCH_ASSOC);
+            if ($adm && intval($adm['total']) > 0) {
+                return json_encode([
+                    "status" => 0,
+                    "message" => "Cannot archive patient: This patient is currently admitted in the hospital. Please discharge and finalize their admission before archiving."
+                ]);
+            }
+        }
 
         $sql = "UPDATE Patient 
                 SET Is_Active = CASE WHEN Is_Active = 1 THEN 0 ELSE 1 END 
                 WHERE Patient_ID = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['patient_id']);
+        $stmt->bindParam(":id", $patientId);
         $stmt->execute();
 
-        return json_encode($stmt->rowCount() > 0 ? 1 : 0);
+        return json_encode(1);
     }
 
     function hardDeletePatient($json)

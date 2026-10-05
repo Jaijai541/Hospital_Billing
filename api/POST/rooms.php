@@ -82,18 +82,64 @@ class RoomMaster
         include "connection.php";
 
         $json = json_decode($json, true);
+        $roomId = intval($json['room_id'] ?? 0);
+
+        if ($roomId <= 0) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Invalid room ID."
+            ]);
+        }
+
+        $checkStmt = $conn->prepare("SELECT Is_Active FROM Room WHERE Room_ID = :id");
+        $checkStmt->execute([':id' => $roomId]);
+        $room = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$room) {
+            return json_encode([
+                "status" => 0,
+                "message" => "Room not found."
+            ]);
+        }
+
+        if (intval($room['Is_Active']) === 1) {
+            $occStmt = $conn->prepare("
+                SELECT COUNT(*) AS total
+                FROM Room_Bed rb
+                WHERE rb.Room_ID = :id 
+                  AND (
+                    rb.Is_Available = 0 
+                    OR EXISTS (
+                        SELECT 1 
+                        FROM Room_Transfer_Log rtl 
+                        INNER JOIN Admission a ON rtl.Admission_ID = a.Admission_ID 
+                        WHERE rtl.Bed_ID = rb.Bed_ID 
+                          AND rtl.Date_Out IS NULL 
+                          AND a.Status = 'Admitted'
+                    )
+                  )
+            ");
+            $occStmt->execute([':id' => $roomId]);
+            $occ = $occStmt->fetch(PDO::FETCH_ASSOC);
+            if ($occ && intval($occ['total']) > 0) {
+                return json_encode([
+                    "status" => 0,
+                    "message" => "Cannot archive room: There are currently active admitted patients staying in this room. Please transfer or discharge the patient(s) before archiving."
+                ]);
+            }
+        }
 
         $sql = "UPDATE Room 
                 SET Is_Active = CASE WHEN Is_Active = 1 THEN 0 ELSE 1 END 
                 WHERE Room_ID = :id";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":id", $json['room_id']);
+        $stmt->bindParam(":id", $roomId);
         $stmt->execute();
 
         $conn->prepare("UPDATE Room_Bed SET Is_Active = (SELECT Is_Active FROM Room WHERE Room_ID = :id) WHERE Room_ID = :id2")
-             ->execute([':id' => $json['room_id'], ':id2' => $json['room_id']]);
+             ->execute([':id' => $roomId, ':id2' => $roomId]);
 
-        return json_encode($stmt->rowCount() > 0 ? 1 : 0);
+        return json_encode(1);
     }
 
     function hardDeleteRoom($json)

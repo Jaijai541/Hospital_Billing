@@ -458,13 +458,14 @@ const displayRoomsAndBeds = async () => {
 
         if (roomsRes.status === 200) {
             allRooms = roomsRes.data || [];
-            filterAndSortRooms();
         }
 
         if (bedsRes.status === 200) {
             allBeds = bedsRes.data || [];
             displayBedsTable(allBeds);
         }
+
+        filterAndSortRooms();
     } catch (error) {
         console.error("[API] Error loading rooms/beds:", error);
     }
@@ -577,12 +578,8 @@ const displayRoomsGrid = (rooms) => {
 
                 return `
                     <div class="bed-tile ${tileCls}" data-bed-id="${b.Bed_ID}" title="${b.Bed_Code}: ${patientName}${admCode} — Click to view stay details">
-                        <div class="bed-tile-header">
-                            <span>${b.Bed_Code}</span>
-                            <span class="bed-status-dot ${dotCls}"></span>
-                        </div>
-                        <div class="bed-tile-patient">${patientName}</div>
-                        <div style="font-size: 10px; opacity: 0.85;">${statusText}</div>
+                        <span class="bed-code-label">${b.Bed_Code}</span>
+                        <span class="bed-status-dot ${dotCls}"></span>
                     </div>
                 `;
             }).join("");

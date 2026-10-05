@@ -26,12 +26,25 @@ class RoomMaster
 
         $stmtType = $conn->prepare("SELECT Code_Prefix FROM Enum_Room_Type WHERE Room_Type_ID = ?");
         $stmtType->execute([$json['room_type_id']]);
-        $prefix = $stmtType->fetch(PDO::FETCH_ASSOC)['Code_Prefix'] ?? 'BED';
+        $prefix = strtoupper($stmtType->fetch(PDO::FETCH_ASSOC)['Code_Prefix'] ?? 'BED');
 
         $stmtBed = $conn->prepare("INSERT INTO Room_Bed (Room_ID, Bed_Code, Is_Available, Is_Active) VALUES (:room_id, :code, 1, 1)");
         for ($i = 1; $i <= $capacity; $i++) {
-            $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $roomName);
-            $bedCode = sprintf("%s-%03d", strtoupper(substr($cleanName, 0, 5)), $i);
+            if (preg_match('/^ward\s*([a-z0-9]+)$/i', $roomName, $matches)) {
+                $bedCode = sprintf("WRD-%s-%03d", strtoupper($matches[1]), $i);
+            } else if (!empty($prefix)) {
+                $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $roomName);
+                if (preg_match('/[0-9]+/', $cleanName, $numMatch)) {
+                    $bedCode = $capacity > 1
+                        ? sprintf("%s-%s-%02d", $prefix, $numMatch[0], $i)
+                        : sprintf("%s-%s", $prefix, $numMatch[0]);
+                } else {
+                    $bedCode = sprintf("%s-%03d", $prefix, $i);
+                }
+            } else {
+                $cleanName = preg_replace('/[^A-Za-z0-9]/', '', $roomName);
+                $bedCode = sprintf("%s-%03d", strtoupper(substr($cleanName, 0, 5)), $i);
+            }
 
             $stmtBed->execute([
                 ':room_id' => $roomId,

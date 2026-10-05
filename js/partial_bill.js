@@ -7,6 +7,288 @@ const formatMoney = (amount) => {
     });
 };
 
+const categorizeLedgerItems = (items, roomStays) => {
+    const map = {
+        "Room and Board Accommodations": {
+            total: 0,
+            items: []
+        },
+        "Drugs and Pharmaceuticals": {
+            total: 0,
+            items: []
+        },
+        "Diagnostic Imaging & Radiology": {
+            total: 0,
+            items: []
+        },
+        "Clinical Laboratory Examinations": {
+            total: 0,
+            items: []
+        },
+        "Medical Procedures & Clinical Supplies": {
+            total: 0,
+            items: []
+        }
+    };
+
+    (roomStays || []).forEach(s => {
+        const fee = parseFloat(s.Calculated_Room_Fee || 0);
+        const days = parseInt(s.Calculated_Days || 1, 10);
+        const rate = parseFloat(s.Daily_Rate || 0);
+        const isCurrent = parseInt(s.Is_Current_Stay, 10) === 1;
+        const statusLabel = isCurrent ? "Active Stay (To Date)" : (s.Date_Out || "Transferred");
+
+        map["Room and Board Accommodations"].total += fee;
+        map["Room and Board Accommodations"].items.push({
+            name: `${s.Bed_Code} (${s.Room_Name} - ${s.Room_Type_Name || "Standard"})`,
+            detail: `${days} ${days > 1 ? "days" : "day"} x ₱${formatMoney(rate)} [${statusLabel}]`,
+            amount: fee,
+            isReturn: false
+        });
+    });
+
+    (items || []).forEach(it => {
+        const cat = (it.Category || "").toLowerCase();
+        const desc = (it.Description || "").toLowerCase();
+        const station = (it.Station_Name || "").toLowerCase();
+        const amt = parseFloat(it.Total_Charge || 0);
+        const qty = Math.abs(parseFloat(it.Quantity || 1));
+        const unit = parseFloat(it.Unit_Price || 0);
+        const isReturn = it.Transaction_Type === "Return" || amt < 0;
+
+        if (it.Transfer_ID || cat.includes("room") || desc.includes("board & lodging")) {
+            return;
+        }
+        if (it.Round_ID || cat.includes("doctor") || desc.includes("bedside round")) {
+            return;
+        }
+
+        if (cat.includes("medicine") || isReturn || desc.includes("medicine") || desc.includes("tablet") || desc.includes("capsule")) {
+            map["Drugs and Pharmaceuticals"].total += amt;
+            map["Drugs and Pharmaceuticals"].items.push({
+                name: it.Description,
+                detail: `${qty} ${qty > 1 ? "units" : "unit"} x ₱${formatMoney(unit)}`,
+                amount: amt,
+                isReturn: isReturn
+            });
+        } else if (station.includes("laboratory") || desc.includes("cbc") || desc.includes("blood count") || desc.includes("phlebotomy") || desc.includes("urinalysis") || desc.includes("stool")) {
+            map["Clinical Laboratory Examinations"].total += amt;
+            map["Clinical Laboratory Examinations"].items.push({
+                name: it.Description,
+                detail: `${qty} ${qty > 1 ? "tests" : "test"} x ₱${formatMoney(unit)}`,
+                amount: amt,
+                isReturn: false
+            });
+        } else if (cat.includes("scan") || station.includes("radiology") || desc.includes("ct") || desc.includes("x-ray") || desc.includes("ultrasound") || desc.includes("ecg") || desc.includes("echo") || desc.includes("mri")) {
+            map["Diagnostic Imaging & Radiology"].total += amt;
+            map["Diagnostic Imaging & Radiology"].items.push({
+                name: it.Description,
+                detail: `${qty} ${qty > 1 ? "scans" : "scan"} x ₱${formatMoney(unit)}`,
+                amount: amt,
+                isReturn: false
+            });
+        } else {
+            map["Medical Procedures & Clinical Supplies"].total += amt;
+            map["Medical Procedures & Clinical Supplies"].items.push({
+                name: it.Description,
+                detail: `${qty} ${qty > 1 ? "units" : "unit"} x ₱${formatMoney(unit)}`,
+                amount: amt,
+                isReturn: false
+            });
+        }
+    });
+
+    return map;
+};
+
+const renderHospitalCharges = (categories) => {
+    const tbody = document.getElementById("pb-hospital-charges-tbody");
+    if (!tbody) return 0;
+
+    let html = "";
+    let grandHospTotal = 0;
+
+    Object.keys(categories).forEach(catName => {
+        const cat = categories[catName];
+        grandHospTotal += cat.total;
+
+        let itemsHtml = "";
+        if (cat.items && cat.items.length > 0) {
+            itemsHtml += '<div class="particular-item-list">';
+            cat.items.forEach(it => {
+                if (it.isReturn) {
+                    itemsHtml += `<div class="particular-sub-item return-item">
+                        <span>• Less Return: ${it.name} ( ${it.detail} )</span>
+                        <span>-₱${formatMoney(Math.abs(it.amount))}</span>
+                    </div>`;
+                } else {
+                    itemsHtml += `<div class="particular-sub-item">
+                        <span>• ${it.name} ( ${it.detail} )</span>
+                        <span>₱${formatMoney(it.amount)}</span>
+                    </div>`;
+                }
+            });
+            itemsHtml += "</div>";
+        } else {
+            itemsHtml += '<span class="particular-subtitle">No accumulated charges recorded to date</span>';
+        }
+
+        html += `
+            <tr>
+                <td>
+                    <span class="particular-category-title">${catName}</span>
+                    ${itemsHtml}
+                </td>
+                <td align="right" style="vertical-align: top;"><strong>₱${formatMoney(cat.total)}</strong></td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+    const subEl = document.getElementById("pb-hosp-subtotal");
+    if (subEl) subEl.textContent = `₱${formatMoney(grandHospTotal)}`;
+    return grandHospTotal;
+};
+
+const renderDoctorFees = (doctors, ledgerItems) => {
+    const tbody = document.getElementById("pb-doctor-fees-tbody");
+    if (!tbody) return 0;
+
+    if (!doctors || doctors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: #64748b; font-style: italic;">No attending physicians assigned yet.</td></tr>';
+        const subEl = document.getElementById("pb-doc-subtotal");
+        if (subEl) subEl.textContent = "₱0.00";
+        return 0;
+    }
+
+    let html = "";
+    let grandDocTotal = 0;
+
+    doctors.forEach(doc => {
+        const total = parseFloat(doc.Charges || 0);
+        grandDocTotal += total;
+        const rounds = parseInt(doc.Round_Count || 0, 10);
+        const subtitle = doc.Specialties 
+            ? `<span class="particular-subtitle">${doc.Doctor_Type || "Physician"} — ${doc.Specialties}</span>`
+            : (doc.Doctor_Type ? `<span class="particular-subtitle">${doc.Doctor_Type}</span>` : "");
+
+        let roundsHtml = "";
+        if (rounds > 0) {
+            roundsHtml += '<div class="particular-item-list">';
+            roundsHtml += `<div class="particular-sub-item">
+                <span>• Bedside Clinical Rounds (${rounds} ${rounds > 1 ? "visits" : "visit"})</span>
+                <span>₱${formatMoney(total)}</span>
+            </div>`;
+            roundsHtml += "</div>";
+        } else if (total > 0) {
+            roundsHtml += '<div class="particular-item-list">';
+            roundsHtml += `<div class="particular-sub-item">
+                <span>• Professional Care & Consultation</span>
+                <span>₱${formatMoney(total)}</span>
+            </div>`;
+            roundsHtml += "</div>";
+        } else {
+            roundsHtml += '<span class="particular-subtitle">No bedside visit charges logged to date</span>';
+        }
+
+        html += `
+            <tr>
+                <td>
+                    <span class="particular-category-title">${doc.Doctor_Name}</span>
+                    ${subtitle}
+                    ${roundsHtml}
+                </td>
+                <td align="right" style="vertical-align: top;"><strong>₱${formatMoney(total)}</strong></td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+    const subEl = document.getElementById("pb-doc-subtotal");
+    if (subEl) subEl.textContent = `₱${formatMoney(grandDocTotal)}`;
+    return grandDocTotal;
+};
+
+const renderAdvancePayments = (advPayments, totalAdvance) => {
+    const sec = document.getElementById("pb-advance-section");
+    const tbody = document.getElementById("pb-advance-tbody");
+    const subtotalEl = document.getElementById("pb-subtotal-advance");
+    if (!sec || !tbody) return;
+
+    if (!advPayments || advPayments.length === 0) {
+        sec.style.display = "none";
+        return;
+    }
+
+    sec.style.display = "block";
+    let html = "";
+    advPayments.forEach(p => {
+        html += `
+            <tr>
+                <td><strong>${p.Receipt_Number}</strong></td>
+                <td>${p.Payment_Date || "-"}</td>
+                <td>${p.Payment_Method}</td>
+                <td align="right"><strong>₱${formatMoney(p.Amount_Paid)}</strong></td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+    if (subtotalEl) subtotalEl.textContent = `₱${formatMoney(totalAdvance)}`;
+};
+
+const renderSummaryBox = (summary, hospTotal, docTotal) => {
+    const gross = parseFloat(summary.gross_total || (hospTotal + docTotal));
+    const returns = parseFloat(summary.return_total || 0);
+    const net = parseFloat(summary.net_accumulated_total || (gross - returns));
+    const advancePaid = parseFloat(summary.advance_payments_total || 0);
+    const estimatedVat = Math.round(net * 0.12 * 100) / 100;
+    const vatableBase = Math.round((net - estimatedVat) * 100) / 100;
+    const totalAmount = net;
+    const netRemaining = Math.max(0, totalAmount - advancePaid);
+
+    const elHosp = document.getElementById("pb-sum-hosp");
+    const elDoc = document.getElementById("pb-sum-doc");
+    const elGross = document.getElementById("pb-sum-gross");
+    const elReturns = document.getElementById("pb-sum-returns");
+    const rowReturns = document.getElementById("pb-row-returns");
+    const elNet = document.getElementById("pb-sum-net");
+    const elVat = document.getElementById("pb-sum-vat");
+    const elTotalWithVat = document.getElementById("pb-sum-total-with-vat");
+    const rowAdvance = document.getElementById("pb-row-advance-payments");
+    const elAdv = document.getElementById("pb-sum-advance-payments");
+    const elRemaining = document.getElementById("pb-sum-remaining-balance");
+    const bannerTotal = document.getElementById("pb-banner-total");
+
+    if (elHosp) elHosp.textContent = `₱${formatMoney(hospTotal)}`;
+    if (elDoc) elDoc.textContent = `₱${formatMoney(docTotal)}`;
+    if (elGross) elGross.textContent = `₱${formatMoney(gross)}`;
+
+    if (rowReturns) {
+        if (returns > 0) {
+            rowReturns.style.display = "table-row";
+            if (elReturns) elReturns.textContent = `-₱${formatMoney(returns)}`;
+        } else {
+            rowReturns.style.display = "none";
+        }
+    }
+
+    if (elNet) elNet.textContent = `₱${formatMoney(vatableBase)}`;
+    if (elVat) elVat.textContent = `₱${formatMoney(estimatedVat)}`;
+    if (elTotalWithVat) elTotalWithVat.textContent = `₱${formatMoney(totalAmount)}`;
+
+    if (rowAdvance) {
+        if (advancePaid > 0) {
+            rowAdvance.style.display = "table-row";
+            if (elAdv) elAdv.textContent = `-₱${formatMoney(advancePaid)}`;
+        } else {
+            rowAdvance.style.display = "none";
+        }
+    }
+
+    if (elRemaining) elRemaining.textContent = `₱${formatMoney(netRemaining)}`;
+    if (bannerTotal) bannerTotal.textContent = `₱${formatMoney(netRemaining)}`;
+};
+
 const renderPartialBill = (bill) => {
     document.getElementById("pb-admission-code").textContent = bill.Admission_Code || "N/A";
     document.getElementById("pb-statement-date").textContent = bill.Statement_Date || "N/A";
@@ -35,9 +317,9 @@ const renderPartialBill = (bill) => {
     document.getElementById("pb-patient-code").textContent = bill.Patient_Code || "N/A";
 
     const dob = bill.Date_Of_Birth || "N/A";
-    const ageText = (bill.Age !== null && bill.Age !== undefined) ? ` (${bill.Age} years old)` : "";
+    const ageText = (bill.Age !== null && bill.Age !== undefined) ? ` (${bill.Age} yrs)` : "";
     document.getElementById("pb-patient-age").textContent = `${dob}${ageText}`;
-    document.getElementById("pb-patient-gender-blood").textContent = `${bill.Gender_Name || "Unspecified"} / Blood Type: ${bill.Blood_Type_Name || "N/A"}`;
+    document.getElementById("pb-patient-gender-blood").textContent = `${bill.Gender_Name || "Unspecified"} / Blood: ${bill.Blood_Type_Name || "N/A"}`;
     document.getElementById("pb-patient-contact").textContent = bill.Contact_Number || "N/A";
     document.getElementById("pb-patient-address").textContent = bill.Address || "N/A";
 
@@ -56,11 +338,11 @@ const renderPartialBill = (bill) => {
     const docNames = doctors.map(d => `${d.Doctor_Name} (${d.Doctor_Type}${d.Specialties ? " - " + d.Specialties : ""})`);
     document.getElementById("pb-patient-doctors").textContent = docNames.length > 0 ? docNames.join("; ") : "No attending physicians assigned";
 
-    renderRoomStaysTable(bill.Room_Stays || []);
-    renderDoctorsTable(bill.Attending_Doctors || []);
-    renderLedgerCategories(bill.Ledger_Items || []);
+    const categories = categorizeLedgerItems(bill.Ledger_Items || [], bill.Room_Stays || []);
+    const hospTotal = renderHospitalCharges(categories);
+    const docTotal = renderDoctorFees(doctors, bill.Ledger_Items || []);
     renderAdvancePayments(bill.Advance_Payments || [], bill.Summary ? bill.Summary.advance_payments_total : 0);
-    renderSummaryBox(bill.Summary || {});
+    renderSummaryBox(bill.Summary || {}, hospTotal, docTotal);
 
     const userJson = sessionStorage.getItem("hospital_user");
     if (userJson) {
@@ -86,270 +368,6 @@ const renderPartialBill = (bill) => {
     const btnBack = document.getElementById("btnBackToChart");
     if (btnBack) {
         btnBack.href = `admission_details.html?id=${bill.Admission_ID}`;
-    }
-};
-
-const renderRoomStaysTable = (stays) => {
-    const tbody = document.getElementById("pb-room-tbody");
-    if (!stays || stays.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-muted"><em>No room stay logs recorded.</em></td></tr>';
-        document.getElementById("pb-subtotal-room").textContent = "₱0.00";
-        return;
-    }
-
-    let html = "";
-    let subtotal = 0;
-
-    stays.forEach(s => {
-        const fee = parseFloat(s.Calculated_Room_Fee || 0);
-        subtotal += fee;
-        const isCurrent = parseInt(s.Is_Current_Stay, 10) === 1;
-        const statusHtml = isCurrent 
-            ? 'Active Bed Stay (To Date)' 
-            : (s.Date_Out || "Transferred");
-
-        html += `
-            <tr>
-                <td><strong>${s.Bed_Code}</strong> (${s.Room_Name})</td>
-                <td>${s.Room_Type_Name || "Standard"}</td>
-                <td>${s.Date_In}</td>
-                <td>${statusHtml}</td>
-                <td align="right">${s.Calculated_Days} day(s)</td>
-                <td align="right">₱${formatMoney(s.Daily_Rate)}</td>
-                <td align="right"><strong>₱${formatMoney(fee)}</strong></td>
-            </tr>
-        `;
-    });
-
-    tbody.innerHTML = html;
-    document.getElementById("pb-subtotal-room").textContent = `₱${formatMoney(subtotal)}`;
-};
-
-const renderDoctorsTable = (docs) => {
-    const tbody = document.getElementById("pb-doctor-tbody");
-    if (!docs || docs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-muted"><em>No attending physician rounds logged yet.</em></td></tr>';
-        document.getElementById("pb-subtotal-doctor").textContent = "₱0.00";
-        return;
-    }
-
-    let html = "";
-    let subtotal = 0;
-
-    docs.forEach(d => {
-        const fee = parseFloat(d.Charges || 0);
-        subtotal += fee;
-        const rounds = parseInt(d.Round_Count || 0, 10);
-        const spec = d.Specialties ? ` — ${d.Specialties}` : "";
-
-        html += `
-            <tr>
-                <td><strong>${d.Doctor_Name}</strong></td>
-                <td>${d.Doctor_Type}${spec}</td>
-                <td align="center"><strong>${rounds}</strong> round(s)</td>
-                <td align="right"><strong>₱${formatMoney(fee)}</strong></td>
-            </tr>
-        `;
-    });
-
-    tbody.innerHTML = html;
-    document.getElementById("pb-subtotal-doctor").textContent = `₱${formatMoney(subtotal)}`;
-};
-
-const renderLedgerCategories = (items) => {
-    const medTbody = document.getElementById("pb-medicine-tbody");
-    const scanTbody = document.getElementById("pb-scan-tbody");
-    const srvTbody = document.getElementById("pb-service-tbody");
-
-    const medItems = [];
-    const scanItems = [];
-    const srvItems = [];
-
-    (items || []).forEach(it => {
-        const cat = (it.Category || "").toLowerCase();
-        const desc = (it.Description || "").toLowerCase();
-        const station = (it.Station_Name || "").toLowerCase();
-
-        if (it.Transfer_ID || cat.includes("room") || desc.includes("board & lodging")) {
-            return;
-        }
-        if (it.Round_ID || cat.includes("doctor") || desc.includes("bedside round")) {
-            return;
-        }
-
-        if (cat.includes("medicine") || it.Transaction_Type === "Return" || desc.includes("medicine") || desc.includes("tablet") || desc.includes("capsule")) {
-            medItems.push(it);
-        } else if (cat.includes("scan") || station.includes("radiology") || desc.includes("ct") || desc.includes("x-ray") || desc.includes("ultrasound") || desc.includes("ecg") || desc.includes("mri") || station.includes("laboratory") || desc.includes("cbc") || desc.includes("urinalysis")) {
-            scanItems.push(it);
-        } else {
-            srvItems.push(it);
-        }
-    });
-
-    let medHtml = "";
-    let medSubtotal = 0;
-    if (medItems.length === 0) {
-        medHtml = '<tr><td colspan="5" class="text-muted"><em>No pharmacy medications dispensed yet.</em></td></tr>';
-    } else {
-        medItems.forEach(m => {
-            const isReturn = m.Transaction_Type === "Return" || parseFloat(m.Total_Charge || 0) < 0;
-            const amt = parseFloat(m.Total_Charge || 0);
-            medSubtotal += amt;
-            const rowClass = isReturn ? ' style="background-color: #f0fff4; color: #166534;"' : '';
-            const sign = isReturn ? "-₱" : "₱";
-
-            medHtml += `
-                <tr${rowClass}>
-                    <td>${m.Timestamp || "-"}</td>
-                    <td><strong>${m.Description}</strong></td>
-                    <td align="right">${Math.abs(parseFloat(m.Quantity || 1))}</td>
-                    <td align="right">₱${formatMoney(m.Unit_Price)}</td>
-                    <td align="right"><strong>${sign}${formatMoney(Math.abs(amt))}</strong></td>
-                </tr>
-            `;
-        });
-    }
-    medTbody.innerHTML = medHtml;
-    document.getElementById("pb-subtotal-medicine").textContent = `₱${formatMoney(medSubtotal)}`;
-
-    let scanHtml = "";
-    let scanSubtotal = 0;
-    if (scanItems.length === 0) {
-        scanHtml = '<tr><td colspan="6" class="text-muted"><em>No diagnostic imaging or laboratory tests ordered yet.</em></td></tr>';
-    } else {
-        scanItems.forEach(s => {
-            const amt = parseFloat(s.Total_Charge || 0);
-            scanSubtotal += amt;
-            scanHtml += `
-                <tr>
-                    <td>${s.Timestamp || "-"}</td>
-                    <td><strong>${s.Description}</strong></td>
-                    <td>${s.Station_Name || "Diagnostics"}</td>
-                    <td align="right">${s.Quantity}</td>
-                    <td align="right">₱${formatMoney(s.Unit_Price)}</td>
-                    <td align="right"><strong>₱${formatMoney(amt)}</strong></td>
-                </tr>
-            `;
-        });
-    }
-    scanTbody.innerHTML = scanHtml;
-    document.getElementById("pb-subtotal-scan").textContent = `₱${formatMoney(scanSubtotal)}`;
-
-    let srvHtml = "";
-    let srvSubtotal = 0;
-    if (srvItems.length === 0) {
-        srvHtml = '<tr><td colspan="6" class="text-muted"><em>No procedures or clinical services recorded yet.</em></td></tr>';
-    } else {
-        srvItems.forEach(v => {
-            const amt = parseFloat(v.Total_Charge || 0);
-            srvSubtotal += amt;
-            srvHtml += `
-                <tr>
-                    <td>${v.Timestamp || "-"}</td>
-                    <td><strong>${v.Description}</strong></td>
-                    <td>${v.Station_Name || "Clinical Care"}</td>
-                    <td align="right">${v.Quantity}</td>
-                    <td align="right">₱${formatMoney(v.Unit_Price)}</td>
-                    <td align="right"><strong>₱${formatMoney(amt)}</strong></td>
-                </tr>
-            `;
-        });
-    }
-    srvTbody.innerHTML = srvHtml;
-    document.getElementById("pb-subtotal-service").textContent = `₱${formatMoney(srvSubtotal)}`;
-};
-
-const renderAdvancePayments = (advPayments, totalAdvance) => {
-    const sec = document.getElementById("pb-advance-section");
-    const tbody = document.getElementById("pb-advance-tbody");
-    const subtotalEl = document.getElementById("pb-subtotal-advance");
-    if (!sec || !tbody) return;
-
-    if (!advPayments || advPayments.length === 0) {
-        sec.style.display = "none";
-        return;
-    }
-
-    sec.style.display = "block";
-    let html = "";
-    advPayments.forEach(p => {
-        html += `
-            <tr>
-                <td><strong>${p.Receipt_Number}</strong></td>
-                <td>${p.Payment_Date || "-"}</td>
-                <td>${p.Payment_Method}</td>
-                <td>${p.Notes || "Advance Patient Deposit"}</td>
-                <td align="right"><strong>₱${formatMoney(p.Amount_Paid)}</strong></td>
-            </tr>
-        `;
-    });
-    tbody.innerHTML = html;
-    if (subtotalEl) subtotalEl.textContent = `₱${formatMoney(totalAdvance)}`;
-};
-
-const renderSummaryBox = (summary) => {
-    const room = parseFloat(summary.room_total || 0);
-    const doc = parseFloat(summary.doctor_total || 0);
-    const med = parseFloat(summary.medicine_total || 0);
-    const scan = parseFloat(summary.scan_total || 0);
-    const srv = parseFloat(summary.service_total || 0);
-    const gross = parseFloat(summary.gross_total || 0);
-    const returns = parseFloat(summary.return_total || 0);
-    const net = parseFloat(summary.net_accumulated_total || (gross - returns));
-    const advancePaid = parseFloat(summary.advance_payments_total || 0);
-    const estimatedVat = Math.round(net * 0.12 * 100) / 100;
-    const vatableBase = Math.round((net - estimatedVat) * 100) / 100;
-    const totalAmount = net;
-    const netRemaining = Math.max(0, totalAmount - advancePaid);
-
-    document.getElementById("pb-sum-room").textContent = `₱${formatMoney(room)}`;
-    document.getElementById("pb-sum-doctor").textContent = `₱${formatMoney(doc)}`;
-    document.getElementById("pb-sum-medicine").textContent = `₱${formatMoney(med)}`;
-    document.getElementById("pb-sum-scan").textContent = `₱${formatMoney(scan)}`;
-    document.getElementById("pb-sum-service").textContent = `₱${formatMoney(srv)}`;
-    document.getElementById("pb-sum-gross").textContent = `₱${formatMoney(gross)}`;
-
-    const rowReturns = document.getElementById("pb-row-returns");
-    if (rowReturns) {
-        if (returns > 0) {
-            rowReturns.style.display = "table-row";
-            document.getElementById("pb-sum-returns").textContent = `-₱${formatMoney(returns)}`;
-        } else {
-            rowReturns.style.display = "none";
-        }
-    }
-
-    document.getElementById("pb-sum-net").textContent = `₱${formatMoney(vatableBase)}`;
-    const elVat = document.getElementById("pb-sum-vat");
-    if (elVat) elVat.textContent = `₱${formatMoney(estimatedVat)}`;
-    const elTotalWithVat = document.getElementById("pb-sum-total-with-vat");
-    if (elTotalWithVat) elTotalWithVat.textContent = `₱${formatMoney(totalAmount)}`;
-
-    const rowAdvance = document.getElementById("pb-row-advance-payments");
-    if (rowAdvance) {
-        if (advancePaid > 0) {
-            rowAdvance.style.display = "table-row";
-            const elAdv = document.getElementById("pb-sum-advance-payments");
-            if (elAdv) elAdv.textContent = `-₱${formatMoney(advancePaid)}`;
-        } else {
-            rowAdvance.style.display = "none";
-        }
-    }
-
-    const rowNetDue = document.getElementById("pb-row-net-due");
-    const bannerTotalEl = document.getElementById("pb-banner-total");
-    if (rowNetDue) {
-        if (advancePaid > 0) {
-            rowNetDue.style.display = "table-row";
-            const elRemBal = document.getElementById("pb-sum-remaining-balance");
-            if (elRemBal) elRemBal.textContent = `₱${formatMoney(netRemaining)}`;
-            if (bannerTotalEl) bannerTotalEl.textContent = `₱${formatMoney(netRemaining)}`;
-        } else {
-            rowNetDue.style.display = "none";
-            if (bannerTotalEl) bannerTotalEl.textContent = `₱${formatMoney(totalAmount)}`;
-        }
-    } else {
-        if (bannerTotalEl) bannerTotalEl.textContent = `₱${formatMoney(totalAmount)}`;
     }
 };
 

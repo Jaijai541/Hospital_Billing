@@ -15,16 +15,16 @@ body.login-body {
     max-width: 880px;
     min-height: 520px;
     border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+    border: 1px solid #d2e4f3;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
     display: flex;
     overflow: hidden;
 }
 
 .brand-panel {
     flex: 1;
-    background-color: #0f172a;
-    color: #ffffff;
+    background-color: #edf5fb;
+    border-right: 1px solid #d2e4f3;
     padding: 48px 40px;
     display: flex;
     flex-direction: column;
@@ -41,26 +41,32 @@ body.login-body {
     justify-content: center;
     width: 50px;
     height: 50px;
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: #ffffff;
+    border: 1px solid #d2e4f3;
     border-radius: 10px;
-    color: #38bdf8;
+    color: #0284c7;
     margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.08);
 }
 
 .brand-system-tag {
+    display: inline-block;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: #38bdf8;
-    margin-bottom: 12px;
+    color: #0284c7;
+    background-color: rgba(2, 132, 199, 0.08);
+    border: 1px solid rgba(2, 132, 199, 0.2);
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 14px;
 }
 
 .brand-heading {
     font-size: 26px;
     font-weight: 800;
-    color: #ffffff;
+    color: #0f172a;
     line-height: 1.25;
     letter-spacing: -0.4px;
     margin: 0 0 6px 0;
@@ -68,8 +74,8 @@ body.login-body {
 
 .brand-tagline {
     font-size: 14.5px;
-    font-weight: 500;
-    color: #94a3b8;
+    font-weight: 600;
+    color: #0284c7;
     margin: 0 0 16px 0;
 }
 
@@ -82,8 +88,9 @@ body.login-body {
 
 .brand-panel-footer {
     padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid #d2e4f3;
     font-size: 12px;
+    font-weight: 500;
     color: #64748b;
 }
 
@@ -293,6 +300,8 @@ body.login-body {
         min-height: auto;
     }
     .brand-panel {
+        border-right: none;
+        border-bottom: 1px solid #d2e4f3;
         padding: 32px 28px 24px 28px;
     }
     .brand-heading {

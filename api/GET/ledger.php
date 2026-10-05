@@ -99,6 +99,46 @@ class LedgerManager
             ];
         }
 
+        $staySql = "SELECT 
+                        rtl.Transfer_ID,
+                        rtl.Bed_ID,
+                        rb.Bed_Code,
+                        r.Room_Name,
+                        rt.Type_Name AS Room_Type_Name,
+                        COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
+                        DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Formatted_Date_In,
+                        GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) AS Active_Days,
+                        GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Active_Fee
+                    FROM Room_Transfer_Log rtl
+                    INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                    INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                    INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                    WHERE rtl.Admission_ID = :aid AND rtl.Date_Out IS NULL
+                    LIMIT 1";
+        $stayStmt = $conn->prepare($staySql);
+        $stayStmt->execute([':aid' => $admissionId]);
+        $activeStay = $stayStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($activeStay) {
+            $activeDays = max(1, intval($activeStay['Active_Days']));
+            $dailyRate = floatval($activeStay['Daily_Rate']);
+            $activeFee = $activeDays * $dailyRate;
+            $dayWord = $activeDays > 1 ? 'days' : 'day';
+
+            $ledger[] = [
+                'Ledger_ID' => 'STAY-' . $activeStay['Transfer_ID'],
+                'Station_Name' => 'Admissions & Bed Management',
+                'Category' => 'Room & Board',
+                'Description' => "Board & Lodging: {$activeStay['Room_Name']} (Bed: {$activeStay['Bed_Code']}) - {$activeStay['Room_Type_Name']} (Current Active Stay: {$activeDays} {$dayWord})",
+                'Quantity' => $activeDays,
+                'Unit_Price' => $dailyRate,
+                'Total_Charge' => $activeFee,
+                'Transaction_Type' => 'Charge',
+                'Timestamp' => $activeStay['Formatted_Date_In'] . ' (Active)',
+                'Is_Active_Stay' => 1
+            ];
+        }
+
         return json_encode($ledger);
     }
 
@@ -173,6 +213,21 @@ class LedgerManager
             }
         }
 
+        $staySql = "SELECT 
+                        COALESCE(SUM(GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate)), 0.00) AS Active_Fee
+                    FROM Room_Transfer_Log rtl
+                    INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                    INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                    INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                    WHERE rtl.Admission_ID = :aid AND rtl.Date_Out IS NULL";
+        $stayStmt = $conn->prepare($staySql);
+        $stayStmt->execute([':aid' => $admissionId]);
+        $activeRoomFee = floatval($stayStmt->fetchColumn() ?: 0.0);
+
+        $roomTotal += $activeRoomFee;
+        $grossTotal += $activeRoomFee;
+        $netTotal += $activeRoomFee;
+
         $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
         $advStmt->execute([':aid' => $admissionId]);
         $advanceTotal = floatval($advStmt->fetchColumn());
@@ -188,7 +243,7 @@ class LedgerManager
             'net_total' => round($netTotal, 2),
             'advance_payments_total' => round($advanceTotal, 2),
             'balance_due' => round(max(0.00, $netTotal - $advanceTotal), 2),
-            'total_items' => count($rows)
+            'total_items' => count($rows) + ($activeRoomFee > 0 ? 1 : 0)
         ]);
     }
 

@@ -1946,15 +1946,30 @@ const renderLedgerTable = (ledger) => {
 
     ledger.forEach(row => {
         const isReturn = row.Transaction_Type === 'Return' || row.Total_Charge < 0;
+        const isActiveStay = !!row.Is_Active_Stay;
         const formattedTotal = parseFloat(row.Total_Charge).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const unitPrice = parseFloat(row.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-        const typeBadge = isReturn 
-            ? '<span class="badge badge-warning">CREDIT / RETURN</span>' 
-            : '<span class="badge badge-primary">CHARGE</span>';
+        let typeBadge = '<span class="badge badge-primary">CHARGE</span>';
+        if (isActiveStay) {
+            typeBadge = '<span class="badge badge-success" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 600;">ACTIVE (ACCUMULATING)</span>';
+        } else if (isReturn) {
+            typeBadge = '<span class="badge badge-warning">CREDIT / RETURN</span>';
+        }
 
-        html += `<tr ${isReturn ? 'style="background-color: #f0fff4;"' : ''}>`;
-        html += `<td><strong>LDG-${String(row.Ledger_ID).padStart(4, '0')}</strong></td>`;
+        const ledgerIdDisplay = isActiveStay 
+            ? '<span class="badge badge-info" style="font-size: 0.72rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">LIVE STAY</span>'
+            : `<strong>LDG-${String(row.Ledger_ID).padStart(4, '0')}</strong>`;
+
+        let rowStyle = '';
+        if (isActiveStay) {
+            rowStyle = 'style="background-color: #f0f9ff;"';
+        } else if (isReturn) {
+            rowStyle = 'style="background-color: #f0fff4;"';
+        }
+
+        html += `<tr ${rowStyle}>`;
+        html += `<td>${ledgerIdDisplay}</td>`;
         html += `<td>${row.Station_Name}</td>`;
         html += `<td><span class="badge badge-info">${row.Category}</span></td>`;
         html += `<td>${row.Description}</td>`;

@@ -352,17 +352,28 @@
                 <p class="text-muted mb-3" style="font-size: 0.85rem;">If the patient did not consume dispensed medications, return them here to post an automated negative credit to the Live Billing Ledger.</p>
                 <div class="form-grid">
                     <div class="form-group span-2">
-                        <label class="form-label" for="return_catalog_id">Select Dispensed Medicine to Return *</label>
+                        <label class="form-label" for="return_catalog_id_text">Select Dispensed Medicine to Return *</label>
                         <div class="input-lookup-group">
                             <input type="hidden" id="return_catalog_id" required>
-                            <input type="text" id="return_catalog_id_text" class="form-control" placeholder="Click to select dispensed medicine to return..." readonly>
+                            <input type="text" id="return_catalog_id_text" class="form-control" placeholder="Click to select dispensed medicine to return..." readonly style="background-color: #f8fafc; cursor: pointer;">
                             <button type="button" id="btnBrowse_return_catalog_id" class="btn btn-outline btn-lookup">Select</button>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="return_unit_price">Unit Price</label>
+                        <input type="text" id="return_unit_price" class="form-control" readonly placeholder="₱0.00" style="background-color: #f8fafc;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="return_max_qty">Max Returnable Qty</label>
+                        <input type="text" id="return_max_qty" class="form-control" readonly placeholder="0 units" style="background-color: #f8fafc;">
                     </div>
 
                     <div class="form-group span-2">
                         <label class="form-label" for="return_qty">Quantity to Return *</label>
                         <input type="number" id="return_qty" class="form-control" min="1" value="1">
+                        <small id="return_credit_calc" class="form-text text-muted" style="display: block; margin-top: 6px; font-weight: 500; font-size: 0.85rem;"></small>
                     </div>
                 </div>
             </div>

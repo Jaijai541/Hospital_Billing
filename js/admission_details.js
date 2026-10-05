@@ -86,6 +86,9 @@ window.addEventListener('DOMContentLoaded', () => {
     initLookupPicker();
     wireLookupPickers();
 
+    const returnQtyInput = document.getElementById('return_qty');
+    if (returnQtyInput) returnQtyInput.addEventListener('input', updateReturnCreditCalc);
+
     const returnCatSearch = document.getElementById('return_catalog_search');
     if (returnCatSearch) returnCatSearch.addEventListener('input', filterDispensedMedicines);
 
@@ -356,13 +359,28 @@ const initClinicalModals = () => {
 
     const handleOpenReturnModal = () => {
         if (admissionData && admissionData.Status !== 'Admitted') {
-            alert("Cannot process returns: Patient is already discharged or billed.");
+            showPopupAlert("Cannot process returns: Patient is already discharged or billed.", "warning");
             return;
         }
-        if (document.getElementById('return_catalog_search')) {
-            document.getElementById('return_catalog_search').value = '';
+        const retCatId = document.getElementById('return_catalog_id');
+        const retCatText = document.getElementById('return_catalog_id_text');
+        const retUnitPrice = document.getElementById('return_unit_price');
+        const retMaxQty = document.getElementById('return_max_qty');
+        const retQty = document.getElementById('return_qty');
+        const retCalc = document.getElementById('return_credit_calc');
+
+        if (retCatId) retCatId.value = '';
+        if (retCatText) retCatText.value = '';
+        if (retUnitPrice) retUnitPrice.value = '';
+        if (retMaxQty) retMaxQty.value = '';
+        if (retQty) {
+            retQty.value = '1';
+            retQty.removeAttribute('max');
+            delete retQty.dataset.max;
+            delete retQty.dataset.price;
         }
-        document.getElementById('return_qty').value = '1';
+        if (retCalc) retCalc.textContent = '';
+
         loadDispensedMedicines();
         openModal('returnModal');
     };
@@ -859,6 +877,111 @@ const wireLookupPickers = () => {
     };
     if (btnBrowseBed) btnBrowseBed.addEventListener('click', handleOpenBedPicker);
     if (transferBedName) transferBedName.addEventListener('click', handleOpenBedPicker);
+
+    const btnBrowseReturnMed = document.getElementById('btnBrowse_return_catalog_id');
+    const returnMedText = document.getElementById('return_catalog_id_text');
+    const handleOpenReturnMedPicker = () => {
+        const showReturnPicker = () => {
+            const medList = dispensedMedicinesList || [];
+            if (medList.length === 0) {
+                showPopupAlert('No dispensed medications eligible for return found for this patient admission.', 'info', 'No Returnable Medications');
+                return;
+            }
+            openLookupPicker({
+                title: 'Select Dispensed Medicine to Return',
+                placeholder: 'Search dispensed medicine by name, item code...',
+                columns: ['Item Code', 'Medicine Description', 'Unit Price', 'Dispensed', 'Returned', 'Eligible to Return'],
+                items: medList,
+                filterOptions: [
+                    { label: 'All Returnable Medicines', value: 'all' }
+                ],
+                categoryFilterFn: (m, val) => true,
+                sortOptions: [
+                    { label: 'Default Order', value: 'default' },
+                    { label: 'Name (A to Z)', value: 'name_asc' },
+                    { label: 'Name (Z to A)', value: 'name_desc' },
+                    { label: 'Eligible Qty (High to Low)', value: 'qty_desc' },
+                    { label: 'Eligible Qty (Low to High)', value: 'qty_asc' },
+                    { label: 'Unit Price (Low to High)', value: 'price_asc' },
+                    { label: 'Unit Price (High to Low)', value: 'price_desc' }
+                ],
+                sortFn: (list, val) => {
+                    const arr = [...list];
+                    if (val === 'name_asc') {
+                        arr.sort((a, b) => (a.Item_Name || '').localeCompare(b.Item_Name || ''));
+                    } else if (val === 'name_desc') {
+                        arr.sort((a, b) => (b.Item_Name || '').localeCompare(a.Item_Name || ''));
+                    } else if (val === 'qty_desc') {
+                        arr.sort((a, b) => parseFloat(b.Net_Remaining_Qty !== undefined ? b.Net_Remaining_Qty : b.Total_Dispensed || 0) - parseFloat(a.Net_Remaining_Qty !== undefined ? a.Net_Remaining_Qty : a.Total_Dispensed || 0));
+                    } else if (val === 'qty_asc') {
+                        arr.sort((a, b) => parseFloat(a.Net_Remaining_Qty !== undefined ? a.Net_Remaining_Qty : a.Total_Dispensed || 0) - parseFloat(b.Net_Remaining_Qty !== undefined ? b.Net_Remaining_Qty : b.Total_Dispensed || 0));
+                    } else if (val === 'price_asc') {
+                        arr.sort((a, b) => parseFloat(a.Unit_Price || 0) - parseFloat(b.Unit_Price || 0));
+                    } else if (val === 'price_desc') {
+                        arr.sort((a, b) => parseFloat(b.Unit_Price || 0) - parseFloat(a.Unit_Price || 0));
+                    }
+                    return arr;
+                },
+                filterFn: (m, q) => {
+                    const str = `${m.Item_Code || ''} ${m.Item_Name || ''}`.toLowerCase();
+                    return str.includes(q);
+                },
+                renderRowFn: (m) => {
+                    const eligible = parseFloat(m.Net_Remaining_Qty !== undefined ? m.Net_Remaining_Qty : m.Total_Dispensed);
+                    const dispensed = parseFloat(m.Total_Dispensed || 0);
+                    const returned = parseFloat(m.Total_Returned || 0);
+                    const price = parseFloat(m.Unit_Price || 0);
+                    return `
+                        <td><strong>${m.Item_Code}</strong></td>
+                        <td>${m.Item_Name}</td>
+                        <td><strong>₱${price.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+                        <td><span class="badge badge-info">${dispensed}</span></td>
+                        <td><span class="badge badge-secondary">${returned}</span></td>
+                        <td><span class="badge badge-success" style="font-weight: 700;">${eligible} unit${eligible !== 1 ? 's' : ''}</span></td>
+                    `;
+                },
+                getItemName: (m) => `[${m.Item_Code}] ${m.Item_Name}`,
+                onSelect: (item) => {
+                    const eligible = parseFloat(item.Net_Remaining_Qty !== undefined ? item.Net_Remaining_Qty : item.Total_Dispensed);
+                    const price = parseFloat(item.Unit_Price || 0);
+
+                    const retCatId = document.getElementById('return_catalog_id');
+                    const retCatText = document.getElementById('return_catalog_id_text');
+                    const retUnitPrice = document.getElementById('return_unit_price');
+                    const retMaxQty = document.getElementById('return_max_qty');
+                    const retQty = document.getElementById('return_qty');
+
+                    if (retCatId) retCatId.value = item.Catalog_ID;
+                    if (retCatText) retCatText.value = `[${item.Item_Code}] ${item.Item_Name}`;
+                    if (retUnitPrice) retUnitPrice.value = `₱${price.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                    if (retMaxQty) retMaxQty.value = `${eligible} unit${eligible !== 1 ? 's' : ''}`;
+
+                    if (retQty) {
+                        retQty.value = eligible >= 1 ? 1 : eligible;
+                        retQty.setAttribute('max', eligible);
+                        retQty.dataset.max = eligible;
+                        retQty.dataset.price = price;
+                    }
+
+                    updateReturnCreditCalc();
+                }
+            });
+        };
+
+        const formData = new FormData();
+        formData.append('operation', 'getDispensedMedicines');
+        formData.append('json', JSON.stringify({ admission_id: admissionId }));
+        axios.post(`${getApiUrl}/ledger.php`, formData)
+            .then(response => {
+                dispensedMedicinesList = Array.isArray(response.data) ? response.data : [];
+                showReturnPicker();
+            })
+            .catch(() => {
+                showReturnPicker();
+            });
+    };
+    if (btnBrowseReturnMed) btnBrowseReturnMed.addEventListener('click', handleOpenReturnMedPicker);
+    if (returnMedText) returnMedText.addEventListener('click', handleOpenReturnMedPicker);
 };
 
 const initDiagnosisModal = () => {
@@ -1922,28 +2045,32 @@ const loadDispensedMedicines = () => {
         });
 }
 
+const updateReturnCreditCalc = () => {
+    const calcEl = document.getElementById('return_credit_calc');
+    if (!calcEl) return;
+    const qtyInput = document.getElementById('return_qty');
+    const price = qtyInput && qtyInput.dataset.price ? parseFloat(qtyInput.dataset.price) : 0;
+    const maxQty = qtyInput && qtyInput.dataset.max ? parseFloat(qtyInput.dataset.max) : 0;
+    const qty = qtyInput ? parseFloat(qtyInput.value || 0) : 0;
+
+    if (maxQty > 0 && qty > maxQty) {
+        calcEl.innerHTML = `<span style="color: #dc2626; font-weight: 600;">Exceeds returnable limit! Only ${maxQty} unit${maxQty !== 1 ? 's' : ''} eligible.</span>`;
+        return;
+    }
+
+    if (price > 0 && qty > 0) {
+        const totalCredit = Math.round(price * qty * 100) / 100;
+        calcEl.innerHTML = `<span style="color: #166534; font-weight: 600;">Estimated ledger refund credit: -₱${totalCredit.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
+    } else {
+        calcEl.textContent = '';
+    }
+};
+
 const openReturnMedicinePicker = () => {
-    openGenericLookupPicker({
-        title: "Select Dispensed Medicine to Return",
-        items: dispensedMedicinesList.map(m => ({
-            id: m.Catalog_ID,
-            text: `[${m.Item_Code}] ${m.Item_Name}`,
-            subtext: `Available to return: ${m.Total_Dispensed} unit(s)`,
-            badge: `${m.Total_Dispensed} units`,
-            badgeClass: "badge-primary"
-        })),
-        selectedId: document.getElementById("return_catalog_id").value,
-        onSelect: (item) => {
-            document.getElementById("return_catalog_id").value = item.id;
-            document.getElementById("return_catalog_id_text").value = item.text;
-            const match = dispensedMedicinesList.find(x => String(x.Catalog_ID) === String(item.id));
-            if (match) {
-                document.getElementById("return_qty").value = match.Total_Dispensed;
-                document.getElementById("return_qty").setAttribute("max", match.Total_Dispensed);
-                document.getElementById("return_qty").dataset.max = match.Total_Dispensed;
-            }
-        }
-    });
+    const btnBrowseReturnMed = document.getElementById('btnBrowse_return_catalog_id');
+    if (btnBrowseReturnMed) {
+        btnBrowseReturnMed.click();
+    }
 };
 
 const filterDispensedMedicines = () => {};
@@ -1953,20 +2080,22 @@ const submitMedicineReturn = () => {
     const qty = parseFloat(document.getElementById('return_qty').value);
 
     if (!catalogId) {
-        alert("Please select a dispensed medicine to return.");
+        showPopupAlert("Please select a dispensed medicine to return.", "warning");
         return;
     }
 
     if (isNaN(qty) || qty <= 0) {
-        alert("Please enter a valid return quantity.");
+        showPopupAlert("Please enter a valid positive return quantity.", "warning");
         return;
     }
 
     const match = dispensedMedicinesList.find(x => String(x.Catalog_ID) === String(catalogId));
-    const maxAvailable = match ? parseFloat(match.Total_Dispensed) : parseFloat(document.getElementById('return_qty').dataset.max || 0);
+    const maxAvailable = match 
+        ? parseFloat(match.Net_Remaining_Qty !== undefined ? match.Net_Remaining_Qty : match.Total_Dispensed) 
+        : parseFloat(document.getElementById('return_qty').dataset.max || 0);
 
     if (qty > maxAvailable) {
-        alert(`Cannot return ${qty} unit(s). Only ${maxAvailable} unit(s) are eligible for return.`);
+        showPopupAlert(`Cannot return ${qty} unit(s). Only ${maxAvailable} unit(s) are eligible for return.`, "warning");
         return;
     }
 
@@ -1984,22 +2113,40 @@ const submitMedicineReturn = () => {
 
         axios.post(`${postApiUrl}/ledger.php`, formData)
             .then(response => {
-                if (response.data.success) {
+                if (response.data && response.data.success) {
                     closeModal('returnModal');
-                    alert(response.data.message);
-                    if (document.getElementById('return_catalog_search')) {
-                        document.getElementById('return_catalog_search').value = '';
-                    }
-                    loadLedger();
-                    loadLedgerSummary();
-                    loadDispensedMedicines();
-                    document.getElementById('return_qty').value = '1';
+                    showPopupAlert(response.data.message || "Medicine return processed successfully.", "success", "Return Recorded", () => {
+                        const retCatId = document.getElementById('return_catalog_id');
+                        const retCatText = document.getElementById('return_catalog_id_text');
+                        const retUnitPrice = document.getElementById('return_unit_price');
+                        const retMaxQty = document.getElementById('return_max_qty');
+                        const retQty = document.getElementById('return_qty');
+                        const retCalc = document.getElementById('return_credit_calc');
+
+                        if (retCatId) retCatId.value = '';
+                        if (retCatText) retCatText.value = '';
+                        if (retUnitPrice) retUnitPrice.value = '';
+                        if (retMaxQty) retMaxQty.value = '';
+                        if (retQty) {
+                            retQty.value = '1';
+                            retQty.removeAttribute('max');
+                            delete retQty.dataset.max;
+                            delete retQty.dataset.price;
+                        }
+                        if (retCalc) retCalc.textContent = '';
+
+                        loadLedger();
+                        loadLedgerSummary();
+                        loadDispensedMedicines();
+                        loadOrders();
+                    });
                 } else {
-                    alert("Return Error: " + (response.data.error || "Failed to process return."));
+                    const err = response.data && response.data.error ? response.data.error : "Failed to process return.";
+                    showPopupAlert("Return Error: " + err, "danger");
                 }
             })
             .catch(() => {
-                alert("Network error processing medicine return.");
+                showPopupAlert("Network error processing medicine return.", "danger");
             });
     }, null, { title: 'Confirm Medicine Return', confirmText: 'Process Return', type: 'warning' });
 };

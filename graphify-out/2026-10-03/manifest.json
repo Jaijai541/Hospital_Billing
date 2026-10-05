@@ -1,0 +1,392 @@
+{
+  "api/GET/admissions.php": {
+    "mtime": 1790926135.6279948,
+    "seen": 1791020643.7564387,
+    "ast_hash": "ecedde27fbb55333f91c0c34cf3b1d87",
+    "semantic_hash": "ecedde27fbb55333f91c0c34cf3b1d87"
+  },
+  "api/GET/archive.php": {
+    "mtime": 1790923539.133082,
+    "seen": 1791020643.7564578,
+    "ast_hash": "7e706c2570684fd85bddbfdf1fd41229",
+    "semantic_hash": "7e706c2570684fd85bddbfdf1fd41229"
+  },
+  "api/GET/audit_log.php": {
+    "mtime": 1790368922.2910824,
+    "seen": 1791020643.7564638,
+    "ast_hash": "ada5f4738cbd8f1660235639742aee3b",
+    "semantic_hash": "ada5f4738cbd8f1660235639742aee3b"
+  },
+  "api/GET/catalogs.php": {
+    "mtime": 1790346091.3761344,
+    "seen": 1791020643.756468,
+    "ast_hash": "a21d23ea01a2832384fd4e53033dd5e1",
+    "semantic_hash": "a21d23ea01a2832384fd4e53033dd5e1"
+  },
+  "api/GET/clinical_orders.php": {
+    "mtime": 1790346265.898193,
+    "seen": 1791020643.756472,
+    "ast_hash": "f85661f23a9181c0e54434cf0403052d",
+    "semantic_hash": "f85661f23a9181c0e54434cf0403052d"
+  },
+  "api/GET/connection.php": {
+    "mtime": 1790345927.6219988,
+    "seen": 1791020643.7564757,
+    "ast_hash": "1b36be74d295502421e0a053f53ffa87",
+    "semantic_hash": "1b36be74d295502421e0a053f53ffa87"
+  },
+  "api/GET/departments.php": {
+    "mtime": 1790755032.7237494,
+    "seen": 1791020643.7564797,
+    "ast_hash": "ab3aa5a7963858644500d59857345e31",
+    "semantic_hash": "ab3aa5a7963858644500d59857345e31"
+  },
+  "api/GET/discounts.php": {
+    "mtime": 1790975668.2085576,
+    "seen": 1791020643.756483,
+    "ast_hash": "4be24389478f6f027a6e027eb4dbbaf5",
+    "semantic_hash": "4be24389478f6f027a6e027eb4dbbaf5"
+  },
+  "api/GET/doctors.php": {
+    "mtime": 1790757524.9593217,
+    "seen": 1791020643.7564862,
+    "ast_hash": "031f7835326327e5351b5c14b5204e25",
+    "semantic_hash": "031f7835326327e5351b5c14b5204e25"
+  },
+  "api/GET/invoices.php": {
+    "mtime": 1790975686.346254,
+    "seen": 1791020643.756491,
+    "ast_hash": "67a56b4b2cde6eaf0634c1ac3151f049",
+    "semantic_hash": "67a56b4b2cde6eaf0634c1ac3151f049"
+  },
+  "api/GET/ledger.php": {
+    "mtime": 1790927772.340587,
+    "seen": 1791020643.756495,
+    "ast_hash": "cbfaee79ab54aeb6080403bd5c94d706",
+    "semantic_hash": "cbfaee79ab54aeb6080403bd5c94d706"
+  },
+  "api/GET/patients.php": {
+    "mtime": 1790756260.7743933,
+    "seen": 1791020643.7565002,
+    "ast_hash": "fc8d6c9df52d8548449e6d490d6f8c01",
+    "semantic_hash": "fc8d6c9df52d8548449e6d490d6f8c01"
+  },
+  "api/GET/rooms.php": {
+    "mtime": 1790755304.871735,
+    "seen": 1791020643.7565033,
+    "ast_hash": "c72fd49769cfef310863bee424f8bc7a",
+    "semantic_hash": "c72fd49769cfef310863bee424f8bc7a"
+  },
+  "api/POST/admissions.php": {
+    "mtime": 1790410174.9934351,
+    "seen": 1791020643.756507,
+    "ast_hash": "8d58e2019508ef07dfc3f4a38d73279a",
+    "semantic_hash": "8d58e2019508ef07dfc3f4a38d73279a"
+  },
+  "api/POST/archive.php": {
+    "mtime": 1790509015.903815,
+    "seen": 1791020643.7565105,
+    "ast_hash": "38ed1e21b3e5db6349b3944c412305ed",
+    "semantic_hash": "38ed1e21b3e5db6349b3944c412305ed"
+  },
+  "api/POST/audit_log.php": {
+    "mtime": 1790410175.009346,
+    "seen": 1791020643.7565143,
+    "ast_hash": "0aa7e68a65d21a000fd12eedf0f6b3dd",
+    "semantic_hash": "0aa7e68a65d21a000fd12eedf0f6b3dd"
+  },
+  "api/POST/auth.php": {
+    "mtime": 1790346410.0672474,
+    "seen": 1791020643.756518,
+    "ast_hash": "73218bfb549c44038f71b176c66b1bc1",
+    "semantic_hash": "73218bfb549c44038f71b176c66b1bc1"
+  },
+  "api/POST/catalogs.php": {
+    "mtime": 1790346137.545167,
+    "seen": 1791020643.7565215,
+    "ast_hash": "94fbed4912b6607da2cf0b15cc494257",
+    "semantic_hash": "94fbed4912b6607da2cf0b15cc494257"
+  },
+  "api/POST/clinical_orders.php": {
+    "mtime": 1790410175.017627,
+    "seen": 1791020643.7565253,
+    "ast_hash": "826c4b59da1ba3517e60ac7bc29a0bda",
+    "semantic_hash": "826c4b59da1ba3517e60ac7bc29a0bda"
+  },
+  "api/POST/connection.php": {
+    "mtime": 1790369493.8215497,
+    "seen": 1791020643.7565293,
+    "ast_hash": "b2075d680d5cbe040870ba8608952a79",
+    "semantic_hash": "b2075d680d5cbe040870ba8608952a79"
+  },
+  "api/POST/departments.php": {
+    "mtime": 1790508930.2395372,
+    "seen": 1791020643.756533,
+    "ast_hash": "a5074eb7c5736a883ee4ced0489b6686",
+    "semantic_hash": "a5074eb7c5736a883ee4ced0489b6686"
+  },
+  "api/POST/discounts.php": {
+    "mtime": 1790975719.3811178,
+    "seen": 1791020643.7565362,
+    "ast_hash": "f9455fe0c352f66887d32720c5229e1b",
+    "semantic_hash": "f9455fe0c352f66887d32720c5229e1b"
+  },
+  "api/POST/doctors.php": {
+    "mtime": 1790410175.0260503,
+    "seen": 1791020643.7565422,
+    "ast_hash": "3437389d0dd06bf817d9d3524c6e3f4a",
+    "semantic_hash": "3437389d0dd06bf817d9d3524c6e3f4a"
+  },
+  "api/POST/invoices.php": {
+    "mtime": 1790974463.8242857,
+    "seen": 1791020643.7565458,
+    "ast_hash": "b3e51ca546d8d42d56a73c0c11faeb46",
+    "semantic_hash": "b3e51ca546d8d42d56a73c0c11faeb46"
+  },
+  "api/POST/ledger.php": {
+    "mtime": 1790410175.0438364,
+    "seen": 1791020643.7565494,
+    "ast_hash": "09a5c3e92d71e58639691994d6087de9",
+    "semantic_hash": "09a5c3e92d71e58639691994d6087de9"
+  },
+  "api/POST/patients.php": {
+    "mtime": 1790346030.4386418,
+    "seen": 1791020643.756553,
+    "ast_hash": "84ebc3c194ded6f8fa8b504e9dc185f9",
+    "semantic_hash": "84ebc3c194ded6f8fa8b504e9dc185f9"
+  },
+  "api/POST/rooms.php": {
+    "mtime": 1790410175.0523837,
+    "seen": 1791020643.7565563,
+    "ast_hash": "4381213808395c10e65113470dc4221a",
+    "semantic_hash": "4381213808395c10e65113470dc4221a"
+  },
+  "api/POST/specialties.php": {
+    "mtime": 1790509858.9798405,
+    "seen": 1791020643.75656,
+    "ast_hash": "4f8c077a97e6cbdac6cf6302bccffe5b",
+    "semantic_hash": "4f8c077a97e6cbdac6cf6302bccffe5b"
+  },
+  "api/connection.php": {
+    "mtime": 1790344071.8208601,
+    "seen": 1791020643.7565637,
+    "ast_hash": "fbde7afdcc6dd213cdc3a69b31bb1667",
+    "semantic_hash": "fbde7afdcc6dd213cdc3a69b31bb1667"
+  },
+  "connection.php": {
+    "mtime": 1790095093.432595,
+    "seen": 1791020643.7565672,
+    "ast_hash": "5e35575489150bb92e4f9f48e34b68f8",
+    "semantic_hash": "5e35575489150bb92e4f9f48e34b68f8"
+  },
+  "examples/Book/app.js": {
+    "mtime": 1787581287.90733,
+    "seen": 1791020643.756571,
+    "ast_hash": "b392ce657ab92343856173d5da2a2c66",
+    "semantic_hash": "b392ce657ab92343856173d5da2a2c66"
+  },
+  "examples/Book/books.php": {
+    "mtime": 1787561589.157011,
+    "seen": 1791020643.7565749,
+    "ast_hash": "96c0095169d52c8afc7e441753246f32",
+    "semantic_hash": "96c0095169d52c8afc7e441753246f32"
+  },
+  "examples/Book/categories.php": {
+    "mtime": 1787562627.620917,
+    "seen": 1791020643.7565792,
+    "ast_hash": "5e7eb9324273c4bd4690584b68f20750",
+    "semantic_hash": "5e7eb9324273c4bd4690584b68f20750"
+  },
+  "examples/Book/connection.php": {
+    "mtime": 1787561566.7652006,
+    "seen": 1791020643.7565825,
+    "ast_hash": "a66688b17aaa2b2cc750132400bba1df",
+    "semantic_hash": "a66688b17aaa2b2cc750132400bba1df"
+  },
+  "examples/Book/index.js": {
+    "mtime": 1787555259.319133,
+    "seen": 1791020643.756586,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "examples/Book/js.js": {
+    "mtime": 1788757352.8517847,
+    "seen": 1791020643.75659,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "examples/Book/template.php": {
+    "mtime": 1787555360.7860446,
+    "seen": 1791020643.756594,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "examples/Exam/api.php": {
+    "mtime": 1786948164.1890168,
+    "seen": 1791020643.7565975,
+    "ast_hash": "15c9c442368c566708d553c91ced8e3e",
+    "semantic_hash": "15c9c442368c566708d553c91ced8e3e"
+  },
+  "examples/Exam/script.js": {
+    "mtime": 1786948184.4780276,
+    "seen": 1791020643.756601,
+    "ast_hash": "8aa8049535a389d542d3d85141afaf8c",
+    "semantic_hash": "8aa8049535a389d542d3d85141afaf8c"
+  },
+  "examples/Library/books.php": {
+    "mtime": 1788763563.5615618,
+    "seen": 1791020643.7566051,
+    "ast_hash": "01ee238630db409d8dd02abb8f8bf974",
+    "semantic_hash": "01ee238630db409d8dd02abb8f8bf974"
+  },
+  "examples/Library/borrow.js": {
+    "mtime": 1788759236.9716127,
+    "seen": 1791020643.7566085,
+    "ast_hash": "3824bd45527743b58cb00a1bef34cdc0",
+    "semantic_hash": "3824bd45527743b58cb00a1bef34cdc0"
+  },
+  "examples/Library/borrow.php": {
+    "mtime": 1788762648.086205,
+    "seen": 1791020643.7566123,
+    "ast_hash": "292c94c734326baadb934d6472c7df97",
+    "semantic_hash": "292c94c734326baadb934d6472c7df97"
+  },
+  "examples/Library/connection.php": {
+    "mtime": 1788758559.9718912,
+    "seen": 1791020643.7566159,
+    "ast_hash": "eecacdc18a044faa8af37efaac71c087",
+    "semantic_hash": "eecacdc18a044faa8af37efaac71c087"
+  },
+  "examples/Library/students.php": {
+    "mtime": 1788763832.1514215,
+    "seen": 1791020643.7566218,
+    "ast_hash": "c004d068dca6673c41433da0bc7ae0ad",
+    "semantic_hash": "c004d068dca6673c41433da0bc7ae0ad"
+  },
+  "examples/invoice/invoice.js": {
+    "mtime": 1788704665.092583,
+    "seen": 1791020643.7566254,
+    "ast_hash": "8d34f1fc65f90cb4c3db6a6d0e3a1557",
+    "semantic_hash": "8d34f1fc65f90cb4c3db6a6d0e3a1557"
+  },
+  "examples/invoice/invoice.php": {
+    "mtime": 1789667198.2546182,
+    "seen": 1791020643.7566295,
+    "ast_hash": "ee126e541a40de5c9c5be6241c961300",
+    "semantic_hash": "ee126e541a40de5c9c5be6241c961300"
+  },
+  "examples/invoice/products.php": {
+    "mtime": 1788704692.6703808,
+    "seen": 1791020643.7566335,
+    "ast_hash": "04fcade715fb67e57cce10886b0abeeb",
+    "semantic_hash": "04fcade715fb67e57cce10886b0abeeb"
+  },
+  "js/admission_details.js": {
+    "mtime": 1790975757.9529552,
+    "seen": 1791020643.7566378,
+    "ast_hash": "5698b74444b8f4445fdfafcdd3967bd6",
+    "semantic_hash": "5698b74444b8f4445fdfafcdd3967bd6"
+  },
+  "js/admissions.js": {
+    "mtime": 1790870668.3311622,
+    "seen": 1791020643.7566416,
+    "ast_hash": "962193c765bbe1f22f918a37e745d145",
+    "semantic_hash": "962193c765bbe1f22f918a37e745d145"
+  },
+  "js/archive.js": {
+    "mtime": 1790413124.4215665,
+    "seen": 1791020643.7566452,
+    "ast_hash": "74a5091f281af164e8c1cd9c57a571d8",
+    "semantic_hash": "74a5091f281af164e8c1cd9c57a571d8"
+  },
+  "js/audit_log.js": {
+    "mtime": 1790410053.3802705,
+    "seen": 1791020643.7566485,
+    "ast_hash": "606dfe14a334070674ef4454d7f15df6",
+    "semantic_hash": "606dfe14a334070674ef4454d7f15df6"
+  },
+  "js/catalogs.js": {
+    "mtime": 1790867491.6644602,
+    "seen": 1791020643.7566514,
+    "ast_hash": "e9fc85857ce1fe39f7fd843180709952",
+    "semantic_hash": "e9fc85857ce1fe39f7fd843180709952"
+  },
+  "js/common.js": {
+    "mtime": 1790870639.29129,
+    "seen": 1791020643.7566557,
+    "ast_hash": "6aae6ff083939d1d014b51abd2a4448c",
+    "semantic_hash": "6aae6ff083939d1d014b51abd2a4448c"
+  },
+  "js/dashboard.js": {
+    "mtime": 1790413135.1765797,
+    "seen": 1791020643.7566595,
+    "ast_hash": "9d7995405dfdc825a696afbcf0f45bad",
+    "semantic_hash": "9d7995405dfdc825a696afbcf0f45bad"
+  },
+  "js/departments.js": {
+    "mtime": 1790758360.4927604,
+    "seen": 1791020643.756663,
+    "ast_hash": "b7aeb59edb746df6c2837723ba0d72e1",
+    "semantic_hash": "b7aeb59edb746df6c2837723ba0d72e1"
+  },
+  "js/discounts.js": {
+    "mtime": 1790975640.0275714,
+    "seen": 1791020643.7566667,
+    "ast_hash": "596e68d23c1a93d13c900ce0cdedeab1",
+    "semantic_hash": "596e68d23c1a93d13c900ce0cdedeab1"
+  },
+  "js/doctors.js": {
+    "mtime": 1790869497.780715,
+    "seen": 1791020643.7566702,
+    "ast_hash": "2923b4e2c61a25d2aeecbd24f0c5a9a3",
+    "semantic_hash": "2923b4e2c61a25d2aeecbd24f0c5a9a3"
+  },
+  "js/invoice_print.js": {
+    "mtime": 1790974544.3648722,
+    "seen": 1791020643.7566738,
+    "ast_hash": "2703b351afba7d4830d4228533746ee0",
+    "semantic_hash": "2703b351afba7d4830d4228533746ee0"
+  },
+  "js/invoices.js": {
+    "mtime": 1790974511.212444,
+    "seen": 1791020643.7566774,
+    "ast_hash": "1c86ff6eb972b6ac2273514d6fafc718",
+    "semantic_hash": "1c86ff6eb972b6ac2273514d6fafc718"
+  },
+  "js/login.js": {
+    "mtime": 1790394729.7203453,
+    "seen": 1791020643.7566807,
+    "ast_hash": "f8efa5c23c5b4d3c0af039440e5ec740",
+    "semantic_hash": "f8efa5c23c5b4d3c0af039440e5ec740"
+  },
+  "js/partial_bill.js": {
+    "mtime": 1790928500.226046,
+    "seen": 1791020643.756684,
+    "ast_hash": "efddd760bd4d5c1100a49d3f1f28f502",
+    "semantic_hash": "efddd760bd4d5c1100a49d3f1f28f502"
+  },
+  "js/patients.js": {
+    "mtime": 1790867403.2615387,
+    "seen": 1791020643.7566874,
+    "ast_hash": "c63cb9e4d669e78eab698e6749c46b7a",
+    "semantic_hash": "c63cb9e4d669e78eab698e6749c46b7a"
+  },
+  "js/payment_receipt.js": {
+    "mtime": 1790928545.4520428,
+    "seen": 1791020643.7566907,
+    "ast_hash": "2b78c5bd04510f409fb1a3a40b51b682",
+    "semantic_hash": "2b78c5bd04510f409fb1a3a40b51b682"
+  },
+  "js/rooms.js": {
+    "mtime": 1790869520.7578778,
+    "seen": 1791020643.756694,
+    "ast_hash": "c8e8d92b8fc09eba8b3f3d973523a362",
+    "semantic_hash": "c8e8d92b8fc09eba8b3f3d973523a362"
+  },
+  "js/sidebar.js": {
+    "mtime": 1790609422.6555161,
+    "seen": 1791020643.7566972,
+    "ast_hash": "e8bb574875bbc6fe108655d504af8272",
+    "semantic_hash": "e8bb574875bbc6fe108655d504af8272"
+  }
+}

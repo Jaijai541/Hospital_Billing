@@ -1,0 +1,732 @@
+{
+  "communities": {
+    "0": [
+      "js_admission_details",
+      "js_admission_details_assigneddoctors",
+      "js_admission_details_availablebedslist",
+      "js_admission_details_catalogitems",
+      "js_admission_details_closelookuppicker",
+      "js_admission_details_customvoucherslist",
+      "js_admission_details_dischargepatientfromchart",
+      "js_admission_details_discountlist",
+      "js_admission_details_dispensedmedicineslist",
+      "js_admission_details_filteravailablebeds",
+      "js_admission_details_filtercatalogitems",
+      "js_admission_details_filterdispensedmedicines",
+      "js_admission_details_filterorderdoctors",
+      "js_admission_details_filterrounddoctors",
+      "js_admission_details_getpaymentmethodoptionshtml",
+      "js_admission_details_initclinicalmodals",
+      "js_admission_details_initclinicaltabs",
+      "js_admission_details_initdiagnosismodal",
+      "js_admission_details_initlookuppicker",
+      "js_admission_details_loadadmissiondetails",
+      "js_admission_details_loadavailablebeds",
+      "js_admission_details_loadcatalogitems",
+      "js_admission_details_loaddiscounts",
+      "js_admission_details_loaddispensedmedicines",
+      "js_admission_details_loadledger",
+      "js_admission_details_loadledgersummary",
+      "js_admission_details_loadorders",
+      "js_admission_details_loadrounds",
+      "js_admission_details_loadtransfers",
+      "js_admission_details_openadvancepaymentmethodpicker",
+      "js_admission_details_openadvancepaymentmodal",
+      "js_admission_details_openlookuppicker",
+      "js_admission_details_openreturnmedicinepicker",
+      "js_admission_details_paymentmethodslist",
+      "js_admission_details_populateassigneddoctordropdowns",
+      "js_admission_details_renderadmittedadvancebillingcard",
+      "js_admission_details_renderbilledsettlementcard",
+      "js_admission_details_renderledgertable",
+      "js_admission_details_renderlookuppickerrows",
+      "js_admission_details_renderorderstable",
+      "js_admission_details_renderpaymenthistorytable",
+      "js_admission_details_renderroundstable",
+      "js_admission_details_rendersettlementsection",
+      "js_admission_details_rendersummarybox",
+      "js_admission_details_rendertransferstable",
+      "js_admission_details_savediagnosis",
+      "js_admission_details_showadvancemethodpicker",
+      "js_admission_details_submitadvancepayment",
+      "js_admission_details_submitbedtransfer",
+      "js_admission_details_submitdoctororder",
+      "js_admission_details_submitdoctorround",
+      "js_admission_details_submitmedicinereturn",
+      "js_admission_details_submitsettlement",
+      "js_admission_details_updateworkflowstepper",
+      "js_admission_details_wirelookuppickers"
+    ],
+    "1": [
+      "js_doctors",
+      "js_doctors_alldoctors",
+      "js_doctors_alldoctortypes",
+      "js_doctors_allspecialties",
+      "js_doctors_allstations",
+      "js_doctors_closespecialtymodal",
+      "js_doctors_closespecialtypicker",
+      "js_doctors_closeviewdoctormodal",
+      "js_doctors_confirmspecialtypicker",
+      "js_doctors_currentfilteredspecialties",
+      "js_doctors_displaydoctors",
+      "js_doctors_displaydoctorstable",
+      "js_doctors_filterandsortdoctors",
+      "js_doctors_loaddoctorforedit",
+      "js_doctors_loaddoctorlookups",
+      "js_doctors_opendoctortypepicker",
+      "js_doctors_openspecialtymodal",
+      "js_doctors_openspecialtypicker",
+      "js_doctors_openstationpicker",
+      "js_doctors_openviewdoctormodal",
+      "js_doctors_populatedoctorform",
+      "js_doctors_promptremovespecialty",
+      "js_doctors_renderspecialtiesmanagelist",
+      "js_doctors_renderspecialtypickerrows",
+      "js_doctors_resetform",
+      "js_doctors_savedoctor",
+      "js_doctors_selecteddoctorspecialties",
+      "js_doctors_submitnewspecialty",
+      "js_doctors_tempselectedspecialties",
+      "js_doctors_togglepickerspecialty",
+      "js_doctors_toggleselectallpickerspecialties",
+      "js_doctors_updatespecialtiestext"
+    ],
+    "2": [
+      "js_admissions",
+      "js_admissions_activedoctors",
+      "js_admissions_activepatients",
+      "js_admissions_alladmissions",
+      "js_admissions_availablebeds",
+      "js_admissions_closedoctorpicker",
+      "js_admissions_confirmdoctorpicker",
+      "js_admissions_currentfiltereddoctors",
+      "js_admissions_dischargepatient",
+      "js_admissions_filterandrendertable",
+      "js_admissions_loadadmissions",
+      "js_admissions_loadbeds",
+      "js_admissions_loaddoctors",
+      "js_admissions_loadpatients",
+      "js_admissions_openbedpicker",
+      "js_admissions_openchart",
+      "js_admissions_opendoctorpicker",
+      "js_admissions_openpatientpicker",
+      "js_admissions_renderadmissionstable",
+      "js_admissions_renderdoctorpickerrows",
+      "js_admissions_resetform",
+      "js_admissions_selecteddoctorids",
+      "js_admissions_submitadmission",
+      "js_admissions_tempselecteddoctorids",
+      "js_admissions_togglepickerdoctor",
+      "js_admissions_toggleselectallpickerdoctors",
+      "js_admissions_updatedoctorstext"
+    ],
+    "3": [
+      "js_rooms",
+      "js_rooms_allbeds",
+      "js_rooms_allrooms",
+      "js_rooms_closebedoccupancymodal",
+      "js_rooms_closeviewroommodal",
+      "js_rooms_displaybedstable",
+      "js_rooms_displayroomsandbeds",
+      "js_rooms_displayroomstable",
+      "js_rooms_filterandsortrooms",
+      "js_rooms_loadroomforedit",
+      "js_rooms_loadroomtypes",
+      "js_rooms_openbedoccupancymodal",
+      "js_rooms_openroomtypepicker",
+      "js_rooms_openviewroommodal",
+      "js_rooms_populateroomform",
+      "js_rooms_renderbedoccupancydata",
+      "js_rooms_resetform",
+      "js_rooms_roomtypes",
+      "js_rooms_saveroom"
+    ],
+    "4": [
+      "js_common",
+      "js_common_closemodal",
+      "js_common_genericlookuppickerstate",
+      "js_common_getactionbuttons",
+      "js_common_getstatusbadge",
+      "js_common_initappsession",
+      "js_common_initmodalcontrols",
+      "js_common_initsidebarcontrols",
+      "js_common_opengenericlookuppicker",
+      "js_common_openmodal",
+      "js_common_rendergenericlookuplist",
+      "js_common_showpopupalert",
+      "js_common_showpopupconfirm",
+      "js_common_togglerecordstatus"
+    ],
+    "5": [
+      "js_patients",
+      "js_patients_allbloodtypes",
+      "js_patients_allgenders",
+      "js_patients_allpatients",
+      "js_patients_displaypatients",
+      "js_patients_displaypatientstable",
+      "js_patients_filterandsortpatients",
+      "js_patients_loadpatientenums",
+      "js_patients_loadpatientforedit",
+      "js_patients_openbloodtypepicker",
+      "js_patients_opengenderpicker",
+      "js_patients_populatepatientform",
+      "js_patients_resetform",
+      "js_patients_savepatient"
+    ],
+    "6": [
+      "js_invoices",
+      "js_invoices_allinvoices",
+      "js_invoices_filterandrenderinvoices",
+      "js_invoices_loadinvoices",
+      "js_invoices_loadpaymentmethods",
+      "js_invoices_openpaymenthistorymodal",
+      "js_invoices_openpaymentmethodpicker",
+      "js_invoices_openpaymentmodal",
+      "js_invoices_paymentmethods",
+      "js_invoices_renderinvoicestable",
+      "js_invoices_submitpayment",
+      "js_invoices_updatepaymentmodalcalculations",
+      "js_invoices_viewprintinvoice"
+    ],
+    "7": [
+      "examples_invoice_invoice_details",
+      "examples_invoice_invoice_displaydetails",
+      "examples_invoice_invoice_formatcurrency",
+      "examples_invoice_invoice_formatdateyyyymmdd",
+      "examples_invoice_invoice_getallproducts",
+      "examples_invoice_invoice_getallstudents",
+      "examples_invoice_invoice_gettotalsales",
+      "examples_invoice_invoice_js_examples_invoice_invoice",
+      "examples_invoice_invoice_onpageload",
+      "examples_invoice_invoice_opendetailsmodal",
+      "examples_invoice_invoice_products",
+      "examples_invoice_invoice_saveinvoice"
+    ],
+    "8": [
+      "api_get_invoices",
+      "api_get_invoices_invoicemanager",
+      "api_get_invoices_invoicemanager_fetchledgeritems",
+      "api_get_invoices_invoicemanager_fetchledgersummary",
+      "api_get_invoices_invoicemanager_getadvancepayments",
+      "api_get_invoices_invoicemanager_getallinvoices",
+      "api_get_invoices_invoicemanager_getdiscountlist",
+      "api_get_invoices_invoicemanager_getinvoicebyid",
+      "api_get_invoices_invoicemanager_getpaymenthistory",
+      "api_get_invoices_invoicemanager_getpaymentmethods",
+      "api_get_invoices_invoicemanager_getpaymentreceipt"
+    ],
+    "9": [
+      "js_departments",
+      "js_departments_alldepartments",
+      "js_departments_closeviewdepartmentmodal",
+      "js_departments_displaydepartments",
+      "js_departments_displaydepartmentstable",
+      "js_departments_filterandsortdepartments",
+      "js_departments_loaddepartmentforedit",
+      "js_departments_openviewdepartmentmodal",
+      "js_departments_populatedepartmentform",
+      "js_departments_resetform",
+      "js_departments_savedepartment"
+    ],
+    "10": [
+      "examples_exam_script",
+      "examples_exam_script_apiclient",
+      "examples_exam_script_customerselect",
+      "examples_exam_script_discountdisplay",
+      "examples_exam_script_initializestore",
+      "examples_exam_script_netdisplay",
+      "examples_exam_script_pricedisplay",
+      "examples_exam_script_processtransaction",
+      "examples_exam_script_productselect",
+      "examples_exam_script_qtyinput"
+    ],
+    "11": [
+      "examples_library_borrow_books",
+      "examples_library_borrow_details",
+      "examples_library_borrow_displaydetails",
+      "examples_library_borrow_formatdateyyyymmdd",
+      "examples_library_borrow_getallbooks",
+      "examples_library_borrow_getallstudents",
+      "examples_library_borrow_js_examples_library_borrow",
+      "examples_library_borrow_onpageload",
+      "examples_library_borrow_opendetailsmodal",
+      "examples_library_borrow_saveborrow"
+    ],
+    "12": [
+      "js_catalogs",
+      "js_catalogs_allcatalogs",
+      "js_catalogs_displaycatalogs",
+      "js_catalogs_displaycatalogstable",
+      "js_catalogs_filterandsortcatalogs",
+      "js_catalogs_loadcatalogforedit",
+      "js_catalogs_opencategorypicker",
+      "js_catalogs_populatecatalogform",
+      "js_catalogs_resetform",
+      "js_catalogs_savecatalogitem"
+    ],
+    "13": [
+      "js_discounts",
+      "js_discounts_alldiscounts",
+      "js_discounts_displaydiscounts",
+      "js_discounts_displaydiscountstable",
+      "js_discounts_filterandsortdiscounts",
+      "js_discounts_formatmoney",
+      "js_discounts_loaddiscountforedit",
+      "js_discounts_populatediscountform",
+      "js_discounts_resetform",
+      "js_discounts_savediscount"
+    ],
+    "14": [
+      "js_invoice_print",
+      "js_invoice_print_formatmoney",
+      "js_invoice_print_getdoctorrounds",
+      "js_invoice_print_loadinvoicedata",
+      "js_invoice_print_openpaymenthistorymodal",
+      "js_invoice_print_parsehospitalcharges",
+      "js_invoice_print_renderdoctorfeestable",
+      "js_invoice_print_renderhospitalchargestable",
+      "js_invoice_print_renderinvoice",
+      "js_invoice_print_rendersettlementsummary"
+    ],
+    "15": [
+      "js_partial_bill",
+      "js_partial_bill_formatmoney",
+      "js_partial_bill_loadpartialbill",
+      "js_partial_bill_renderadvancepayments",
+      "js_partial_bill_renderdoctorstable",
+      "js_partial_bill_renderledgercategories",
+      "js_partial_bill_renderpartialbill",
+      "js_partial_bill_renderroomstaystable",
+      "js_partial_bill_rendersummarybox"
+    ],
+    "16": [
+      "api_get_admissions",
+      "api_get_admissions_admissionmanager",
+      "api_get_admissions_admissionmanager_getactivedoctors",
+      "api_get_admissions_admissionmanager_getactivepatients",
+      "api_get_admissions_admissionmanager_getadmissionbyid",
+      "api_get_admissions_admissionmanager_getalladmissions",
+      "api_get_admissions_admissionmanager_getavailablebeds",
+      "api_get_admissions_admissionmanager_getbedtransfers"
+    ],
+    "17": [
+      "api_get_rooms",
+      "api_get_rooms_roommaster",
+      "api_get_rooms_roommaster_getallbeds",
+      "api_get_rooms_roommaster_getallrooms",
+      "api_get_rooms_roommaster_getallroomtypes",
+      "api_get_rooms_roommaster_getbedoccupancyhistory",
+      "api_get_rooms_roommaster_getroombyid"
+    ],
+    "18": [
+      "js_archive",
+      "js_archive_currentarchivedrecords",
+      "js_archive_displayarchivetable",
+      "js_archive_filterarchivedrecords",
+      "js_archive_harddeleterecord",
+      "js_archive_loadarchivedrecords",
+      "js_archive_restorerecord"
+    ],
+    "19": [
+      "js_audit_log",
+      "js_audit_log_allauditlogs",
+      "js_audit_log_filterandrenderauditlogs",
+      "js_audit_log_getactionbadgeclass",
+      "js_audit_log_loadauditlogs",
+      "js_audit_log_renderaudittable",
+      "js_audit_log_updateauditstats"
+    ],
+    "20": [
+      "api_get_doctors",
+      "api_get_doctors_closure_1",
+      "api_get_doctors_doctormaster",
+      "api_get_doctors_doctormaster_getalldoctors",
+      "api_get_doctors_doctormaster_getdoctorbyid",
+      "api_get_doctors_doctormaster_getdoctorlookups"
+    ],
+    "21": [
+      "api_get_ledger",
+      "api_get_ledger_ledgermanager",
+      "api_get_ledger_ledgermanager_getadmissionledger",
+      "api_get_ledger_ledgermanager_getdispensedmedicines",
+      "api_get_ledger_ledgermanager_getledgersummary",
+      "api_get_ledger_ledgermanager_getpartialbill"
+    ],
+    "22": [
+      "api_post_admissions",
+      "api_post_admissions_admissionmanager",
+      "api_post_admissions_admissionmanager_admitpatient",
+      "api_post_admissions_admissionmanager_dischargepatient",
+      "api_post_admissions_admissionmanager_transferbed",
+      "api_post_admissions_admissionmanager_updatediagnosis"
+    ],
+    "23": [
+      "api_post_catalogs",
+      "api_post_catalogs_catalog",
+      "api_post_catalogs_catalog_harddeletecatalog",
+      "api_post_catalogs_catalog_insertcatalog",
+      "api_post_catalogs_catalog_togglestatus",
+      "api_post_catalogs_catalog_updatecatalog"
+    ],
+    "24": [
+      "api_post_clinical_orders",
+      "api_post_clinical_orders_clinicalordermanager",
+      "api_post_clinical_orders_clinicalordermanager_administerorder",
+      "api_post_clinical_orders_clinicalordermanager_cancelorder",
+      "api_post_clinical_orders_clinicalordermanager_createdoctororder",
+      "api_post_clinical_orders_clinicalordermanager_logdoctorround"
+    ],
+    "25": [
+      "api_post_departments",
+      "api_post_departments_departmentmaster",
+      "api_post_departments_departmentmaster_harddeletedepartment",
+      "api_post_departments_departmentmaster_insertdepartment",
+      "api_post_departments_departmentmaster_togglestatus",
+      "api_post_departments_departmentmaster_updatedepartment"
+    ],
+    "26": [
+      "api_post_discounts",
+      "api_post_discounts_discount",
+      "api_post_discounts_discount_harddeletediscount",
+      "api_post_discounts_discount_insertdiscount",
+      "api_post_discounts_discount_togglestatus",
+      "api_post_discounts_discount_updatediscount"
+    ],
+    "27": [
+      "api_post_doctors",
+      "api_post_doctors_doctormaster",
+      "api_post_doctors_doctormaster_harddeletedoctor",
+      "api_post_doctors_doctormaster_insertdoctor",
+      "api_post_doctors_doctormaster_togglestatus",
+      "api_post_doctors_doctormaster_updatedoctor"
+    ],
+    "28": [
+      "api_post_patients",
+      "api_post_patients_patientmaster",
+      "api_post_patients_patientmaster_harddeletepatient",
+      "api_post_patients_patientmaster_insertpatient",
+      "api_post_patients_patientmaster_togglestatus",
+      "api_post_patients_patientmaster_updatepatient"
+    ],
+    "29": [
+      "api_post_rooms",
+      "api_post_rooms_roommaster",
+      "api_post_rooms_roommaster_harddeleteroom",
+      "api_post_rooms_roommaster_insertroom",
+      "api_post_rooms_roommaster_togglestatus",
+      "api_post_rooms_roommaster_updateroom"
+    ],
+    "30": [
+      "api_get_clinical_orders",
+      "api_get_clinical_orders_clinicalordermanager",
+      "api_get_clinical_orders_clinicalordermanager_getcataloglist",
+      "api_get_clinical_orders_clinicalordermanager_getdoctororders",
+      "api_get_clinical_orders_clinicalordermanager_getdoctorrounds"
+    ],
+    "31": [
+      "api_get_departments",
+      "api_get_departments_department",
+      "api_get_departments_department_getactivedepartments",
+      "api_get_departments_department_getalldepartments",
+      "api_get_departments_department_getdepartmentbyid"
+    ],
+    "32": [
+      "api_get_discounts",
+      "api_get_discounts_discount",
+      "api_get_discounts_discount_getalldiscounts",
+      "api_get_discounts_discount_getalldiscounttypes",
+      "api_get_discounts_discount_getdiscountbyid"
+    ],
+    "33": [
+      "api_get_patients",
+      "api_get_patients_patientmaster",
+      "api_get_patients_patientmaster_getallpatients",
+      "api_get_patients_patientmaster_getpatientbyid",
+      "api_get_patients_patientmaster_getpatientenums"
+    ],
+    "34": [
+      "api_post_invoices",
+      "api_post_invoices_invoicemanager",
+      "api_post_invoices_invoicemanager_recordadvancepayment",
+      "api_post_invoices_invoicemanager_recordpayment",
+      "api_post_invoices_invoicemanager_settleinvoice"
+    ],
+    "35": [
+      "api_post_specialties",
+      "api_post_specialties_specialtymaster",
+      "api_post_specialties_specialtymaster_getallspecialties",
+      "api_post_specialties_specialtymaster_insertspecialty",
+      "api_post_specialties_specialtymaster_removespecialty"
+    ],
+    "36": [
+      "examples_book_app",
+      "examples_book_app_displaybooks",
+      "examples_book_app_displaybookstable",
+      "examples_book_app_displaycategories",
+      "examples_book_app_insertbook"
+    ],
+    "37": [
+      "js_payment_receipt",
+      "js_payment_receipt_formatcurrency",
+      "js_payment_receipt_geturlparam",
+      "js_payment_receipt_loadreceiptdata",
+      "js_payment_receipt_renderreceipt"
+    ],
+    "38": [
+      "api_get_catalogs",
+      "api_get_catalogs_catalog",
+      "api_get_catalogs_catalog_getallcatalogs",
+      "api_get_catalogs_catalog_getcatalogbyid"
+    ],
+    "39": [
+      "api_post_archive",
+      "api_post_archive_archivemanager",
+      "api_post_archive_archivemanager_harddeleterecord",
+      "api_post_archive_archivemanager_restorerecord"
+    ],
+    "40": [
+      "examples_book_books",
+      "examples_book_books_book",
+      "examples_book_books_book_getbooks",
+      "examples_book_books_book_insertbook"
+    ],
+    "41": [
+      "api_get_archive",
+      "api_get_archive_archivemanager",
+      "api_get_archive_archivemanager_getarchivedrecords"
+    ],
+    "42": [
+      "api_get_audit_log",
+      "api_get_audit_log_auditlogget",
+      "api_get_audit_log_auditlogget_getallauditlogs"
+    ],
+    "43": [
+      "api_post_auth",
+      "api_post_auth_auth",
+      "api_post_auth_auth_login"
+    ],
+    "44": [
+      "api_post_ledger",
+      "api_post_ledger_ledgermanager",
+      "api_post_ledger_ledgermanager_returnmedicine"
+    ],
+    "45": [
+      "examples_book_categories",
+      "examples_book_categories_category",
+      "examples_book_categories_category_getcategories"
+    ],
+    "46": [
+      "examples_invoice_invoice_invoice",
+      "examples_invoice_invoice_invoice_saveinvoice",
+      "examples_invoice_invoice_php_examples_invoice_invoice"
+    ],
+    "47": [
+      "examples_invoice_products",
+      "examples_invoice_products_product",
+      "examples_invoice_products_product_getallproducts"
+    ],
+    "48": [
+      "examples_library_books",
+      "examples_library_books_book",
+      "examples_library_books_book_getallbooks"
+    ],
+    "49": [
+      "examples_library_borrow_borrow",
+      "examples_library_borrow_borrow_saveborrow",
+      "examples_library_borrow_php_examples_library_borrow"
+    ],
+    "50": [
+      "examples_library_students",
+      "examples_library_students_student",
+      "examples_library_students_student_getallstudents"
+    ],
+    "51": [
+      "js_dashboard",
+      "js_dashboard_loaddashboardmetrics",
+      "js_dashboard_renderrecentadmissions"
+    ],
+    "52": [
+      "api_post_audit_log",
+      "api_post_audit_log_closure_1"
+    ],
+    "53": [
+      "js_sidebar",
+      "js_sidebar_rendersidebar"
+    ],
+    "54": [
+      "api_connection"
+    ],
+    "55": [
+      "api_get_connection"
+    ],
+    "56": [
+      "api_post_connection"
+    ],
+    "57": [
+      "connection"
+    ],
+    "58": [
+      "examples_book_connection"
+    ],
+    "59": [
+      "examples_book_index"
+    ],
+    "60": [
+      "examples_book_js"
+    ],
+    "61": [
+      "examples_book_template"
+    ],
+    "62": [
+      "examples_exam_api"
+    ],
+    "63": [
+      "examples_library_connection"
+    ],
+    "64": [
+      "js_login"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07205387205387205,
+    "1": 0.11088709677419355,
+    "2": 0.12535612535612536,
+    "3": 0.18128654970760233,
+    "4": 0.1978021978021978,
+    "5": 0.21978021978021978,
+    "6": 0.21794871794871795,
+    "7": 0.30303030303030304,
+    "8": 0.21818181818181817,
+    "9": 0.34545454545454546,
+    "10": 0.2,
+    "11": 0.35555555555555557,
+    "12": 0.35555555555555557,
+    "13": 0.35555555555555557,
+    "14": 0.4222222222222222,
+    "15": 0.5555555555555556,
+    "16": 0.25,
+    "17": 0.2857142857142857,
+    "18": 0.5714285714285714,
+    "19": 0.47619047619047616,
+    "20": 0.3333333333333333,
+    "21": 0.4666666666666667,
+    "22": 0.3333333333333333,
+    "23": 0.3333333333333333,
+    "24": 0.3333333333333333,
+    "25": 0.3333333333333333,
+    "26": 0.3333333333333333,
+    "27": 0.3333333333333333,
+    "28": 0.3333333333333333,
+    "29": 0.3333333333333333,
+    "30": 0.4,
+    "31": 0.4,
+    "32": 0.4,
+    "33": 0.4,
+    "34": 0.4,
+    "35": 0.4,
+    "36": 0.6,
+    "37": 0.7,
+    "38": 0.5,
+    "39": 0.5,
+    "40": 0.5,
+    "41": 0.6666666666666666,
+    "42": 0.6666666666666666,
+    "43": 0.6666666666666666,
+    "44": 0.6666666666666666,
+    "45": 0.6666666666666666,
+    "46": 0.6666666666666666,
+    "47": 0.6666666666666666,
+    "48": 0.6666666666666666,
+    "49": 0.6666666666666666,
+    "50": 0.6666666666666666,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0
+  },
+  "gods": [
+    {
+      "id": "api_get_invoices_invoicemanager",
+      "label": "InvoiceManager",
+      "degree": 10
+    },
+    {
+      "id": "js_admission_details_loadledgersummary",
+      "label": "loadLedgerSummary()",
+      "degree": 8
+    },
+    {
+      "id": "js_admission_details_rendersettlementsection",
+      "label": "renderSettlementSection()",
+      "degree": 8
+    },
+    {
+      "id": "js_invoice_print_renderinvoice",
+      "label": "renderInvoice()",
+      "degree": 8
+    },
+    {
+      "id": "js_partial_bill_renderpartialbill",
+      "label": "renderPartialBill()",
+      "degree": 8
+    },
+    {
+      "id": "api_get_admissions_admissionmanager",
+      "label": "AdmissionManager",
+      "degree": 7
+    },
+    {
+      "id": "js_admission_details_initclinicalmodals",
+      "label": "initClinicalModals()",
+      "degree": 7
+    },
+    {
+      "id": "js_admission_details_loadledger",
+      "label": "loadLedger()",
+      "degree": 7
+    },
+    {
+      "id": "js_partial_bill_formatmoney",
+      "label": "formatMoney()",
+      "degree": 7
+    },
+    {
+      "id": "api_get_rooms_roommaster",
+      "label": "RoomMaster",
+      "degree": 6
+    }
+  ],
+  "surprises": [],
+  "questions": [
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `assignedDoctors`, `availableBedsList`, `catalogItems` to the rest of the system?",
+      "why": "46 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `admission_details.js` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07205387205387205 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `doctors.js` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.11088709677419355 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `admissions.js` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.12535612535612536 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

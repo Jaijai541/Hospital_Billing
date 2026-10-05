@@ -173,6 +173,13 @@ const initClinicalTabs = () => {
         } else if (tabId === 'tab-orders') {
             activateSubtab('sub-orders');
         }
+
+        if (realTabId === 'tab-ledger') {
+            loadLedger();
+            loadLedgerSummary();
+        } else if (realTabId === 'tab-clinical') {
+            loadTransfers();
+        }
     };
 
     switchClinicalTab = activateTab;
@@ -1779,12 +1786,20 @@ const renderTransfersTable = (transfers) => {
     transfers.forEach(t => {
         const rawRate = parseFloat(t.Daily_Rate || t.Room_Rate || 0);
         const rate = isNaN(rawRate) ? '0.00' : rawRate.toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const fee = t.Total_Room_Fee ? `₱${parseFloat(t.Total_Room_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '<span class="text-muted">Accumulating...</span>';
         const isCurrent = (t.Is_Current == 1 || t.Is_Current_Stay == 1 || !t.Date_Out || t.Date_Out === 'Currently In Bed');
+        const rawFee = parseFloat(t.Total_Room_Fee !== undefined && t.Total_Room_Fee !== null ? t.Total_Room_Fee : (t.Calculated_Room_Fee || 0));
+        const formattedFee = isNaN(rawFee) ? '0.00' : rawFee.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const fee = isCurrent 
+            ? `₱${formattedFee} <small class="text-success" style="font-weight: normal;">(Live)</small>` 
+            : `₱${formattedFee}`;
 
         const stayBadge = isCurrent 
             ? '<span class="badge badge-success">Active Occupancy</span>' 
             : '<span class="badge badge-secondary">Closed & Charged</span>';
+
+        const daysText = isCurrent
+            ? `${t.Total_Days || t.Calculated_Days || 1} day(s) <small class="text-success">(Active)</small>`
+            : `${t.Total_Days} day(s)`;
 
         html += '<tr>';
         html += `<td><strong>STAY-${String(t.Transfer_ID).padStart(3, '0')}</strong></td>`;
@@ -1793,7 +1808,7 @@ const renderTransfersTable = (transfers) => {
         html += `<td>₱${rate}/day</td>`;
         html += `<td>${t.Date_In}</td>`;
         html += `<td>${t.Date_Out || '<span class="text-muted">Currently In Bed</span>'}</td>`;
-        html += `<td>${t.Total_Days || 'Active'}</td>`;
+        html += `<td>${daysText}</td>`;
         html += `<td><strong>${fee}</strong></td>`;
         html += `<td>${stayBadge}</td>`;
         html += '</tr>';

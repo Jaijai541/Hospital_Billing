@@ -323,8 +323,10 @@ class AdmissionManager
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate, 0.00) AS Daily_Rate,
                     DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Date_In,
                     DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Date_Out,
-                    rtl.Total_Days,
-                    rtl.Total_Room_Fee,
+                    COALESCE(rtl.Total_Days, GREATEST(1, DATEDIFF(NOW(), rtl.Date_In))) AS Total_Days,
+                    COALESCE(rtl.Total_Room_Fee, GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate, 0.00)) AS Total_Room_Fee,
+                    GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) AS Calculated_Days,
+                    GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate, 0.00) AS Calculated_Room_Fee,
                     (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current,
                     (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current_Stay
                 FROM Room_Transfer_Log rtl

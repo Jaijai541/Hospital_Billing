@@ -35,6 +35,11 @@ body.login-body {
     position: relative;
 }
 
+.brand-icon-wrapper {
+    display: block;
+    margin-bottom: 14px;
+}
+
 .brand-badge-icon {
     display: inline-flex;
     align-items: center;
@@ -45,7 +50,6 @@ body.login-body {
     border: 1px solid #d2e4f3;
     border-radius: 10px;
     color: #0284c7;
-    margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(2, 132, 199, 0.08);
 }
 

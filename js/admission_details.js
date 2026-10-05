@@ -397,12 +397,10 @@ const initClinicalModals = () => {
 
     const historyModal = document.getElementById('patientHistoryModal');
     const btnOpenHist = document.getElementById('btnOpenAdmissionHistory');
-    const pillHist = document.getElementById('banner-history-pill');
     const btnCloseHist = document.getElementById('btnCloseHistoryModal');
     const btnCloseHistFooter = document.getElementById('btnCloseHistoryModalFooter');
 
     if (btnOpenHist) btnOpenHist.addEventListener('click', openPatientAdmissionHistoryModal);
-    if (pillHist) pillHist.addEventListener('click', openPatientAdmissionHistoryModal);
     if (btnCloseHist) btnCloseHist.addEventListener('click', () => closeModal('patientHistoryModal'));
     if (btnCloseHistFooter) btnCloseHistFooter.addEventListener('click', () => closeModal('patientHistoryModal'));
 
@@ -979,24 +977,7 @@ const loadAdmissionDetails = () => {
             document.getElementById('banner-room').textContent = admissionData.Room_Name ? `${admissionData.Room_Name} (${admissionData.Room_Type})` : 'N/A';
             document.getElementById('banner-rate').textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
 
-            const totalAdm = parseInt(admissionData.Total_Admissions || 1, 10);
-            const seqAdm = parseInt(admissionData.Admission_Sequence || 1, 10);
-            const bannerHistoryPill = document.getElementById('banner-history-pill');
-            if (bannerHistoryPill) {
-                if (totalAdm <= 1) {
-                    bannerHistoryPill.innerHTML = `1st Admission (First Visit)`;
-                    bannerHistoryPill.style.background = '#e0f2fe';
-                    bannerHistoryPill.style.color = '#0369a1';
-                    bannerHistoryPill.style.border = '1px solid #bae6fd';
-                    bannerHistoryPill.title = 'Click to view complete patient admission history';
-                } else {
-                    bannerHistoryPill.innerHTML = `${formatOrdinal(seqAdm)} of ${totalAdm} Admissions`;
-                    bannerHistoryPill.style.background = '#fef3c7';
-                    bannerHistoryPill.style.color = '#92400e';
-                    bannerHistoryPill.style.border = '1px solid #fde68a';
-                    bannerHistoryPill.title = `Patient has ${totalAdm} recorded admissions. Click to view history.`;
-                }
-            }
+
 
             const remBal = parseFloat(admissionData.Remaining_Balance !== undefined && admissionData.Remaining_Balance !== null ? admissionData.Remaining_Balance : 0);
             let statusDisplay = `<span class="badge badge-primary" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600;">Admitted</span>`;

@@ -62,9 +62,6 @@ const updateBedGauge = (beds) => {
     const elSummary = document.getElementById('occupancy-summary-text');
     if (elSummary) elSummary.textContent = `${occupiedBeds} of ${totalBeds} Beds in Active Use`;
 
-    const elPct = document.getElementById('occupancy-pct-text');
-    if (elPct) elPct.textContent = `${occPct}% Capacity`;
-
     const elBadge = document.getElementById('occupancy-rate-badge');
     if (elBadge) {
         elBadge.textContent = `${occPct}% Occupied`;

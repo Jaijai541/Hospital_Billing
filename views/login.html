@@ -4,41 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Billing System - Login</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.2">
-    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="../css/common.css?v=8.3">
+    <link rel="stylesheet" href="../css/login.css?v=8.3">
 </head>
 <body class="login-body">
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="5"/>
+                        <path d="M12 7v10"/>
+                        <path d="M7 12h10"/>
+                    </svg>
+                </div>
+                <h1 class="brand-title">In-Patient Hospital</h1>
+                <p class="brand-subtitle">Billing & Patient Information System</p>
+                <div class="auth-badge">Secure Portal Access</div>
+            </div>
 
-    <div class="login-card">
-        <div class="brand">
-            <h2>In-Patient Hospital</h2>
-            <p>Billing & Patient Information System</p>
+            <div id="error-message" class="error-alert"></div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <div class="input-wrapper password-input-wrapper">
+                        <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" id="btnTogglePassword" class="password-toggle-btn" aria-label="Show password" tabindex="0">
+                            <svg class="eye-icon eye-on" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg class="eye-icon eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                <line x1="2" x2="22" y1="2" y2="22"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-login" class="btn btn-primary btn-submit-login">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="login-credentials-card">
+                <div class="credentials-badge">Authorized Demo Access</div>
+                <div class="credentials-row">
+                    <span class="credentials-item">User: <strong>admin</strong></span>
+                    <span class="credentials-divider">•</span>
+                    <span class="credentials-item">Pass: <strong>admin123</strong></span>
+                </div>
+            </div>
         </div>
 
-        <div id="error-message" class="text-danger mb-3" style="font-size: 13px; text-align: center; min-height: 18px; font-weight: 600;"></div>
-
-        <form id="loginForm">
-            <div class="form-group mb-3">
-                <label class="form-label" for="username">Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Enter username" required autofocus>
-            </div>
-
-            <div class="form-group mb-4">
-                <label class="form-label" for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter password" required>
-            </div>
-
-            <button type="submit" id="btn-login" class="btn btn-primary btn-submit-login">
-                Sign In to System
-            </button>
-        </form>
-
-        <div class="login-credentials-hint">
-            <span>Default Test Credentials: <strong>admin</strong> / <strong>admin123</strong></span>
+        <div class="login-footer">
+            <span>Hospital Information & Billing Management System</span>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/login.js?v=6.0"></script>
+    <script src="../js/login.js?v=8.3"></script>
 </body>
 </html>

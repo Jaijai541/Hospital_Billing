@@ -1009,8 +1009,8 @@ const loadAdmissionDetails = () => {
                     statusDisplay = `<span class="badge badge-success" style="font-weight: 600;">Settled (Paid in Full)</span>`;
                 }
             }
-            const statusSuffix = totalAdm > 1 ? ` &bull; <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600; font-size: 11px; border: 1px solid #cbd5e1;">Lifetime: ${totalAdm} Admissions</span>` : ``;
-            document.getElementById('banner-status').innerHTML = `${statusDisplay} <small class="text-muted" style="margin-left: 6px;">(Admitted: ${admissionData.Admission_Date})</small>${statusSuffix}`;
+            const statusSuffix = totalAdm > 1 ? `<span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600; font-size: 11px; border: 1px solid #cbd5e1;">Lifetime: ${totalAdm} Admissions</span>` : ``;
+            document.getElementById('banner-status').innerHTML = `${statusDisplay} <small class="text-muted" style="margin-left: 6px;">(Admitted: ${admissionData.Admission_Date})</small><br>${statusSuffix}<br>`;
 
             const badgeSettlement = document.getElementById('badge_tab_settlement');
             if (badgeSettlement) {

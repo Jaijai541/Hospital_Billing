@@ -56,7 +56,6 @@ const renderInvoicesTable = (invoices) => {
     html += '<th>Patient Code & Name</th>';
     html += '<th>Gross Charges</th>';
     html += '<th>Applied Discounts</th>';
-    html += '<th>12% VAT</th>';
     html += '<th>Net Amount Due</th>';
     html += '<th>Amount Paid</th>';
     html += '<th>Balance Due</th>';
@@ -79,16 +78,6 @@ const renderInvoicesTable = (invoices) => {
             discBadge = discItems.map(item => `<span class="badge badge-info" style="font-size: 11px; max-width: 220px; white-space: normal; display: inline-block; text-align: left; margin-bottom: 2px;">${item}</span>`).join('<br>');
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
             discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
-        }
-
-        const vatRate = parseFloat(inv.VAT_Rate !== undefined && inv.VAT_Rate !== null ? inv.VAT_Rate : 12.00);
-        const vatAmt = parseFloat(inv.VAT_Amount || 0);
-        const vatExemptAmt = parseFloat(inv.VAT_Exempt_Amount || 0);
-        let vatBadge = '';
-        if (vatRate === 0 || vatExemptAmt > 0) {
-            vatBadge = '<span class="badge badge-success" style="font-size: 11px;">0% (Exempt)</span>';
-        } else {
-            vatBadge = `₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
         }
 
         let statusBadge = '';
@@ -116,7 +105,6 @@ const renderInvoicesTable = (invoices) => {
         html += `<td><strong>${inv.Patient_Code}</strong><br>${inv.Patient_Name}</td>`;
         html += `<td>₱${gross}</td>`;
         html += `<td>${discBadge}</td>`;
-        html += `<td>${vatBadge}</td>`;
         html += `<td><strong style="color: var(--primary);">₱${net}</strong></td>`;
         html += `<td>₱${paid}</td>`;
         html += `<td><strong style="color: ${balVal > 0 ? '#dc2626' : '#16a34a'};">₱${bal}</strong></td>`;

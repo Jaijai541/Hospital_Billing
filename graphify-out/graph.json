@@ -407,6 +407,32 @@
       "source_location": "L5"
     },
     {
+      "id": "api_post_users_usermanager",
+      "label": "UserManager",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": "usermanager",
+      "source_file": "api/POST/users.php",
+      "source_location": "L5"
+    },
+    {
+      "id": "api_get_users_usermanager",
+      "label": "UserManager",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": "usermanager",
+      "source_file": "api/GET/users.php",
+      "source_location": "L5"
+    },
+    {
       "id": "api_get_invoices_invoicemanager",
       "label": "InvoiceManager",
       "_callable": true,
@@ -3561,7 +3587,7 @@
       "file_type": "code",
       "norm_label": ".harddeleterecord()",
       "source_file": "api/POST/archive.php",
-      "source_location": "L46"
+      "source_location": "L62"
     },
     {
       "id": "api_post_archive_archivemanager_restorerecord",
@@ -4137,7 +4163,7 @@
       "file_type": "code",
       "norm_label": "filterandrenderinvoices()",
       "source_file": "js/invoices.js",
-      "source_location": "L133"
+      "source_location": "L121"
     },
     {
       "id": "js_invoices_loadinvoices",
@@ -4149,7 +4175,7 @@
       "file_type": "code",
       "norm_label": "loadinvoices()",
       "source_file": "js/invoices.js",
-      "source_location": "L163"
+      "source_location": "L151"
     },
     {
       "id": "js_invoices_loadpaymentmethods",
@@ -4173,7 +4199,7 @@
       "file_type": "code",
       "norm_label": "openpaymenthistorymodal()",
       "source_file": "js/invoices.js",
-      "source_location": "L253"
+      "source_location": "L241"
     },
     {
       "id": "js_invoices_openpaymentmethodpicker",
@@ -4197,7 +4223,7 @@
       "file_type": "code",
       "norm_label": "openpaymentmodal()",
       "source_file": "js/invoices.js",
-      "source_location": "L216"
+      "source_location": "L204"
     },
     {
       "id": "js_invoices_renderinvoicestable",
@@ -4221,7 +4247,7 @@
       "file_type": "code",
       "norm_label": "submitpayment()",
       "source_file": "js/invoices.js",
-      "source_location": "L406"
+      "source_location": "L394"
     },
     {
       "id": "js_invoices_updatepaymentmodalcalculations",
@@ -4233,7 +4259,7 @@
       "file_type": "code",
       "norm_label": "updatepaymentmodalcalculations()",
       "source_file": "js/invoices.js",
-      "source_location": "L181"
+      "source_location": "L169"
     },
     {
       "id": "js_invoices_viewprintinvoice",
@@ -4245,7 +4271,7 @@
       "file_type": "code",
       "norm_label": "viewprintinvoice()",
       "source_file": "js/invoices.js",
-      "source_location": "L177"
+      "source_location": "L165"
     },
     {
       "id": "js_promissory_notes_closehistorymodal",
@@ -4426,6 +4452,294 @@
       "norm_label": "updatestats()",
       "source_file": "js/promissory_notes.js",
       "source_location": "L163"
+    },
+    {
+      "id": "js_staff_archivestaff",
+      "label": "archiveStaff()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "archivestaff()",
+      "source_file": "js/staff.js",
+      "source_location": "L312"
+    },
+    {
+      "id": "js_staff_escapesinglequotes",
+      "label": "escapeSingleQuotes()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "escapesinglequotes()",
+      "source_file": "js/staff.js",
+      "source_location": "L179"
+    },
+    {
+      "id": "js_staff_filterandrenderstaff",
+      "label": "filterAndRenderStaff()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "filterandrenderstaff()",
+      "source_file": "js/staff.js",
+      "source_location": "L81"
+    },
+    {
+      "id": "js_staff_getrolebadge",
+      "label": "getRoleBadge()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "getrolebadge()",
+      "source_file": "js/staff.js",
+      "source_location": "L69"
+    },
+    {
+      "id": "js_staff_initstaffevents",
+      "label": "initStaffEvents()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "initstaffevents()",
+      "source_file": "js/staff.js",
+      "source_location": "L425"
+    },
+    {
+      "id": "js_staff_loadroles",
+      "label": "loadRoles()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "loadroles()",
+      "source_file": "js/staff.js",
+      "source_location": "L8"
+    },
+    {
+      "id": "js_staff_loadstaff",
+      "label": "loadStaff()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "loadstaff()",
+      "source_file": "js/staff.js",
+      "source_location": "L53"
+    },
+    {
+      "id": "js_staff_loadstations",
+      "label": "loadStations()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "loadstations()",
+      "source_file": "js/staff.js",
+      "source_location": "L35"
+    },
+    {
+      "id": "js_staff_openaddstaffmodal",
+      "label": "openAddStaffModal()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openaddstaffmodal()",
+      "source_file": "js/staff.js",
+      "source_location": "L183"
+    },
+    {
+      "id": "js_staff_openeditstaffmodal",
+      "label": "openEditStaffModal()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openeditstaffmodal()",
+      "source_file": "js/staff.js",
+      "source_location": "L207"
+    },
+    {
+      "id": "js_staff_openresetpasswordmodal",
+      "label": "openResetPasswordModal()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openresetpasswordmodal()",
+      "source_file": "js/staff.js",
+      "source_location": "L368"
+    },
+    {
+      "id": "js_staff_renderstafftable",
+      "label": "renderStaffTable()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "renderstafftable()",
+      "source_file": "js/staff.js",
+      "source_location": "L115"
+    },
+    {
+      "id": "js_staff_restorestaff",
+      "label": "restoreStaff()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "restorestaff()",
+      "source_file": "js/staff.js",
+      "source_location": "L340"
+    },
+    {
+      "id": "js_staff_saveresetpassword",
+      "label": "saveResetPassword()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "saveresetpassword()",
+      "source_file": "js/staff.js",
+      "source_location": "L382"
+    },
+    {
+      "id": "js_staff_savestaffform",
+      "label": "saveStaffForm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "savestaffform()",
+      "source_file": "js/staff.js",
+      "source_location": "L249"
+    },
+    {
+      "id": "api_post_users_usermanager_adduser",
+      "label": ".addUser()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".adduser()",
+      "source_file": "api/POST/users.php",
+      "source_location": "L7"
+    },
+    {
+      "id": "api_post_users_usermanager_archiveuser",
+      "label": ".archiveUser()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".archiveuser()",
+      "source_file": "api/POST/users.php",
+      "source_location": "L147"
+    },
+    {
+      "id": "api_post_users_usermanager_resetpassword",
+      "label": ".resetPassword()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".resetpassword()",
+      "source_file": "api/POST/users.php",
+      "source_location": "L200"
+    },
+    {
+      "id": "api_post_users_usermanager_restoreuser",
+      "label": ".restoreUser()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".restoreuser()",
+      "source_file": "api/POST/users.php",
+      "source_location": "L177"
+    },
+    {
+      "id": "api_post_users_usermanager_updateuser",
+      "label": ".updateUser()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".updateuser()",
+      "source_file": "api/POST/users.php",
+      "source_location": "L71"
+    },
+    {
+      "id": "api_get_users_usermanager_getdepartmentstations",
+      "label": ".getDepartmentStations()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".getdepartmentstations()",
+      "source_file": "api/GET/users.php",
+      "source_location": "L102"
+    },
+    {
+      "id": "api_get_users_usermanager_getuserbyid",
+      "label": ".getUserById()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".getuserbyid()",
+      "source_file": "api/GET/users.php",
+      "source_location": "L56"
+    },
+    {
+      "id": "api_get_users_usermanager_getuserroles",
+      "label": ".getUserRoles()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".getuserroles()",
+      "source_file": "api/GET/users.php",
+      "source_location": "L90"
+    },
+    {
+      "id": "api_get_users_usermanager_getusers",
+      "label": ".getUsers()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".getusers()",
+      "source_file": "api/GET/users.php",
+      "source_location": "L7"
     },
     {
       "id": "examples_invoice_invoice_displaydetails",
@@ -6141,6 +6455,72 @@
       "norm_label": "allpromissorynotes",
       "source_file": "js/promissory_notes.js",
       "source_location": "L4"
+    },
+    {
+      "id": "js_staff",
+      "label": "staff.js",
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "staff.js",
+      "source_file": "js/staff.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "js_staff_allstaff",
+      "label": "allStaff",
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "allstaff",
+      "source_file": "js/staff.js",
+      "source_location": "L4"
+    },
+    {
+      "id": "js_staff_roleslist",
+      "label": "rolesList",
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "roleslist",
+      "source_file": "js/staff.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "js_staff_stationslist",
+      "label": "stationsList",
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "stationslist",
+      "source_file": "js/staff.js",
+      "source_location": "L6"
+    },
+    {
+      "id": "api_post_users",
+      "label": "POST/users.php",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": "post/users.php",
+      "source_file": "api/POST/users.php",
+      "source_location": "L1"
+    },
+    {
+      "id": "api_get_users",
+      "label": "GET/users.php",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": "get/users.php",
+      "source_file": "api/GET/users.php",
+      "source_location": "L1"
     },
     {
       "id": "examples_invoice_invoice_details",
@@ -8403,7 +8783,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/invoices.js",
-      "source_location": "L160",
+      "source_location": "L148",
       "weight": 1.0
     },
     {
@@ -8415,7 +8795,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/invoices.js",
-      "source_location": "L170",
+      "source_location": "L158",
       "weight": 1.0
     },
     {
@@ -8427,7 +8807,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/invoices.js",
-      "source_location": "L330",
+      "source_location": "L318",
       "weight": 1.0
     },
     {
@@ -8439,7 +8819,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/invoices.js",
-      "source_location": "L249",
+      "source_location": "L237",
       "weight": 1.0
     },
     {
@@ -8451,7 +8831,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/invoices.js",
-      "source_location": "L454",
+      "source_location": "L442",
       "weight": 1.0
     },
     {
@@ -9223,6 +9603,102 @@
       "weight": 1.0
     },
     {
+      "source": "js_staff_archivestaff",
+      "target": "js_staff_loadstaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L325",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_filterandrenderstaff",
+      "target": "js_staff_renderstafftable",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_loadstaff",
+      "target": "js_staff_filterandrenderstaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openeditstaffmodal",
+      "target": "js_staff_archivestaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openeditstaffmodal",
+      "target": "js_staff_restorestaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L240",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_renderstafftable",
+      "target": "js_staff_getrolebadge",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_restorestaff",
+      "target": "js_staff_loadstaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L353",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_savestaffform",
+      "target": "js_staff_loadstaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L302",
+      "weight": 1.0
+    },
+    {
       "source": "examples_book_app",
       "target": "examples_book_app_displaybooks",
       "relation": "contains",
@@ -9747,7 +10223,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/invoices.js",
-      "source_location": "L177",
+      "source_location": "L165",
       "weight": 1.0
     },
     {
@@ -9919,6 +10395,54 @@
       "weight": 1.0
     },
     {
+      "source": "js_staff",
+      "target": "js_staff_loadstations",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_initstaffevents",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L425",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_loadstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_loadroles",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
       "source": "agents",
       "target": "agents_agent_guidelines_project_instructions",
       "relation": "contains",
@@ -10084,6 +10608,17 @@
       "weight": 1.0
     },
     {
+      "source": "api_get_users",
+      "target": "api_get_users_usermanager",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/users.php",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
       "source": "api_post_admissions",
       "target": "api_post_admissions_admissionmanager",
       "relation": "contains",
@@ -10234,6 +10769,17 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "api/POST/specialties.php",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users",
+      "target": "api_post_users_usermanager",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
       "source_location": "L5",
       "weight": 1.0
     },
@@ -11862,7 +12408,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/invoices.js",
-      "source_location": "L216",
+      "source_location": "L204",
       "weight": 1.0
     },
     {
@@ -11873,7 +12419,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/invoices.js",
-      "source_location": "L253",
+      "source_location": "L241",
       "weight": 1.0
     },
     {
@@ -12358,6 +12904,160 @@
       "confidence_score": 1.0,
       "source_file": "js/rooms.js",
       "source_location": "L993",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_renderstafftable",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_escapesinglequotes",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L179",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_openaddstaffmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_openeditstaffmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_savestaffform",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L249",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_archivestaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L312",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_restorestaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L340",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_openresetpasswordmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L368",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_saveresetpassword",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L382",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_allstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_roleslist",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_stationslist",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_getrolebadge",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_filterandrenderstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -12977,6 +13677,50 @@
       "weight": 1.0
     },
     {
+      "source": "api_get_users_usermanager",
+      "target": "api_get_users_usermanager_getdepartmentstations",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/users.php",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_users_usermanager",
+      "target": "api_get_users_usermanager_getuserbyid",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/users.php",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_users_usermanager",
+      "target": "api_get_users_usermanager_getusers",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/users.php",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_users_usermanager",
+      "target": "api_get_users_usermanager_getuserroles",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/users.php",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
       "source": "api_post_admissions_admissionmanager",
       "target": "api_post_admissions_admissionmanager_dischargepatient",
       "relation": "method",
@@ -13028,7 +13772,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "api/POST/archive.php",
-      "source_location": "L46",
+      "source_location": "L62",
       "weight": 1.0
     },
     {
@@ -13491,6 +14235,61 @@
       "confidence_score": 1.0,
       "source_file": "api/POST/specialties.php",
       "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users_usermanager",
+      "target": "api_post_users_usermanager_archiveuser",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users_usermanager",
+      "target": "api_post_users_usermanager_restoreuser",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
+      "source_location": "L177",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users_usermanager",
+      "target": "api_post_users_usermanager_resetpassword",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users_usermanager",
+      "target": "api_post_users_usermanager_adduser",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users_usermanager",
+      "target": "api_post_users_usermanager_updateuser",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
+      "source_location": "L71",
       "weight": 1.0
     },
     {
@@ -14238,7 +15037,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/invoices.js",
-      "source_location": "L507",
+      "source_location": "L495",
       "weight": 1.0
     },
     {
@@ -14250,7 +15049,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/invoices.js",
-      "source_location": "L509",
+      "source_location": "L497",
       "weight": 1.0
     },
     {
@@ -14262,7 +15061,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/invoices.js",
-      "source_location": "L513",
+      "source_location": "L501",
       "weight": 1.0
     },
     {
@@ -14274,7 +15073,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/invoices.js",
-      "source_location": "L523",
+      "source_location": "L511",
       "weight": 1.0
     },
     {
@@ -14538,7 +15337,67 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/sidebar.js",
-      "source_location": "L77",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_openaddstaffmodal",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L428",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_savestaffform",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L443",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_saveresetpassword",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L458",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_filterandrenderstaff",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L463",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_loadstaff",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L478",
       "weight": 1.0
     },
     {
@@ -14567,5 +15426,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "db09ce49819af8a247c841939de9f798972234a1"
+  "built_at_commit": "4107db03445cce91ebe4841592b32bba0eabaf5b"
 }

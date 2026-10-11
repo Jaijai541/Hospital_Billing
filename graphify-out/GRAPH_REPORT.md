@@ -1,17 +1,17 @@
-# Graph Report - Hospital_Billing  (2026-10-06)
+# Graph Report - Hospital_Billing  (2026-10-12)
 
 ## Corpus Check
-- 69 files · ~82,633 words
+- 73 files · ~96,085 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 19 file(s) not represented in the graph (top: .css 17, (none) 2)
+- Unclassified: 20 file(s) not represented in the graph (top: .css 18, (none) 2)
 
 ## Summary
-- 524 nodes · 724 edges · 66 communities (21 shown, 45 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 82 edges (avg confidence: 0.85)
+- 556 nodes · 766 edges · 69 communities (22 shown, 47 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 87 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `db09ce49`
+- Built from commit: `4107db03`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -69,6 +69,9 @@
 - Student
 - dashboard.js
 - promissory_notes.js
+- staff.js
+- UserManager
+- UserManager
 
 ## God Nodes (most connected - your core abstractions)
 1. `InvoiceManager` - 12 edges
@@ -91,7 +94,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (66 total, 45 thin omitted)
+## Communities (69 total, 47 thin omitted)
 
 ### Community 0 - "admission_details.js"
 Cohesion: 0.06
@@ -177,16 +180,20 @@ Nodes (4): loadDashboardMetrics(), renderRecentAdmissions(), updateBedGauge(), u
 Cohesion: 0.22
 Nodes (15): allPaymentMethods, allPromissoryNotes, closeHistoryModal(), closePaymentModal(), filterAndRenderPromissoryNotes(), initEvents(), loadPromissoryNotes(), openPaymentHistoryModal() (+7 more)
 
+### Community 66 - "staff.js"
+Cohesion: 0.18
+Nodes (14): allStaff, archiveStaff(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadStaff(), openAddStaffModal(), openEditStaffModal() (+6 more)
+
 ## Knowledge Gaps
-- **56 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+51 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 223 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **45 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **59 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+54 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 241 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **47 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What connects `apiClient`, `customerSelect`, `productSelect` to the rest of the system?**
-  _56 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _59 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `admission_details.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06346153846153846 - nodes in this community are weakly interconnected._
 - **Should `doctors.js` be split into smaller, more focused modules?**

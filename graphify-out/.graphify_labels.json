@@ -64,5 +64,8 @@
   "62": "api.php",
   "63": "Library/connection.php",
   "64": "login.js",
-  "65": "promissory_notes.js"
+  "65": "promissory_notes.js",
+  "66": "staff.js",
+  "67": "UserManager",
+  "68": "UserManager"
 }

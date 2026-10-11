@@ -148,14 +148,14 @@ const renderStaffTable = (staff) => {
 
         let archiveActionBtn = '';
         if (parseInt(u.User_ID, 10) === 1) {
-            archiveActionBtn = '<button type="button" class="btn btn-sm btn-outline" style="opacity: 0.5;" title="Primary Admin Protected" disabled>Protected</button>';
+            archiveActionBtn = '<button type="button" class="btn btn-sm btn-icon btn-action-icon" title="Primary Administrator Protected" aria-label="Protected" disabled style="opacity: 0.35; cursor: not-allowed;">🔒</button>';
         } else if (isActive) {
-            archiveActionBtn = `<button type="button" class="btn btn-sm btn-danger" onclick="archiveStaff(${u.User_ID}, '${escapeSingleQuotes(u.Full_Name)}')">Archive</button>`;
+            archiveActionBtn = `<button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-archive btn-action-soft-delete" onclick="event.stopPropagation(); archiveStaff(${u.User_ID})" title="Send to Archive (Soft Delete)" aria-label="Archive Staff Account">✕</button>`;
         } else {
-            archiveActionBtn = `<button type="button" class="btn btn-sm btn-success" onclick="restoreStaff(${u.User_ID}, '${escapeSingleQuotes(u.Full_Name)}')">Restore</button>`;
+            archiveActionBtn = `<button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-restore" onclick="event.stopPropagation(); restoreStaff(${u.User_ID})" title="Restore Staff Account" aria-label="Restore Staff Account">↻</button>`;
         }
 
-        html += '<tr>';
+        html += `<tr class="clickable-row" onclick="openEditStaffModal(${u.User_ID})" title="Click to view / edit staff user account">`;
         html += `<td><span class="staff-code-pill">${u.User_Code}</span></td>`;
         html += `<td><strong>${u.Last_Name}, ${u.First_Name}</strong></td>`;
         html += `<td><code style="color: #0369a1; font-weight: 600; font-size: 13.5px;">@${u.Username}</code></td>`;
@@ -163,9 +163,11 @@ const renderStaffTable = (staff) => {
         html += `<td>${u.Station_Name || '<span class="text-muted">General Administration</span>'}</td>`;
         html += `<td>${statusBadge}</td>`;
         html += `<td style="text-align: center; white-space: nowrap;">
-            <button type="button" class="btn btn-sm btn-outline" onclick="openEditStaffModal(${u.User_ID})">Edit</button>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="openResetPasswordModal(${u.User_ID}, '${escapeSingleQuotes(u.Full_Name)}', '${escapeSingleQuotes(u.Username)}')">Reset Password</button>
-            ${archiveActionBtn}
+            <div class="table-actions" style="justify-content: center;">
+                <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-edit" onclick="event.stopPropagation(); openEditStaffModal(${u.User_ID})" title="Edit Staff Account" aria-label="Edit Staff Account">✎</button>
+                <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-key" onclick="event.stopPropagation(); openResetPasswordModal(${u.User_ID})" title="Reset Password" aria-label="Reset Password">🔑</button>
+                ${archiveActionBtn}
+            </div>
         </td>`;
         html += '</tr>';
     });
@@ -193,6 +195,12 @@ const openAddStaffModal = () => {
     document.getElementById("staff_password_help").textContent = "Initial password for account sign-in (min 4 characters).";
     document.getElementById("btnSaveStaff").textContent = "Create Staff Account";
 
+    const btnArchive = document.getElementById("btnArchiveStaff");
+    if (btnArchive) {
+        btnArchive.style.display = "none";
+        btnArchive.onclick = null;
+    }
+
     openModal("staffModal");
 };
 
@@ -213,6 +221,27 @@ const openEditStaffModal = (userId) => {
     document.getElementById("staff_password_label").textContent = "Change Password (Optional)";
     document.getElementById("staff_password_help").textContent = "Leave blank to keep the current password unchanged.";
     document.getElementById("btnSaveStaff").textContent = "Save Changes";
+
+    const btnArchive = document.getElementById("btnArchiveStaff");
+    if (btnArchive) {
+        if (parseInt(user.User_ID, 10) === 1) {
+            btnArchive.style.display = "none";
+            btnArchive.onclick = null;
+        } else {
+            const isActive = parseInt(user.Is_Active, 10) === 1;
+            btnArchive.style.display = "inline-flex";
+            btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
+            btnArchive.textContent = isActive ? "Send to Archive" : "Restore Account";
+            btnArchive.onclick = () => {
+                closeModal("staffModal");
+                if (isActive) {
+                    archiveStaff(user.User_ID, user.Full_Name);
+                } else {
+                    restoreStaff(user.User_ID, user.Full_Name);
+                }
+            };
+        }
+    }
 
     openModal("staffModal");
 };
@@ -281,7 +310,10 @@ const saveStaffForm = (e) => {
 };
 
 const archiveStaff = (userId, name) => {
-    showPopupConfirm(`Are you sure you want to ARCHIVE staff member "${name}"?\n\nThe user will no longer be able to log in, but their historical audit records and signatures will be preserved.`, () => {
+    const user = allStaff.find(u => String(u.User_ID) === String(userId));
+    const targetName = name || (user ? user.Full_Name : `Staff #${userId}`);
+
+    showPopupConfirm(`Are you sure you want to ARCHIVE staff member "${targetName}"?\n\nThe user will no longer be able to log in, but their historical audit records and signatures will be preserved.`, () => {
         const formData = new FormData();
         formData.append("operation", "archiveUser");
         formData.append("json", JSON.stringify({ user_id: userId }));
@@ -306,7 +338,10 @@ const archiveStaff = (userId, name) => {
 };
 
 const restoreStaff = (userId, name) => {
-    showPopupConfirm(`Are you sure you want to RESTORE staff member "${name}" back to active status?`, () => {
+    const user = allStaff.find(u => String(u.User_ID) === String(userId));
+    const targetName = name || (user ? user.Full_Name : `Staff #${userId}`);
+
+    showPopupConfirm(`Are you sure you want to RESTORE staff member "${targetName}" back to active status?`, () => {
         const formData = new FormData();
         formData.append("operation", "restoreUser");
         formData.append("json", JSON.stringify({ user_id: userId }));
@@ -331,9 +366,13 @@ const restoreStaff = (userId, name) => {
 };
 
 const openResetPasswordModal = (userId, name, username) => {
+    const user = allStaff.find(u => String(u.User_ID) === String(userId));
+    const targetName = name || (user ? user.Full_Name : `Staff #${userId}`);
+    const targetUsername = username || (user ? user.Username : "");
+
     document.getElementById("reset_user_id").value = userId;
-    document.getElementById("reset_staff_name").textContent = name;
-    document.getElementById("reset_staff_username").textContent = `@${username}`;
+    document.getElementById("reset_staff_name").textContent = targetName;
+    document.getElementById("reset_staff_username").textContent = `@${targetUsername}`;
     document.getElementById("reset_new_password").value = "";
     document.getElementById("reset_confirm_password").value = "";
 

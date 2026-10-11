@@ -28,3 +28,16 @@
     border: 1px solid #a7f3d0;
     font-weight: 700;
 }
+
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+}
+
+.table-actions .btn-action-key:hover:not(:disabled) {
+    background-color: #fefce8 !important;
+    border-color: #ca8a04 !important;
+    box-shadow: 0 3px 8px rgba(202, 138, 4, 0.18);
+}

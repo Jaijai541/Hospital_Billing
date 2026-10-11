@@ -1,12 +1,12 @@
 # Graph Report - Hospital_Billing  (2026-10-12)
 
 ## Corpus Check
-- 73 files · ~95,870 words
+- 73 files · ~96,085 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 20 file(s) not represented in the graph (top: .css 18, (none) 2)
 
 ## Summary
-- 556 nodes · 765 edges · 69 communities (22 shown, 47 thin omitted)
+- 556 nodes · 766 edges · 69 communities (22 shown, 47 thin omitted)
 - Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 87 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
@@ -182,7 +182,7 @@ Nodes (15): allPaymentMethods, allPromissoryNotes, closeHistoryModal(), closePay
 
 ### Community 66 - "staff.js"
 Cohesion: 0.18
-Nodes (14): allStaff, archiveStaff(), escapeSingleQuotes(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadStaff(), openAddStaffModal() (+6 more)
+Nodes (14): allStaff, archiveStaff(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadStaff(), openAddStaffModal(), openEditStaffModal() (+6 more)
 
 ## Knowledge Gaps
 - **59 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+54 more)

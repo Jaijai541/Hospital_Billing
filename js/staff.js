@@ -135,7 +135,6 @@ const renderStaffTable = (staff) => {
     html += '<th>System Role</th>';
     html += '<th>Assigned Station</th>';
     html += '<th>Account Status</th>';
-    html += '<th style="text-align: center;">Actions</th>';
     html += '</tr></thead><tbody>';
 
     staff.forEach(u => {
@@ -146,15 +145,6 @@ const renderStaffTable = (staff) => {
 
         const roleBadge = getRoleBadge(u.Role_Name);
 
-        let archiveActionBtn = '';
-        if (parseInt(u.User_ID, 10) === 1) {
-            archiveActionBtn = '<button type="button" class="btn btn-sm btn-icon btn-action-icon" title="Primary Administrator Protected" aria-label="Protected" disabled style="opacity: 0.35; cursor: not-allowed;">🔒</button>';
-        } else if (isActive) {
-            archiveActionBtn = `<button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-archive btn-action-soft-delete" onclick="event.stopPropagation(); archiveStaff(${u.User_ID})" title="Send to Archive (Soft Delete)" aria-label="Archive Staff Account">✕</button>`;
-        } else {
-            archiveActionBtn = `<button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-restore" onclick="event.stopPropagation(); restoreStaff(${u.User_ID})" title="Restore Staff Account" aria-label="Restore Staff Account">↻</button>`;
-        }
-
         html += `<tr class="clickable-row" onclick="openEditStaffModal(${u.User_ID})" title="Click to view / edit staff user account">`;
         html += `<td><span class="staff-code-pill">${u.User_Code}</span></td>`;
         html += `<td><strong>${u.Last_Name}, ${u.First_Name}</strong></td>`;
@@ -162,13 +152,6 @@ const renderStaffTable = (staff) => {
         html += `<td>${roleBadge}</td>`;
         html += `<td>${u.Station_Name || '<span class="text-muted">General Administration</span>'}</td>`;
         html += `<td>${statusBadge}</td>`;
-        html += `<td style="text-align: center; white-space: nowrap;">
-            <div class="table-actions" style="justify-content: center;">
-                <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-edit" onclick="event.stopPropagation(); openEditStaffModal(${u.User_ID})" title="Edit Staff Account" aria-label="Edit Staff Account">✎</button>
-                <button type="button" class="btn btn-sm btn-icon btn-action-icon btn-action-key" onclick="event.stopPropagation(); openResetPasswordModal(${u.User_ID})" title="Reset Password" aria-label="Reset Password">🔑</button>
-                ${archiveActionBtn}
-            </div>
-        </td>`;
         html += '</tr>';
     });
 
@@ -199,6 +182,12 @@ const openAddStaffModal = () => {
     if (btnArchive) {
         btnArchive.style.display = "none";
         btnArchive.onclick = null;
+    }
+
+    const btnReset = document.getElementById("btnOpenResetFromEdit");
+    if (btnReset) {
+        btnReset.style.display = "none";
+        btnReset.onclick = null;
     }
 
     openModal("staffModal");
@@ -241,6 +230,15 @@ const openEditStaffModal = (userId) => {
                 }
             };
         }
+    }
+
+    const btnReset = document.getElementById("btnOpenResetFromEdit");
+    if (btnReset) {
+        btnReset.style.display = "inline-flex";
+        btnReset.onclick = () => {
+            closeModal("staffModal");
+            openResetPasswordModal(user.User_ID, user.Full_Name, user.Username);
+        };
     }
 
     openModal("staffModal");

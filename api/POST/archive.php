@@ -32,6 +32,22 @@ class ArchiveManager
             case 'departments':
                 $sql = "UPDATE Enum_Department_Station SET Is_Active = 1 WHERE Station_ID = :id";
                 break;
+            case 'staff':
+            case 'users':
+                $sql = "UPDATE System_User SET Is_Active = 1 WHERE User_ID = :id";
+                break;
+            case 'beds':
+                $sql = "UPDATE Room_Bed SET Is_Active = 1 WHERE Bed_ID = :id";
+                break;
+            case 'specialties':
+                $sql = "UPDATE Enum_Specialty SET Is_Active = 1 WHERE Specialty_ID = :id";
+                break;
+            case 'payment_methods':
+                $sql = "UPDATE Enum_Payment_Method SET Is_Active = 1 WHERE Payment_Method_ID = :id";
+                break;
+            case 'room_types':
+                $sql = "UPDATE Enum_Room_Type SET Is_Active = 1 WHERE Room_Type_ID = :id";
+                break;
             default:
                 return json_encode(0);
         }
@@ -70,6 +86,22 @@ class ArchiveManager
                     break;
                 case 'departments':
                     $sql = "DELETE FROM Enum_Department_Station WHERE Station_ID = :id";
+                    break;
+                case 'staff':
+                case 'users':
+                    $sql = "DELETE FROM System_User WHERE User_ID = :id";
+                    break;
+                case 'beds':
+                    $sql = "DELETE FROM Room_Bed WHERE Bed_ID = :id";
+                    break;
+                case 'specialties':
+                    $sql = "DELETE FROM Enum_Specialty WHERE Specialty_ID = :id";
+                    break;
+                case 'payment_methods':
+                    $sql = "DELETE FROM Enum_Payment_Method WHERE Payment_Method_ID = :id";
+                    break;
+                case 'room_types':
+                    $sql = "DELETE FROM Enum_Room_Type WHERE Room_Type_ID = :id";
                     break;
                 default:
                     return json_encode(0);

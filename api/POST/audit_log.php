@@ -168,6 +168,42 @@ if (!defined('AUDIT_HOOK_REGISTERED')) {
                 $ref = strtoupper($data['entity'] ?? 'REC') . '-' . ($data['id'] ?? '');
                 $desc = "Permanently deleted " . ($data['entity'] ?? 'record') . " (ID #" . ($data['id'] ?? '') . ") from database";
                 break;
+
+            case 'addUser':
+                $actionType = 'CREATE';
+                $module = 'Staff Management';
+                $newUid = $decodedOut['user_id'] ?? 0;
+                $ref = 'USR-' . str_pad($newUid, 3, '0', STR_PAD_LEFT);
+                $desc = "Created new staff user account: " . ($data['first_name'] ?? '') . " " . ($data['last_name'] ?? '') . " (@" . ($data['username'] ?? '') . ")";
+                break;
+
+            case 'updateUser':
+                $actionType = 'UPDATE';
+                $module = 'Staff Management';
+                $ref = 'USR-' . str_pad($data['user_id'] ?? 0, 3, '0', STR_PAD_LEFT);
+                $desc = "Updated staff user account: " . ($data['first_name'] ?? '') . " " . ($data['last_name'] ?? '') . " (@" . ($data['username'] ?? '') . ")";
+                break;
+
+            case 'archiveUser':
+                $actionType = 'ARCHIVE';
+                $module = 'Staff Management';
+                $ref = 'USR-' . str_pad($data['user_id'] ?? $data['id'] ?? 0, 3, '0', STR_PAD_LEFT);
+                $desc = "Archived / Deactivated staff account $ref";
+                break;
+
+            case 'restoreUser':
+                $actionType = 'RESTORE';
+                $module = 'Staff Management';
+                $ref = 'USR-' . str_pad($data['user_id'] ?? $data['id'] ?? 0, 3, '0', STR_PAD_LEFT);
+                $desc = "Restored staff account $ref back to active status";
+                break;
+
+            case 'resetPassword':
+                $actionType = 'SECURITY';
+                $module = 'Staff Management';
+                $ref = 'USR-' . str_pad($data['user_id'] ?? 0, 3, '0', STR_PAD_LEFT);
+                $desc = "Reset password for staff user account $ref";
+                break;
         }
 
         $userId = $userObj['user_id'] ?? ($data['user_id'] ?? ($data['processed_by_user_id'] ?? ($decodedOut['user_id'] ?? 1)));

@@ -1,0 +1,30 @@
+.staff-code-pill {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0369a1;
+    background-color: var(--primary-light);
+    padding: 3px 9px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}
+
+.staff-role-badge-admin {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    font-weight: 700;
+}
+
+.staff-role-badge-finance {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+    font-weight: 700;
+}
+
+.staff-role-badge-nurse {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    font-weight: 700;
+}

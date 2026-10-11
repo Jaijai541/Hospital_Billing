@@ -75,6 +75,61 @@ class ArchiveManager
                         ORDER BY d.Station_Name ASC";
                 break;
 
+            case 'staff':
+            case 'users':
+                $sql = "SELECT u.User_ID AS ID,
+                               CONCAT('USR-', LPAD(u.User_ID, 3, '0')) AS Code,
+                               CONCAT(u.Last_Name, ', ', u.First_Name, ' (@', u.Username, ')') AS Name,
+                               CONCAT('Role: ', r.Role_Name, ' | Station: ', COALESCE(s.Station_Name, 'None')) AS Details
+                        FROM System_User u
+                        INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                        LEFT JOIN Enum_Department_Station s ON u.Station_ID = s.Station_ID
+                        WHERE u.Is_Active = 0
+                        ORDER BY u.User_ID ASC";
+                break;
+
+            case 'beds':
+                $sql = "SELECT b.Bed_ID AS ID,
+                               b.Bed_Code AS Code,
+                               CONCAT(r.Room_Name, ' (', b.Bed_Code, ')') AS Name,
+                               CONCAT('Room: ', r.Room_Name, ' | Type: ', rt.Type_Name, ' | Rate: ₱', FORMAT(COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate), 2)) AS Details
+                        FROM Room_Bed b
+                        INNER JOIN Room r ON b.Room_ID = r.Room_ID
+                        INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                        WHERE b.Is_Active = 0
+                        ORDER BY b.Bed_Code ASC";
+                break;
+
+            case 'specialties':
+                $sql = "SELECT s.Specialty_ID AS ID,
+                               CONCAT('SPEC-', LPAD(s.Specialty_ID, 3, '0')) AS Code,
+                               s.Specialty_Name AS Name,
+                               'Doctor Medical Specialty Classification' AS Details
+                        FROM Enum_Specialty s
+                        WHERE s.Is_Active = 0
+                        ORDER BY s.Specialty_Name ASC";
+                break;
+
+            case 'payment_methods':
+                $sql = "SELECT pm.Payment_Method_ID AS ID,
+                               CONCAT(pm.Code_Prefix, '-', LPAD(pm.Payment_Method_ID, 3, '0')) AS Code,
+                               pm.Method_Name AS Name,
+                               CONCAT('Category: ', pm.Category_Type, ' | ', COALESCE(pm.Description, '')) AS Details
+                        FROM Enum_Payment_Method pm
+                        WHERE pm.Is_Active = 0
+                        ORDER BY pm.Method_Name ASC";
+                break;
+
+            case 'room_types':
+                $sql = "SELECT rt.Room_Type_ID AS ID,
+                               CONCAT(rt.Code_Prefix, '-', LPAD(rt.Room_Type_ID, 3, '0')) AS Code,
+                               rt.Type_Name AS Name,
+                               CONCAT('Daily Rate: ₱', FORMAT(rt.Daily_Rate, 2), '/day') AS Details
+                        FROM Enum_Room_Type rt
+                        WHERE rt.Is_Active = 0
+                        ORDER BY rt.Type_Name ASC";
+                break;
+
             default:
                 return json_encode([]);
         }

@@ -1,0 +1,448 @@
+const getApiUrl = "../api/GET";
+const postApiUrl = "../api/POST";
+
+let allStaff = [];
+let rolesList = [];
+let stationsList = [];
+
+const loadRoles = () => {
+    const formData = new FormData();
+    formData.append("operation", "getUserRoles");
+
+    axios.post(`${getApiUrl}/users.php`, formData)
+        .then(response => {
+            rolesList = response.data || [];
+            const roleFilter = document.getElementById("role_filter");
+            const staffRoleSelect = document.getElementById("staff_role_id");
+
+            if (roleFilter) {
+                roleFilter.innerHTML = '<option value="all">All Roles</option>';
+                rolesList.forEach(r => {
+                    roleFilter.innerHTML += `<option value="${r.Role_ID}">${r.Role_Name}</option>`;
+                });
+            }
+
+            if (staffRoleSelect) {
+                staffRoleSelect.innerHTML = '<option value="">Select Role...</option>';
+                rolesList.forEach(r => {
+                    staffRoleSelect.innerHTML += `<option value="${r.Role_ID}">${r.Role_Name}</option>`;
+                });
+            }
+        })
+        .catch(() => {});
+};
+
+const loadStations = () => {
+    const formData = new FormData();
+    formData.append("operation", "getDepartmentStations");
+
+    axios.post(`${getApiUrl}/users.php`, formData)
+        .then(response => {
+            stationsList = response.data || [];
+            const staffStationSelect = document.getElementById("staff_station_id");
+            if (staffStationSelect) {
+                staffStationSelect.innerHTML = '<option value="">Unassigned / Admin</option>';
+                stationsList.forEach(s => {
+                    staffStationSelect.innerHTML += `<option value="${s.Station_ID}">${s.Station_Name} (${s.Code_Prefix})</option>`;
+                });
+            }
+        })
+        .catch(() => {});
+};
+
+const loadStaff = () => {
+    const formData = new FormData();
+    formData.append("operation", "getUsers");
+    formData.append("json", JSON.stringify({ status: "all" }));
+
+    axios.post(`${getApiUrl}/users.php`, formData)
+        .then(response => {
+            allStaff = response.data || [];
+            filterAndRenderStaff();
+        })
+        .catch(() => {
+            allStaff = [];
+            filterAndRenderStaff();
+        });
+};
+
+const getRoleBadge = (roleName) => {
+    const r = (roleName || "").toLowerCase();
+    if (r.includes("admin")) {
+        return `<span class="badge staff-role-badge-admin">${roleName}</span>`;
+    } else if (r.includes("finance")) {
+        return `<span class="badge staff-role-badge-finance">${roleName}</span>`;
+    } else if (r.includes("nurse")) {
+        return `<span class="badge staff-role-badge-nurse">${roleName}</span>`;
+    }
+    return `<span class="badge badge-secondary">${roleName}</span>`;
+};
+
+const filterAndRenderStaff = () => {
+    const searchEl = document.getElementById("search_input");
+    const query = searchEl ? searchEl.value.toLowerCase().trim() : "";
+
+    const roleEl = document.getElementById("role_filter");
+    const roleVal = roleEl ? roleEl.value : "all";
+
+    const statusEl = document.getElementById("status_filter");
+    const statusVal = statusEl ? statusEl.value : "all";
+
+    const filtered = allStaff.filter(u => {
+        const matchesQuery = !query
+            || (u.First_Name && u.First_Name.toLowerCase().includes(query))
+            || (u.Last_Name && u.Last_Name.toLowerCase().includes(query))
+            || (u.Username && u.Username.toLowerCase().includes(query))
+            || (u.User_Code && u.User_Code.toLowerCase().includes(query))
+            || (u.Role_Name && u.Role_Name.toLowerCase().includes(query))
+            || (u.Station_Name && u.Station_Name.toLowerCase().includes(query));
+
+        const matchesRole = roleVal === "all" || String(u.Role_ID) === String(roleVal);
+
+        let matchesStatus = true;
+        if (statusVal === "active") {
+            matchesStatus = parseInt(u.Is_Active, 10) === 1;
+        } else if (statusVal === "archived") {
+            matchesStatus = parseInt(u.Is_Active, 10) === 0;
+        }
+
+        return matchesQuery && matchesRole && matchesStatus;
+    });
+
+    renderStaffTable(filtered);
+};
+
+const renderStaffTable = (staff) => {
+    const tableDiv = document.getElementById("table-div");
+    if (!tableDiv) return;
+
+    if (typeof updateFilterCount === "function") {
+        updateFilterCount(staff.length, allStaff.length, "staff members");
+    }
+
+    if (!staff || staff.length === 0) {
+        tableDiv.innerHTML = typeof getEmptyStateHtml === "function"
+            ? getEmptyStateHtml("👥", "No staff accounts found", "No staff accounts match your search filter criteria.")
+            : '<p><em>No staff accounts found.</em></p>';
+        return;
+    }
+
+    let html = '<table class="data-table">';
+    html += '<thead><tr>';
+    html += '<th>Staff ID</th>';
+    html += '<th>Full Name</th>';
+    html += '<th>Username</th>';
+    html += '<th>System Role</th>';
+    html += '<th>Assigned Station</th>';
+    html += '<th>Account Status</th>';
+    html += '<th style="text-align: center;">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    staff.forEach(u => {
+        const isActive = parseInt(u.Is_Active, 10) === 1;
+        const statusBadge = isActive
+            ? '<span class="badge badge-success">Active</span>'
+            : '<span class="badge badge-danger">Archived</span>';
+
+        const roleBadge = getRoleBadge(u.Role_Name);
+
+        let archiveActionBtn = '';
+        if (parseInt(u.User_ID, 10) === 1) {
+            archiveActionBtn = '<button type="button" class="btn btn-sm btn-outline" style="opacity: 0.5;" title="Primary Admin Protected" disabled>Protected</button>';
+        } else if (isActive) {
+            archiveActionBtn = `<button type="button" class="btn btn-sm btn-danger" onclick="archiveStaff(${u.User_ID}, '${escapeSingleQuotes(u.Full_Name)}')">Archive</button>`;
+        } else {
+            archiveActionBtn = `<button type="button" class="btn btn-sm btn-success" onclick="restoreStaff(${u.User_ID}, '${escapeSingleQuotes(u.Full_Name)}')">Restore</button>`;
+        }
+
+        html += '<tr>';
+        html += `<td><span class="staff-code-pill">${u.User_Code}</span></td>`;
+        html += `<td><strong>${u.Last_Name}, ${u.First_Name}</strong></td>`;
+        html += `<td><code style="color: #0369a1; font-weight: 600; font-size: 13.5px;">@${u.Username}</code></td>`;
+        html += `<td>${roleBadge}</td>`;
+        html += `<td>${u.Station_Name || '<span class="text-muted">General Administration</span>'}</td>`;
+        html += `<td>${statusBadge}</td>`;
+        html += `<td style="text-align: center; white-space: nowrap;">
+            <button type="button" class="btn btn-sm btn-outline" onclick="openEditStaffModal(${u.User_ID})">Edit</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openResetPasswordModal(${u.User_ID}, '${escapeSingleQuotes(u.Full_Name)}', '${escapeSingleQuotes(u.Username)}')">Reset Password</button>
+            ${archiveActionBtn}
+        </td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    tableDiv.innerHTML = html;
+};
+
+const escapeSingleQuotes = (str) => {
+    return (str || "").replace(/'/g, "\\'");
+};
+
+const openAddStaffModal = () => {
+    document.getElementById("staff_user_id").value = "";
+    document.getElementById("staff_first_name").value = "";
+    document.getElementById("staff_last_name").value = "";
+    document.getElementById("staff_username").value = "";
+    document.getElementById("staff_role_id").value = "";
+    document.getElementById("staff_station_id").value = "";
+    document.getElementById("staff_password").value = "";
+    document.getElementById("staff_password").required = true;
+
+    document.getElementById("staffModalTitle").textContent = "Add New Staff User";
+    document.getElementById("staff_password_label").textContent = "Account Password *";
+    document.getElementById("staff_password_help").textContent = "Initial password for account sign-in (min 4 characters).";
+    document.getElementById("btnSaveStaff").textContent = "Create Staff Account";
+
+    openModal("staffModal");
+};
+
+const openEditStaffModal = (userId) => {
+    const user = allStaff.find(u => String(u.User_ID) === String(userId));
+    if (!user) return;
+
+    document.getElementById("staff_user_id").value = user.User_ID;
+    document.getElementById("staff_first_name").value = user.First_Name || "";
+    document.getElementById("staff_last_name").value = user.Last_Name || "";
+    document.getElementById("staff_username").value = user.Username || "";
+    document.getElementById("staff_role_id").value = user.Role_ID || "";
+    document.getElementById("staff_station_id").value = user.Station_ID || "";
+    document.getElementById("staff_password").value = "";
+    document.getElementById("staff_password").required = false;
+
+    document.getElementById("staffModalTitle").textContent = `Edit Staff User: ${user.Full_Name}`;
+    document.getElementById("staff_password_label").textContent = "Change Password (Optional)";
+    document.getElementById("staff_password_help").textContent = "Leave blank to keep the current password unchanged.";
+    document.getElementById("btnSaveStaff").textContent = "Save Changes";
+
+    openModal("staffModal");
+};
+
+const saveStaffForm = (e) => {
+    e.preventDefault();
+
+    const userId = document.getElementById("staff_user_id").value;
+    const firstName = document.getElementById("staff_first_name").value.trim();
+    const lastName = document.getElementById("staff_last_name").value.trim();
+    const username = document.getElementById("staff_username").value.trim();
+    const roleId = document.getElementById("staff_role_id").value;
+    const stationId = document.getElementById("staff_station_id").value;
+    const password = document.getElementById("staff_password").value.trim();
+
+    if (!firstName || !lastName || !username || !roleId) {
+        showPopupAlert("Please fill in First Name, Last Name, Username, and System Role.", "warning");
+        return;
+    }
+
+    if (!userId && !password) {
+        showPopupAlert("Please enter a password for the new staff account.", "warning");
+        return;
+    }
+
+    if (password && password.length < 4) {
+        showPopupAlert("Password must be at least 4 characters long.", "warning");
+        return;
+    }
+
+    const isEdit = !!userId;
+    const operation = isEdit ? "updateUser" : "addUser";
+
+    const payload = {
+        first_name: firstName,
+        last_name: lastName,
+        username: username,
+        role_id: roleId,
+        station_id: stationId || null
+    };
+
+    if (isEdit) {
+        payload.user_id = userId;
+        if (password) payload.password = password;
+    } else {
+        payload.password = password;
+    }
+
+    const formData = new FormData();
+    formData.append("operation", operation);
+    formData.append("json", JSON.stringify(payload));
+
+    axios.post(`${postApiUrl}/users.php`, formData)
+        .then(response => {
+            if (response.data && response.data.status === 1) {
+                closeModal("staffModal");
+                showPopupAlert(response.data.message || "Staff account saved successfully.", "success");
+                loadStaff();
+            } else {
+                showPopupAlert((response.data && response.data.message) || "Failed to save staff account.", "error");
+            }
+        })
+        .catch(() => {
+            showPopupAlert("Network error while communicating with server.", "error");
+        });
+};
+
+const archiveStaff = (userId, name) => {
+    showPopupConfirm(`Are you sure you want to ARCHIVE staff member "${name}"?\n\nThe user will no longer be able to log in, but their historical audit records and signatures will be preserved.`, () => {
+        const formData = new FormData();
+        formData.append("operation", "archiveUser");
+        formData.append("json", JSON.stringify({ user_id: userId }));
+
+        axios.post(`${postApiUrl}/users.php`, formData)
+            .then(response => {
+                if (response.data && response.data.status === 1) {
+                    showPopupAlert(response.data.message || "Staff account archived.", "success");
+                    loadStaff();
+                } else {
+                    showPopupAlert((response.data && response.data.message) || "Failed to archive staff account.", "error");
+                }
+            })
+            .catch(() => {
+                showPopupAlert("Network error while communicating with server.", "error");
+            });
+    }, null, {
+        title: "Archive Staff Account",
+        confirmText: "Archive Account",
+        type: "warning"
+    });
+};
+
+const restoreStaff = (userId, name) => {
+    showPopupConfirm(`Are you sure you want to RESTORE staff member "${name}" back to active status?`, () => {
+        const formData = new FormData();
+        formData.append("operation", "restoreUser");
+        formData.append("json", JSON.stringify({ user_id: userId }));
+
+        axios.post(`${postApiUrl}/users.php`, formData)
+            .then(response => {
+                if (response.data && response.data.status === 1) {
+                    showPopupAlert(response.data.message || "Staff account restored.", "success");
+                    loadStaff();
+                } else {
+                    showPopupAlert((response.data && response.data.message) || "Failed to restore staff account.", "error");
+                }
+            })
+            .catch(() => {
+                showPopupAlert("Network error while communicating with server.", "error");
+            });
+    }, null, {
+        title: "Restore Staff Account",
+        confirmText: "Restore Account",
+        type: "info"
+    });
+};
+
+const openResetPasswordModal = (userId, name, username) => {
+    document.getElementById("reset_user_id").value = userId;
+    document.getElementById("reset_staff_name").textContent = name;
+    document.getElementById("reset_staff_username").textContent = `@${username}`;
+    document.getElementById("reset_new_password").value = "";
+    document.getElementById("reset_confirm_password").value = "";
+
+    openModal("resetPasswordModal");
+};
+
+const saveResetPassword = (e) => {
+    e.preventDefault();
+
+    const userId = document.getElementById("reset_user_id").value;
+    const newPass = document.getElementById("reset_new_password").value.trim();
+    const confPass = document.getElementById("reset_confirm_password").value.trim();
+
+    if (!newPass) {
+        showPopupAlert("Please enter a new password.", "warning");
+        return;
+    }
+
+    if (newPass.length < 4) {
+        showPopupAlert("Password must be at least 4 characters long.", "warning");
+        return;
+    }
+
+    if (newPass !== confPass) {
+        showPopupAlert("Passwords do not match. Please re-enter carefully.", "warning");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("operation", "resetPassword");
+    formData.append("json", JSON.stringify({
+        user_id: userId,
+        password: newPass
+    }));
+
+    axios.post(`${postApiUrl}/users.php`, formData)
+        .then(response => {
+            if (response.data && response.data.status === 1) {
+                closeModal("resetPasswordModal");
+                showPopupAlert(response.data.message || "Password updated successfully.", "success");
+            } else {
+                showPopupAlert((response.data && response.data.message) || "Failed to reset password.", "error");
+            }
+        })
+        .catch(() => {
+            showPopupAlert("Network error while communicating with server.", "error");
+        });
+};
+
+const initStaffEvents = () => {
+    const btnOpenAdd = document.getElementById("btnOpenAddStaffModal");
+    if (btnOpenAdd) {
+        btnOpenAdd.addEventListener("click", openAddStaffModal);
+    }
+
+    const btnCloseModal = document.getElementById("btnCloseStaffModal");
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener("click", () => closeModal("staffModal"));
+    }
+
+    const btnCancelModal = document.getElementById("btnCancelStaffModal");
+    if (btnCancelModal) {
+        btnCancelModal.addEventListener("click", () => closeModal("staffModal"));
+    }
+
+    const staffForm = document.getElementById("staffForm");
+    if (staffForm) {
+        staffForm.addEventListener("submit", saveStaffForm);
+    }
+
+    const btnCloseReset = document.getElementById("btnCloseResetModal");
+    if (btnCloseReset) {
+        btnCloseReset.addEventListener("click", () => closeModal("resetPasswordModal"));
+    }
+
+    const btnCancelReset = document.getElementById("btnCancelResetModal");
+    if (btnCancelReset) {
+        btnCancelReset.addEventListener("click", () => closeModal("resetPasswordModal"));
+    }
+
+    const resetForm = document.getElementById("resetPasswordForm");
+    if (resetForm) {
+        resetForm.addEventListener("submit", saveResetPassword);
+    }
+
+    const searchInput = document.getElementById("search_input");
+    if (searchInput) {
+        searchInput.addEventListener("input", filterAndRenderStaff);
+    }
+
+    const roleFilter = document.getElementById("role_filter");
+    if (roleFilter) {
+        roleFilter.addEventListener("change", filterAndRenderStaff);
+    }
+
+    const statusFilter = document.getElementById("status_filter");
+    if (statusFilter) {
+        statusFilter.addEventListener("change", filterAndRenderStaff);
+    }
+
+    const btnRefresh = document.getElementById("btnRefresh");
+    if (btnRefresh) {
+        btnRefresh.addEventListener("click", loadStaff);
+    }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    initStaffEvents();
+    loadRoles();
+    loadStations();
+    loadStaff();
+});

@@ -1,17 +1,17 @@
 # Graph Report - Hospital_Billing  (2026-10-12)
 
 ## Corpus Check
-- 73 files · ~96,008 words
+- 73 files · ~96,185 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 20 file(s) not represented in the graph (top: .css 18, (none) 2)
 
 ## Summary
-- 556 nodes · 767 edges · 69 communities (22 shown, 47 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 87 edges (avg confidence: 0.85)
+- 558 nodes · 773 edges · 69 communities (22 shown, 47 thin omitted)
+- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 89 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7ab22025`
+- Built from commit: `ba26a0aa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -181,12 +181,12 @@ Cohesion: 0.22
 Nodes (15): allPaymentMethods, allPromissoryNotes, closeHistoryModal(), closePaymentModal(), filterAndRenderPromissoryNotes(), initEvents(), loadPromissoryNotes(), openPaymentHistoryModal() (+7 more)
 
 ### Community 66 - "staff.js"
-Cohesion: 0.19
-Nodes (15): allStaff, archiveStaff(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadStaff(), openAddStaffModal(), openEditStaffModal() (+7 more)
+Cohesion: 0.18
+Nodes (19): allStaff, archiveStaff(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadRoles(), loadStaff(), loadStations() (+11 more)
 
 ## Knowledge Gaps
 - **59 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+54 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 240 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 238 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **47 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions

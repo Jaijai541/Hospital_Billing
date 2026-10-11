@@ -4463,7 +4463,7 @@
       "file_type": "code",
       "norm_label": "archivestaff()",
       "source_file": "js/staff.js",
-      "source_location": "L312"
+      "source_location": "L310"
     },
     {
       "id": "js_staff_escapesinglequotes",
@@ -4475,7 +4475,7 @@
       "file_type": "code",
       "norm_label": "escapesinglequotes()",
       "source_file": "js/staff.js",
-      "source_location": "L179"
+      "source_location": "L162"
     },
     {
       "id": "js_staff_filterandrenderstaff",
@@ -4511,7 +4511,7 @@
       "file_type": "code",
       "norm_label": "initstaffevents()",
       "source_file": "js/staff.js",
-      "source_location": "L425"
+      "source_location": "L423"
     },
     {
       "id": "js_staff_loadroles",
@@ -4559,7 +4559,7 @@
       "file_type": "code",
       "norm_label": "openaddstaffmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L183"
+      "source_location": "L166"
     },
     {
       "id": "js_staff_openeditstaffmodal",
@@ -4571,7 +4571,7 @@
       "file_type": "code",
       "norm_label": "openeditstaffmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L207"
+      "source_location": "L196"
     },
     {
       "id": "js_staff_openresetpasswordmodal",
@@ -4583,7 +4583,7 @@
       "file_type": "code",
       "norm_label": "openresetpasswordmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L368"
+      "source_location": "L366"
     },
     {
       "id": "js_staff_renderstafftable",
@@ -4607,7 +4607,7 @@
       "file_type": "code",
       "norm_label": "restorestaff()",
       "source_file": "js/staff.js",
-      "source_location": "L340"
+      "source_location": "L338"
     },
     {
       "id": "js_staff_saveresetpassword",
@@ -4619,7 +4619,7 @@
       "file_type": "code",
       "norm_label": "saveresetpassword()",
       "source_file": "js/staff.js",
-      "source_location": "L382"
+      "source_location": "L380"
     },
     {
       "id": "js_staff_savestaffform",
@@ -4631,7 +4631,7 @@
       "file_type": "code",
       "norm_label": "savestaffform()",
       "source_file": "js/staff.js",
-      "source_location": "L249"
+      "source_location": "L247"
     },
     {
       "id": "api_post_users_usermanager_adduser",
@@ -9611,7 +9611,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L325",
+      "source_location": "L323",
       "weight": 1.0
     },
     {
@@ -9647,12 +9647,24 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L238",
+      "source_location": "L227",
       "weight": 1.0
     },
     {
       "source": "js_staff_openeditstaffmodal",
       "target": "js_staff_restorestaff",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openeditstaffmodal",
+      "target": "js_staff_openresetpasswordmodal",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -9671,7 +9683,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L147",
+      "source_location": "L146",
       "weight": 1.0
     },
     {
@@ -9683,7 +9695,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L353",
+      "source_location": "L351",
       "weight": 1.0
     },
     {
@@ -9695,7 +9707,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L302",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -10415,7 +10427,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L425",
+      "source_location": "L423",
       "weight": 1.0
     },
     {
@@ -12925,7 +12937,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L179",
+      "source_location": "L162",
       "weight": 1.0
     },
     {
@@ -12936,7 +12948,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L183",
+      "source_location": "L166",
       "weight": 1.0
     },
     {
@@ -12947,7 +12959,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L207",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -12958,7 +12970,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L249",
+      "source_location": "L247",
       "weight": 1.0
     },
     {
@@ -12969,7 +12981,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L312",
+      "source_location": "L310",
       "weight": 1.0
     },
     {
@@ -12980,7 +12992,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L340",
+      "source_location": "L338",
       "weight": 1.0
     },
     {
@@ -12991,7 +13003,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L368",
+      "source_location": "L366",
       "weight": 1.0
     },
     {
@@ -13002,7 +13014,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L382",
+      "source_location": "L380",
       "weight": 1.0
     },
     {
@@ -15349,7 +15361,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L428",
+      "source_location": "L426",
       "weight": 1.0
     },
     {
@@ -15361,7 +15373,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L443",
+      "source_location": "L441",
       "weight": 1.0
     },
     {
@@ -15373,7 +15385,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L458",
+      "source_location": "L456",
       "weight": 1.0
     },
     {
@@ -15385,7 +15397,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L463",
+      "source_location": "L461",
       "weight": 1.0
     },
     {
@@ -15397,7 +15409,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L478",
+      "source_location": "L476",
       "weight": 1.0
     },
     {
@@ -15426,5 +15438,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4107db03445cce91ebe4841592b32bba0eabaf5b"
+  "built_at_commit": "7ab2202526dd14fc9946128fef730ea3f91f7192"
 }

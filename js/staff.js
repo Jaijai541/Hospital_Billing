@@ -5,49 +5,82 @@ let allStaff = [];
 let rolesList = [];
 let stationsList = [];
 
-const loadRoles = () => {
+const loadRoles = async () => {
     const formData = new FormData();
     formData.append("operation", "getUserRoles");
 
-    axios.post(`${getApiUrl}/users.php`, formData)
-        .then(response => {
-            rolesList = response.data || [];
-            const roleFilter = document.getElementById("role_filter");
-            const staffRoleSelect = document.getElementById("staff_role_id");
+    try {
+        const response = await axios.post(`${getApiUrl}/users.php`, formData);
+        rolesList = response.data || [];
+        const roleFilter = document.getElementById("role_filter");
 
-            if (roleFilter) {
-                roleFilter.innerHTML = '<option value="all">All Roles</option>';
-                rolesList.forEach(r => {
-                    roleFilter.innerHTML += `<option value="${r.Role_ID}">${r.Role_Name}</option>`;
-                });
-            }
-
-            if (staffRoleSelect) {
-                staffRoleSelect.innerHTML = '<option value="">Select Role...</option>';
-                rolesList.forEach(r => {
-                    staffRoleSelect.innerHTML += `<option value="${r.Role_ID}">${r.Role_Name}</option>`;
-                });
-            }
-        })
-        .catch(() => {});
+        if (roleFilter) {
+            roleFilter.innerHTML = '<option value="all">All Roles</option>';
+            rolesList.forEach(r => {
+                roleFilter.innerHTML += `<option value="${r.Role_ID}">${r.Role_Name}</option>`;
+            });
+        }
+    } catch (e) {
+        rolesList = [];
+    }
 };
 
-const loadStations = () => {
+const loadStations = async () => {
     const formData = new FormData();
     formData.append("operation", "getDepartmentStations");
 
-    axios.post(`${getApiUrl}/users.php`, formData)
-        .then(response => {
-            stationsList = response.data || [];
-            const staffStationSelect = document.getElementById("staff_station_id");
-            if (staffStationSelect) {
-                staffStationSelect.innerHTML = '<option value="">Unassigned / Admin</option>';
-                stationsList.forEach(s => {
-                    staffStationSelect.innerHTML += `<option value="${s.Station_ID}">${s.Station_Name} (${s.Code_Prefix})</option>`;
-                });
-            }
-        })
-        .catch(() => {});
+    try {
+        const response = await axios.post(`${getApiUrl}/users.php`, formData);
+        stationsList = response.data || [];
+    } catch (e) {
+        stationsList = [];
+    }
+};
+
+const openRolePicker = async () => {
+    if (!rolesList || rolesList.length === 0) {
+        await loadRoles();
+    }
+    openGenericLookupPicker({
+        title: "Select System Role",
+        items: rolesList.map(r => ({
+            id: r.Role_ID,
+            text: r.Role_Name,
+            subtext: `Access Role #${r.Role_ID}`
+        })),
+        selectedId: document.getElementById("staff_role_id").value,
+        onSelect: (item) => {
+            document.getElementById("staff_role_id").value = item.id;
+            document.getElementById("staff_role_id_text").value = item.text;
+        }
+    });
+};
+
+const openStationPicker = async () => {
+    if (!stationsList || stationsList.length === 0) {
+        await loadStations();
+    }
+    const items = [
+        {
+            id: "",
+            text: "General Administration",
+            subtext: "Unassigned / Hospital-wide"
+        },
+        ...stationsList.map(s => ({
+            id: s.Station_ID,
+            text: s.Station_Name,
+            subtext: s.Code_Prefix ? `Code: ${s.Code_Prefix}` : ""
+        }))
+    ];
+    openGenericLookupPicker({
+        title: "Select Department / Station",
+        items: items,
+        selectedId: document.getElementById("staff_station_id").value,
+        onSelect: (item) => {
+            document.getElementById("staff_station_id").value = item.id;
+            document.getElementById("staff_station_id_text").value = item.text;
+        }
+    });
 };
 
 const loadStaff = () => {
@@ -169,7 +202,9 @@ const openAddStaffModal = () => {
     document.getElementById("staff_last_name").value = "";
     document.getElementById("staff_username").value = "";
     document.getElementById("staff_role_id").value = "";
+    document.getElementById("staff_role_id_text").value = "";
     document.getElementById("staff_station_id").value = "";
+    document.getElementById("staff_station_id_text").value = "";
     document.getElementById("staff_password").value = "";
     document.getElementById("staff_password").required = true;
 
@@ -202,7 +237,9 @@ const openEditStaffModal = (userId) => {
     document.getElementById("staff_last_name").value = user.Last_Name || "";
     document.getElementById("staff_username").value = user.Username || "";
     document.getElementById("staff_role_id").value = user.Role_ID || "";
+    document.getElementById("staff_role_id_text").value = user.Role_Name || "";
     document.getElementById("staff_station_id").value = user.Station_ID || "";
+    document.getElementById("staff_station_id_text").value = user.Station_Name || "General Administration";
     document.getElementById("staff_password").value = "";
     document.getElementById("staff_password").required = false;
 
@@ -474,6 +511,24 @@ const initStaffEvents = () => {
     const btnRefresh = document.getElementById("btnRefresh");
     if (btnRefresh) {
         btnRefresh.addEventListener("click", loadStaff);
+    }
+
+    const roleInput = document.getElementById("staff_role_id_text");
+    if (roleInput) {
+        roleInput.addEventListener("click", openRolePicker);
+    }
+    const btnBrowseRole = document.getElementById("btnBrowse_staff_role_id");
+    if (btnBrowseRole) {
+        btnBrowseRole.addEventListener("click", openRolePicker);
+    }
+
+    const stationInput = document.getElementById("staff_station_id_text");
+    if (stationInput) {
+        stationInput.addEventListener("click", openStationPicker);
+    }
+    const btnBrowseStation = document.getElementById("btnBrowse_staff_station_id");
+    if (btnBrowseStation) {
+        btnBrowseStation.addEventListener("click", openStationPicker);
     }
 };
 

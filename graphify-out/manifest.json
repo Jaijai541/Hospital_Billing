@@ -552,15 +552,15 @@
     "semantic_hash": ""
   },
   "js/staff.js": {
-    "mtime": 1791739782.575562,
-    "seen": 1791739867.926542,
-    "ast_hash": "31ef70b759917db9bffee0c96df56df0",
+    "mtime": 1791740668.0544825,
+    "seen": 1791740706.3820214,
+    "ast_hash": "f0f3bc7dbb610ba8476a2055e4884f8a",
     "semantic_hash": ""
   },
   "views/staff.html": {
-    "mtime": 1791739715.1049657,
-    "seen": 1791739867.932375,
-    "ast_hash": "e9a59e74818a3fa77ddec2bdc0d21668",
+    "mtime": 1791740539.153256,
+    "seen": 1791740706.385228,
+    "ast_hash": "f5eb12705f440ae5374bb816ea96e1a6",
     "semantic_hash": ""
   }
 }

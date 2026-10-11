@@ -4463,7 +4463,7 @@
       "file_type": "code",
       "norm_label": "archivestaff()",
       "source_file": "js/staff.js",
-      "source_location": "L310"
+      "source_location": "L347"
     },
     {
       "id": "js_staff_escapesinglequotes",
@@ -4475,7 +4475,7 @@
       "file_type": "code",
       "norm_label": "escapesinglequotes()",
       "source_file": "js/staff.js",
-      "source_location": "L162"
+      "source_location": "L195"
     },
     {
       "id": "js_staff_filterandrenderstaff",
@@ -4487,7 +4487,7 @@
       "file_type": "code",
       "norm_label": "filterandrenderstaff()",
       "source_file": "js/staff.js",
-      "source_location": "L81"
+      "source_location": "L114"
     },
     {
       "id": "js_staff_getrolebadge",
@@ -4499,7 +4499,7 @@
       "file_type": "code",
       "norm_label": "getrolebadge()",
       "source_file": "js/staff.js",
-      "source_location": "L69"
+      "source_location": "L102"
     },
     {
       "id": "js_staff_initstaffevents",
@@ -4511,7 +4511,7 @@
       "file_type": "code",
       "norm_label": "initstaffevents()",
       "source_file": "js/staff.js",
-      "source_location": "L423"
+      "source_location": "L460"
     },
     {
       "id": "js_staff_loadroles",
@@ -4535,7 +4535,7 @@
       "file_type": "code",
       "norm_label": "loadstaff()",
       "source_file": "js/staff.js",
-      "source_location": "L53"
+      "source_location": "L86"
     },
     {
       "id": "js_staff_loadstations",
@@ -4547,7 +4547,7 @@
       "file_type": "code",
       "norm_label": "loadstations()",
       "source_file": "js/staff.js",
-      "source_location": "L35"
+      "source_location": "L28"
     },
     {
       "id": "js_staff_openaddstaffmodal",
@@ -4559,7 +4559,7 @@
       "file_type": "code",
       "norm_label": "openaddstaffmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L166"
+      "source_location": "L199"
     },
     {
       "id": "js_staff_openeditstaffmodal",
@@ -4571,7 +4571,7 @@
       "file_type": "code",
       "norm_label": "openeditstaffmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L196"
+      "source_location": "L231"
     },
     {
       "id": "js_staff_openresetpasswordmodal",
@@ -4583,7 +4583,31 @@
       "file_type": "code",
       "norm_label": "openresetpasswordmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L366"
+      "source_location": "L403"
+    },
+    {
+      "id": "js_staff_openrolepicker",
+      "label": "openRolePicker()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openrolepicker()",
+      "source_file": "js/staff.js",
+      "source_location": "L40"
+    },
+    {
+      "id": "js_staff_openstationpicker",
+      "label": "openStationPicker()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openstationpicker()",
+      "source_file": "js/staff.js",
+      "source_location": "L59"
     },
     {
       "id": "js_staff_renderstafftable",
@@ -4595,7 +4619,7 @@
       "file_type": "code",
       "norm_label": "renderstafftable()",
       "source_file": "js/staff.js",
-      "source_location": "L115"
+      "source_location": "L148"
     },
     {
       "id": "js_staff_restorestaff",
@@ -4607,7 +4631,7 @@
       "file_type": "code",
       "norm_label": "restorestaff()",
       "source_file": "js/staff.js",
-      "source_location": "L338"
+      "source_location": "L375"
     },
     {
       "id": "js_staff_saveresetpassword",
@@ -4619,7 +4643,7 @@
       "file_type": "code",
       "norm_label": "saveresetpassword()",
       "source_file": "js/staff.js",
-      "source_location": "L380"
+      "source_location": "L417"
     },
     {
       "id": "js_staff_savestaffform",
@@ -4631,7 +4655,7 @@
       "file_type": "code",
       "norm_label": "savestaffform()",
       "source_file": "js/staff.js",
-      "source_location": "L247"
+      "source_location": "L284"
     },
     {
       "id": "api_post_users_usermanager_adduser",
@@ -9611,7 +9635,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L323",
+      "source_location": "L360",
       "weight": 1.0
     },
     {
@@ -9623,7 +9647,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L112",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -9635,7 +9659,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L61",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -9647,7 +9671,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L227",
+      "source_location": "L264",
       "weight": 1.0
     },
     {
@@ -9659,7 +9683,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L229",
+      "source_location": "L266",
       "weight": 1.0
     },
     {
@@ -9671,7 +9695,31 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L240",
+      "source_location": "L277",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openrolepicker",
+      "target": "js_staff_loadroles",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openstationpicker",
+      "target": "js_staff_loadstations",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -9683,7 +9731,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L146",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -9695,7 +9743,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L351",
+      "source_location": "L388",
       "weight": 1.0
     },
     {
@@ -9707,7 +9755,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L300",
+      "source_location": "L337",
       "weight": 1.0
     },
     {
@@ -10415,7 +10463,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L35",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
@@ -10427,19 +10475,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L423",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_loadstaff",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "js/staff.js",
-      "source_location": "L53",
+      "source_location": "L460",
       "weight": 1.0
     },
     {
@@ -10452,6 +10488,18 @@
       "context": "call",
       "source_file": "js/staff.js",
       "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_loadstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L86",
       "weight": 1.0
     },
     {
@@ -12920,13 +12968,35 @@
     },
     {
       "source": "js_staff",
+      "target": "js_staff_getrolebadge",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_filterandrenderstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
       "target": "js_staff_renderstafftable",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L115",
+      "source_location": "L148",
       "weight": 1.0
     },
     {
@@ -12937,7 +13007,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L162",
+      "source_location": "L195",
       "weight": 1.0
     },
     {
@@ -12948,7 +13018,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L166",
+      "source_location": "L199",
       "weight": 1.0
     },
     {
@@ -12959,7 +13029,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L196",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -12970,7 +13040,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L247",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -12981,7 +13051,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L310",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -12992,29 +13062,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L338",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_openresetpasswordmodal",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L366",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_saveresetpassword",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L380",
+      "source_location": "L375",
       "weight": 1.0
     },
     {
@@ -13030,6 +13078,39 @@
     },
     {
       "source": "js_staff",
+      "target": "js_staff_openrolepicker",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_openresetpasswordmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L403",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_saveresetpassword",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L417",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
       "target": "js_staff_roleslist",
       "relation": "contains",
       "_origin": "ast",
@@ -13041,6 +13122,17 @@
     },
     {
       "source": "js_staff",
+      "target": "js_staff_openstationpicker",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
       "target": "js_staff_stationslist",
       "relation": "contains",
       "_origin": "ast",
@@ -13048,28 +13140,6 @@
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
       "source_location": "L6",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_getrolebadge",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L69",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_filterandrenderstaff",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -15361,7 +15431,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L426",
+      "source_location": "L463",
       "weight": 1.0
     },
     {
@@ -15373,7 +15443,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L441",
+      "source_location": "L478",
       "weight": 1.0
     },
     {
@@ -15385,7 +15455,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L456",
+      "source_location": "L493",
       "weight": 1.0
     },
     {
@@ -15397,7 +15467,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L461",
+      "source_location": "L498",
       "weight": 1.0
     },
     {
@@ -15409,7 +15479,31 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L476",
+      "source_location": "L513",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_openrolepicker",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L518",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_openstationpicker",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L527",
       "weight": 1.0
     },
     {
@@ -15438,5 +15532,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "7ab2202526dd14fc9946128fef730ea3f91f7192"
+  "built_at_commit": "ba26a0aa4183d1122c8c8055cac12b97debfa9b4"
 }

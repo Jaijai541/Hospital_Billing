@@ -371,6 +371,9 @@
     .page-header,
     .reports-tab-bar,
     .report-filter-panel,
+    #report-kpi-container,
+    .report-kpi-grid,
+    .report-kpi-card,
     .spreadsheet-header-bar,
     .sidebar-open-btn,
     .btn {

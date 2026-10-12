@@ -357,7 +357,7 @@
 
 @page {
     size: auto;
-    margin: 8mm 6mm;
+    margin: 5mm 4mm;
 }
 
 @media print {
@@ -371,7 +371,8 @@
         padding: 0 !important;
         background: #ffffff !important;
         color: #000000 !important;
-        font-size: 8.5pt !important;
+        font-size: 7.5pt !important;
+        line-height: 1.15 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
@@ -409,22 +410,26 @@
     }
 
     .print-report-header {
-        margin-bottom: 12px !important;
-        padding-bottom: 8px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 4px !important;
         border-bottom: 1.5px solid #000000 !important;
     }
 
     .print-report-header h1 {
-        font-size: 16pt !important;
+        font-size: 13pt !important;
+        line-height: 1.1 !important;
+        margin: 0 !important;
     }
 
     .print-report-header h2 {
-        font-size: 11pt !important;
+        font-size: 9.5pt !important;
+        line-height: 1.15 !important;
+        margin: 2px 0 0 0 !important;
     }
 
     .print-meta-row {
-        font-size: 8pt !important;
-        margin-top: 6px !important;
+        font-size: 7pt !important;
+        margin-top: 3px !important;
     }
 
     .spreadsheet-table {
@@ -432,7 +437,8 @@
         max-width: 100% !important;
         table-layout: auto !important;
         border-collapse: collapse !important;
-        font-size: 8pt !important;
+        font-size: 7.5pt !important;
+        line-height: 1.15 !important;
     }
 
     .spreadsheet-table thead th,
@@ -444,29 +450,32 @@
         background: #f1f5f9 !important;
         color: #000000 !important;
         border: 1px solid #475569 !important;
-        padding: 3px 5px !important;
-        font-size: 7.5pt !important;
+        padding: 2px 3px !important;
+        font-size: 7pt !important;
         white-space: normal !important;
-        letter-spacing: 0 !important;
+        letter-spacing: -0.1px !important;
+        line-height: 1.1 !important;
     }
 
     .spreadsheet-table tbody td {
         border: 1px solid #cbd5e1 !important;
         color: #000000 !important;
-        padding: 3px 5px !important;
-        font-size: 8pt !important;
+        padding: 2px 3px !important;
+        font-size: 7.5pt !important;
         white-space: normal !important;
         word-break: normal !important;
         overflow-wrap: break-word !important;
+        line-height: 1.15 !important;
     }
 
     .spreadsheet-table tfoot td {
         background: #f8fafc !important;
         border: 1.5px solid #000000 !important;
         color: #000000 !important;
-        padding: 3px 5px !important;
-        font-size: 8pt !important;
+        padding: 2px 3px !important;
+        font-size: 7.5pt !important;
         white-space: normal !important;
+        line-height: 1.15 !important;
     }
 
     .spreadsheet-table .currency-cell,
@@ -475,13 +484,20 @@
         white-space: nowrap !important;
     }
 
-    .spreadsheet-table .badge {
-        padding: 1px 4px !important;
+    .spreadsheet-table .col-seq {
+        width: 18px !important;
+        padding: 2px 1px !important;
         font-size: 7pt !important;
+    }
+
+    .spreadsheet-table .badge {
+        padding: 0 3px !important;
+        font-size: 6.5pt !important;
         border: 1px solid #64748b !important;
         background: transparent !important;
         color: #000000 !important;
         white-space: nowrap !important;
+        line-height: 1.2 !important;
     }
 
     .spreadsheet-table tr {
@@ -489,16 +505,21 @@
     }
 
     .print-signatures-wrap {
-        margin-top: 24px !important;
+        margin-top: 14px !important;
         page-break-inside: avoid !important;
     }
 
+    .print-signatures-grid {
+        gap: 20px !important;
+    }
+
     .print-signature-line {
-        margin-top: 32px !important;
-        font-size: 8.5pt !important;
+        margin-top: 20px !important;
+        padding-top: 2px !important;
+        font-size: 7.5pt !important;
     }
 
     .print-signature-role {
-        font-size: 7.5pt !important;
+        font-size: 6.5pt !important;
     }
 }

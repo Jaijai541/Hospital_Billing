@@ -67,5 +67,7 @@
   "65": "promissory_notes.js",
   "66": "staff.js",
   "67": "UserManager",
-  "68": "UserManager"
+  "68": "UserManager",
+  "69": "reports.js",
+  "70": "ReportManager"
 }

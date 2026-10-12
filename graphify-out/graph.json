@@ -433,6 +433,19 @@
       "source_location": "L5"
     },
     {
+      "id": "api_get_reports_reportmanager",
+      "label": "ReportManager",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": "reportmanager",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L5"
+    },
+    {
       "id": "api_get_invoices_invoicemanager",
       "label": "InvoiceManager",
       "_callable": true,
@@ -467,7 +480,7 @@
       "file_type": "code",
       "norm_label": "dischargepatientfromchart()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1288"
+      "source_location": "L1295"
     },
     {
       "id": "js_admission_details_filteravailablebeds",
@@ -479,7 +492,7 @@
       "file_type": "code",
       "norm_label": "filteravailablebeds()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1837"
+      "source_location": "L1850"
     },
     {
       "id": "js_admission_details_filtercatalogitems",
@@ -491,7 +504,7 @@
       "file_type": "code",
       "norm_label": "filtercatalogitems()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1416"
+      "source_location": "L1429"
     },
     {
       "id": "js_admission_details_filterdispensedmedicines",
@@ -503,7 +516,7 @@
       "file_type": "code",
       "norm_label": "filterdispensedmedicines()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2105"
+      "source_location": "L2118"
     },
     {
       "id": "js_admission_details_filterorderdoctors",
@@ -515,7 +528,7 @@
       "file_type": "code",
       "norm_label": "filterorderdoctors()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1345"
+      "source_location": "L1358"
     },
     {
       "id": "js_admission_details_filterrounddoctors",
@@ -527,7 +540,7 @@
       "file_type": "code",
       "norm_label": "filterrounddoctors()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1372"
+      "source_location": "L1385"
     },
     {
       "id": "js_admission_details_formatordinal",
@@ -551,7 +564,7 @@
       "file_type": "code",
       "norm_label": "getdefaultnextduedate()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2718"
+      "source_location": "L2737"
     },
     {
       "id": "js_admission_details_getpaymentmethodoptionshtml",
@@ -563,7 +576,7 @@
       "file_type": "code",
       "norm_label": "getpaymentmethodoptionshtml()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2183"
+      "source_location": "L2196"
     },
     {
       "id": "js_admission_details_initclinicalmodals",
@@ -635,7 +648,7 @@
       "file_type": "code",
       "norm_label": "loadadvancepayments()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2627"
+      "source_location": "L2646"
     },
     {
       "id": "js_admission_details_loadavailablebeds",
@@ -647,7 +660,7 @@
       "file_type": "code",
       "norm_label": "loadavailablebeds()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1821"
+      "source_location": "L1834"
     },
     {
       "id": "js_admission_details_loadbedhistory",
@@ -659,7 +672,7 @@
       "file_type": "code",
       "norm_label": "loadbedhistory()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1755"
+      "source_location": "L1768"
     },
     {
       "id": "js_admission_details_loadcatalogitems",
@@ -671,7 +684,7 @@
       "file_type": "code",
       "norm_label": "loadcatalogitems()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1399"
+      "source_location": "L1412"
     },
     {
       "id": "js_admission_details_loaddiscounts",
@@ -683,7 +696,7 @@
       "file_type": "code",
       "norm_label": "loaddiscounts()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2739"
+      "source_location": "L2758"
     },
     {
       "id": "js_admission_details_loaddispensedmedicines",
@@ -695,7 +708,7 @@
       "file_type": "code",
       "norm_label": "loaddispensedmedicines()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2059"
+      "source_location": "L2072"
     },
     {
       "id": "js_admission_details_loadledger",
@@ -707,7 +720,7 @@
       "file_type": "code",
       "norm_label": "loadledger()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1919"
+      "source_location": "L1932"
     },
     {
       "id": "js_admission_details_loadledgersummary",
@@ -719,7 +732,7 @@
       "file_type": "code",
       "norm_label": "loadledgersummary()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2003"
+      "source_location": "L2016"
     },
     {
       "id": "js_admission_details_loadorders",
@@ -731,7 +744,7 @@
       "file_type": "code",
       "norm_label": "loadorders()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1444"
+      "source_location": "L1457"
     },
     {
       "id": "js_admission_details_loadrounds",
@@ -743,7 +756,7 @@
       "file_type": "code",
       "norm_label": "loadrounds()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1638"
+      "source_location": "L1651"
     },
     {
       "id": "js_admission_details_loadtransfers",
@@ -755,7 +768,7 @@
       "file_type": "code",
       "norm_label": "loadtransfers()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1738"
+      "source_location": "L1751"
     },
     {
       "id": "js_admission_details_openadvancepaymentmethodpicker",
@@ -767,7 +780,7 @@
       "file_type": "code",
       "norm_label": "openadvancepaymentmethodpicker()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2231"
+      "source_location": "L2244"
     },
     {
       "id": "js_admission_details_openadvancepaymentmodal",
@@ -779,7 +792,7 @@
       "file_type": "code",
       "norm_label": "openadvancepaymentmodal()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2196"
+      "source_location": "L2209"
     },
     {
       "id": "js_admission_details_openlookuppicker",
@@ -803,7 +816,7 @@
       "file_type": "code",
       "norm_label": "openpatientadmissionhistorymodal()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2399"
+      "source_location": "L2412"
     },
     {
       "id": "js_admission_details_openreturnmedicinepicker",
@@ -815,7 +828,7 @@
       "file_type": "code",
       "norm_label": "openreturnmedicinepicker()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2098"
+      "source_location": "L2111"
     },
     {
       "id": "js_admission_details_populateassigneddoctordropdowns",
@@ -827,7 +840,7 @@
       "file_type": "code",
       "norm_label": "populateassigneddoctordropdowns()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1340"
+      "source_location": "L1353"
     },
     {
       "id": "js_admission_details_renderadmittedadvancebillingcard",
@@ -839,7 +852,7 @@
       "file_type": "code",
       "norm_label": "renderadmittedadvancebillingcard()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2623"
+      "source_location": "L2642"
     },
     {
       "id": "js_admission_details_renderadmitteddischargegatecard",
@@ -851,7 +864,7 @@
       "file_type": "code",
       "norm_label": "renderadmitteddischargegatecard()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2553"
+      "source_location": "L2566"
     },
     {
       "id": "js_admission_details_renderadvancepaymentshistory",
@@ -863,7 +876,7 @@
       "file_type": "code",
       "norm_label": "renderadvancepaymentshistory()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2339"
+      "source_location": "L2352"
     },
     {
       "id": "js_admission_details_renderbilledsettlementcard",
@@ -875,7 +888,7 @@
       "file_type": "code",
       "norm_label": "renderbilledsettlementcard()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2770"
+      "source_location": "L2789"
     },
     {
       "id": "js_admission_details_renderledgertable",
@@ -887,7 +900,7 @@
       "file_type": "code",
       "norm_label": "renderledgertable()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1936"
+      "source_location": "L1949"
     },
     {
       "id": "js_admission_details_renderlookuppickerrows",
@@ -911,7 +924,7 @@
       "file_type": "code",
       "norm_label": "renderorderstable()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1461"
+      "source_location": "L1474"
     },
     {
       "id": "js_admission_details_renderpaymenthistorytable",
@@ -923,7 +936,7 @@
       "file_type": "code",
       "norm_label": "renderpaymenthistorytable()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2656"
+      "source_location": "L2675"
     },
     {
       "id": "js_admission_details_renderpromissoryplanoptionshtml",
@@ -935,7 +948,7 @@
       "file_type": "code",
       "norm_label": "renderpromissoryplanoptionshtml()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2727"
+      "source_location": "L2746"
     },
     {
       "id": "js_admission_details_renderroundstable",
@@ -947,7 +960,7 @@
       "file_type": "code",
       "norm_label": "renderroundstable()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1655"
+      "source_location": "L1668"
     },
     {
       "id": "js_admission_details_rendersettlementsection",
@@ -959,7 +972,7 @@
       "file_type": "code",
       "norm_label": "rendersettlementsection()",
       "source_file": "js/admission_details.js",
-      "source_location": "L3060"
+      "source_location": "L3079"
     },
     {
       "id": "js_admission_details_rendersummarybox",
@@ -971,7 +984,7 @@
       "file_type": "code",
       "norm_label": "rendersummarybox()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2022"
+      "source_location": "L2035"
     },
     {
       "id": "js_admission_details_rendertransferstable",
@@ -983,7 +996,7 @@
       "file_type": "code",
       "norm_label": "rendertransferstable()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1760"
+      "source_location": "L1773"
     },
     {
       "id": "js_admission_details_savediagnosis",
@@ -1007,7 +1020,7 @@
       "file_type": "code",
       "norm_label": "showadvancemethodpicker()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2246"
+      "source_location": "L2259"
     },
     {
       "id": "js_admission_details_submitadvancepayment",
@@ -1019,7 +1032,7 @@
       "file_type": "code",
       "norm_label": "submitadvancepayment()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2274"
+      "source_location": "L2287"
     },
     {
       "id": "js_admission_details_submitbedtransfer",
@@ -1031,7 +1044,7 @@
       "file_type": "code",
       "norm_label": "submitbedtransfer()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1870"
+      "source_location": "L1883"
     },
     {
       "id": "js_admission_details_submitdoctororder",
@@ -1043,7 +1056,7 @@
       "file_type": "code",
       "norm_label": "submitdoctororder()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1527"
+      "source_location": "L1540"
     },
     {
       "id": "js_admission_details_submitdoctorround",
@@ -1055,7 +1068,7 @@
       "file_type": "code",
       "norm_label": "submitdoctorround()",
       "source_file": "js/admission_details.js",
-      "source_location": "L1694"
+      "source_location": "L1707"
     },
     {
       "id": "js_admission_details_submitmedicinereturn",
@@ -1067,7 +1080,7 @@
       "file_type": "code",
       "norm_label": "submitmedicinereturn()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2107"
+      "source_location": "L2120"
     },
     {
       "id": "js_admission_details_submitsettlement",
@@ -1079,7 +1092,7 @@
       "file_type": "code",
       "norm_label": "submitsettlement()",
       "source_file": "js/admission_details.js",
-      "source_location": "L3961"
+      "source_location": "L3980"
     },
     {
       "id": "js_admission_details_updatereturncreditcalc",
@@ -1091,7 +1104,7 @@
       "file_type": "code",
       "norm_label": "updatereturncreditcalc()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2077"
+      "source_location": "L2090"
     },
     {
       "id": "js_admission_details_updateworkflowstepper",
@@ -3611,7 +3624,31 @@
       "file_type": "code",
       "norm_label": "closemodal()",
       "source_file": "js/common.js",
-      "source_location": "L106"
+      "source_location": "L192"
+    },
+    {
+      "id": "js_common_closeselfchangepasswordmodal",
+      "label": "closeSelfChangePasswordModal()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "common.js",
+      "file_type": "code",
+      "norm_label": "closeselfchangepasswordmodal()",
+      "source_file": "js/common.js",
+      "source_location": "L200"
+    },
+    {
+      "id": "js_common_enforcepagerbacguard",
+      "label": "enforcePageRbacGuard()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "common.js",
+      "file_type": "code",
+      "norm_label": "enforcepagerbacguard()",
+      "source_file": "js/common.js",
+      "source_location": "L23"
     },
     {
       "id": "js_common_getactionbuttons",
@@ -3623,7 +3660,7 @@
       "file_type": "code",
       "norm_label": "getactionbuttons()",
       "source_file": "js/common.js",
-      "source_location": "L401"
+      "source_location": "L631"
     },
     {
       "id": "js_common_getemptystatehtml",
@@ -3635,7 +3672,7 @@
       "file_type": "code",
       "norm_label": "getemptystatehtml()",
       "source_file": "js/common.js",
-      "source_location": "L690"
+      "source_location": "L920"
     },
     {
       "id": "js_common_getstatusbadge",
@@ -3647,7 +3684,7 @@
       "file_type": "code",
       "norm_label": "getstatusbadge()",
       "source_file": "js/common.js",
-      "source_location": "L395"
+      "source_location": "L625"
     },
     {
       "id": "js_common_handleuserlogout",
@@ -3671,7 +3708,7 @@
       "file_type": "code",
       "norm_label": "initappsession()",
       "source_file": "js/common.js",
-      "source_location": "L23"
+      "source_location": "L84"
     },
     {
       "id": "js_common_initmodalcontrols",
@@ -3683,7 +3720,7 @@
       "file_type": "code",
       "norm_label": "initmodalcontrols()",
       "source_file": "js/common.js",
-      "source_location": "L357"
+      "source_location": "L587"
     },
     {
       "id": "js_common_initsearchclearbuttons",
@@ -3695,7 +3732,7 @@
       "file_type": "code",
       "norm_label": "initsearchclearbuttons()",
       "source_file": "js/common.js",
-      "source_location": "L720"
+      "source_location": "L950"
     },
     {
       "id": "js_common_initsidebarcontrols",
@@ -3707,7 +3744,7 @@
       "file_type": "code",
       "norm_label": "initsidebarcontrols()",
       "source_file": "js/common.js",
-      "source_location": "L55"
+      "source_location": "L141"
     },
     {
       "id": "js_common_opengenericlookuppicker",
@@ -3719,7 +3756,7 @@
       "file_type": "code",
       "norm_label": "opengenericlookuppicker()",
       "source_file": "js/common.js",
-      "source_location": "L468"
+      "source_location": "L698"
     },
     {
       "id": "js_common_openmodal",
@@ -3731,7 +3768,19 @@
       "file_type": "code",
       "norm_label": "openmodal()",
       "source_file": "js/common.js",
-      "source_location": "L96"
+      "source_location": "L182"
+    },
+    {
+      "id": "js_common_openselfchangepasswordmodal",
+      "label": "openSelfChangePasswordModal()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "common.js",
+      "file_type": "code",
+      "norm_label": "openselfchangepasswordmodal()",
+      "source_file": "js/common.js",
+      "source_location": "L208"
     },
     {
       "id": "js_common_rendergenericlookuplist",
@@ -3743,7 +3792,7 @@
       "file_type": "code",
       "norm_label": "rendergenericlookuplist()",
       "source_file": "js/common.js",
-      "source_location": "L589"
+      "source_location": "L819"
     },
     {
       "id": "js_common_showpopupalert",
@@ -3755,7 +3804,7 @@
       "file_type": "code",
       "norm_label": "showpopupalert()",
       "source_file": "js/common.js",
-      "source_location": "L245"
+      "source_location": "L475"
     },
     {
       "id": "js_common_showpopupconfirm",
@@ -3767,7 +3816,7 @@
       "file_type": "code",
       "norm_label": "showpopupconfirm()",
       "source_file": "js/common.js",
-      "source_location": "L253"
+      "source_location": "L483"
     },
     {
       "id": "js_common_showtoast",
@@ -3779,7 +3828,7 @@
       "file_type": "code",
       "norm_label": "showtoast()",
       "source_file": "js/common.js",
-      "source_location": "L114"
+      "source_location": "L344"
     },
     {
       "id": "js_common_togglerecordstatus",
@@ -3791,7 +3840,7 @@
       "file_type": "code",
       "norm_label": "togglerecordstatus()",
       "source_file": "js/common.js",
-      "source_location": "L415"
+      "source_location": "L645"
     },
     {
       "id": "js_common_updatefiltercount",
@@ -3803,7 +3852,7 @@
       "file_type": "code",
       "norm_label": "updatefiltercount()",
       "source_file": "js/common.js",
-      "source_location": "L700"
+      "source_location": "L930"
     },
     {
       "id": "examples_book_books_book_getbooks",
@@ -4682,6 +4731,18 @@
       "source_location": "L147"
     },
     {
+      "id": "api_post_users_usermanager_changepassword",
+      "label": ".changePassword()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "UserManager",
+      "file_type": "code",
+      "norm_label": ".changepassword()",
+      "source_file": "api/POST/users.php",
+      "source_location": "L232"
+    },
+    {
       "id": "api_post_users_usermanager_resetpassword",
       "label": ".resetPassword()",
       "_callable": true,
@@ -4764,6 +4825,246 @@
       "norm_label": ".getusers()",
       "source_file": "api/GET/users.php",
       "source_location": "L7"
+    },
+    {
+      "id": "js_reports_exporttocsv",
+      "label": "exportToCsv()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "exporttocsv()",
+      "source_file": "js/reports.js",
+      "source_location": "L720"
+    },
+    {
+      "id": "js_reports_exporttoexcel",
+      "label": "exportToExcel()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "exporttoexcel()",
+      "source_file": "js/reports.js",
+      "source_location": "L693"
+    },
+    {
+      "id": "js_reports_fetchreportdata",
+      "label": "fetchReportData()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "fetchreportdata()",
+      "source_file": "js/reports.js",
+      "source_location": "L164"
+    },
+    {
+      "id": "js_reports_formatdateymd",
+      "label": "formatDateYMD()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "formatdateymd()",
+      "source_file": "js/reports.js",
+      "source_location": "L10"
+    },
+    {
+      "id": "js_reports_formatpesos",
+      "label": "formatPesos()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "formatpesos()",
+      "source_file": "js/reports.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "js_reports_initreports",
+      "label": "initReports()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "initreports()",
+      "source_file": "js/reports.js",
+      "source_location": "L17"
+    },
+    {
+      "id": "js_reports_loadfilterlookups",
+      "label": "loadFilterLookups()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "loadfilterlookups()",
+      "source_file": "js/reports.js",
+      "source_location": "L109"
+    },
+    {
+      "id": "js_reports_printofficialreport",
+      "label": "printOfficialReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "printofficialreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L755"
+    },
+    {
+      "id": "js_reports_renderactivereport",
+      "label": "renderActiveReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderactivereport()",
+      "source_file": "js/reports.js",
+      "source_location": "L221"
+    },
+    {
+      "id": "js_reports_renderaragingreport",
+      "label": "renderArAgingReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderaragingreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L520"
+    },
+    {
+      "id": "js_reports_renderbedoccupancyreport",
+      "label": "renderBedOccupancyReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderbedoccupancyreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L620"
+    },
+    {
+      "id": "js_reports_rendercollectionsreport",
+      "label": "renderCollectionsReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "rendercollectionsreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L279"
+    },
+    {
+      "id": "js_reports_renderdepartmentrevenuereport",
+      "label": "renderDepartmentRevenueReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderdepartmentrevenuereport()",
+      "source_file": "js/reports.js",
+      "source_location": "L369"
+    },
+    {
+      "id": "js_reports_renderdoctorfeesreport",
+      "label": "renderDoctorFeesReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderdoctorfeesreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L445"
+    },
+    {
+      "id": "js_reports_setupeventlisteners",
+      "label": "setupEventListeners()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "setupeventlisteners()",
+      "source_file": "js/reports.js",
+      "source_location": "L75"
+    },
+    {
+      "id": "js_reports_setuppresetbuttons",
+      "label": "setupPresetButtons()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "setuppresetbuttons()",
+      "source_file": "js/reports.js",
+      "source_location": "L39"
+    },
+    {
+      "id": "js_reports_setuptabswitching",
+      "label": "setupTabSwitching()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "setuptabswitching()",
+      "source_file": "js/reports.js",
+      "source_location": "L26"
+    },
+    {
+      "id": "js_reports_showerrorstate",
+      "label": "showErrorState()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "showerrorstate()",
+      "source_file": "js/reports.js",
+      "source_location": "L207"
+    },
+    {
+      "id": "js_reports_updateprintheader",
+      "label": "updatePrintHeader()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "updateprintheader()",
+      "source_file": "js/reports.js",
+      "source_location": "L239"
+    },
+    {
+      "id": "js_reports_updatesecondaryfilterui",
+      "label": "updateSecondaryFilterUI()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "updatesecondaryfilterui()",
+      "source_file": "js/reports.js",
+      "source_location": "L120"
     },
     {
       "id": "examples_invoice_invoice_displaydetails",
@@ -4872,6 +5173,90 @@
       "norm_label": "saveinvoice()",
       "source_file": "examples/invoice/invoice.js",
       "source_location": "L6"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getagingaccountsreceivable",
+      "label": ".getAgingAccountsReceivable()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getagingaccountsreceivable()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L378"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getbedoccupancysummary",
+      "label": ".getBedOccupancySummary()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getbedoccupancysummary()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L485"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdailycollections",
+      "label": ".getDailyCollections()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdailycollections()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L13"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdb",
+      "label": ".getDb()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdb()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L7"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdepartmentrevenue",
+      "label": ".getDepartmentRevenue()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdepartmentrevenue()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L124"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdoctorfeessummary",
+      "label": ".getDoctorFeesSummary()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdoctorfeessummary()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L261"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getfilterlookups",
+      "label": ".getFilterLookups()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getfilterlookups()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L573"
     },
     {
       "id": "api_get_invoices_invoicemanager_fetchledgeritems",
@@ -5925,7 +6310,7 @@
       "file_type": "code",
       "norm_label": "genericlookuppickerstate",
       "source_file": "js/common.js",
-      "source_location": "L459"
+      "source_location": "L689"
     },
     {
       "id": "agents",
@@ -5997,7 +6382,7 @@
       "node_kind": "heading",
       "norm_label": "2. technology stack & environment",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L33"
+      "source_location": "L37"
     },
     {
       "id": "project_rules_3_ui_component_architecture",
@@ -6009,7 +6394,7 @@
       "node_kind": "heading",
       "norm_label": "3. ui & component architecture",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L44"
+      "source_location": "L48"
     },
     {
       "id": "project_rules_4_key_modules_data_flow",
@@ -6021,7 +6406,7 @@
       "node_kind": "heading",
       "norm_label": "4. key modules & data flow",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L83"
+      "source_location": "L87"
     },
     {
       "id": "project_rules_5_verification_checklist_before_finishing_any_task",
@@ -6033,7 +6418,7 @@
       "node_kind": "heading",
       "norm_label": "5. verification checklist before finishing any task",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L100"
+      "source_location": "L104"
     },
     {
       "id": "project_rules_cache_busting",
@@ -6045,7 +6430,7 @@
       "node_kind": "heading",
       "norm_label": "cache-busting",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L77"
+      "source_location": "L81"
     },
     {
       "id": "project_rules_form_dropdowns_vs_lookup_picker_windows",
@@ -6057,7 +6442,7 @@
       "node_kind": "heading",
       "norm_label": "form dropdowns vs. lookup picker windows",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L65"
+      "source_location": "L69"
     },
     {
       "id": "project_rules_hospital_billing_system_project_rules_architecture_guidelines",
@@ -6081,7 +6466,7 @@
       "node_kind": "heading",
       "norm_label": "layout structure",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L46"
+      "source_location": "L50"
     },
     {
       "id": "project_rules_modal_design_system",
@@ -6093,7 +6478,7 @@
       "node_kind": "heading",
       "norm_label": "modal design system",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L52"
+      "source_location": "L56"
     },
     {
       "id": "examples_book_books",
@@ -6547,6 +6932,28 @@
       "source_location": "L1"
     },
     {
+      "id": "js_reports",
+      "label": "reports.js",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "reports.js",
+      "source_file": "js/reports.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "js_reports_lookupdata",
+      "label": "lookupData",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "lookupdata",
+      "source_file": "js/reports.js",
+      "source_location": "L3"
+    },
+    {
       "id": "examples_invoice_invoice_details",
       "label": "details",
       "_origin": "ast",
@@ -6578,6 +6985,17 @@
       "norm_label": "products",
       "source_file": "examples/invoice/invoice.js",
       "source_location": "L4"
+    },
+    {
+      "id": "api_get_reports",
+      "label": "reports.php",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": "reports.php",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L1"
     },
     {
       "id": "api_get_invoices",
@@ -6660,6 +7078,78 @@
       "context": "call",
       "source_file": "api/GET/ledger.php",
       "source_location": "L390",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getagingaccountsreceivable",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L380",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getbedoccupancysummary",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L487",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getdailycollections",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getdepartmentrevenue",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getdoctorfeessummary",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L263",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getfilterlookups",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L575",
       "weight": 1.0
     },
     {
@@ -6887,7 +7377,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1310",
+      "source_location": "L1323",
       "weight": 1.0
     },
     {
@@ -6899,7 +7389,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1311",
+      "source_location": "L1324",
       "weight": 1.0
     },
     {
@@ -6911,7 +7401,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1312",
+      "source_location": "L1325",
       "weight": 1.0
     },
     {
@@ -6923,7 +7413,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1313",
+      "source_location": "L1326",
       "weight": 1.0
     },
     {
@@ -6935,7 +7425,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1314",
+      "source_location": "L1327",
       "weight": 1.0
     },
     {
@@ -6947,7 +7437,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1316",
+      "source_location": "L1329",
       "weight": 1.0
     },
     {
@@ -7043,7 +7533,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1237",
+      "source_location": "L1244",
       "weight": 1.0
     },
     {
@@ -7055,7 +7545,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2643",
+      "source_location": "L2662",
       "weight": 1.0
     },
     {
@@ -7067,7 +7557,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2645",
+      "source_location": "L2664",
       "weight": 1.0
     },
     {
@@ -7079,7 +7569,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1830",
+      "source_location": "L1843",
       "weight": 1.0
     },
     {
@@ -7091,7 +7581,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1756",
+      "source_location": "L1769",
       "weight": 1.0
     },
     {
@@ -7103,7 +7593,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1409",
+      "source_location": "L1422",
       "weight": 1.0
     },
     {
@@ -7115,7 +7605,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2763",
+      "source_location": "L2782",
       "weight": 1.0
     },
     {
@@ -7127,7 +7617,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2070",
+      "source_location": "L2083",
       "weight": 1.0
     },
     {
@@ -7139,7 +7629,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1929",
+      "source_location": "L1942",
       "weight": 1.0
     },
     {
@@ -7151,7 +7641,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2014",
+      "source_location": "L2027",
       "weight": 1.0
     },
     {
@@ -7163,7 +7653,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2015",
+      "source_location": "L2028",
       "weight": 1.0
     },
     {
@@ -7175,7 +7665,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1454",
+      "source_location": "L1467",
       "weight": 1.0
     },
     {
@@ -7187,7 +7677,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1648",
+      "source_location": "L1661",
       "weight": 1.0
     },
     {
@@ -7199,7 +7689,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1748",
+      "source_location": "L1761",
       "weight": 1.0
     },
     {
@@ -7211,7 +7701,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2237",
+      "source_location": "L2250",
       "weight": 1.0
     },
     {
@@ -7235,7 +7725,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1341",
+      "source_location": "L1354",
       "weight": 1.0
     },
     {
@@ -7247,7 +7737,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1342",
+      "source_location": "L1355",
       "weight": 1.0
     },
     {
@@ -7259,7 +7749,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2624",
+      "source_location": "L2643",
       "weight": 1.0
     },
     {
@@ -7271,7 +7761,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2821",
+      "source_location": "L2840",
       "weight": 1.0
     },
     {
@@ -7283,7 +7773,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2863",
+      "source_location": "L2882",
       "weight": 1.0
     },
     {
@@ -7295,7 +7785,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2921",
+      "source_location": "L2940",
       "weight": 1.0
     },
     {
@@ -7307,7 +7797,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3042",
+      "source_location": "L3061",
       "weight": 1.0
     },
     {
@@ -7331,7 +7821,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3089",
+      "source_location": "L3108",
       "weight": 1.0
     },
     {
@@ -7343,7 +7833,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3322",
+      "source_location": "L3341",
       "weight": 1.0
     },
     {
@@ -7355,7 +7845,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3336",
+      "source_location": "L3355",
       "weight": 1.0
     },
     {
@@ -7367,7 +7857,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3389",
+      "source_location": "L3408",
       "weight": 1.0
     },
     {
@@ -7379,7 +7869,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2314",
+      "source_location": "L2327",
       "weight": 1.0
     },
     {
@@ -7391,7 +7881,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2315",
+      "source_location": "L2328",
       "weight": 1.0
     },
     {
@@ -7403,7 +7893,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2316",
+      "source_location": "L2329",
       "weight": 1.0
     },
     {
@@ -7415,7 +7905,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2317",
+      "source_location": "L2330",
       "weight": 1.0
     },
     {
@@ -7427,7 +7917,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1899",
+      "source_location": "L1912",
       "weight": 1.0
     },
     {
@@ -7439,7 +7929,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1900",
+      "source_location": "L1913",
       "weight": 1.0
     },
     {
@@ -7451,7 +7941,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1901",
+      "source_location": "L1914",
       "weight": 1.0
     },
     {
@@ -7463,7 +7953,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1902",
+      "source_location": "L1915",
       "weight": 1.0
     },
     {
@@ -7475,7 +7965,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1903",
+      "source_location": "L1916",
       "weight": 1.0
     },
     {
@@ -7487,7 +7977,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1567",
+      "source_location": "L1580",
       "weight": 1.0
     },
     {
@@ -7499,7 +7989,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1725",
+      "source_location": "L1738",
       "weight": 1.0
     },
     {
@@ -7511,7 +8001,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1726",
+      "source_location": "L1739",
       "weight": 1.0
     },
     {
@@ -7523,7 +8013,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1727",
+      "source_location": "L1740",
       "weight": 1.0
     },
     {
@@ -7535,7 +8025,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2167",
+      "source_location": "L2180",
       "weight": 1.0
     },
     {
@@ -7547,7 +8037,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2168",
+      "source_location": "L2181",
       "weight": 1.0
     },
     {
@@ -7559,7 +8049,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2169",
+      "source_location": "L2182",
       "weight": 1.0
     },
     {
@@ -7571,7 +8061,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2170",
+      "source_location": "L2183",
       "weight": 1.0
     },
     {
@@ -8020,6 +8510,42 @@
     },
     {
       "source": "js_common_initappsession",
+      "target": "js_common_showtoast",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/common.js",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common_initappsession",
+      "target": "js_common_enforcepagerbacguard",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/common.js",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common_initappsession",
+      "target": "js_common_openselfchangepasswordmodal",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/common.js",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common_initappsession",
       "target": "js_common_showpopupconfirm",
       "relation": "calls",
       "_origin": "ast",
@@ -8027,7 +8553,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L44",
+      "source_location": "L130",
       "weight": 1.0
     },
     {
@@ -8039,7 +8565,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L45",
+      "source_location": "L131",
       "weight": 1.0
     },
     {
@@ -8051,7 +8577,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L362",
+      "source_location": "L592",
       "weight": 1.0
     },
     {
@@ -8063,7 +8589,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L368",
+      "source_location": "L598",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common_openselfchangepasswordmodal",
+      "target": "js_common_showtoast",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/common.js",
+      "source_location": "L272",
       "weight": 1.0
     },
     {
@@ -8075,7 +8613,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L246",
+      "source_location": "L476",
       "weight": 1.0
     },
     {
@@ -8087,7 +8625,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L420",
+      "source_location": "L650",
       "weight": 1.0
     },
     {
@@ -8099,7 +8637,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L439",
+      "source_location": "L669",
       "weight": 1.0
     },
     {
@@ -9255,6 +9793,330 @@
       "weight": 1.0
     },
     {
+      "source": "js_reports_exporttocsv",
+      "target": "js_reports_formatdateymd",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L746",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_exporttoexcel",
+      "target": "js_reports_formatdateymd",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L714",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_fetchreportdata",
+      "target": "js_reports_renderactivereport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L197",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_fetchreportdata",
+      "target": "js_reports_showerrorstate",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_setuptabswitching",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_setuppresetbuttons",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_setupeventlisteners",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_loadfilterlookups",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_updatesecondaryfilterui",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_printofficialreport",
+      "target": "js_reports_updateprintheader",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L756",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_rendercollectionsreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderdepartmentrevenuereport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderdoctorfeesreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderaragingreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderbedoccupancyreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_updateprintheader",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderaragingreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L532",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderbedoccupancyreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L673",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_rendercollectionsreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L291",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderdepartmentrevenuereport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L382",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderdoctorfeesreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L457",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuppresetbuttons",
+      "target": "js_reports_formatdateymd",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuppresetbuttons",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuptabswitching",
+      "target": "js_reports_updatesecondaryfilterui",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuptabswitching",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
       "source": "js_rooms_closeroomtypemodal",
       "target": "js_rooms_canceleditroomtype",
       "relation": "calls",
@@ -9863,7 +10725,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1399",
+      "source_location": "L1412",
       "weight": 1.0
     },
     {
@@ -9875,7 +10737,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1444",
+      "source_location": "L1457",
       "weight": 1.0
     },
     {
@@ -9887,7 +10749,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1638",
+      "source_location": "L1651",
       "weight": 1.0
     },
     {
@@ -9899,7 +10761,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1738",
+      "source_location": "L1751",
       "weight": 1.0
     },
     {
@@ -9911,7 +10773,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1821",
+      "source_location": "L1834",
       "weight": 1.0
     },
     {
@@ -9923,7 +10785,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L1919",
+      "source_location": "L1932",
       "weight": 1.0
     },
     {
@@ -9935,7 +10797,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2003",
+      "source_location": "L2016",
       "weight": 1.0
     },
     {
@@ -9947,7 +10809,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2059",
+      "source_location": "L2072",
       "weight": 1.0
     },
     {
@@ -9959,7 +10821,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2627",
+      "source_location": "L2646",
       "weight": 1.0
     },
     {
@@ -9971,7 +10833,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2739",
+      "source_location": "L2758",
       "weight": 1.0
     },
     {
@@ -10120,18 +10982,6 @@
     },
     {
       "source": "js_common",
-      "target": "js_common_initappsession",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "js/common.js",
-      "source_location": "L23",
-      "weight": 1.0
-    },
-    {
-      "source": "js_common",
       "target": "js_common_initsidebarcontrols",
       "relation": "contains",
       "_origin": "ast",
@@ -10139,7 +10989,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L55",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common",
+      "target": "js_common_initappsession",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/common.js",
+      "source_location": "L84",
       "weight": 1.0
     },
     {
@@ -10151,7 +11013,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/common.js",
-      "source_location": "L720",
+      "source_location": "L950",
       "weight": 1.0
     },
     {
@@ -10653,6 +11515,17 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "api/GET/patients.php",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports",
+      "target": "api_get_reports_reportmanager",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
       "source_location": "L5",
       "weight": 1.0
     },
@@ -11247,7 +12120,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1288",
+      "source_location": "L1295",
       "weight": 1.0
     },
     {
@@ -11269,7 +12142,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1340",
+      "source_location": "L1353",
       "weight": 1.0
     },
     {
@@ -11280,7 +12153,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1345",
+      "source_location": "L1358",
       "weight": 1.0
     },
     {
@@ -11291,7 +12164,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1372",
+      "source_location": "L1385",
       "weight": 1.0
     },
     {
@@ -11302,7 +12175,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1416",
+      "source_location": "L1429",
       "weight": 1.0
     },
     {
@@ -11313,7 +12186,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1461",
+      "source_location": "L1474",
       "weight": 1.0
     },
     {
@@ -11335,7 +12208,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1655",
+      "source_location": "L1668",
       "weight": 1.0
     },
     {
@@ -11346,7 +12219,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1755",
+      "source_location": "L1768",
       "weight": 1.0
     },
     {
@@ -11357,7 +12230,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1760",
+      "source_location": "L1773",
       "weight": 1.0
     },
     {
@@ -11368,7 +12241,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1837",
+      "source_location": "L1850",
       "weight": 1.0
     },
     {
@@ -11379,7 +12252,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L1936",
+      "source_location": "L1949",
       "weight": 1.0
     },
     {
@@ -11401,18 +12274,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2022",
-      "weight": 1.0
-    },
-    {
-      "source": "js_admission_details",
-      "target": "js_admission_details_openreturnmedicinepicker",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/admission_details.js",
-      "source_location": "L2098",
+      "source_location": "L2035",
       "weight": 1.0
     },
     {
@@ -11428,18 +12290,18 @@
     },
     {
       "source": "js_admission_details",
-      "target": "js_admission_details_getpaymentmethodoptionshtml",
+      "target": "js_admission_details_openreturnmedicinepicker",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2183",
+      "source_location": "L2111",
       "weight": 1.0
     },
     {
       "source": "js_admission_details",
-      "target": "js_admission_details_openadvancepaymentmodal",
+      "target": "js_admission_details_getpaymentmethodoptionshtml",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -11450,13 +12312,24 @@
     },
     {
       "source": "js_admission_details",
+      "target": "js_admission_details_openadvancepaymentmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/admission_details.js",
+      "source_location": "L2209",
+      "weight": 1.0
+    },
+    {
+      "source": "js_admission_details",
       "target": "js_admission_details_openadvancepaymentmethodpicker",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2231",
+      "source_location": "L2244",
       "weight": 1.0
     },
     {
@@ -11467,7 +12340,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2246",
+      "source_location": "L2259",
       "weight": 1.0
     },
     {
@@ -11478,7 +12351,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2274",
+      "source_location": "L2287",
       "weight": 1.0
     },
     {
@@ -11489,7 +12362,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2339",
+      "source_location": "L2352",
       "weight": 1.0
     },
     {
@@ -11500,7 +12373,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2399",
+      "source_location": "L2412",
       "weight": 1.0
     },
     {
@@ -11511,7 +12384,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2553",
+      "source_location": "L2566",
       "weight": 1.0
     },
     {
@@ -11522,7 +12395,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2623",
+      "source_location": "L2642",
       "weight": 1.0
     },
     {
@@ -11533,7 +12406,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2656",
+      "source_location": "L2675",
       "weight": 1.0
     },
     {
@@ -11544,7 +12417,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2718",
+      "source_location": "L2737",
       "weight": 1.0
     },
     {
@@ -11555,7 +12428,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2727",
+      "source_location": "L2746",
       "weight": 1.0
     },
     {
@@ -11566,7 +12439,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2770",
+      "source_location": "L2789",
       "weight": 1.0
     },
     {
@@ -11577,7 +12450,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L3060",
+      "source_location": "L3079",
       "weight": 1.0
     },
     {
@@ -11588,7 +12461,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L3961",
+      "source_location": "L3980",
       "weight": 1.0
     },
     {
@@ -11923,13 +12796,57 @@
     },
     {
       "source": "js_common",
+      "target": "js_common_openmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/common.js",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common",
       "target": "js_common_closemodal",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L106",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common",
+      "target": "js_common_closeselfchangepasswordmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/common.js",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common",
+      "target": "js_common_openselfchangepasswordmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/common.js",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common",
+      "target": "js_common_enforcepagerbacguard",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/common.js",
+      "source_location": "L23",
       "weight": 1.0
     },
     {
@@ -11940,7 +12857,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L114",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -11951,7 +12868,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L245",
+      "source_location": "L475",
       "weight": 1.0
     },
     {
@@ -11962,7 +12879,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L253",
+      "source_location": "L483",
       "weight": 1.0
     },
     {
@@ -11973,7 +12890,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L357",
+      "source_location": "L587",
       "weight": 1.0
     },
     {
@@ -11984,7 +12901,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L395",
+      "source_location": "L625",
       "weight": 1.0
     },
     {
@@ -11995,7 +12912,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L401",
+      "source_location": "L631",
       "weight": 1.0
     },
     {
@@ -12006,7 +12923,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L415",
+      "source_location": "L645",
       "weight": 1.0
     },
     {
@@ -12017,7 +12934,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L459",
+      "source_location": "L689",
       "weight": 1.0
     },
     {
@@ -12028,7 +12945,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L468",
+      "source_location": "L698",
       "weight": 1.0
     },
     {
@@ -12039,29 +12956,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L589",
-      "weight": 1.0
-    },
-    {
-      "source": "js_common",
-      "target": "js_common_getemptystatehtml",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/common.js",
-      "source_location": "L690",
-      "weight": 1.0
-    },
-    {
-      "source": "js_common",
-      "target": "js_common_updatefiltercount",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/common.js",
-      "source_location": "L700",
+      "source_location": "L819",
       "weight": 1.0
     },
     {
@@ -12077,13 +12972,24 @@
     },
     {
       "source": "js_common",
-      "target": "js_common_openmodal",
+      "target": "js_common_getemptystatehtml",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/common.js",
-      "source_location": "L96",
+      "source_location": "L920",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common",
+      "target": "js_common_updatefiltercount",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/common.js",
+      "source_location": "L930",
       "weight": 1.0
     },
     {
@@ -12824,6 +13730,226 @@
       "weight": 1.0
     },
     {
+      "source": "js_reports",
+      "target": "js_reports_formatdateymd",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_loadfilterlookups",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_updatesecondaryfilterui",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_fetchreportdata",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_showerrorstate",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderactivereport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L221",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_updateprintheader",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_setuptabswitching",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_rendercollectionsreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L279",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_lookupdata",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderdepartmentrevenuereport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L369",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_setuppresetbuttons",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderdoctorfeesreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L445",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_formatpesos",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderaragingreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L520",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderbedoccupancyreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L620",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_exporttoexcel",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L693",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_exporttocsv",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L720",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_setupeventlisteners",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_printofficialreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L755",
+      "weight": 1.0
+    },
+    {
       "source": "js_rooms",
       "target": "js_rooms_renderbedoccupancydata",
       "relation": "contains",
@@ -13161,7 +14287,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L46",
+      "source_location": "L50",
       "weight": 1.0
     },
     {
@@ -13172,7 +14298,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L52",
+      "source_location": "L56",
       "weight": 1.0
     },
     {
@@ -13183,7 +14309,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L65",
+      "source_location": "L69",
       "weight": 1.0
     },
     {
@@ -13194,7 +14320,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L77",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -13205,7 +14331,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L100",
+      "source_location": "L104",
       "weight": 1.0
     },
     {
@@ -13216,7 +14342,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L33",
+      "source_location": "L37",
       "weight": 1.0
     },
     {
@@ -13227,7 +14353,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L44",
+      "source_location": "L48",
       "weight": 1.0
     },
     {
@@ -13249,7 +14375,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L83",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -13701,6 +14827,83 @@
       "confidence_score": 1.0,
       "source_file": "api/GET/patients.php",
       "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdepartmentrevenue",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdailycollections",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdoctorfeessummary",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L261",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getagingaccountsreceivable",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L378",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getbedoccupancysummary",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L485",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getfilterlookups",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L573",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L7",
       "weight": 1.0
     },
     {
@@ -14354,6 +15557,17 @@
     },
     {
       "source": "api_post_users_usermanager",
+      "target": "api_post_users_usermanager_changepassword",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/POST/users.php",
+      "source_location": "L232",
+      "weight": 1.0
+    },
+    {
+      "source": "api_post_users_usermanager",
       "target": "api_post_users_usermanager_adduser",
       "relation": "method",
       "_origin": "ast",
@@ -14639,7 +15853,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/admission_details.js",
-      "source_location": "L3946",
+      "source_location": "L3965",
       "weight": 1.0
     },
     {
@@ -14843,7 +16057,19 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/common.js",
-      "source_location": "L527",
+      "source_location": "L757",
+      "weight": 1.0
+    },
+    {
+      "source": "js_common_openselfchangepasswordmodal",
+      "target": "js_common_closeselfchangepasswordmodal",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/common.js",
+      "source_location": "L249",
       "weight": 1.0
     },
     {
@@ -15291,6 +16517,54 @@
       "weight": 1.0
     },
     {
+      "source": "js_reports",
+      "target": "js_reports_initreports",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L760",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_exporttocsv",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_printofficialreport",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_exporttoexcel",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
       "source": "js_rooms",
       "target": "js_rooms_closebedoccupancymodal",
       "relation": "indirect_call",
@@ -15419,7 +16693,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/sidebar.js",
-      "source_location": "L78",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -15527,10 +16801,10 @@
       "confidence_score": 0.95,
       "context": "openGenericLookupPicker",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L67",
+      "source_location": "L71",
       "weight": 1.0
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ba26a0aa4183d1122c8c8055cac12b97debfa9b4"
+  "built_at_commit": "2428f889b103407a3020399f0782aac41ef024c2"
 }

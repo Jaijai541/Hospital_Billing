@@ -282,9 +282,9 @@
     "semantic_hash": "04fcade715fb67e57cce10886b0abeeb"
   },
   "js/admission_details.js": {
-    "mtime": 1791216764.7688215,
-    "seen": 1791216809.4772215,
-    "ast_hash": "d72ec79e7355a928dbdb2ca476f357d5",
+    "mtime": 1791817947.613997,
+    "seen": 1791818071.0070465,
+    "ast_hash": "ba4c284bf0d8408f9bd0f31112eef6eb",
     "semantic_hash": ""
   },
   "js/admissions.js": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "js/common.js": {
-    "mtime": 1791210027.7198753,
-    "seen": 1791210359.6752834,
-    "ast_hash": "b07d304726ebf7f0d4d4ba1d0bad2c62",
+    "mtime": 1791817430.942305,
+    "seen": 1791818071.008402,
+    "ast_hash": "87e04fb487697110e0c789c1bedd74c1",
     "semantic_hash": ""
   },
   "js/dashboard.js": {
@@ -384,9 +384,9 @@
     "semantic_hash": ""
   },
   "js/sidebar.js": {
-    "mtime": 1791735875.3517065,
-    "seen": 1791736034.0457969,
-    "ast_hash": "ad0549ed48427d4036e8e8ee0058b042",
+    "mtime": 1791816908.2552955,
+    "seen": 1791818071.0129747,
+    "ast_hash": "089766398234227eff063283b839ef1e",
     "semantic_hash": ""
   },
   "js/promissory_notes.js": {
@@ -396,15 +396,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791205605.917549,
-    "seen": 1791205927.1213224,
-    "ast_hash": "206e39d647f75285c91cb24c4d4e584a",
+    "mtime": 1791814162.02441,
+    "seen": 1791814202.8841674,
+    "ast_hash": "f4af380890284102b3c200b77dcb4091",
     "semantic_hash": ""
   },
   "PROJECT_RULES.md": {
-    "mtime": 1790881805.7954323,
-    "seen": 1791205514.5793414,
-    "ast_hash": "f44596864852d2ee021452bf4ce51475",
+    "mtime": 1791814131.3262775,
+    "seen": 1791814202.8841705,
+    "ast_hash": "9887e13450482762e32099071138098b",
     "semantic_hash": ""
   },
   "examples/Book/html.html": {
@@ -438,69 +438,69 @@
     "semantic_hash": ""
   },
   "views/admission_details.html": {
-    "mtime": 1791216771.0266743,
-    "seen": 1791216809.4809763,
-    "ast_hash": "9901b27b41bc87068cffc19da5063b66",
+    "mtime": 1791817973.1502354,
+    "seen": 1791818071.0158727,
+    "ast_hash": "51b57c32c1455977a06643c987f2d4b1",
     "semantic_hash": ""
   },
   "views/admissions.html": {
-    "mtime": 1791134608.0089607,
-    "seen": 1791205514.579369,
-    "ast_hash": "7e075e91f3289ceb4de1addc211506d8",
+    "mtime": 1791817973.1492078,
+    "seen": 1791818071.0158777,
+    "ast_hash": "c708ee501b8c1f63dbad31245fc3b65e",
     "semantic_hash": ""
   },
   "views/archive.html": {
-    "mtime": 1791735774.5049877,
-    "seen": 1791736034.0483313,
-    "ast_hash": "ed4997cfb47fa4f6887143ead2fcf7cb",
+    "mtime": 1791817973.1502354,
+    "seen": 1791818071.0158815,
+    "ast_hash": "3706dca1e49749167e8e1c530e771146",
     "semantic_hash": ""
   },
   "views/audit_log.html": {
-    "mtime": 1791134608.014169,
-    "seen": 1791205514.579377,
-    "ast_hash": "0cd7734006eb4e6920b68d005c607ba5",
+    "mtime": 1791817973.1502354,
+    "seen": 1791818071.015885,
+    "ast_hash": "980946dacad76715c9276de71a74c6ed",
     "semantic_hash": ""
   },
   "views/catalogs.html": {
-    "mtime": 1791134608.0151775,
-    "seen": 1791205514.5793815,
-    "ast_hash": "bb73b891c1502680cd78915c78b414a1",
+    "mtime": 1791817973.151359,
+    "seen": 1791818071.0158892,
+    "ast_hash": "440fbacce97f860cfabc96b19b7fbf40",
     "semantic_hash": ""
   },
   "views/departments.html": {
-    "mtime": 1791134608.0151775,
-    "seen": 1791205514.579386,
-    "ast_hash": "2d63ae378d7eddefac3453ceea8cc22f",
+    "mtime": 1791817973.151359,
+    "seen": 1791818071.015893,
+    "ast_hash": "a72a35255770479ee58864275a0152db",
     "semantic_hash": ""
   },
   "views/discounts.html": {
-    "mtime": 1791134608.0161927,
-    "seen": 1791205514.5793903,
-    "ast_hash": "74272db8057119a8b85680e51c49b4d6",
+    "mtime": 1791817973.1525846,
+    "seen": 1791818071.0158966,
+    "ast_hash": "f24230203ac789c9ae07d77653891d31",
     "semantic_hash": ""
   },
   "views/doctors.html": {
-    "mtime": 1791134608.0172164,
-    "seen": 1791205514.5793948,
-    "ast_hash": "441cbe2dd9b3f04712280119acba46e6",
+    "mtime": 1791817973.1536217,
+    "seen": 1791818071.0159001,
+    "ast_hash": "78703e8ef9ff702015d3c2d25769a29e",
     "semantic_hash": ""
   },
   "views/index.html": {
-    "mtime": 1791207470.0900292,
-    "seen": 1791207539.2878463,
-    "ast_hash": "f96ecaaa1e04d9b3b38759d858669b3f",
+    "mtime": 1791817973.1536217,
+    "seen": 1791818071.0159035,
+    "ast_hash": "6203d43ba4acadecbf5cbf7b23ad85af",
     "semantic_hash": ""
   },
   "views/invoice_print.html": {
-    "mtime": 1791212303.9758103,
-    "seen": 1791212385.9182217,
-    "ast_hash": "241aa2729ab9f9a891aaa9bf0097c8df",
+    "mtime": 1791817973.1546166,
+    "seen": 1791818071.015907,
+    "ast_hash": "6af7627718e899b5e34592d16c798a4b",
     "semantic_hash": ""
   },
   "views/invoices.html": {
-    "mtime": 1791733994.2894328,
-    "seen": 1791734537.3200858,
-    "ast_hash": "9eedc805902796810f7917a2cc248ef6",
+    "mtime": 1791817973.1546166,
+    "seen": 1791818071.0159104,
+    "ast_hash": "deaa3f1a95f1d13ac4d830062fd28dd5",
     "semantic_hash": ""
   },
   "views/login.html": {
@@ -510,33 +510,33 @@
     "semantic_hash": ""
   },
   "views/partial_bill.html": {
-    "mtime": 1791211968.5142057,
-    "seen": 1791212040.7700772,
-    "ast_hash": "a19674c4d1aaa67c969e316fa3033d44",
+    "mtime": 1791817973.1568375,
+    "seen": 1791818071.016256,
+    "ast_hash": "16ee5e1c3f078cb5006bd68853b5a87b",
     "semantic_hash": ""
   },
   "views/patients.html": {
-    "mtime": 1791134608.0212438,
-    "seen": 1791205514.579426,
-    "ast_hash": "9dc2dbc02e5559654041fc8640a16cd5",
+    "mtime": 1791817973.1568375,
+    "seen": 1791818071.0162613,
+    "ast_hash": "d5e24022f1a1de74fcb367607d5feacc",
     "semantic_hash": ""
   },
   "views/payment_receipt.html": {
-    "mtime": 1791134608.0212438,
-    "seen": 1791205514.57943,
-    "ast_hash": "072e8acdfe84b55d6233cc186b020411",
+    "mtime": 1791817973.158202,
+    "seen": 1791818071.0162673,
+    "ast_hash": "8825630d94373aa7ab4e59a0fc7e7dd4",
     "semantic_hash": ""
   },
   "views/promissory_notes.html": {
-    "mtime": 1791134608.0222502,
-    "seen": 1791205514.5794344,
-    "ast_hash": "7ca6b3be3320be71f99fac9645fc6559",
+    "mtime": 1791817973.1592705,
+    "seen": 1791818071.0162718,
+    "ast_hash": "286eb664c6ce179789e6b4ae595529fe",
     "semantic_hash": ""
   },
   "views/rooms.html": {
-    "mtime": 1791208846.1070118,
-    "seen": 1791208902.1200068,
-    "ast_hash": "0fbc173f2aee84cf01b74b15abc1430f",
+    "mtime": 1791817973.1613696,
+    "seen": 1791818071.0162816,
+    "ast_hash": "9755c626104f9142e7e251ec421eac3e",
     "semantic_hash": ""
   },
   "api/GET/users.php": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "api/POST/users.php": {
-    "mtime": 1791735620.759742,
-    "seen": 1791736034.0341024,
-    "ast_hash": "545823930c3dbd45a78be4c067cc7344",
+    "mtime": 1791816796.7594354,
+    "seen": 1791818071.0005322,
+    "ast_hash": "371df302d4be665e3b2a5911b67457a7",
     "semantic_hash": ""
   },
   "js/staff.js": {
@@ -558,9 +558,27 @@
     "semantic_hash": ""
   },
   "views/staff.html": {
-    "mtime": 1791740539.153256,
-    "seen": 1791740706.385228,
-    "ast_hash": "f5eb12705f440ae5374bb816ea96e1a6",
+    "mtime": 1791817973.1613696,
+    "seen": 1791818071.0162854,
+    "ast_hash": "ae69473249e8a8c7a501515ebbeb4ff5",
+    "semantic_hash": ""
+  },
+  "api/GET/reports.php": {
+    "mtime": 1791812735.9045045,
+    "seen": 1791812849.3601866,
+    "ast_hash": "b35ce904306bbd895523f7d9c901168e",
+    "semantic_hash": ""
+  },
+  "js/reports.js": {
+    "mtime": 1791809701.7722936,
+    "seen": 1791809914.4241152,
+    "ast_hash": "28e46e291a08a2bc58e4400c44af3eef",
+    "semantic_hash": ""
+  },
+  "views/reports.html": {
+    "mtime": 1791817973.1603258,
+    "seen": 1791818071.0162773,
+    "ast_hash": "1e7667d52f32f695f9f9920a2f1c53a7",
     "semantic_hash": ""
   }
 }

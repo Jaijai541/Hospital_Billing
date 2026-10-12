@@ -20,6 +20,67 @@ const handleUserLogout = async () => {
     window.location.href = "login.html";
 };
 
+const enforcePageRbacGuard = (user) => {
+    if (!user) return false;
+    const pathParts = window.location.pathname.split("/");
+    const currentPage = (pathParts[pathParts.length - 1] || "").toLowerCase();
+    if (!currentPage || currentPage === "login.html") {
+        return true;
+    }
+
+    const roleId = parseInt(user.role_id, 10) || 0;
+    const roleName = (user.role_name || "").toLowerCase();
+    const isAdmin = roleId === 1 || roleName === "admin";
+    const isFinance = roleId === 2 || roleName === "finance staff";
+    const isNurse = roleId === 3 || roleName === "nurse";
+
+    const adminOnlyPages = [
+        "staff.html",
+        "departments.html",
+        "audit_log.html",
+        "archive.html"
+    ];
+
+    const financeRestrictedPages = [
+        ...adminOnlyPages
+    ];
+
+    const nurseRestrictedPages = [
+        ...adminOnlyPages,
+        "discounts.html",
+        "invoices.html",
+        "invoice_print.html",
+        "partial_bill.html",
+        "payment_receipt.html",
+        "promissory_notes.html",
+        "reports.html"
+    ];
+
+    if (isAdmin) {
+        return true;
+    }
+
+    if (isFinance && financeRestrictedPages.includes(currentPage)) {
+        sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your account role does not have permission to access that module.");
+        window.location.replace("invoices.html");
+        return false;
+    }
+
+    if (isNurse && nurseRestrictedPages.includes(currentPage)) {
+        sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your account role does not have permission to access that module.");
+        window.location.replace("admissions.html");
+        return false;
+    }
+
+    if (!isAdmin && !isFinance && !isNurse && adminOnlyPages.includes(currentPage)) {
+        sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your account role does not have permission to access that module.");
+        window.location.replace("index.html");
+        return false;
+    }
+
+    return true;
+};
+
 const initAppSession = () => {
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) {
@@ -29,13 +90,38 @@ const initAppSession = () => {
         return;
     }
 
+    let user = null;
     try {
-        const user = JSON.parse(userJson);
+        user = JSON.parse(userJson);
         const userDisplay = document.getElementById("user-display");
         if (userDisplay) {
             userDisplay.textContent = `${user.full_name} (${user.role_name})`;
         }
-    } catch (e) {}
+    } catch (e) {
+        sessionStorage.removeItem("hospital_user");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const deniedMsg = sessionStorage.getItem("rbac_denied_msg");
+    if (deniedMsg) {
+        sessionStorage.removeItem("rbac_denied_msg");
+        setTimeout(() => {
+            showToast(deniedMsg, "warning", "Access Restricted");
+        }, 150);
+    }
+
+    if (!enforcePageRbacGuard(user)) {
+        return;
+    }
+
+    const changePassBtn = document.getElementById("btn-self-change-pass");
+    if (changePassBtn && !changePassBtn.dataset.wired) {
+        changePassBtn.dataset.wired = "true";
+        changePassBtn.addEventListener("click", () => {
+            openSelfChangePasswordModal();
+        });
+    }
 
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn && !logoutBtn.dataset.wired) {
@@ -110,6 +196,150 @@ const closeModal = (modalId = "formModal") => {
         modal.style.display = "none";
     }
 };
+
+const closeSelfChangePasswordModal = () => {
+    const modal = document.getElementById("selfChangePasswordModal");
+    if (modal) {
+        modal.classList.remove("active");
+        modal.style.display = "none";
+    }
+};
+
+const openSelfChangePasswordModal = () => {
+    let modal = document.getElementById("selfChangePasswordModal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "selfChangePasswordModal";
+        modal.className = "modal-overlay";
+        modal.style.display = "none";
+        modal.style.zIndex = "1350";
+        modal.innerHTML = `
+            <div class="modal-container" style="max-width: 440px;">
+                <div class="modal-header">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600;">Change Password</h3>
+                        <p style="margin: 2px 0 0; font-size: 0.82rem; color: var(--text-muted, #64748b);">Update your active account password</p>
+                    </div>
+                    <button type="button" class="modal-close" id="btnCloseSelfChangePass" aria-label="Close modal">&times;</button>
+                </div>
+                <form id="formSelfChangePassword">
+                    <div class="modal-body" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="self_current_password" style="font-size: 0.85rem; font-weight: 500; margin-bottom: 4px; display: block;">Current Password <span style="color: var(--danger, #ef4444);">*</span></label>
+                            <input type="password" id="self_current_password" class="form-control" placeholder="Enter current password" required autocomplete="current-password" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="self_new_password" style="font-size: 0.85rem; font-weight: 500; margin-bottom: 4px; display: block;">New Password <span style="color: var(--danger, #ef4444);">*</span></label>
+                            <input type="password" id="self_new_password" class="form-control" placeholder="Minimum 4 characters" minlength="4" required autocomplete="new-password" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="self_confirm_password" style="font-size: 0.85rem; font-weight: 500; margin-bottom: 4px; display: block;">Confirm New Password <span style="color: var(--danger, #ef4444);">*</span></label>
+                            <input type="password" id="self_confirm_password" class="form-control" placeholder="Re-enter new password" minlength="4" required autocomplete="new-password" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border, #e2e8f0);">
+                        <button type="button" class="btn btn-secondary" id="btnCancelSelfChangePass">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitSelfChangePass">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById("btnCloseSelfChangePass").addEventListener("click", closeSelfChangePasswordModal);
+        document.getElementById("btnCancelSelfChangePass").addEventListener("click", closeSelfChangePasswordModal);
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                closeSelfChangePasswordModal();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && (modal.classList.contains("active") || modal.style.display === "flex")) {
+                closeSelfChangePasswordModal();
+            }
+        });
+
+        const form = document.getElementById("formSelfChangePassword");
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const curr = document.getElementById("self_current_password").value;
+            const next = document.getElementById("self_new_password").value.trim();
+            const conf = document.getElementById("self_confirm_password").value.trim();
+
+            if (!curr || !next || !conf) {
+                showToast("All password fields are required.", "warning");
+                return;
+            }
+
+            if (next.length < 4) {
+                showToast("New password must be at least 4 characters long.", "warning");
+                return;
+            }
+
+            if (next !== conf) {
+                showToast("New password and confirmation do not match.", "warning");
+                return;
+            }
+
+            if (curr === next) {
+                showToast("New password cannot be identical to your current password.", "warning");
+                return;
+            }
+
+            const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            if (!user.user_id) {
+                showToast("Active user session not found. Please log in again.", "danger");
+                return;
+            }
+
+            const btnSubmit = document.getElementById("btnSubmitSelfChangePass");
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = "Updating...";
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append("operation", "changePassword");
+                fd.append("json", JSON.stringify({
+                    user_id: user.user_id,
+                    current_password: curr,
+                    new_password: next
+                }));
+
+                const res = await axios.post("../api/POST/users.php", fd);
+                if (res.data && res.data.status === 1) {
+                    showToast(res.data.message || "Your password has been changed successfully.", "success");
+                    form.reset();
+                    closeSelfChangePasswordModal();
+                } else {
+                    showToast((res.data && res.data.message) || "Failed to update password.", "danger");
+                }
+            } catch (err) {
+                showToast("Network error occurred while updating password.", "danger");
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = "Update Password";
+                }
+            }
+        });
+    }
+
+    const form = document.getElementById("formSelfChangePassword");
+    if (form) form.reset();
+    modal.classList.add("active");
+    modal.style.display = "flex";
+    setTimeout(() => {
+        const firstInput = document.getElementById("self_current_password");
+        if (firstInput) firstInput.focus();
+    }, 50);
+};
+
+window.openSelfChangePasswordModal = openSelfChangePasswordModal;
+window.closeSelfChangePasswordModal = closeSelfChangePasswordModal;
 
 const showToast = (message, type = null, title = null, callback = null, duration = null) => {
     if (callback === null && typeof type === "function") {

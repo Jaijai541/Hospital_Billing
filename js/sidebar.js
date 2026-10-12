@@ -19,6 +19,13 @@ const renderSidebar = () => {
 
     const isActive = (href) => (activePage === href ? ' class="active"' : "");
 
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const roleId = parseInt(user.role_id, 10) || 0;
+    const roleName = user.role_name || "";
+    const isAdmin = roleId === 1 || roleName.toLowerCase() === "admin";
+    const isFinance = roleId === 2 || roleName.toLowerCase() === "finance staff";
+    const isNurse = roleId === 3 || roleName.toLowerCase() === "nurse";
+
     sidebarEl.className = "sidebar";
     sidebarEl.innerHTML = `
         <div class="sidebar-brand">
@@ -31,10 +38,13 @@ const renderSidebar = () => {
 
         <div class="sidebar-user">
             <div class="sidebar-user-info">
-                <strong id="user-display">Loading...</strong>
+                <strong id="user-display">${user.full_name || "Loading..."} (${user.role_name || "Active Session"})</strong>
                 <span>Active Session</span>
             </div>
-            <button id="btn-logout" class="btn btn-sm btn-outline">Logout</button>
+            <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button type="button" id="btn-self-change-pass" class="btn btn-sm btn-outline" style="flex: 1; font-size: 11px; padding: 4px 6px;">Change Password</button>
+                <button type="button" id="btn-logout" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px;">Logout</button>
+            </div>
         </div>
 
         <div class="sidebar-nav-container">
@@ -47,10 +57,10 @@ const renderSidebar = () => {
             <ul class="sidebar-nav">
                 <li><a href="patients.html"${isActive("patients.html")}>Patients Directory</a></li>
                 <li><a href="doctors.html"${isActive("doctors.html")}>Doctors & Fees</a></li>
-                <li><a href="departments.html"${isActive("departments.html")}>Departments & Stations</a></li>
+                ${isAdmin ? `<li><a href="departments.html"${isActive("departments.html")}>Departments & Stations</a></li>` : ""}
                 <li><a href="rooms.html"${isActive("rooms.html")}>Rooms & Beds</a></li>
                 <li><a href="catalogs.html"${isActive("catalogs.html")}>Charge Catalogs</a></li>
-                <li><a href="discounts.html"${isActive("discounts.html")}>Billing Discounts</a></li>
+                ${isAdmin || isFinance ? `<li><a href="discounts.html"${isActive("discounts.html")}>Billing Discounts</a></li>` : ""}
             </ul>
 
             <div class="nav-section-title">Clinical Care</div>
@@ -58,6 +68,7 @@ const renderSidebar = () => {
                 <li><a href="admissions.html"${isActive("admissions.html")}>Admissions & Beds</a></li>
             </ul>
 
+            ${isAdmin || isFinance ? `
             <div class="nav-section-title">Billing & Settlement</div>
             <ul class="sidebar-nav">
                 <li><a href="invoices.html"${isActive("invoices.html")}>Invoices & Settlement</a></li>
@@ -68,13 +79,16 @@ const renderSidebar = () => {
             <ul class="sidebar-nav">
                 <li><a href="reports.html"${isActive("reports.html")}>Reports & Analytics</a></li>
             </ul>
+            ` : ""}
 
+            ${isAdmin ? `
             <div class="nav-section-title">System & Tools</div>
             <ul class="sidebar-nav">
                 <li><a href="staff.html"${isActive("staff.html")}>Staff & Users</a></li>
                 <li><a href="audit_log.html"${isActive("audit_log.html")}>Audit Log</a></li>
                 <li><a href="archive.html"${isActive("archive.html")}>System Archive</a></li>
             </ul>
+            ` : ""}
         </div>
     `;
 };

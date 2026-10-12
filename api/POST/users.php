@@ -228,6 +228,50 @@ class UserManager
             "message" => $res ? "Password reset successfully." : "Failed to reset password."
         ]);
     }
+
+    function changePassword($json)
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $userId = intval($json['user_id'] ?? 0);
+        $currentPassword = $json['current_password'] ?? '';
+        $newPassword = trim($json['new_password'] ?? '');
+
+        if ($userId <= 0 || empty($currentPassword) || empty($newPassword)) {
+            return json_encode([
+                "status" => 0,
+                "message" => "All password fields are required."
+            ]);
+        }
+
+        if (strlen($newPassword) < 4) {
+            return json_encode([
+                "status" => 0,
+                "message" => "New password must be at least 4 characters long."
+            ]);
+        }
+
+        $stmt = $conn->prepare("SELECT Password_Hash FROM System_User WHERE User_ID = :id AND Is_Active = 1");
+        $stmt->execute([':id' => $userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user || !password_verify($currentPassword, $user['Password_Hash'])) {
+            return json_encode([
+                "status" => 0,
+                "message" => "The current password you entered is incorrect."
+            ]);
+        }
+
+        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $updateStmt = $conn->prepare("UPDATE System_User SET Password_Hash = :hash WHERE User_ID = :id");
+        $res = $updateStmt->execute([':hash' => $passwordHash, ':id' => $userId]);
+
+        return json_encode([
+            "status" => $res ? 1 : 0,
+            "message" => $res ? "Your password has been changed successfully." : "Failed to change password."
+        ]);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -254,6 +298,9 @@ switch ($operation) {
         break;
     case "resetPassword":
         echo $userManager->resetPassword($json);
+        break;
+    case "changePassword":
+        echo $userManager->changePassword($json);
         break;
     default:
         echo json_encode(["status" => 0, "message" => "Invalid operation."]);

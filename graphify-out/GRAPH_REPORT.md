@@ -1,17 +1,17 @@
 # Graph Report - Hospital_Billing  (2026-10-12)
 
 ## Corpus Check
-- 73 files · ~96,185 words
+- 75 files · ~102,480 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 20 file(s) not represented in the graph (top: .css 18, (none) 2)
+- Unclassified: 21 file(s) not represented in the graph (top: .css 19, (none) 2)
 
 ## Summary
-- 558 nodes · 773 edges · 69 communities (22 shown, 47 thin omitted)
-- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 89 edges (avg confidence: 0.85)
+- 593 nodes · 847 edges · 71 communities (23 shown, 48 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ba26a0aa`
+- Built from commit: `2428f889`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -72,18 +72,20 @@
 - staff.js
 - UserManager
 - UserManager
+- reports.js
+- ReportManager
 
 ## God Nodes (most connected - your core abstractions)
 1. `InvoiceManager` - 12 edges
 2. `renderSettlementSection()` - 10 edges
 3. `loadLedgerSummary()` - 9 edges
 4. `AdmissionManager` - 8 edges
-5. `RoomMaster` - 8 edges
-6. `initClinicalModals()` - 8 edges
-7. `loadLedger()` - 8 edges
-8. `renderInvoice()` - 8 edges
-9. `renderPartialBill()` - 8 edges
-10. `initEvents()` - 8 edges
+5. `ReportManager` - 8 edges
+6. `RoomMaster` - 8 edges
+7. `initClinicalModals()` - 8 edges
+8. `loadLedger()` - 8 edges
+9. `renderInvoice()` - 8 edges
+10. `renderPartialBill()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Critical Rules Summary` --references--> `openGenericLookupPicker()`  [INFERRED]
@@ -94,7 +96,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (69 total, 47 thin omitted)
+## Communities (71 total, 48 thin omitted)
 
 ### Community 0 - "admission_details.js"
 Cohesion: 0.06
@@ -114,7 +116,7 @@ Nodes (26): allBeds, allRooms, cancelEditRoomType(), closeRoomTypeModal(), close
 
 ### Community 4 - "common.js"
 Cohesion: 0.08
-Nodes (24): Agent Guidelines & Project Instructions, Critical Rules Summary, closeModal(), genericLookupPickerState, handleUserLogout(), initAppSession(), initModalControls(), openGenericLookupPicker() (+16 more)
+Nodes (27): Agent Guidelines & Project Instructions, Critical Rules Summary, closeModal(), closeSelfChangePasswordModal(), enforcePageRbacGuard(), genericLookupPickerState, handleUserLogout(), initAppSession() (+19 more)
 
 ### Community 5 - "patients.js"
 Cohesion: 0.22
@@ -184,16 +186,20 @@ Nodes (15): allPaymentMethods, allPromissoryNotes, closeHistoryModal(), closePay
 Cohesion: 0.18
 Nodes (19): allStaff, archiveStaff(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadRoles(), loadStaff(), loadStations() (+11 more)
 
+### Community 69 - "reports.js"
+Cohesion: 0.22
+Nodes (21): exportToCsv(), exportToExcel(), fetchReportData(), formatDateYMD(), formatPesos(), initReports(), loadFilterLookups(), lookupData (+13 more)
+
 ## Knowledge Gaps
-- **59 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+54 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 238 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **47 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **60 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+55 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 241 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What connects `apiClient`, `customerSelect`, `productSelect` to the rest of the system?**
-  _59 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _60 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `admission_details.js` be split into smaller, more focused modules?**
   _Cohesion score 0.06346153846153846 - nodes in this community are weakly interconnected._
 - **Should `doctors.js` be split into smaller, more focused modules?**
@@ -201,4 +207,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `admissions.js` be split into smaller, more focused modules?**
   _Cohesion score 0.12535612535612536 - nodes in this community are weakly interconnected._
 - **Should `common.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.07575757575757576 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0761904761904762 - nodes in this community are weakly interconnected._

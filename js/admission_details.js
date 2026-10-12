@@ -1178,9 +1178,13 @@ const loadAdmissionDetails = () => {
 
             populateAssignedDoctorDropdowns();
 
+            const isNurseRole = currentUser && (parseInt(currentUser.role_id, 10) === 3 || (currentUser.role_name || '').toLowerCase() === 'nurse');
+
             const btnDischarge = document.getElementById('btnChartDischarge');
             if (btnDischarge) {
-                if (admissionData.Status === 'Admitted') {
+                if (isNurseRole) {
+                    btnDischarge.style.display = 'none';
+                } else if (admissionData.Status === 'Admitted') {
                     btnDischarge.style.display = 'inline-flex';
                     btnDischarge.onclick = () => dischargePatientFromChart(admissionData.Admission_ID, admissionData.Full_Name);
                 } else {
@@ -1191,7 +1195,10 @@ const loadAdmissionDetails = () => {
             const btnTabPB = document.getElementById('btnTabLedgerPartialBill');
             const btnTabSOA = document.getElementById('btnTabSettlementSOA');
 
-            if (admissionData.Status === 'Admitted') {
+            if (isNurseRole) {
+                if (btnTabPB) btnTabPB.style.display = 'none';
+                if (btnTabSOA) btnTabSOA.style.display = 'none';
+            } else if (admissionData.Status === 'Admitted') {
                 if (btnTabPB) {
                     btnTabPB.disabled = false;
                     btnTabPB.innerHTML = 'Print Partial Bill (Interim)';
@@ -1286,6 +1293,12 @@ const loadAdmissionDetails = () => {
 };
 
 const dischargePatientFromChart = (admId, patientName) => {
+    const isNurseRole = currentUser && (parseInt(currentUser.role_id, 10) === 3 || (currentUser.role_name || '').toLowerCase() === 'nurse');
+    if (isNurseRole) {
+        showToast("Access Denied: Patient discharge is restricted to Finance Staff and Administrators.", "warning");
+        return;
+    }
+
     showPopupConfirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`, () => {
         const formData = new FormData();
         formData.append('operation', 'dischargePatient');
@@ -2554,6 +2567,8 @@ const renderAdmittedDischargeGateCard = (advList) => {
     const container = document.getElementById('settlement-container');
     if (!container) return;
 
+    const isNurseRole = currentUser && (parseInt(currentUser.role_id, 10) === 3 || (currentUser.role_name || '').toLowerCase() === 'nurse');
+
     const runningGross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
     const totalAdvPaid = (advList || []).reduce((acc, p) => acc + parseFloat(p.Amount_Paid || 0), 0);
     const unpaidBal = Math.max(0, runningGross - totalAdvPaid);
@@ -2601,10 +2616,14 @@ const renderAdmittedDischargeGateCard = (advList) => {
             </div>
 
             <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')" style="font-size: 14px; padding: 10px 20px; font-weight: 700;">
-                    Process Patient Discharge &amp; Unlock Final SOA
-                </button>
-                <span class="text-muted" style="font-size: 13px;">Discharging unlocks statutory discounts (Senior/PWD/PhilHealth) and the Cashier settlement desk.</span>
+                ${isNurseRole ? `
+                    <span class="badge badge-info" style="font-size: 13px; padding: 8px 14px; font-weight: 600;">Discharge Clearance must be processed by Finance Staff or Hospital Administrator.</span>
+                ` : `
+                    <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')" style="font-size: 14px; padding: 10px 20px; font-weight: 700;">
+                        Process Patient Discharge &amp; Unlock Final SOA
+                    </button>
+                    <span class="text-muted" style="font-size: 13px;">Discharging unlocks statutory discounts (Senior/PWD/PhilHealth) and the Cashier settlement desk.</span>
+                `}
             </div>
 
             <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">

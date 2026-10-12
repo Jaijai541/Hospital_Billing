@@ -433,6 +433,19 @@
       "source_location": "L5"
     },
     {
+      "id": "api_get_reports_reportmanager",
+      "label": "ReportManager",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": "reportmanager",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L5"
+    },
+    {
       "id": "api_get_invoices_invoicemanager",
       "label": "InvoiceManager",
       "_callable": true,
@@ -4463,7 +4476,7 @@
       "file_type": "code",
       "norm_label": "archivestaff()",
       "source_file": "js/staff.js",
-      "source_location": "L310"
+      "source_location": "L347"
     },
     {
       "id": "js_staff_escapesinglequotes",
@@ -4475,7 +4488,7 @@
       "file_type": "code",
       "norm_label": "escapesinglequotes()",
       "source_file": "js/staff.js",
-      "source_location": "L162"
+      "source_location": "L195"
     },
     {
       "id": "js_staff_filterandrenderstaff",
@@ -4487,7 +4500,7 @@
       "file_type": "code",
       "norm_label": "filterandrenderstaff()",
       "source_file": "js/staff.js",
-      "source_location": "L81"
+      "source_location": "L114"
     },
     {
       "id": "js_staff_getrolebadge",
@@ -4499,7 +4512,7 @@
       "file_type": "code",
       "norm_label": "getrolebadge()",
       "source_file": "js/staff.js",
-      "source_location": "L69"
+      "source_location": "L102"
     },
     {
       "id": "js_staff_initstaffevents",
@@ -4511,7 +4524,7 @@
       "file_type": "code",
       "norm_label": "initstaffevents()",
       "source_file": "js/staff.js",
-      "source_location": "L423"
+      "source_location": "L460"
     },
     {
       "id": "js_staff_loadroles",
@@ -4535,7 +4548,7 @@
       "file_type": "code",
       "norm_label": "loadstaff()",
       "source_file": "js/staff.js",
-      "source_location": "L53"
+      "source_location": "L86"
     },
     {
       "id": "js_staff_loadstations",
@@ -4547,7 +4560,7 @@
       "file_type": "code",
       "norm_label": "loadstations()",
       "source_file": "js/staff.js",
-      "source_location": "L35"
+      "source_location": "L28"
     },
     {
       "id": "js_staff_openaddstaffmodal",
@@ -4559,7 +4572,7 @@
       "file_type": "code",
       "norm_label": "openaddstaffmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L166"
+      "source_location": "L199"
     },
     {
       "id": "js_staff_openeditstaffmodal",
@@ -4571,7 +4584,7 @@
       "file_type": "code",
       "norm_label": "openeditstaffmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L196"
+      "source_location": "L231"
     },
     {
       "id": "js_staff_openresetpasswordmodal",
@@ -4583,7 +4596,31 @@
       "file_type": "code",
       "norm_label": "openresetpasswordmodal()",
       "source_file": "js/staff.js",
-      "source_location": "L366"
+      "source_location": "L403"
+    },
+    {
+      "id": "js_staff_openrolepicker",
+      "label": "openRolePicker()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openrolepicker()",
+      "source_file": "js/staff.js",
+      "source_location": "L40"
+    },
+    {
+      "id": "js_staff_openstationpicker",
+      "label": "openStationPicker()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 66,
+      "community_name": "staff.js",
+      "file_type": "code",
+      "norm_label": "openstationpicker()",
+      "source_file": "js/staff.js",
+      "source_location": "L59"
     },
     {
       "id": "js_staff_renderstafftable",
@@ -4595,7 +4632,7 @@
       "file_type": "code",
       "norm_label": "renderstafftable()",
       "source_file": "js/staff.js",
-      "source_location": "L115"
+      "source_location": "L148"
     },
     {
       "id": "js_staff_restorestaff",
@@ -4607,7 +4644,7 @@
       "file_type": "code",
       "norm_label": "restorestaff()",
       "source_file": "js/staff.js",
-      "source_location": "L338"
+      "source_location": "L375"
     },
     {
       "id": "js_staff_saveresetpassword",
@@ -4619,7 +4656,7 @@
       "file_type": "code",
       "norm_label": "saveresetpassword()",
       "source_file": "js/staff.js",
-      "source_location": "L380"
+      "source_location": "L417"
     },
     {
       "id": "js_staff_savestaffform",
@@ -4631,7 +4668,7 @@
       "file_type": "code",
       "norm_label": "savestaffform()",
       "source_file": "js/staff.js",
-      "source_location": "L247"
+      "source_location": "L284"
     },
     {
       "id": "api_post_users_usermanager_adduser",
@@ -4742,6 +4779,246 @@
       "source_location": "L7"
     },
     {
+      "id": "js_reports_exporttocsv",
+      "label": "exportToCsv()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "exporttocsv()",
+      "source_file": "js/reports.js",
+      "source_location": "L720"
+    },
+    {
+      "id": "js_reports_exporttoexcel",
+      "label": "exportToExcel()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "exporttoexcel()",
+      "source_file": "js/reports.js",
+      "source_location": "L693"
+    },
+    {
+      "id": "js_reports_fetchreportdata",
+      "label": "fetchReportData()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "fetchreportdata()",
+      "source_file": "js/reports.js",
+      "source_location": "L164"
+    },
+    {
+      "id": "js_reports_formatdateymd",
+      "label": "formatDateYMD()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "formatdateymd()",
+      "source_file": "js/reports.js",
+      "source_location": "L10"
+    },
+    {
+      "id": "js_reports_formatpesos",
+      "label": "formatPesos()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "formatpesos()",
+      "source_file": "js/reports.js",
+      "source_location": "L5"
+    },
+    {
+      "id": "js_reports_initreports",
+      "label": "initReports()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "initreports()",
+      "source_file": "js/reports.js",
+      "source_location": "L17"
+    },
+    {
+      "id": "js_reports_loadfilterlookups",
+      "label": "loadFilterLookups()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "loadfilterlookups()",
+      "source_file": "js/reports.js",
+      "source_location": "L109"
+    },
+    {
+      "id": "js_reports_printofficialreport",
+      "label": "printOfficialReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "printofficialreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L755"
+    },
+    {
+      "id": "js_reports_renderactivereport",
+      "label": "renderActiveReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderactivereport()",
+      "source_file": "js/reports.js",
+      "source_location": "L221"
+    },
+    {
+      "id": "js_reports_renderaragingreport",
+      "label": "renderArAgingReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderaragingreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L520"
+    },
+    {
+      "id": "js_reports_renderbedoccupancyreport",
+      "label": "renderBedOccupancyReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderbedoccupancyreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L620"
+    },
+    {
+      "id": "js_reports_rendercollectionsreport",
+      "label": "renderCollectionsReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "rendercollectionsreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L279"
+    },
+    {
+      "id": "js_reports_renderdepartmentrevenuereport",
+      "label": "renderDepartmentRevenueReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderdepartmentrevenuereport()",
+      "source_file": "js/reports.js",
+      "source_location": "L369"
+    },
+    {
+      "id": "js_reports_renderdoctorfeesreport",
+      "label": "renderDoctorFeesReport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "renderdoctorfeesreport()",
+      "source_file": "js/reports.js",
+      "source_location": "L445"
+    },
+    {
+      "id": "js_reports_setupeventlisteners",
+      "label": "setupEventListeners()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "setupeventlisteners()",
+      "source_file": "js/reports.js",
+      "source_location": "L75"
+    },
+    {
+      "id": "js_reports_setuppresetbuttons",
+      "label": "setupPresetButtons()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "setuppresetbuttons()",
+      "source_file": "js/reports.js",
+      "source_location": "L39"
+    },
+    {
+      "id": "js_reports_setuptabswitching",
+      "label": "setupTabSwitching()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "setuptabswitching()",
+      "source_file": "js/reports.js",
+      "source_location": "L26"
+    },
+    {
+      "id": "js_reports_showerrorstate",
+      "label": "showErrorState()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "showerrorstate()",
+      "source_file": "js/reports.js",
+      "source_location": "L207"
+    },
+    {
+      "id": "js_reports_updateprintheader",
+      "label": "updatePrintHeader()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "updateprintheader()",
+      "source_file": "js/reports.js",
+      "source_location": "L239"
+    },
+    {
+      "id": "js_reports_updatesecondaryfilterui",
+      "label": "updateSecondaryFilterUI()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "updatesecondaryfilterui()",
+      "source_file": "js/reports.js",
+      "source_location": "L120"
+    },
+    {
       "id": "examples_invoice_invoice_displaydetails",
       "label": "displayDetails()",
       "_callable": true,
@@ -4848,6 +5125,90 @@
       "norm_label": "saveinvoice()",
       "source_file": "examples/invoice/invoice.js",
       "source_location": "L6"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getagingaccountsreceivable",
+      "label": ".getAgingAccountsReceivable()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getagingaccountsreceivable()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L378"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getbedoccupancysummary",
+      "label": ".getBedOccupancySummary()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getbedoccupancysummary()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L485"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdailycollections",
+      "label": ".getDailyCollections()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdailycollections()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L13"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdb",
+      "label": ".getDb()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdb()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L7"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdepartmentrevenue",
+      "label": ".getDepartmentRevenue()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdepartmentrevenue()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L124"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getdoctorfeessummary",
+      "label": ".getDoctorFeesSummary()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getdoctorfeessummary()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L261"
+    },
+    {
+      "id": "api_get_reports_reportmanager_getfilterlookups",
+      "label": ".getFilterLookups()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": ".getfilterlookups()",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L573"
     },
     {
       "id": "api_get_invoices_invoicemanager_fetchledgeritems",
@@ -5973,7 +6334,7 @@
       "node_kind": "heading",
       "norm_label": "2. technology stack & environment",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L33"
+      "source_location": "L37"
     },
     {
       "id": "project_rules_3_ui_component_architecture",
@@ -5985,7 +6346,7 @@
       "node_kind": "heading",
       "norm_label": "3. ui & component architecture",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L44"
+      "source_location": "L48"
     },
     {
       "id": "project_rules_4_key_modules_data_flow",
@@ -5997,7 +6358,7 @@
       "node_kind": "heading",
       "norm_label": "4. key modules & data flow",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L83"
+      "source_location": "L87"
     },
     {
       "id": "project_rules_5_verification_checklist_before_finishing_any_task",
@@ -6009,7 +6370,7 @@
       "node_kind": "heading",
       "norm_label": "5. verification checklist before finishing any task",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L100"
+      "source_location": "L104"
     },
     {
       "id": "project_rules_cache_busting",
@@ -6021,7 +6382,7 @@
       "node_kind": "heading",
       "norm_label": "cache-busting",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L77"
+      "source_location": "L81"
     },
     {
       "id": "project_rules_form_dropdowns_vs_lookup_picker_windows",
@@ -6033,7 +6394,7 @@
       "node_kind": "heading",
       "norm_label": "form dropdowns vs. lookup picker windows",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L65"
+      "source_location": "L69"
     },
     {
       "id": "project_rules_hospital_billing_system_project_rules_architecture_guidelines",
@@ -6057,7 +6418,7 @@
       "node_kind": "heading",
       "norm_label": "layout structure",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L46"
+      "source_location": "L50"
     },
     {
       "id": "project_rules_modal_design_system",
@@ -6069,7 +6430,7 @@
       "node_kind": "heading",
       "norm_label": "modal design system",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L52"
+      "source_location": "L56"
     },
     {
       "id": "examples_book_books",
@@ -6523,6 +6884,28 @@
       "source_location": "L1"
     },
     {
+      "id": "js_reports",
+      "label": "reports.js",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "reports.js",
+      "source_file": "js/reports.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "js_reports_lookupdata",
+      "label": "lookupData",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "reports.js",
+      "file_type": "code",
+      "norm_label": "lookupdata",
+      "source_file": "js/reports.js",
+      "source_location": "L3"
+    },
+    {
       "id": "examples_invoice_invoice_details",
       "label": "details",
       "_origin": "ast",
@@ -6554,6 +6937,17 @@
       "norm_label": "products",
       "source_file": "examples/invoice/invoice.js",
       "source_location": "L4"
+    },
+    {
+      "id": "api_get_reports",
+      "label": "reports.php",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "ReportManager",
+      "file_type": "code",
+      "norm_label": "reports.php",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L1"
     },
     {
       "id": "api_get_invoices",
@@ -6636,6 +7030,78 @@
       "context": "call",
       "source_file": "api/GET/ledger.php",
       "source_location": "L390",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getagingaccountsreceivable",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L380",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getbedoccupancysummary",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L487",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getdailycollections",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getdepartmentrevenue",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getdoctorfeessummary",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L263",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager_getfilterlookups",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "api/GET/reports.php",
+      "source_location": "L575",
       "weight": 1.0
     },
     {
@@ -9231,6 +9697,330 @@
       "weight": 1.0
     },
     {
+      "source": "js_reports_exporttocsv",
+      "target": "js_reports_formatdateymd",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L746",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_exporttoexcel",
+      "target": "js_reports_formatdateymd",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L714",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_fetchreportdata",
+      "target": "js_reports_renderactivereport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L197",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_fetchreportdata",
+      "target": "js_reports_showerrorstate",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_setuptabswitching",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_setuppresetbuttons",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_setupeventlisteners",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_loadfilterlookups",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_updatesecondaryfilterui",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_initreports",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_printofficialreport",
+      "target": "js_reports_updateprintheader",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L756",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_rendercollectionsreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L225",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderdepartmentrevenuereport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderdoctorfeesreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderaragingreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_renderbedoccupancyreport",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderactivereport",
+      "target": "js_reports_updateprintheader",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderaragingreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L532",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderbedoccupancyreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L673",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_rendercollectionsreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L291",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderdepartmentrevenuereport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L382",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_renderdoctorfeesreport",
+      "target": "js_reports_formatpesos",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L457",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuppresetbuttons",
+      "target": "js_reports_formatdateymd",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuppresetbuttons",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuptabswitching",
+      "target": "js_reports_updatesecondaryfilterui",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setuptabswitching",
+      "target": "js_reports_fetchreportdata",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/reports.js",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
       "source": "js_rooms_closeroomtypemodal",
       "target": "js_rooms_canceleditroomtype",
       "relation": "calls",
@@ -9611,7 +10401,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L323",
+      "source_location": "L360",
       "weight": 1.0
     },
     {
@@ -9623,7 +10413,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L112",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -9635,7 +10425,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L61",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -9647,7 +10437,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L227",
+      "source_location": "L264",
       "weight": 1.0
     },
     {
@@ -9659,7 +10449,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L229",
+      "source_location": "L266",
       "weight": 1.0
     },
     {
@@ -9671,7 +10461,31 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L240",
+      "source_location": "L277",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openrolepicker",
+      "target": "js_staff_loadroles",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_openstationpicker",
+      "target": "js_staff_loadstations",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -9683,7 +10497,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L146",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -9695,7 +10509,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L351",
+      "source_location": "L388",
       "weight": 1.0
     },
     {
@@ -9707,7 +10521,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L300",
+      "source_location": "L337",
       "weight": 1.0
     },
     {
@@ -10415,7 +11229,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L35",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
@@ -10427,19 +11241,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/staff.js",
-      "source_location": "L423",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_loadstaff",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "js/staff.js",
-      "source_location": "L53",
+      "source_location": "L460",
       "weight": 1.0
     },
     {
@@ -10452,6 +11254,18 @@
       "context": "call",
       "source_file": "js/staff.js",
       "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_loadstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/staff.js",
+      "source_location": "L86",
       "weight": 1.0
     },
     {
@@ -10605,6 +11419,17 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "api/GET/patients.php",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports",
+      "target": "api_get_reports_reportmanager",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
       "source_location": "L5",
       "weight": 1.0
     },
@@ -12776,6 +13601,226 @@
       "weight": 1.0
     },
     {
+      "source": "js_reports",
+      "target": "js_reports_formatdateymd",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_loadfilterlookups",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_updatesecondaryfilterui",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_fetchreportdata",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_showerrorstate",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderactivereport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L221",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_updateprintheader",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_setuptabswitching",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_rendercollectionsreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L279",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_lookupdata",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderdepartmentrevenuereport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L369",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_setuppresetbuttons",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderdoctorfeesreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L445",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_formatpesos",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderaragingreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L520",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_renderbedoccupancyreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L620",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_exporttoexcel",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L693",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_exporttocsv",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L720",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_setupeventlisteners",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports",
+      "target": "js_reports_printofficialreport",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/reports.js",
+      "source_location": "L755",
+      "weight": 1.0
+    },
+    {
       "source": "js_rooms",
       "target": "js_rooms_renderbedoccupancydata",
       "relation": "contains",
@@ -12920,13 +13965,35 @@
     },
     {
       "source": "js_staff",
+      "target": "js_staff_getrolebadge",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_filterandrenderstaff",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
       "target": "js_staff_renderstafftable",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L115",
+      "source_location": "L148",
       "weight": 1.0
     },
     {
@@ -12937,7 +14004,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L162",
+      "source_location": "L195",
       "weight": 1.0
     },
     {
@@ -12948,7 +14015,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L166",
+      "source_location": "L199",
       "weight": 1.0
     },
     {
@@ -12959,7 +14026,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L196",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -12970,7 +14037,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L247",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -12981,7 +14048,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L310",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -12992,29 +14059,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
-      "source_location": "L338",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_openresetpasswordmodal",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L366",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_saveresetpassword",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L380",
+      "source_location": "L375",
       "weight": 1.0
     },
     {
@@ -13030,6 +14075,39 @@
     },
     {
       "source": "js_staff",
+      "target": "js_staff_openrolepicker",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_openresetpasswordmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L403",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
+      "target": "js_staff_saveresetpassword",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L417",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
       "target": "js_staff_roleslist",
       "relation": "contains",
       "_origin": "ast",
@@ -13041,6 +14119,17 @@
     },
     {
       "source": "js_staff",
+      "target": "js_staff_openstationpicker",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/staff.js",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff",
       "target": "js_staff_stationslist",
       "relation": "contains",
       "_origin": "ast",
@@ -13048,28 +14137,6 @@
       "confidence_score": 1.0,
       "source_file": "js/staff.js",
       "source_location": "L6",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_getrolebadge",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L69",
-      "weight": 1.0
-    },
-    {
-      "source": "js_staff",
-      "target": "js_staff_filterandrenderstaff",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "js/staff.js",
-      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -13091,7 +14158,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L46",
+      "source_location": "L50",
       "weight": 1.0
     },
     {
@@ -13102,7 +14169,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L52",
+      "source_location": "L56",
       "weight": 1.0
     },
     {
@@ -13113,7 +14180,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L65",
+      "source_location": "L69",
       "weight": 1.0
     },
     {
@@ -13124,7 +14191,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L77",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -13135,7 +14202,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L100",
+      "source_location": "L104",
       "weight": 1.0
     },
     {
@@ -13146,7 +14213,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L33",
+      "source_location": "L37",
       "weight": 1.0
     },
     {
@@ -13157,7 +14224,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L44",
+      "source_location": "L48",
       "weight": 1.0
     },
     {
@@ -13179,7 +14246,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L83",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -13631,6 +14698,83 @@
       "confidence_score": 1.0,
       "source_file": "api/GET/patients.php",
       "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdepartmentrevenue",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdailycollections",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdoctorfeessummary",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L261",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getagingaccountsreceivable",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L378",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getbedoccupancysummary",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L485",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getfilterlookups",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L573",
+      "weight": 1.0
+    },
+    {
+      "source": "api_get_reports_reportmanager",
+      "target": "api_get_reports_reportmanager_getdb",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "api/GET/reports.php",
+      "source_location": "L7",
       "weight": 1.0
     },
     {
@@ -15221,6 +16365,54 @@
       "weight": 1.0
     },
     {
+      "source": "js_reports",
+      "target": "js_reports_initreports",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L760",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_exporttocsv",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_printofficialreport",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_exporttoexcel",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
       "source": "js_rooms",
       "target": "js_rooms_closebedoccupancymodal",
       "relation": "indirect_call",
@@ -15349,7 +16541,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/sidebar.js",
-      "source_location": "L78",
+      "source_location": "L83",
       "weight": 1.0
     },
     {
@@ -15361,7 +16553,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L426",
+      "source_location": "L463",
       "weight": 1.0
     },
     {
@@ -15373,7 +16565,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L441",
+      "source_location": "L478",
       "weight": 1.0
     },
     {
@@ -15385,7 +16577,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L456",
+      "source_location": "L493",
       "weight": 1.0
     },
     {
@@ -15397,7 +16589,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L461",
+      "source_location": "L498",
       "weight": 1.0
     },
     {
@@ -15409,7 +16601,31 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/staff.js",
-      "source_location": "L476",
+      "source_location": "L513",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_openrolepicker",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L518",
+      "weight": 1.0
+    },
+    {
+      "source": "js_staff_initstaffevents",
+      "target": "js_staff_openstationpicker",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/staff.js",
+      "source_location": "L527",
       "weight": 1.0
     },
     {
@@ -15433,10 +16649,10 @@
       "confidence_score": 0.95,
       "context": "openGenericLookupPicker",
       "source_file": "PROJECT_RULES.md",
-      "source_location": "L67",
+      "source_location": "L71",
       "weight": 1.0
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "7ab2202526dd14fc9946128fef730ea3f91f7192"
+  "built_at_commit": "b2569dbcf21a8f648443a665e8cce5a7ca208e7c"
 }

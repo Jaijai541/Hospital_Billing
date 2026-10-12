@@ -127,20 +127,23 @@ class ReportManager
         $startDate = trim($params['start_date'] ?? '');
         $endDate = trim($params['end_date'] ?? '');
 
-        $where = [];
+        $joinDateConditions = [];
+        $whereDetails = [];
         $bindings = [];
 
         if (!empty($startDate)) {
-            $where[] = "DATE(bl.Timestamp) >= :start_date";
+            $joinDateConditions[] = "DATE(bl.Timestamp) >= :start_date";
+            $whereDetails[] = "DATE(bl.Timestamp) >= :start_date";
             $bindings[':start_date'] = $startDate;
         }
 
         if (!empty($endDate)) {
-            $where[] = "DATE(bl.Timestamp) <= :end_date";
+            $joinDateConditions[] = "DATE(bl.Timestamp) <= :end_date";
+            $whereDetails[] = "DATE(bl.Timestamp) <= :end_date";
             $bindings[':end_date'] = $endDate;
         }
 
-        $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+        $joinDateSql = !empty($joinDateConditions) ? " AND " . implode(" AND ", $joinDateConditions) : "";
 
         $summarySql = "SELECT 
                             s.Station_ID,
@@ -149,9 +152,9 @@ class ReportManager
                             COUNT(bl.Ledger_ID) AS Total_Transactions,
                             SUM(CASE WHEN bl.Transaction_Type = 'Charge' THEN bl.Total_Charge ELSE 0.00 END) AS Gross_Charges,
                             SUM(CASE WHEN bl.Transaction_Type = 'Return' THEN ABS(bl.Total_Charge) ELSE 0.00 END) AS Total_Returns,
-                            SUM(bl.Total_Charge) AS Net_Revenue
+                            SUM(COALESCE(bl.Total_Charge, 0.00)) AS Net_Revenue
                         FROM Enum_Department_Station s
-                        LEFT JOIN Billing_Ledger bl ON s.Station_ID = bl.Station_ID $whereClause
+                        LEFT JOIN Billing_Ledger bl ON s.Station_ID = bl.Station_ID $joinDateSql
                         WHERE s.Is_Active = 1
                         GROUP BY s.Station_ID, s.Station_Name, s.Code_Prefix
                         ORDER BY Net_Revenue DESC, s.Station_Name ASC";
@@ -191,6 +194,8 @@ class ReportManager
         }
         unset($st);
 
+        $detailsWhereClause = !empty($whereDetails) ? "WHERE " . implode(" AND ", $whereDetails) : "";
+
         $detailsSql = "SELECT 
                             bl.Ledger_ID,
                             DATE_FORMAT(bl.Timestamp, '%Y-%m-%d %h:%i %p') AS Formatted_Date,
@@ -229,7 +234,7 @@ class ReportManager
                         LEFT JOIN Room_Transfer_Log rtl ON bl.Transfer_ID = rtl.Transfer_ID
                         LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                         LEFT JOIN Room rm ON rb.Room_ID = rm.Room_ID
-                        $whereClause
+                        $detailsWhereClause
                         ORDER BY bl.Timestamp DESC, bl.Ledger_ID DESC";
 
         $detailsStmt = $conn->prepare($detailsSql);
@@ -260,25 +265,31 @@ class ReportManager
         $endDate = trim($params['end_date'] ?? '');
         $doctorId = intval($params['doctor_id'] ?? 0);
 
-        $where = [];
+        $joinDateConditions = [];
+        $whereItemized = [];
         $bindings = [];
 
         if (!empty($startDate)) {
-            $where[] = "DATE(drl.Round_Timestamp) >= :start_date";
+            $joinDateConditions[] = "DATE(drl.Round_Timestamp) >= :start_date";
+            $whereItemized[] = "DATE(drl.Round_Timestamp) >= :start_date";
             $bindings[':start_date'] = $startDate;
         }
 
         if (!empty($endDate)) {
-            $where[] = "DATE(drl.Round_Timestamp) <= :end_date";
+            $joinDateConditions[] = "DATE(drl.Round_Timestamp) <= :end_date";
+            $whereItemized[] = "DATE(drl.Round_Timestamp) <= :end_date";
             $bindings[':end_date'] = $endDate;
         }
 
+        $joinDateSql = !empty($joinDateConditions) ? " AND " . implode(" AND ", $joinDateConditions) : "";
+
+        $whereDoctor = ["d.Is_Active = 1"];
         if ($doctorId > 0) {
-            $where[] = "d.Doctor_ID = :doctor_id";
+            $whereDoctor[] = "d.Doctor_ID = :doctor_id";
+            $whereItemized[] = "d.Doctor_ID = :doctor_id";
             $bindings[':doctor_id'] = $doctorId;
         }
-
-        $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+        $whereDoctorSql = "WHERE " . implode(" AND ", $whereDoctor);
 
         $summarySql = "SELECT 
                             d.Doctor_ID,
@@ -295,8 +306,8 @@ class ReportManager
                         LEFT JOIN Enum_Department_Station ds ON d.Station_ID = ds.Station_ID
                         LEFT JOIN Admission_Doctor ad ON d.Doctor_ID = ad.Doctor_ID
                         LEFT JOIN Admission a ON ad.Admission_ID = a.Admission_ID
-                        LEFT JOIN Doctor_Round_Log drl ON ad.Admission_Doctor_ID = drl.Admission_Doctor_ID $whereClause
-                        WHERE d.Is_Active = 1
+                        LEFT JOIN Doctor_Round_Log drl ON ad.Admission_Doctor_ID = drl.Admission_Doctor_ID $joinDateSql
+                        $whereDoctorSql
                         GROUP BY d.Doctor_ID, d.First_Name, d.Last_Name, dt.Type_Name, ds.Station_Name, d.Base_Round_Fee
                         ORDER BY Total_PF_Generated DESC, Total_Rounds DESC, d.Last_Name ASC";
 
@@ -323,6 +334,8 @@ class ReportManager
         }
         unset($doc);
 
+        $itemizedWhereSql = !empty($whereItemized) ? "WHERE " . implode(" AND ", $whereItemized) : "";
+
         $itemizedSql = "SELECT 
                             drl.Round_ID,
                             DATE_FORMAT(drl.Round_Timestamp, '%Y-%m-%d %h:%i %p') AS Round_Date,
@@ -339,7 +352,7 @@ class ReportManager
                         LEFT JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
                         JOIN Admission a ON ad.Admission_ID = a.Admission_ID
                         JOIN Patient p ON a.Patient_ID = p.Patient_ID
-                        $whereClause
+                        $itemizedWhereSql
                         ORDER BY drl.Round_Timestamp DESC, drl.Round_ID DESC";
 
         $itemizedStmt = $conn->prepare($itemizedSql);

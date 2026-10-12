@@ -28,6 +28,10 @@
 4. **CLICKABLE FILE LINKS IN ALL RESPONSES**
    - Whenever referencing files or symbols to the user, always format paths as clickable markdown links using the `file:///` URI scheme (e.g. `[views/rooms.html](file:///C:/xampp/htdocs/Hospital_Billing/views/rooms.html)`).
 
+5. **MINIMIZE USE OF ICONS & EMOJIS**
+   - The user interface adheres to a clean, minimalist clinical aesthetic.
+   - Strictly avoid decorative emojis and superfluous icons across buttons, tabs, badges, tables, and headers. Use clear, self-explanatory textual labels.
+
 ---
 
 ## 2. Technology Stack & Environment

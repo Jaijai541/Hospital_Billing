@@ -13,13 +13,15 @@
     border-radius: 10px;
     border: 1px solid #e2e8f0;
     margin-bottom: 18px;
+    width: 100%;
     overflow-x: auto;
 }
 
 .report-tab-btn {
+    flex: 1 1 0;
     border: none;
     background: transparent;
-    padding: 9px 18px;
+    padding: 10px 14px;
     font-size: 13.5px;
     font-weight: 600;
     color: #475569;
@@ -29,7 +31,8 @@
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    text-align: center;
 }
 
 .report-tab-btn:hover {

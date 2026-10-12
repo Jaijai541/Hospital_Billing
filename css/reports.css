@@ -355,15 +355,38 @@
     color: #64748b;
 }
 
+@page {
+    size: auto;
+    margin: 8mm 6mm;
+}
+
 @media print {
-    body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        font-size: 11px !important;
+    *, *:before, *:after {
+        box-sizing: border-box !important;
     }
 
-    .app-wrapper {
-        display: block !important;
+    html, body {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 8.5pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .app-wrapper,
+    .main-content,
+    .spreadsheet-card,
+    .spreadsheet-viewport {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     .sidebar,
@@ -380,45 +403,102 @@
         display: none !important;
     }
 
-    .main-content {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-    }
-
     .print-report-header,
     .print-signatures-wrap {
         display: block !important;
     }
 
-    .spreadsheet-card {
-        border: none !important;
-        box-shadow: none !important;
+    .print-report-header {
+        margin-bottom: 12px !important;
+        padding-bottom: 8px !important;
+        border-bottom: 1.5px solid #000000 !important;
     }
 
-    .spreadsheet-viewport {
-        max-height: none !important;
-        overflow: visible !important;
+    .print-report-header h1 {
+        font-size: 16pt !important;
+    }
+
+    .print-report-header h2 {
+        font-size: 11pt !important;
+    }
+
+    .print-meta-row {
+        font-size: 8pt !important;
+        margin-top: 6px !important;
     }
 
     .spreadsheet-table {
-        font-size: 10.5px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: auto !important;
+        border-collapse: collapse !important;
+        font-size: 8pt !important;
+    }
+
+    .spreadsheet-table thead th,
+    .spreadsheet-table tfoot td {
+        position: static !important;
     }
 
     .spreadsheet-table thead th {
-        background: #e2e8f0 !important;
+        background: #f1f5f9 !important;
         color: #000000 !important;
-        border: 1px solid #94a3b8 !important;
+        border: 1px solid #475569 !important;
+        padding: 3px 5px !important;
+        font-size: 7.5pt !important;
+        white-space: normal !important;
+        letter-spacing: 0 !important;
     }
 
     .spreadsheet-table tbody td {
         border: 1px solid #cbd5e1 !important;
         color: #000000 !important;
+        padding: 3px 5px !important;
+        font-size: 8pt !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
     }
 
     .spreadsheet-table tfoot td {
-        background: #f1f5f9 !important;
-        border: 1px solid #000000 !important;
+        background: #f8fafc !important;
+        border: 1.5px solid #000000 !important;
         color: #000000 !important;
+        padding: 3px 5px !important;
+        font-size: 8pt !important;
+        white-space: normal !important;
+    }
+
+    .spreadsheet-table .currency-cell,
+    .spreadsheet-table .number-cell,
+    .spreadsheet-table .col-seq {
+        white-space: nowrap !important;
+    }
+
+    .spreadsheet-table .badge {
+        padding: 1px 4px !important;
+        font-size: 7pt !important;
+        border: 1px solid #64748b !important;
+        background: transparent !important;
+        color: #000000 !important;
+        white-space: nowrap !important;
+    }
+
+    .spreadsheet-table tr {
+        page-break-inside: avoid !important;
+    }
+
+    .print-signatures-wrap {
+        margin-top: 24px !important;
+        page-break-inside: avoid !important;
+    }
+
+    .print-signature-line {
+        margin-top: 32px !important;
+        font-size: 8.5pt !important;
+    }
+
+    .print-signature-role {
+        font-size: 7.5pt !important;
     }
 }

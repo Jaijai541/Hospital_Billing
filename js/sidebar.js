@@ -64,6 +64,11 @@ const renderSidebar = () => {
                 <li><a href="promissory_notes.html"${isActive("promissory_notes.html")}>Promissory Notes & AR</a></li>
             </ul>
 
+            <div class="nav-section-title">Reports & Management</div>
+            <ul class="sidebar-nav">
+                <li><a href="reports.html"${isActive("reports.html")}>Reports & Analytics</a></li>
+            </ul>
+
             <div class="nav-section-title">System & Tools</div>
             <ul class="sidebar-nav">
                 <li><a href="staff.html"${isActive("staff.html")}>Staff & Users</a></li>

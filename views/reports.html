@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Billing System — Reports & Financial Analytics</title>
+    <link rel="stylesheet" href="../css/common.css?v=8.3">
+    <link rel="stylesheet" href="../css/dashboard.css?v=7.1">
+    <link rel="stylesheet" href="../css/reports.css?v=1.0">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside id="sidebar-container" class="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="print-report-header">
+                <h1>Hospital Management & Inpatient Care</h1>
+                <h2 id="print-report-title">Financial & Operational Audit Report</h2>
+                <div class="print-meta-row">
+                    <span id="print-date-range">Date Range: All Dates</span>
+                    <span id="print-generated-on">Generated: Just now</span>
+                    <span id="print-generated-by">Prepared by: Administrator</span>
+                </div>
+            </div>
+
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Reports & Financial Analytics</h2>
+                    <p>Live database reporting, revenue auditing, collection tracking, and spreadsheet export.</p>
+                </div>
+                <div class="reports-header-actions">
+                    <button type="button" id="btnExportExcel" class="btn btn-excel">
+                        <span>📊 Export Excel (.xlsx)</span>
+                    </button>
+                    <button type="button" id="btnExportCsv" class="btn btn-csv">
+                        <span>📁 Export CSV</span>
+                    </button>
+                    <button type="button" id="btnPrintReport" class="btn btn-outline">
+                        <span>🖨️ Print Official Report</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="reports-tab-bar">
+                <button type="button" class="report-tab-btn active" data-tab="collections">
+                    <span>💳 Collections & Remittance</span>
+                </button>
+                <button type="button" class="report-tab-btn" data-tab="department_revenue">
+                    <span>🏢 Department Revenue</span>
+                </button>
+                <button type="button" class="report-tab-btn" data-tab="doctor_fees">
+                    <span>🩺 Doctor Professional Fees</span>
+                </button>
+                <button type="button" class="report-tab-btn" data-tab="ar_aging">
+                    <span>⏳ AR & Promissory Aging</span>
+                </button>
+                <button type="button" class="report-tab-btn" data-tab="bed_occupancy">
+                    <span>🛏️ Bed Capacity & Occupancy</span>
+                </button>
+            </div>
+
+            <div class="report-filter-panel">
+                <div class="report-filter-grid">
+                    <div class="date-preset-group">
+                        <button type="button" class="date-preset-btn active" data-preset="all">All Time</button>
+                        <button type="button" class="date-preset-btn" data-preset="today">Today</button>
+                        <button type="button" class="date-preset-btn" data-preset="week">This Week</button>
+                        <button type="button" class="date-preset-btn" data-preset="month">This Month</button>
+                    </div>
+
+                    <div class="filter-dates-wrap">
+                        <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <label for="filter_start_date" style="font-size: 12.5px; font-weight: 600; color: #475569; white-space: nowrap; margin: 0;">From:</label>
+                            <input type="date" id="filter_start_date" class="form-control" style="width: 145px; padding: 6px 10px; font-size: 12.5px;">
+                        </div>
+
+                        <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <label for="filter_end_date" style="font-size: 12.5px; font-weight: 600; color: #475569; white-space: nowrap; margin: 0;">To:</label>
+                            <input type="date" id="filter_end_date" class="form-control" style="width: 145px; padding: 6px 10px; font-size: 12.5px;">
+                        </div>
+
+                        <div id="secondary-filter-container" style="display: flex; align-items: center; gap: 8px;">
+                            <label for="filter_secondary" id="filter_secondary_label" style="font-size: 12.5px; font-weight: 600; color: #475569; white-space: nowrap; margin: 0;">Filter:</label>
+                            <select id="filter_secondary" class="form-control" style="width: 170px; padding: 6px 10px; font-size: 12.5px;">
+                                <option value="">All Records</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-actions-wrap">
+                        <button type="button" id="btnApplyFilter" class="btn btn-primary" style="padding: 7px 16px; font-size: 13px;">
+                            Apply Filter
+                        </button>
+                        <button type="button" id="btnResetFilter" class="btn btn-outline" style="padding: 7px 14px; font-size: 13px;">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="report-kpi-container" class="report-kpi-grid"></div>
+
+            <div class="spreadsheet-card">
+                <div class="spreadsheet-header-bar">
+                    <div class="spreadsheet-title-wrap">
+                        <h3 id="spreadsheet-title">Daily Cashier Collections & Remittance Spreadsheet</h3>
+                        <p id="spreadsheet-subtitle">Itemized receipt logs, payment methods breakdown, and settlement balances.</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="record-count-badge" class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">0 Records</span>
+                    </div>
+                </div>
+
+                <div class="spreadsheet-viewport">
+                    <table id="report-table" class="spreadsheet-table">
+                        <thead id="report-table-head"></thead>
+                        <tbody id="report-table-body">
+                            <tr>
+                                <td colspan="10" style="text-align: center; padding: 40px; color: #64748b;">
+                                    Loading live report from database...
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="report-table-foot"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="print-signatures-wrap">
+                <div class="print-signatures-grid">
+                    <div class="print-signature-box">
+                        <div class="print-signature-line">PREPARED BY:</div>
+                        <div class="print-signature-role" id="sig-prepared-name">Cashier / Billing Clerk</div>
+                    </div>
+                    <div class="print-signature-box">
+                        <div class="print-signature-line">VERIFIED & AUDITED BY:</div>
+                        <div class="print-signature-role">Chief Financial Officer / Accountant</div>
+                    </div>
+                    <div class="print-signature-box">
+                        <div class="print-signature-line">APPROVED BY:</div>
+                        <div class="print-signature-role">Hospital Medical Director</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="../js/sidebar.js?v=8.3"></script>
+    <script src="../js/common.js?v=8.3"></script>
+    <script src="../js/reports.js?v=1.0"></script>
+</body>
+</html>

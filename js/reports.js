@@ -176,9 +176,9 @@ const fetchReportData = async () => {
     if (tableBody) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="12" style="text-align: center; padding: 40px; color: #64748b;">
-                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Querying database records...</div>
-                    <span style="font-size: 12px; color: #94a3b8;">Computing financial transactions and totals</span>
+                <td colspan="12" class="report-loading-cell">
+                    <div class="report-loading-title">Querying database records...</div>
+                    <span class="report-loading-sub">Computing financial transactions and totals</span>
                 </td>
             </tr>
         `;

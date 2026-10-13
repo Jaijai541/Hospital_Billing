@@ -69,6 +69,39 @@
     flex-wrap: wrap;
 }
 
+.filter-dates-wrap .form-group {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-dates-wrap label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.filter-dates-wrap input[type="date"] {
+    width: 145px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+}
+
+.filter-dates-wrap select {
+    width: 170px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+}
+
+#secondary-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .date-preset-group {
     display: inline-flex;
     border: 1px solid #cbd5e1;
@@ -106,6 +139,11 @@
     align-items: center;
     gap: 8px;
     justify-content: flex-end;
+}
+
+.filter-actions-wrap #btnResetFilter {
+    padding: 7px 14px;
+    font-size: 13px;
 }
 
 .btn-excel {
@@ -200,6 +238,17 @@
     color: #64748b;
 }
 
+.spreadsheet-meta-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#record-count-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
 .spreadsheet-viewport {
     width: 100%;
     overflow-x: auto;
@@ -252,6 +301,23 @@
 
 .spreadsheet-table tbody tr:hover td {
     background-color: #eff6ff !important;
+}
+
+.report-loading-cell {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+}
+
+.report-loading-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.report-loading-sub {
+    font-size: 12px;
+    color: #94a3b8;
 }
 
 .spreadsheet-table tfoot td {

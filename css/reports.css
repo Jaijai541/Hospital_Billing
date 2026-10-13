@@ -334,13 +334,6 @@
     white-space: nowrap;
 }
 
-.col-seq {
-    width: 36px;
-    text-align: center;
-    color: #94a3b8;
-    font-weight: 500;
-}
-
 .currency-cell {
     font-variant-numeric: tabular-nums;
     text-align: right;
@@ -548,15 +541,8 @@
     }
 
     .spreadsheet-table .currency-cell,
-    .spreadsheet-table .number-cell,
-    .spreadsheet-table .col-seq {
+    .spreadsheet-table .number-cell {
         white-space: nowrap !important;
-    }
-
-    .spreadsheet-table .col-seq {
-        width: 18px !important;
-        padding: 2px 1px !important;
-        font-size: 7pt !important;
     }
 
     .spreadsheet-table .badge {

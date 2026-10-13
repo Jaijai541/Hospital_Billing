@@ -321,7 +321,6 @@ const renderCollectionsReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th class="col-seq">#</th>
             <th>Receipt #</th>
             <th>Payment Date & Time</th>
             <th>Admission #</th>
@@ -339,15 +338,14 @@ const renderCollectionsReport = () => {
     if (records.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="11" style="text-align: center; padding: 30px; color: #64748b;">
+                <td colspan="10" style="text-align: center; padding: 30px; color: #64748b;">
                     No payment records found matching the selected date filters.
                 </td>
             </tr>
         `;
     } else {
-        tbody.innerHTML = records.map((r, i) => `
+        tbody.innerHTML = records.map((r) => `
             <tr>
-                <td class="col-seq">${i + 1}</td>
                 <td style="font-weight: 700; color: #0284c7;">${r.Receipt_Number}</td>
                 <td>${r.Payment_Date}</td>
                 <td><span class="badge badge-secondary">${r.Admission_Code}</span></td>
@@ -369,7 +367,7 @@ const renderCollectionsReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="7" style="text-align: right; text-transform: uppercase;">Grand Total Collections:</td>
+            <td colspan="6" style="text-align: right; text-transform: uppercase;">Grand Total Collections:</td>
             <td class="currency-cell" style="color: #107c41; font-size: 14px;">${formatPesos(summary.total_collections)}</td>
             <td colspan="3"></td>
         </tr>
@@ -414,7 +412,6 @@ const renderDepartmentRevenueReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th class="col-seq">#</th>
             <th>Station / Department</th>
             <th>Code</th>
             <th class="text-right">Transaction Count</th>
@@ -426,9 +423,8 @@ const renderDepartmentRevenueReport = () => {
     `;
 
     const tbody = document.getElementById("report-table-body");
-    tbody.innerHTML = stations.map((st, i) => `
+    tbody.innerHTML = stations.map((st) => `
         <tr>
-            <td class="col-seq">${i + 1}</td>
             <td style="font-weight: 700; color: #0f172a;">${st.Station_Name}</td>
             <td><span class="badge badge-secondary">${st.Code_Prefix}</span></td>
             <td class="number-cell">${st.Total_Transactions}</td>
@@ -442,7 +438,7 @@ const renderDepartmentRevenueReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="3" style="text-align: right; text-transform: uppercase;">Hospital Grand Totals:</td>
+            <td colspan="2" style="text-align: right; text-transform: uppercase;">Hospital Grand Totals:</td>
             <td class="number-cell">${summary.grand_transactions}</td>
             <td class="currency-cell">${formatPesos(summary.grand_gross)}</td>
             <td class="currency-cell" style="color: #ef4444;">${formatPesos(summary.grand_returns)}</td>
@@ -489,7 +485,6 @@ const renderDoctorFeesReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th class="col-seq">#</th>
             <th>Doctor ID</th>
             <th>Physician Full Name</th>
             <th>Designation</th>
@@ -502,9 +497,8 @@ const renderDoctorFeesReport = () => {
     `;
 
     const tbody = document.getElementById("report-table-body");
-    tbody.innerHTML = doctors.map((d, i) => `
+    tbody.innerHTML = doctors.map((d) => `
         <tr>
-            <td class="col-seq">${i + 1}</td>
             <td><span class="badge badge-secondary">${d.Doctor_Code}</span></td>
             <td style="font-weight: 700; color: #0f172a;">${d.Doctor_Name}</td>
             <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
@@ -519,7 +513,7 @@ const renderDoctorFeesReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="6" style="text-align: right; text-transform: uppercase;">Total Professional Fees & Rounds:</td>
+            <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Professional Fees & Rounds:</td>
             <td class="number-cell" style="font-size: 14px;">${summary.grand_rounds_count}</td>
             <td></td>
             <td class="currency-cell" style="color: #0284c7; font-size: 14px;">${formatPesos(summary.grand_pf_total)}</td>
@@ -564,7 +558,6 @@ const renderArAgingReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th class="col-seq">#</th>
             <th>Note #</th>
             <th>Invoice #</th>
             <th>Patient Name</th>
@@ -583,13 +576,13 @@ const renderArAgingReport = () => {
     if (notes.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="12" style="text-align: center; padding: 30px; color: #64748b;">
+                <td colspan="11" style="text-align: center; padding: 30px; color: #64748b;">
                     No promissory notes found matching the selected status filter.
                 </td>
             </tr>
         `;
     } else {
-        tbody.innerHTML = notes.map((n, i) => {
+        tbody.innerHTML = notes.map((n) => {
             let bracketBadge = "badge-success";
             if (n.Aging_Bracket.includes("1-30")) bracketBadge = "badge-warning";
             else if (n.Aging_Bracket.includes("31-60") || n.Aging_Bracket.includes("61-90") || n.Aging_Bracket.includes("90+")) bracketBadge = "badge-danger";
@@ -600,7 +593,6 @@ const renderArAgingReport = () => {
 
             return `
                 <tr>
-                    <td class="col-seq">${i + 1}</td>
                     <td style="font-weight: 700; color: #6366f1;">${n.Note_Code}</td>
                     <td><span class="badge badge-secondary">${n.Invoice_Code}</span></td>
                     <td style="font-weight: 600;">${n.Patient_Name}</td>
@@ -620,7 +612,7 @@ const renderArAgingReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="7" style="text-align: right; text-transform: uppercase;">Total Active Accounts Receivable:</td>
+            <td colspan="6" style="text-align: right; text-transform: uppercase;">Total Active Accounts Receivable:</td>
             <td class="currency-cell" style="color: #ef4444; font-size: 14px;">${formatPesos(summary.total_active_ar)}</td>
             <td colspan="4"></td>
         </tr>
@@ -663,7 +655,6 @@ const renderBedOccupancyReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th class="col-seq">#</th>
             <th>Room / Ward Name</th>
             <th>Classification</th>
             <th class="text-right">Daily Board Rate</th>
@@ -675,9 +666,8 @@ const renderBedOccupancyReport = () => {
     `;
 
     const tbody = document.getElementById("report-table-body");
-    tbody.innerHTML = rooms.map((rm, i) => `
+    tbody.innerHTML = rooms.map((rm) => `
         <tr>
-            <td class="col-seq">${i + 1}</td>
             <td style="font-weight: 700; color: #0f172a;">${rm.Room_Name}</td>
             <td><span class="badge badge-info">${rm.Room_Type}</span></td>
             <td class="currency-cell">${formatPesos(rm.Daily_Rate)}</td>
@@ -691,7 +681,7 @@ const renderBedOccupancyReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="4" style="text-align: right; text-transform: uppercase;">Hospital Capacity Totals:</td>
+            <td colspan="3" style="text-align: right; text-transform: uppercase;">Hospital Capacity Totals:</td>
             <td class="number-cell" style="font-size: 14px;">${summary.total_beds}</td>
             <td class="number-cell" style="color: #f59e0b; font-size: 14px;">${summary.occupied_beds}</td>
             <td class="number-cell" style="color: #107c41; font-size: 14px;">${summary.vacant_beds}</td>

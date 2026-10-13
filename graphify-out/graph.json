@@ -4191,6 +4191,18 @@
       "source_location": "L6"
     },
     {
+      "id": "js_sidebar_initsidebarusermenu",
+      "label": "initSidebarUserMenu()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "sidebar.js",
+      "file_type": "code",
+      "norm_label": "initsidebarusermenu()",
+      "source_file": "js/sidebar.js",
+      "source_location": "L1"
+    },
+    {
       "id": "js_sidebar_rendersidebar",
       "label": "renderSidebar()",
       "_callable": true,
@@ -4200,7 +4212,7 @@
       "file_type": "code",
       "norm_label": "rendersidebar()",
       "source_file": "js/sidebar.js",
-      "source_location": "L1"
+      "source_location": "L97"
     },
     {
       "id": "js_invoices_filterandrenderinvoices",
@@ -10489,6 +10501,18 @@
       "weight": 1.0
     },
     {
+      "source": "js_sidebar_rendersidebar",
+      "target": "js_sidebar_initsidebarusermenu",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "js/sidebar.js",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
       "source": "js_staff_archivestaff",
       "target": "js_staff_loadstaff",
       "relation": "calls",
@@ -14093,6 +14117,17 @@
       "weight": 1.0
     },
     {
+      "source": "js_sidebar",
+      "target": "js_sidebar_initsidebarusermenu",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "js/sidebar.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
       "source": "js_staff",
       "target": "js_staff_getrolebadge",
       "relation": "contains",
@@ -16693,7 +16728,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/sidebar.js",
-      "source_location": "L97",
+      "source_location": "L205",
       "weight": 1.0
     },
     {
@@ -16806,5 +16841,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2428f889b103407a3020399f0782aac41ef024c2"
+  "built_at_commit": "a4fe7c8284e91d326f198c5978ec9f3e2117119e"
 }

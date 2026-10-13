@@ -1,3 +1,99 @@
+const initSidebarUserMenu = () => {
+    const btnMenu = document.getElementById("btn-user-menu");
+    const menu = document.getElementById("sidebar-user-menu");
+    if (!btnMenu || !menu) return;
+
+    const closeUserMenu = () => {
+        menu.style.display = "none";
+        btnMenu.classList.remove("active");
+        btnMenu.setAttribute("aria-expanded", "false");
+    };
+
+    if (!btnMenu.dataset.wired) {
+        btnMenu.dataset.wired = "true";
+        btnMenu.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = menu.style.display === "flex" || menu.style.display === "block";
+            if (isOpen) {
+                closeUserMenu();
+            } else {
+                menu.style.display = "flex";
+                btnMenu.classList.add("active");
+                btnMenu.setAttribute("aria-expanded", "true");
+            }
+        });
+    }
+
+    if (!document.body.dataset.userMenuGlobalWired) {
+        document.body.dataset.userMenuGlobalWired = "true";
+        document.addEventListener("click", (e) => {
+            const openMenu = document.getElementById("sidebar-user-menu");
+            const openBtn = document.getElementById("btn-user-menu");
+            if (openMenu && !e.target.closest(".sidebar-user-dropdown")) {
+                openMenu.style.display = "none";
+                if (openBtn) {
+                    openBtn.classList.remove("active");
+                    openBtn.setAttribute("aria-expanded", "false");
+                }
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                const openMenu = document.getElementById("sidebar-user-menu");
+                const openBtn = document.getElementById("btn-user-menu");
+                if (openMenu && (openMenu.style.display === "flex" || openMenu.style.display === "block")) {
+                    openMenu.style.display = "none";
+                    if (openBtn) {
+                        openBtn.classList.remove("active");
+                        openBtn.setAttribute("aria-expanded", "false");
+                    }
+                }
+            }
+        });
+    }
+
+    if (!menu.dataset.closeWired) {
+        menu.dataset.closeWired = "true";
+        menu.addEventListener("click", () => {
+            closeUserMenu();
+        });
+    }
+
+    const btnChangePass = document.getElementById("btn-self-change-pass");
+    if (btnChangePass && !btnChangePass.dataset.wired) {
+        btnChangePass.dataset.wired = "true";
+        btnChangePass.addEventListener("click", () => {
+            closeUserMenu();
+            if (typeof openSelfChangePasswordModal === "function") {
+                openSelfChangePasswordModal();
+            }
+        });
+    }
+
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout && !btnLogout.dataset.wired) {
+        btnLogout.dataset.wired = "true";
+        btnLogout.addEventListener("click", () => {
+            closeUserMenu();
+            if (typeof showPopupConfirm === "function") {
+                showPopupConfirm("Are you sure you want to log out of your active session?", () => {
+                    if (typeof handleUserLogout === "function") {
+                        handleUserLogout();
+                    } else {
+                        sessionStorage.removeItem("hospital_user");
+                        window.location.href = "login.html";
+                    }
+                }, null, {
+                    title: "Confirm Logout",
+                    confirmText: "Logout",
+                    type: "warning"
+                });
+            }
+        });
+    }
+};
+
 const renderSidebar = () => {
     const sidebarEl = document.getElementById("sidebar-container") || document.querySelector("aside.sidebar");
     if (!sidebarEl) return;
@@ -41,9 +137,19 @@ const renderSidebar = () => {
                 <strong id="user-display">${user.full_name || "Loading..."} (${user.role_name || "Active Session"})</strong>
                 <span>Active Session</span>
             </div>
-            <div style="display: flex; gap: 6px; margin-top: 8px;">
-                <button type="button" id="btn-self-change-pass" class="btn btn-sm btn-outline" style="flex: 1; font-size: 11px; padding: 4px 6px;">Change Password</button>
-                <button type="button" id="btn-logout" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 4px 8px;">Logout</button>
+            <div class="sidebar-user-dropdown">
+                <button type="button" id="btn-user-menu" class="sidebar-user-menu-btn" title="Account Options" aria-label="Account Options" aria-expanded="false">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="2.2"/>
+                        <circle cx="12" cy="12" r="2.2"/>
+                        <circle cx="12" cy="19" r="2.2"/>
+                    </svg>
+                </button>
+                <div id="sidebar-user-menu" class="sidebar-user-dropdown-menu" style="display: none;">
+                    <button type="button" id="btn-self-change-pass" class="sidebar-user-dropdown-item">Change Password</button>
+                    <div class="sidebar-user-dropdown-divider"></div>
+                    <button type="button" id="btn-logout" class="sidebar-user-dropdown-item text-danger">Logout</button>
+                </div>
             </div>
         </div>
 
@@ -91,6 +197,8 @@ const renderSidebar = () => {
             ` : ""}
         </div>
     `;
+
+    initSidebarUserMenu();
 };
 
 renderSidebar();

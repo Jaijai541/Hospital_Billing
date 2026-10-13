@@ -1,17 +1,17 @@
-# Graph Report - Hospital_Billing  (2026-10-12)
+# Graph Report - Hospital_Billing  (2026-10-13)
 
 ## Corpus Check
-- 75 files · ~102,480 words
+- 75 files · ~102,754 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 21 file(s) not represented in the graph (top: .css 19, (none) 2)
 
 ## Summary
-- 593 nodes · 847 edges · 71 communities (23 shown, 48 thin omitted)
+- 594 nodes · 849 edges · 71 communities (23 shown, 48 thin omitted)
 - Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2428f889`
+- Built from commit: `a4fe7c82`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -68,6 +68,7 @@
 - Borrow
 - Student
 - dashboard.js
+- sidebar.js
 - promissory_notes.js
 - staff.js
 - UserManager
@@ -192,7 +193,7 @@ Nodes (21): exportToCsv(), exportToExcel(), fetchReportData(), formatDateYMD(), 
 
 ## Knowledge Gaps
 - **60 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+55 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 241 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 239 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions

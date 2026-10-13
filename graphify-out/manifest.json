@@ -570,15 +570,15 @@
     "semantic_hash": ""
   },
   "js/reports.js": {
-    "mtime": 1791809701.7722936,
-    "seen": 1791809914.4241152,
-    "ast_hash": "28e46e291a08a2bc58e4400c44af3eef",
+    "mtime": 1791900370.4913895,
+    "seen": 1791900433.5450654,
+    "ast_hash": "36c0dd9bea2c2a5ee2907d0959fd9bb2",
     "semantic_hash": ""
   },
   "views/reports.html": {
-    "mtime": 1791890855.83128,
-    "seen": 1791890908.6022513,
-    "ast_hash": "31684680916f241767f1136ec13f9662",
+    "mtime": 1791900415.5183306,
+    "seen": 1791900433.5486202,
+    "ast_hash": "f6e9fc2ddc8bc3ea0ec7e300d6eae708",
     "semantic_hash": ""
   }
 }

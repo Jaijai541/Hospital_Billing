@@ -1,7 +1,7 @@
 # Graph Report - Hospital_Billing  (2026-10-13)
 
 ## Corpus Check
-- 75 files · ~102,754 words
+- 75 files · ~102,774 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 21 file(s) not represented in the graph (top: .css 19, (none) 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a4fe7c82`
+- Built from commit: `9a5f2166`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

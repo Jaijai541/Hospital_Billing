@@ -73,17 +73,27 @@ const setupPresetButtons = () => {
 };
 
 const setupEventListeners = () => {
-    const btnApply = document.getElementById("btnApplyFilter");
-    if (btnApply) {
-        btnApply.addEventListener("click", () => fetchReportData());
+    const secondarySelect = document.getElementById("filter_secondary");
+    if (secondarySelect) {
+        secondarySelect.addEventListener("change", () => fetchReportData());
     }
+
+    const startInput = document.getElementById("filter_start_date");
+    const endInput = document.getElementById("filter_end_date");
+    const handleDateChange = () => {
+        document.querySelectorAll(".date-preset-btn").forEach((b) => b.classList.remove("active"));
+        fetchReportData();
+    };
+
+    if (startInput) startInput.addEventListener("change", handleDateChange);
+    if (endInput) endInput.addEventListener("change", handleDateChange);
 
     const btnReset = document.getElementById("btnResetFilter");
     if (btnReset) {
         btnReset.addEventListener("click", () => {
-            document.getElementById("filter_start_date").value = "";
-            document.getElementById("filter_end_date").value = "";
-            document.getElementById("filter_secondary").value = "";
+            if (startInput) startInput.value = "";
+            if (endInput) endInput.value = "";
+            if (secondarySelect) secondarySelect.value = "";
             const presetAll = document.querySelector('.date-preset-btn[data-preset="all"]');
             if (presetAll) presetAll.click();
             else fetchReportData();

@@ -4848,7 +4848,7 @@
       "file_type": "code",
       "norm_label": "exporttocsv()",
       "source_file": "js/reports.js",
-      "source_location": "L720"
+      "source_location": "L730"
     },
     {
       "id": "js_reports_exporttoexcel",
@@ -4860,7 +4860,7 @@
       "file_type": "code",
       "norm_label": "exporttoexcel()",
       "source_file": "js/reports.js",
-      "source_location": "L693"
+      "source_location": "L703"
     },
     {
       "id": "js_reports_fetchreportdata",
@@ -4872,7 +4872,7 @@
       "file_type": "code",
       "norm_label": "fetchreportdata()",
       "source_file": "js/reports.js",
-      "source_location": "L164"
+      "source_location": "L174"
     },
     {
       "id": "js_reports_formatdateymd",
@@ -4920,7 +4920,7 @@
       "file_type": "code",
       "norm_label": "loadfilterlookups()",
       "source_file": "js/reports.js",
-      "source_location": "L109"
+      "source_location": "L119"
     },
     {
       "id": "js_reports_printofficialreport",
@@ -4932,7 +4932,7 @@
       "file_type": "code",
       "norm_label": "printofficialreport()",
       "source_file": "js/reports.js",
-      "source_location": "L755"
+      "source_location": "L765"
     },
     {
       "id": "js_reports_renderactivereport",
@@ -4944,7 +4944,7 @@
       "file_type": "code",
       "norm_label": "renderactivereport()",
       "source_file": "js/reports.js",
-      "source_location": "L221"
+      "source_location": "L231"
     },
     {
       "id": "js_reports_renderaragingreport",
@@ -4956,7 +4956,7 @@
       "file_type": "code",
       "norm_label": "renderaragingreport()",
       "source_file": "js/reports.js",
-      "source_location": "L520"
+      "source_location": "L530"
     },
     {
       "id": "js_reports_renderbedoccupancyreport",
@@ -4968,7 +4968,7 @@
       "file_type": "code",
       "norm_label": "renderbedoccupancyreport()",
       "source_file": "js/reports.js",
-      "source_location": "L620"
+      "source_location": "L630"
     },
     {
       "id": "js_reports_rendercollectionsreport",
@@ -4980,7 +4980,7 @@
       "file_type": "code",
       "norm_label": "rendercollectionsreport()",
       "source_file": "js/reports.js",
-      "source_location": "L279"
+      "source_location": "L289"
     },
     {
       "id": "js_reports_renderdepartmentrevenuereport",
@@ -4992,7 +4992,7 @@
       "file_type": "code",
       "norm_label": "renderdepartmentrevenuereport()",
       "source_file": "js/reports.js",
-      "source_location": "L369"
+      "source_location": "L379"
     },
     {
       "id": "js_reports_renderdoctorfeesreport",
@@ -5004,7 +5004,7 @@
       "file_type": "code",
       "norm_label": "renderdoctorfeesreport()",
       "source_file": "js/reports.js",
-      "source_location": "L445"
+      "source_location": "L455"
     },
     {
       "id": "js_reports_setupeventlisteners",
@@ -5052,7 +5052,7 @@
       "file_type": "code",
       "norm_label": "showerrorstate()",
       "source_file": "js/reports.js",
-      "source_location": "L207"
+      "source_location": "L217"
     },
     {
       "id": "js_reports_updateprintheader",
@@ -5064,7 +5064,7 @@
       "file_type": "code",
       "norm_label": "updateprintheader()",
       "source_file": "js/reports.js",
-      "source_location": "L239"
+      "source_location": "L249"
     },
     {
       "id": "js_reports_updatesecondaryfilterui",
@@ -5076,7 +5076,7 @@
       "file_type": "code",
       "norm_label": "updatesecondaryfilterui()",
       "source_file": "js/reports.js",
-      "source_location": "L120"
+      "source_location": "L130"
     },
     {
       "id": "examples_invoice_invoice_displaydetails",
@@ -9813,7 +9813,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L746",
+      "source_location": "L756",
       "weight": 1.0
     },
     {
@@ -9825,7 +9825,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L714",
+      "source_location": "L724",
       "weight": 1.0
     },
     {
@@ -9837,7 +9837,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L197",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -9849,7 +9849,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L199",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -9933,7 +9933,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L756",
+      "source_location": "L766",
       "weight": 1.0
     },
     {
@@ -9945,7 +9945,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L225",
+      "source_location": "L235",
       "weight": 1.0
     },
     {
@@ -9957,7 +9957,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L227",
+      "source_location": "L237",
       "weight": 1.0
     },
     {
@@ -9969,7 +9969,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L229",
+      "source_location": "L239",
       "weight": 1.0
     },
     {
@@ -9981,7 +9981,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L231",
+      "source_location": "L241",
       "weight": 1.0
     },
     {
@@ -9993,7 +9993,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L233",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -10005,7 +10005,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L236",
+      "source_location": "L246",
       "weight": 1.0
     },
     {
@@ -10017,7 +10017,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L532",
+      "source_location": "L542",
       "weight": 1.0
     },
     {
@@ -10029,7 +10029,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L673",
+      "source_location": "L683",
       "weight": 1.0
     },
     {
@@ -10041,7 +10041,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L291",
+      "source_location": "L301",
       "weight": 1.0
     },
     {
@@ -10053,7 +10053,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L382",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -10065,7 +10065,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/reports.js",
-      "source_location": "L457",
+      "source_location": "L467",
       "weight": 1.0
     },
     {
@@ -13772,7 +13772,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L109",
+      "source_location": "L119",
       "weight": 1.0
     },
     {
@@ -13783,7 +13783,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L120",
+      "source_location": "L130",
       "weight": 1.0
     },
     {
@@ -13794,7 +13794,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L164",
+      "source_location": "L174",
       "weight": 1.0
     },
     {
@@ -13805,7 +13805,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L207",
+      "source_location": "L217",
       "weight": 1.0
     },
     {
@@ -13816,7 +13816,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L221",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -13827,7 +13827,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L239",
+      "source_location": "L249",
       "weight": 1.0
     },
     {
@@ -13849,7 +13849,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L279",
+      "source_location": "L289",
       "weight": 1.0
     },
     {
@@ -13871,7 +13871,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L369",
+      "source_location": "L379",
       "weight": 1.0
     },
     {
@@ -13893,7 +13893,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L445",
+      "source_location": "L455",
       "weight": 1.0
     },
     {
@@ -13915,7 +13915,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L520",
+      "source_location": "L530",
       "weight": 1.0
     },
     {
@@ -13926,7 +13926,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L620",
+      "source_location": "L630",
       "weight": 1.0
     },
     {
@@ -13937,7 +13937,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L693",
+      "source_location": "L703",
       "weight": 1.0
     },
     {
@@ -13948,7 +13948,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L720",
+      "source_location": "L730",
       "weight": 1.0
     },
     {
@@ -13970,7 +13970,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/reports.js",
-      "source_location": "L755",
+      "source_location": "L765",
       "weight": 1.0
     },
     {
@@ -16560,31 +16560,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/reports.js",
-      "source_location": "L760",
-      "weight": 1.0
-    },
-    {
-      "source": "js_reports_setupeventlisteners",
-      "target": "js_reports_exporttocsv",
-      "relation": "indirect_call",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "argument",
-      "source_file": "js/reports.js",
-      "source_location": "L100",
-      "weight": 1.0
-    },
-    {
-      "source": "js_reports_setupeventlisteners",
-      "target": "js_reports_printofficialreport",
-      "relation": "indirect_call",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "argument",
-      "source_file": "js/reports.js",
-      "source_location": "L105",
+      "source_location": "L770",
       "weight": 1.0
     },
     {
@@ -16596,7 +16572,31 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/reports.js",
-      "source_location": "L95",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_exporttocsv",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "js_reports_setupeventlisteners",
+      "target": "js_reports_printofficialreport",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "argument",
+      "source_file": "js/reports.js",
+      "source_location": "L115",
       "weight": 1.0
     },
     {
@@ -16841,5 +16841,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a4fe7c8284e91d326f198c5978ec9f3e2117119e"
+  "built_at_commit": "9a5f2166da528f2fcf04ceec0ce97b356af20a10"
 }

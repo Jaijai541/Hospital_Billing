@@ -2195,11 +2195,12 @@ const submitMedicineReturn = () => {
 
 const getPaymentMethodOptionsHtml = (selectedId = 1) => {
     let opts = '';
-    if (!paymentMethodsList || paymentMethodsList.length === 0) {
+    const filtered = (paymentMethodsList || []).filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
+    if (filtered.length === 0) {
         opts = '<option value="1" data-code="CSH" data-category="Cash" data-name="Cash">Cash (Cash)</option>';
         return opts;
     }
-    paymentMethodsList.forEach(pm => {
+    filtered.forEach(pm => {
         const isSel = pm.Payment_Method_ID == selectedId ? 'selected' : '';
         opts += `<option value="${pm.Payment_Method_ID}" data-code="${pm.Code_Prefix || ''}" data-category="${pm.Category_Type || ''}" data-name="${pm.Method_Name || ''}" ${isSel}>${pm.Method_Name} (${pm.Category_Type})</option>`;
     });
@@ -2246,7 +2247,7 @@ const openAdvancePaymentMethodPicker = () => {
         const fd = new FormData();
         fd.append('operation', 'getPaymentMethods');
         axios.post(`${getApiUrl}/invoices.php`, fd).then(res => {
-            paymentMethodsList = res.data || [];
+            paymentMethodsList = (res.data || []).filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
             showAdvanceMethodPicker();
         }).catch(() => {
             showAdvanceMethodPicker();
@@ -2257,12 +2258,14 @@ const openAdvancePaymentMethodPicker = () => {
 };
 
 const showAdvanceMethodPicker = () => {
-    const list = (paymentMethodsList && paymentMethodsList.length > 0) ? paymentMethodsList : [
+    const validList = (paymentMethodsList || []).filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
+    const list = validList.length > 0 ? validList : [
         { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash' },
-        { Payment_Method_ID: 2, Method_Name: 'GCash', Category_Type: 'E-Wallet' },
-        { Payment_Method_ID: 3, Method_Name: 'Maya', Category_Type: 'E-Wallet' },
-        { Payment_Method_ID: 4, Method_Name: 'Credit / Debit Card', Category_Type: 'Card' },
-        { Payment_Method_ID: 5, Method_Name: 'Bank Wire / Online Transfer', Category_Type: 'Bank' }
+        { Payment_Method_ID: 4, Method_Name: 'GCash', Category_Type: 'Digital / E-Wallet' },
+        { Payment_Method_ID: 5, Method_Name: 'PayMaya (Maya)', Category_Type: 'Digital / E-Wallet' },
+        { Payment_Method_ID: 6, Method_Name: 'Bank Transfer', Category_Type: 'Bank' },
+        { Payment_Method_ID: 7, Method_Name: 'Credit / Debit Card', Category_Type: 'Card' },
+        { Payment_Method_ID: 8, Method_Name: 'Check / Cheque', Category_Type: 'Check' }
     ];
 
     openGenericLookupPicker({
@@ -2746,8 +2749,8 @@ const getDefaultNextDueDate = () => {
 const renderPromissoryPlanOptionsHtml = () => {
     if (!promissoryPlanTypes || promissoryPlanTypes.length === 0) {
         return `
-            <option value="1" data-code="Full_30_Days" data-months="1">Full Settlement (Within 30 Days)</option>
-            <option value="2" data-code="Monthly_Installment" data-months="3">Monthly Installment Plan</option>
+            <option value="1" data-code="Full_30_Days" data-months="1">Accounts Receivable (AR) - Full Settlement (Within 30 Days)</option>
+            <option value="2" data-code="Monthly_Installment" data-months="3">Notes Receivable (NR) - Monthly Installment Plan</option>
         `;
     }
     return promissoryPlanTypes.map(p => `
@@ -2777,7 +2780,7 @@ const loadDiscounts = () => {
     Promise.all([p1, p2, p3])
         .then(([resDisc, resPay, resPlan]) => {
             discountList = resDisc.data || [];
-            paymentMethodsList = resPay.data || [];
+            paymentMethodsList = (resPay.data || []).filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
             promissoryPlanTypes = resPlan.data || [];
             renderSettlementSection();
         })
@@ -3327,16 +3330,16 @@ const renderSettlementSection = () => {
             <div id="promissory-note-settlement-card" class="card p-3" style="display: none; background: #fffdf5; border: 1px solid #f59e0b; border-radius: 8px; margin-top: 4px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                     <div>
-                        <strong style="color: #92400e; font-size: 15px;">Promissory Note &amp; Mutual Settlement Agreement</strong>
+                        <strong style="color: #92400e; font-size: 15px;">Promissory Note &amp; Mutual Settlement Agreement (NR / AR)</strong>
                     </div>
                     <span class="badge badge-warning" style="font-size: 12.5px;" id="pn_balance_badge">Unsettled Balance: ₱0.00</span>
                 </div>
                 <p class="text-muted mb-3" style="font-size: 13px;">
-                    Because an outstanding balance remains upon discharge, a legally binding Promissory Note is prepared between the Hospital and the Patient / Guarantor. Please select the agreed payment schedule:
+                    Because an outstanding balance remains upon discharge, a legally binding Promissory Note is prepared between the Hospital and the Patient / Guarantor. Please select whether this is a Notes Receivable (NR) installment plan or Accounts Receivable (AR) 30-day deferred credit:
                 </p>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
                     <div class="form-group">
-                        <label class="form-label" for="pn_plan_type_id" style="font-weight: 600;">Settlement Scheme / Plan Type *</label>
+                        <label class="form-label" for="pn_plan_type_id" style="font-weight: 600;">Receivable Type &amp; Settlement Scheme *</label>
                         <select id="pn_plan_type_id" class="form-select">
                             ${renderPromissoryPlanOptionsHtml()}
                         </select>
@@ -3579,12 +3582,12 @@ const renderSettlementSection = () => {
                 const bal = math.remainingNetToSettle;
                 lblChange.style.background = '#fffdf5';
                 lblChange.style.borderColor = '#f59e0b';
-                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">₱0.00 Cash Paid Today</span> — Full <strong>₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> balance deferred to Promissory Note (NR / AR)`;
+                lblChange.innerHTML = `<span style="color: #b45309; font-weight: 700;">₱0.00 Paid Today</span> — Full <strong>₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong> balance deferred to Promissory Note (NR / AR)`;
             } else {
                 const bal = Math.round((math.remainingNetToSettle - paid) * 100) / 100;
                 lblChange.style.background = '#fffdf5';
                 lblChange.style.borderColor = '#f59e0b';
-                lblChange.innerHTML = `<span style="color: #0369a1; font-weight: 700;">Partial Cash Paid: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span> | <strong style="color: #b45309;">Remaining Balance Deferred to Promissory Note: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>`;
+                lblChange.innerHTML = `<span style="color: #0369a1; font-weight: 700;">Partial Payment Tendered: ₱${paid.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span> | <strong style="color: #b45309;">Remaining Balance Deferred to Promissory Note: ₱${bal.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>`;
             }
         }
 
@@ -3784,10 +3787,9 @@ const renderSettlementSection = () => {
     });
 
     const openSettlePaymentMethodPicker = () => {
-        const list = (paymentMethodsList && paymentMethodsList.length > 0) ? paymentMethodsList : [
+        const validList = (paymentMethodsList || []).filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
+        const list = validList.length > 0 ? validList : [
             { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash', Code_Prefix: 'CSH', Description: 'Cash Tendered at Cashier Counter' },
-            { Payment_Method_ID: 2, Method_Name: 'Accounts Receivable (AR)', Category_Type: 'Receivable', Code_Prefix: 'AR', Description: 'Promissory Note / Hospital Accounts Receivable' },
-            { Payment_Method_ID: 3, Method_Name: 'Notes Receivable', Category_Type: 'Receivable', Code_Prefix: 'NR', Description: 'Formal Promissory Note with Due Date' },
             { Payment_Method_ID: 4, Method_Name: 'GCash', Category_Type: 'Digital / E-Wallet', Code_Prefix: 'GCSH', Description: 'GCash Mobile Wallet Transfer' },
             { Payment_Method_ID: 5, Method_Name: 'PayMaya (Maya)', Category_Type: 'Digital / E-Wallet', Code_Prefix: 'MAYA', Description: 'Maya Mobile Wallet Transfer' },
             { Payment_Method_ID: 6, Method_Name: 'Bank Transfer', Category_Type: 'Bank', Code_Prefix: 'BANK', Description: 'Direct Online Bank Transfer / Deposit' },
@@ -3801,17 +3803,15 @@ const renderSettlementSection = () => {
             title: "Select Settlement Payment Method",
             selectedId: currentId,
             items: list.map(pm => {
-                const isReceivable = (pm.Code_Prefix === 'NR' || pm.Code_Prefix === 'AR' || (pm.Category_Type && pm.Category_Type.toLowerCase().includes('receivable')) || (pm.Method_Name && pm.Method_Name.toLowerCase().includes('receivable')));
                 let badgeClass = 'badge-info';
                 if (pm.Category_Type === 'Cash') badgeClass = 'badge-success';
-                else if (isReceivable) badgeClass = 'badge-warning';
                 else if (pm.Category_Type && pm.Category_Type.toLowerCase().includes('wallet')) badgeClass = 'badge-primary';
                 else if (pm.Category_Type === 'Card') badgeClass = 'badge-secondary';
 
                 return {
                     id: pm.Payment_Method_ID,
                     text: `${pm.Method_Name} (${pm.Category_Type || 'Payment'})`,
-                    subtext: pm.Description || (isReceivable ? 'Deferred settlement with Promissory Note' : 'Immediate payment upon discharge'),
+                    subtext: pm.Description || 'Payment tendered and verified today',
                     badge: pm.Category_Type || 'Payment',
                     badgeClass: badgeClass,
                     raw: pm
@@ -3830,48 +3830,14 @@ const renderSettlementSection = () => {
 
         const pmId = pm.Payment_Method_ID || pm.id;
         const pmName = pm.Method_Name || pm.text || '';
-        const pmCode = pm.Code_Prefix || (pm.raw ? pm.raw.Code_Prefix : '') || '';
         const pmCat = pm.Category_Type || (pm.raw ? pm.raw.Category_Type : '') || '';
         const pmDesc = pm.Description || (pm.raw ? pm.raw.Description : '') || '';
 
         if (inputId) inputId.value = pmId;
         if (inputText) inputText.value = `${pmName} (${pmCat || 'Payment'})`;
 
-        const isNR = pmCode === 'NR' || pmName.toLowerCase().includes('notes receivable');
-        const isAR = pmCode === 'AR' || pmName.toLowerCase().includes('accounts receivable');
-
         if (hintText) {
-            if (isNR) {
-                hintText.innerHTML = '<strong style="color: #b45309;">Notes Receivable: Formal Promissory Note with negotiable installment schedule</strong>';
-            } else if (isAR) {
-                hintText.innerHTML = '<strong style="color: #b45309;">Accounts Receivable: 30-day deferred credit agreement</strong>';
-            } else {
-                hintText.innerHTML = pmDesc ? `<span class="text-muted">${pmDesc}</span>` : '<span class="text-muted">Payment tendered and verified today</span>';
-            }
-        }
-
-        if (isNR || isAR) {
-            if (cashInput) {
-                cashInput.value = '0.00';
-            }
-            const planSelect = document.getElementById('pn_plan_type_id');
-            if (planSelect) {
-                for (let i = 0; i < planSelect.options.length; i++) {
-                    const optCode = planSelect.options[i].dataset.code;
-                    if (isAR && optCode === 'Full_30_Days') {
-                        planSelect.selectedIndex = i;
-                        break;
-                    } else if (isNR && optCode === 'Monthly_Installment') {
-                        planSelect.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-        } else {
-            const math = computeSettlementMath();
-            if (cashInput && parseFloat(cashInput.value || 0) === 0) {
-                cashInput.value = math.remainingNetToSettle.toFixed(2);
-            }
+            hintText.innerHTML = pmDesc ? `<span class="text-muted">${pmDesc}</span>` : '<span class="text-muted">Payment tendered and verified today</span>';
         }
 
         updateSettlementTotals();
@@ -3879,25 +3845,6 @@ const renderSettlementSection = () => {
 
     if (cashInput) {
         cashInput.addEventListener('input', () => {
-            const paid = parseFloat(cashInput.value || 0);
-            const inputId = document.getElementById('settle_payment_method_id');
-            const currentMethodId = inputId ? parseInt(inputId.value, 10) : 1;
-            const currentPm = (paymentMethodsList || []).find(p => p.Payment_Method_ID == currentMethodId);
-            const isReceivable = currentPm && (currentPm.Code_Prefix === 'NR' || currentPm.Code_Prefix === 'AR' || (currentPm.Category_Type && currentPm.Category_Type.toLowerCase().includes('receivable')));
-
-            if (paid === 0 && !isReceivable) {
-                const nrPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'NR') || (paymentMethodsList || []).find(p => p.Code_Prefix === 'AR');
-                if (nrPm) {
-                    applySelectedPaymentMethod(nrPm);
-                    return;
-                }
-            } else if (paid > 0 && isReceivable) {
-                const cashPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'CSH' || p.Payment_Method_ID == 1);
-                if (cashPm) {
-                    applySelectedPaymentMethod(cashPm);
-                    return;
-                }
-            }
             updateSettlementTotals();
         });
     }
@@ -3910,26 +3857,14 @@ const renderSettlementSection = () => {
         if (cashInput) {
             cashInput.value = math.remainingNetToSettle.toFixed(2);
         }
-        const inputId = document.getElementById('settle_payment_method_id');
-        const currentMethodId = inputId ? parseInt(inputId.value, 10) : 1;
-        const currentPm = (paymentMethodsList || []).find(p => p.Payment_Method_ID == currentMethodId);
-        const isReceivable = currentPm && (currentPm.Code_Prefix === 'NR' || currentPm.Code_Prefix === 'AR' || (currentPm.Category_Type && currentPm.Category_Type.toLowerCase().includes('receivable')));
-        if (isReceivable || !currentPm) {
-            const cashPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'CSH' || p.Payment_Method_ID == 1) || { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash' };
-            applySelectedPaymentMethod(cashPm);
-        } else {
-            updateSettlementTotals();
-        }
+        updateSettlementTotals();
     });
 
     document.getElementById('btn-quick-promissory')?.addEventListener('click', () => {
         if (cashInput) {
             cashInput.value = '0.00';
         }
-        const nrPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'NR' || (p.Method_Name && p.Method_Name.toLowerCase().includes('notes receivable'))) 
-            || (paymentMethodsList || []).find(p => p.Code_Prefix === 'AR')
-            || { Payment_Method_ID: 3, Method_Name: 'Notes Receivable', Category_Type: 'Receivable', Code_Prefix: 'NR' };
-        applySelectedPaymentMethod(nrPm);
+        updateSettlementTotals();
     });
 
     document.getElementById('btn-exact-cash')?.addEventListener('click', () => {
@@ -3937,26 +3872,14 @@ const renderSettlementSection = () => {
         if (cashInput) {
             cashInput.value = math.remainingNetToSettle.toFixed(2);
         }
-        const inputId = document.getElementById('settle_payment_method_id');
-        const currentMethodId = inputId ? parseInt(inputId.value, 10) : 1;
-        const currentPm = (paymentMethodsList || []).find(p => p.Payment_Method_ID == currentMethodId);
-        const isReceivable = currentPm && (currentPm.Code_Prefix === 'NR' || currentPm.Code_Prefix === 'AR' || (currentPm.Category_Type && currentPm.Category_Type.toLowerCase().includes('receivable')));
-        if (isReceivable || !currentPm) {
-            const cashPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'CSH' || p.Payment_Method_ID == 1) || { Payment_Method_ID: 1, Method_Name: 'Cash', Category_Type: 'Cash' };
-            applySelectedPaymentMethod(cashPm);
-        } else {
-            updateSettlementTotals();
-        }
+        updateSettlementTotals();
     });
 
     document.getElementById('btn-zero-cash')?.addEventListener('click', () => {
         if (cashInput) {
             cashInput.value = '0.00';
         }
-        const nrPm = (paymentMethodsList || []).find(p => p.Code_Prefix === 'NR' || (p.Method_Name && p.Method_Name.toLowerCase().includes('notes receivable'))) 
-            || (paymentMethodsList || []).find(p => p.Code_Prefix === 'AR')
-            || { Payment_Method_ID: 3, Method_Name: 'Notes Receivable', Category_Type: 'Receivable', Code_Prefix: 'NR' };
-        applySelectedPaymentMethod(nrPm);
+        updateSettlementTotals();
     });
 
     document.getElementById('pn_plan_type_id')?.addEventListener('change', updateSettlementTotals);
@@ -4027,14 +3950,19 @@ const submitSettlement = () => {
     const totalAdvancePaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
     const remainingNetToSettle = Math.max(0, Math.round((netAmt - totalAdvancePaid) * 100) / 100);
 
+    const payMethodText = document.getElementById('settle_payment_method_text');
+    const payMethodName = payMethodText ? payMethodText.value : 'Cash';
+    const planSelect = document.getElementById('pn_plan_type_id');
+    const planName = planSelect && planSelect.options[planSelect.selectedIndex] ? planSelect.options[planSelect.selectedIndex].text : 'Promissory Note';
+
     let confirmMsg = '';
     if (amountPaid === 0) {
-        confirmMsg = `Confirm Promissory Note (NR / AR) execution with ₱0.00 cash paid today?\n\nThe entire balance of ₱${remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a formal Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. An Official Statement of Account (SOA) will be generated for signing.`;
+        confirmMsg = `Confirm Promissory Note execution with ₱0.00 paid today?\n\nPlan: ${planName}\nThe entire balance of ₱${remainingNetToSettle.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a formal Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. An Official Statement of Account (SOA) will be generated for signing.`;
     } else if (amountPaid < remainingNetToSettle) {
         const remaining = Math.max(0, Math.round((remainingNetToSettle - amountPaid) * 100) / 100);
-        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. An Official Receipt will be issued for the cash payment.`;
+        confirmMsg = `Confirm partial settlement payment of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} via ${payMethodName}?\n\nPlan: ${planName}\nAn outstanding balance of ₱${remaining.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be formalized under a Promissory Note agreement. Pre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. An Official Receipt will be issued for the ${payMethodName} payment.`;
     } else {
-        confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nPre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. This will record the official Final Invoice as PAID IN FULL and release the bed.`;
+        confirmMsg = `Confirm final billing settlement of ₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} via ${payMethodName}?\n\nPre-discharge advance deposits of ₱${totalAdvancePaid.toLocaleString('en-PH', {minimumFractionDigits: 2})} will be officially credited. This will record the official Final Invoice as PAID IN FULL and release the bed.`;
     }
 
     showPopupConfirm(confirmMsg, () => {

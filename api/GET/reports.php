@@ -580,7 +580,7 @@ class ReportManager
         $doctorsStmt = $conn->query("SELECT Doctor_ID, CONCAT('Dr. ', First_Name, ' ', Last_Name) AS Full_Name FROM Doctor WHERE Is_Active = 1 ORDER BY Last_Name ASC");
         $doctors = $doctorsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $methodsStmt = $conn->query("SELECT Payment_Method_ID, Method_Name FROM Enum_Payment_Method WHERE Is_Active = 1 ORDER BY Payment_Method_ID ASC");
+        $methodsStmt = $conn->query("SELECT Payment_Method_ID, Method_Name FROM Enum_Payment_Method WHERE Is_Active = 1 AND Code_Prefix NOT IN ('AR', 'NR') ORDER BY Payment_Method_ID ASC");
         $methods = $methodsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [

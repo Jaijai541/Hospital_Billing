@@ -132,7 +132,7 @@ const loadPaymentMethods = async () => {
             params: { operation: "getPaymentMethods" }
         });
         if (response.status === 200 && Array.isArray(response.data)) {
-            allPaymentMethods = response.data;
+            allPaymentMethods = response.data.filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
         }
     } catch (e) {}
 };
@@ -328,7 +328,12 @@ const renderTable = (notes) => {
                 </div>
             </td>
             <td>
-                <div style="font-weight: 600; color: #1e293b;">${note.Plan_Type_Name}</div>
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                    ${note.Plan_Type_Code === 'Monthly_Installment' || (note.Plan_Type_Name && note.Plan_Type_Name.includes('NR'))
+                        ? '<span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 7px; font-weight: 700;">NR</span>'
+                        : '<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 7px; font-weight: 700;">AR</span>'}
+                    <span style="font-weight: 600; color: #1e293b;">${note.Plan_Type_Name}</span>
+                </div>
                 <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                     ${note.Installment_Months > 1 ? `${note.Installment_Months} mos &bull; ₱${monthly.toLocaleString("en-PH", { minimumFractionDigits: 2 })}/mo` : "Lump sum settlement"}
                 </div>
@@ -367,9 +372,10 @@ const openPaymentModal = (note) => {
     const modal = document.getElementById("recordPaymentModal");
     if (!modal) return;
 
+    const isNR = note.Plan_Type_Code === 'Monthly_Installment' || (note.Plan_Type_Name && note.Plan_Type_Name.includes('NR'));
     document.getElementById("pay_invoice_id").value = note.Invoice_ID;
     document.getElementById("pay_note_id").value = note.Note_ID;
-    document.getElementById("pay_note_code").textContent = note.Note_Code;
+    document.getElementById("pay_note_code").textContent = `${note.Note_Code} (${isNR ? 'NR' : 'AR'})`;
     document.getElementById("pay_invoice_code").textContent = note.Invoice_Code;
     document.getElementById("pay_patient_name").textContent = note.Patient_Name;
     document.getElementById("pay_guarantor_name").textContent = `${note.Guarantor_Name || "Patient"} (${note.Guarantor_Contact || "No phone"})`;
@@ -624,9 +630,10 @@ const closeHistoryModal = () => {
 };
 
 const openPaymentMethodPicker = () => {
+    const validMethods = (allPaymentMethods || []).filter(pm => pm.Code_Prefix !== 'AR' && pm.Code_Prefix !== 'NR');
     openGenericLookupPicker({
         title: "Select Payment Method",
-        items: allPaymentMethods.map(pm => ({
+        items: validMethods.map(pm => ({
             id: pm.Payment_Method_ID,
             text: pm.Method_Name,
             subtext: `Category: ${pm.Category_Type}`,

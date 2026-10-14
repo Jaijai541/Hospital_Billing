@@ -405,7 +405,7 @@ class InvoiceManager
     function getPaymentMethods()
     {
         include "connection.php";
-        $sql = "SELECT Payment_Method_ID, Method_Name, Category_Type, Code_Prefix, Description FROM Enum_Payment_Method WHERE Is_Active = 1 ORDER BY Payment_Method_ID ASC";
+        $sql = "SELECT Payment_Method_ID, Method_Name, Category_Type, Code_Prefix, Description FROM Enum_Payment_Method WHERE Is_Active = 1 AND Code_Prefix NOT IN ('AR', 'NR') ORDER BY Payment_Method_ID ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));

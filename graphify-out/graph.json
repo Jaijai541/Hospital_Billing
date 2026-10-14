@@ -564,7 +564,7 @@
       "file_type": "code",
       "norm_label": "getdefaultnextduedate()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2737"
+      "source_location": "L2740"
     },
     {
       "id": "js_admission_details_getpaymentmethodoptionshtml",
@@ -648,7 +648,7 @@
       "file_type": "code",
       "norm_label": "loadadvancepayments()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2646"
+      "source_location": "L2649"
     },
     {
       "id": "js_admission_details_loadavailablebeds",
@@ -696,7 +696,7 @@
       "file_type": "code",
       "norm_label": "loaddiscounts()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2758"
+      "source_location": "L2761"
     },
     {
       "id": "js_admission_details_loaddispensedmedicines",
@@ -780,7 +780,7 @@
       "file_type": "code",
       "norm_label": "openadvancepaymentmethodpicker()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2244"
+      "source_location": "L2245"
     },
     {
       "id": "js_admission_details_openadvancepaymentmodal",
@@ -792,7 +792,7 @@
       "file_type": "code",
       "norm_label": "openadvancepaymentmodal()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2209"
+      "source_location": "L2210"
     },
     {
       "id": "js_admission_details_openlookuppicker",
@@ -816,7 +816,7 @@
       "file_type": "code",
       "norm_label": "openpatientadmissionhistorymodal()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2412"
+      "source_location": "L2415"
     },
     {
       "id": "js_admission_details_openreturnmedicinepicker",
@@ -852,7 +852,7 @@
       "file_type": "code",
       "norm_label": "renderadmittedadvancebillingcard()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2642"
+      "source_location": "L2645"
     },
     {
       "id": "js_admission_details_renderadmitteddischargegatecard",
@@ -864,7 +864,7 @@
       "file_type": "code",
       "norm_label": "renderadmitteddischargegatecard()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2566"
+      "source_location": "L2569"
     },
     {
       "id": "js_admission_details_renderadvancepaymentshistory",
@@ -876,7 +876,7 @@
       "file_type": "code",
       "norm_label": "renderadvancepaymentshistory()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2352"
+      "source_location": "L2355"
     },
     {
       "id": "js_admission_details_renderbilledsettlementcard",
@@ -888,7 +888,7 @@
       "file_type": "code",
       "norm_label": "renderbilledsettlementcard()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2789"
+      "source_location": "L2792"
     },
     {
       "id": "js_admission_details_renderledgertable",
@@ -936,7 +936,7 @@
       "file_type": "code",
       "norm_label": "renderpaymenthistorytable()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2675"
+      "source_location": "L2678"
     },
     {
       "id": "js_admission_details_renderpromissoryplanoptionshtml",
@@ -948,7 +948,7 @@
       "file_type": "code",
       "norm_label": "renderpromissoryplanoptionshtml()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2746"
+      "source_location": "L2749"
     },
     {
       "id": "js_admission_details_renderroundstable",
@@ -972,7 +972,7 @@
       "file_type": "code",
       "norm_label": "rendersettlementsection()",
       "source_file": "js/admission_details.js",
-      "source_location": "L3079"
+      "source_location": "L3082"
     },
     {
       "id": "js_admission_details_rendersummarybox",
@@ -1020,7 +1020,7 @@
       "file_type": "code",
       "norm_label": "showadvancemethodpicker()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2259"
+      "source_location": "L2260"
     },
     {
       "id": "js_admission_details_submitadvancepayment",
@@ -1032,7 +1032,7 @@
       "file_type": "code",
       "norm_label": "submitadvancepayment()",
       "source_file": "js/admission_details.js",
-      "source_location": "L2287"
+      "source_location": "L2290"
     },
     {
       "id": "js_admission_details_submitbedtransfer",
@@ -1092,7 +1092,7 @@
       "file_type": "code",
       "norm_label": "submitsettlement()",
       "source_file": "js/admission_details.js",
-      "source_location": "L3980"
+      "source_location": "L3903"
     },
     {
       "id": "js_admission_details_updatereturncreditcalc",
@@ -4344,7 +4344,7 @@
       "file_type": "code",
       "norm_label": "closehistorymodal()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L621"
+      "source_location": "L627"
     },
     {
       "id": "js_promissory_notes_closepaymentmodal",
@@ -4356,7 +4356,7 @@
       "file_type": "code",
       "norm_label": "closepaymentmodal()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L408"
+      "source_location": "L414"
     },
     {
       "id": "js_promissory_notes_filterandrenderpromissorynotes",
@@ -4428,7 +4428,7 @@
       "file_type": "code",
       "norm_label": "openpaymenthistorymodal()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L504"
+      "source_location": "L510"
     },
     {
       "id": "js_promissory_notes_openpaymentmethodpicker",
@@ -4440,7 +4440,7 @@
       "file_type": "code",
       "norm_label": "openpaymentmethodpicker()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L626"
+      "source_location": "L632"
     },
     {
       "id": "js_promissory_notes_openpaymentmodal",
@@ -4452,7 +4452,7 @@
       "file_type": "code",
       "norm_label": "openpaymentmodal()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L364"
+      "source_location": "L369"
     },
     {
       "id": "js_promissory_notes_recalculatepayment",
@@ -4464,7 +4464,7 @@
       "file_type": "code",
       "norm_label": "recalculatepayment()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L414"
+      "source_location": "L420"
     },
     {
       "id": "js_promissory_notes_renderhistorytable",
@@ -4476,7 +4476,7 @@
       "file_type": "code",
       "norm_label": "renderhistorytable()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L561"
+      "source_location": "L567"
     },
     {
       "id": "js_promissory_notes_rendertable",
@@ -4500,7 +4500,7 @@
       "file_type": "code",
       "norm_label": "submitinstallmentpayment()",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L431"
+      "source_location": "L437"
     },
     {
       "id": "js_promissory_notes_updatestats",
@@ -7557,7 +7557,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2662",
+      "source_location": "L2665",
       "weight": 1.0
     },
     {
@@ -7569,7 +7569,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2664",
+      "source_location": "L2667",
       "weight": 1.0
     },
     {
@@ -7617,7 +7617,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2782",
+      "source_location": "L2785",
       "weight": 1.0
     },
     {
@@ -7713,7 +7713,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2250",
+      "source_location": "L2251",
       "weight": 1.0
     },
     {
@@ -7761,7 +7761,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2643",
+      "source_location": "L2646",
       "weight": 1.0
     },
     {
@@ -7773,7 +7773,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2840",
+      "source_location": "L2843",
       "weight": 1.0
     },
     {
@@ -7785,7 +7785,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2882",
+      "source_location": "L2885",
       "weight": 1.0
     },
     {
@@ -7797,7 +7797,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2940",
+      "source_location": "L2943",
       "weight": 1.0
     },
     {
@@ -7809,7 +7809,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3061",
+      "source_location": "L3064",
       "weight": 1.0
     },
     {
@@ -7833,7 +7833,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3108",
+      "source_location": "L3111",
       "weight": 1.0
     },
     {
@@ -7845,7 +7845,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3341",
+      "source_location": "L3344",
       "weight": 1.0
     },
     {
@@ -7857,7 +7857,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3355",
+      "source_location": "L3358",
       "weight": 1.0
     },
     {
@@ -7869,7 +7869,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L3408",
+      "source_location": "L3411",
       "weight": 1.0
     },
     {
@@ -7881,7 +7881,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2327",
+      "source_location": "L2330",
       "weight": 1.0
     },
     {
@@ -7893,7 +7893,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2328",
+      "source_location": "L2331",
       "weight": 1.0
     },
     {
@@ -7905,7 +7905,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2329",
+      "source_location": "L2332",
       "weight": 1.0
     },
     {
@@ -7917,7 +7917,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2330",
+      "source_location": "L2333",
       "weight": 1.0
     },
     {
@@ -9729,7 +9729,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L530",
+      "source_location": "L536",
       "weight": 1.0
     },
     {
@@ -9741,7 +9741,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L531",
+      "source_location": "L537",
       "weight": 1.0
     },
     {
@@ -9753,7 +9753,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L552",
+      "source_location": "L558",
       "weight": 1.0
     },
     {
@@ -9765,7 +9765,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L404",
+      "source_location": "L410",
       "weight": 1.0
     },
     {
@@ -9777,7 +9777,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L354",
+      "source_location": "L359",
       "weight": 1.0
     },
     {
@@ -9789,7 +9789,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L477",
+      "source_location": "L483",
       "weight": 1.0
     },
     {
@@ -9801,7 +9801,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/promissory_notes.js",
-      "source_location": "L491",
+      "source_location": "L497",
       "weight": 1.0
     },
     {
@@ -10845,7 +10845,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2646",
+      "source_location": "L2649",
       "weight": 1.0
     },
     {
@@ -10857,7 +10857,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "js/admission_details.js",
-      "source_location": "L2758",
+      "source_location": "L2761",
       "weight": 1.0
     },
     {
@@ -12342,7 +12342,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2209",
+      "source_location": "L2210",
       "weight": 1.0
     },
     {
@@ -12353,7 +12353,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2244",
+      "source_location": "L2245",
       "weight": 1.0
     },
     {
@@ -12364,7 +12364,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2259",
+      "source_location": "L2260",
       "weight": 1.0
     },
     {
@@ -12375,7 +12375,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2287",
+      "source_location": "L2290",
       "weight": 1.0
     },
     {
@@ -12386,7 +12386,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2352",
+      "source_location": "L2355",
       "weight": 1.0
     },
     {
@@ -12397,7 +12397,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2412",
+      "source_location": "L2415",
       "weight": 1.0
     },
     {
@@ -12408,7 +12408,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2566",
+      "source_location": "L2569",
       "weight": 1.0
     },
     {
@@ -12419,7 +12419,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2642",
+      "source_location": "L2645",
       "weight": 1.0
     },
     {
@@ -12430,7 +12430,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2675",
+      "source_location": "L2678",
       "weight": 1.0
     },
     {
@@ -12441,7 +12441,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2737",
+      "source_location": "L2740",
       "weight": 1.0
     },
     {
@@ -12452,7 +12452,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2746",
+      "source_location": "L2749",
       "weight": 1.0
     },
     {
@@ -12463,7 +12463,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L2789",
+      "source_location": "L2792",
       "weight": 1.0
     },
     {
@@ -12474,7 +12474,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L3079",
+      "source_location": "L3082",
       "weight": 1.0
     },
     {
@@ -12485,7 +12485,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/admission_details.js",
-      "source_location": "L3980",
+      "source_location": "L3903",
       "weight": 1.0
     },
     {
@@ -13651,7 +13651,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L364",
+      "source_location": "L369",
       "weight": 1.0
     },
     {
@@ -13673,7 +13673,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L408",
+      "source_location": "L414",
       "weight": 1.0
     },
     {
@@ -13684,7 +13684,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L414",
+      "source_location": "L420",
       "weight": 1.0
     },
     {
@@ -13695,7 +13695,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L431",
+      "source_location": "L437",
       "weight": 1.0
     },
     {
@@ -13717,7 +13717,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L504",
+      "source_location": "L510",
       "weight": 1.0
     },
     {
@@ -13728,7 +13728,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L561",
+      "source_location": "L567",
       "weight": 1.0
     },
     {
@@ -13739,7 +13739,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L621",
+      "source_location": "L627",
       "weight": 1.0
     },
     {
@@ -13750,7 +13750,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "js/promissory_notes.js",
-      "source_location": "L626",
+      "source_location": "L632",
       "weight": 1.0
     },
     {
@@ -15888,7 +15888,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "js/admission_details.js",
-      "source_location": "L3965",
+      "source_location": "L3888",
       "weight": 1.0
     },
     {
@@ -16841,5 +16841,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0b06ea424f0b40e60243d7cb380c2399d181758a"
+  "built_at_commit": "8df2103daead1ab3697d639b8e8fb17af6f2a8e1"
 }

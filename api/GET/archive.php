@@ -116,7 +116,7 @@ class ArchiveManager
                                pm.Method_Name AS Name,
                                CONCAT('Category: ', pm.Category_Type, ' | ', COALESCE(pm.Description, '')) AS Details
                         FROM Enum_Payment_Method pm
-                        WHERE pm.Is_Active = 0
+                        WHERE pm.Is_Active = 0 AND pm.Code_Prefix NOT IN ('AR', 'NR')
                         ORDER BY pm.Method_Name ASC";
                 break;
 

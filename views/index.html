@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Billing System — Executive Dashboard</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/dashboard.css?v=7.0">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/dashboard.css?v=9.9">
 </head>
 <body>
 
@@ -22,86 +22,215 @@
                 </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card" style="border-left: 4px solid var(--primary);">
-                    <div class="stat-info">
-                        <h4>Active In-Patients</h4>
-                        <div class="stat-value" id="stat-active-admissions">0</div>
+            <div class="pulse-cards-grid">
+                <div class="pulse-card pulse-theme-clinical active-pulse-card" id="pulse-card-clinical" data-target-slide="0" role="button" tabindex="0">
+                    <div class="pulse-card-top">
+                        <div class="pulse-title-group">
+                            <span class="pulse-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            </span>
+                            <h4 class="pulse-card-label">Active In-Patients</h4>
+                        </div>
+                        <span class="pulse-status-pill pill-neutral" id="pulse-clinical-badge">0% Dx</span>
+                    </div>
+                    <div class="pulse-big-value" id="stat-active-admissions">0</div>
+                    <div class="pulse-bottom-wrap">
+                        <div class="pulse-progress-track">
+                            <div class="pulse-progress-fill fill-clinical" id="pulse-clinical-bar"></div>
+                        </div>
+                        <div class="pulse-footer-row">
+                            <span class="pulse-footer-meta" id="pulse-clinical-meta">0 of 0 patients diagnosed</span>
+                            <span class="pulse-view-cue">
+                                <span class="pulse-cue-text"></span>
+                                <svg class="pulse-cue-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card" style="border-left: 4px solid var(--success);">
-                    <div class="stat-info">
-                        <h4>Available Vacant Beds</h4>
-                        <div class="stat-value" id="stat-available-beds">0</div>
+                <div class="pulse-card pulse-theme-capacity" id="pulse-card-capacity" data-target-slide="1" role="button" tabindex="0">
+                    <div class="pulse-card-top">
+                        <div class="pulse-title-group">
+                            <span class="pulse-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                            </span>
+                            <h4 class="pulse-card-label">Available Beds</h4>
+                        </div>
+                        <span class="pulse-status-pill pill-success" id="pulse-capacity-badge">0% Occupied</span>
+                    </div>
+                    <div class="pulse-big-value" id="stat-available-beds">0</div>
+                    <div class="pulse-bottom-wrap">
+                        <div class="pulse-progress-track">
+                            <div class="pulse-progress-fill fill-capacity" id="pulse-capacity-bar"></div>
+                        </div>
+                        <div class="pulse-footer-row">
+                            <span class="pulse-footer-meta" id="pulse-capacity-meta">0 occupied of 0 active beds</span>
+                            <span class="pulse-view-cue">
+                                <span class="pulse-cue-text"></span>
+                                <svg class="pulse-cue-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card" style="border-left: 4px solid #16a34a;">
-                    <div class="stat-info">
-                        <h4>Collections Received</h4>
-                        <div class="stat-value" id="stat-total-collections" style="color: #16a34a; font-size: 24px;">₱0.00</div>
+                <div class="pulse-card pulse-theme-clearance" id="pulse-card-clearance" data-target-slide="2" role="button" tabindex="0">
+                    <div class="pulse-card-top">
+                        <div class="pulse-title-group">
+                            <span class="pulse-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </span>
+                            <h4 class="pulse-card-label">Accounts Receivable</h4>
+                        </div>
+                        <span class="pulse-status-pill pill-warning" id="pulse-clearance-badge">Cleared</span>
+                    </div>
+                    <div class="pulse-big-value pulse-val-ar" id="stat-total-ar">₱0.00</div>
+                    <div class="pulse-bottom-wrap">
+                        <div class="pulse-progress-track">
+                            <div class="pulse-progress-fill fill-clearance" id="pulse-clearance-bar"></div>
+                        </div>
+                        <div class="pulse-footer-row">
+                            <span class="pulse-footer-meta" id="pulse-clearance-meta">0 active promissory notes</span>
+                            <span class="pulse-view-cue">
+                                <span class="pulse-cue-text"></span>
+                                <svg class="pulse-cue-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="stat-card" style="border-left: 4px solid var(--danger);">
-                    <div class="stat-info">
-                        <h4>Accounts Receivable (AR)</h4>
-                        <div class="stat-value" id="stat-total-ar" style="color: #dc2626; font-size: 24px;">₱0.00</div>
+                <div class="pulse-card pulse-theme-revenue" id="pulse-card-revenue" data-target-slide="3" role="button" tabindex="0">
+                    <div class="pulse-card-top">
+                        <div class="pulse-title-group">
+                            <span class="pulse-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </span>
+                            <h4 class="pulse-card-label">Collections Received</h4>
+                        </div>
+                        <span class="pulse-status-pill pill-info" id="pulse-revenue-badge">0% Rate</span>
+                    </div>
+                    <div class="pulse-big-value pulse-val-collections" id="stat-total-collections">₱0.00</div>
+                    <div class="pulse-bottom-wrap">
+                        <div class="pulse-progress-track">
+                            <div class="pulse-progress-fill fill-revenue" id="pulse-revenue-bar"></div>
+                        </div>
+                        <div class="pulse-footer-row">
+                            <span class="pulse-footer-meta" id="pulse-revenue-meta">₱0.00 in advance deposits</span>
+                            <span class="pulse-view-cue">
+                                <span class="pulse-cue-text"></span>
+                                <svg class="pulse-cue-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="dashboard-split-grid">
-                <div class="occupancy-gauge-card">
-                    <div class="occupancy-card-header">
-                        <h3>Bed Capacity &amp; Occupancy</h3>
-                        <span id="occupancy-rate-badge" class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">0% Occupied</span>
+            <div class="dash-carousel-slide" id="dash-slide-0">
+                <div class="card dash-modern-card dash-theme-clinical mb-4">
+                    <div class="card-header dash-modern-header">
+                        <div class="dash-header-title-group">
+                            <span class="dash-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </span>
+                            <h3 class="dash-card-title">Currently Admitted Patients</h3>
+                            <button type="button" id="btnRefreshDashboard" class="btn-refresh" title="Refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
+                        <a href="admissions.html" class="btn btn-sm btn-outline">View All Admissions &raquo;</a>
+                    </div>
+                    <div class="card-body dash-card-body-flush">
+                        <div class="table-responsive">
+                            <div id="recent-admissions-container">
+                                <p class="dash-loading-text">Loading active admissions snapshot...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-carousel-slide dash-slide-hidden" id="dash-slide-1">
+                <div class="occupancy-gauge-card dash-modern-card dash-theme-capacity full-width-card mb-4">
+                    <div class="occupancy-card-header dash-modern-header">
+                        <div class="dash-header-title-group">
+                            <span class="dash-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                            </span>
+                            <h3>Bed Capacity &amp; Floor Occupancy</h3>
+                        </div>
+                        <span id="occupancy-rate-badge" class="badge badge-info dash-header-badge">0% Occupied</span>
                     </div>
                     <div class="occupancy-card-body">
-                        <div>
-                            <div style="font-size: 12.5px; font-weight: 600; margin-bottom: 6px;">
-                                <span id="occupancy-summary-text">0 of 0 Beds in Active Use</span>
-                            </div>
-                            <div class="occupancy-progress-wrap">
-                                <div id="occupancy-progress-bar" class="occupancy-progress-bar low"></div>
-                            </div>
-                        </div>
+                        <div class="bed-capacity-layout-grid">
+                            <div class="bed-overall-column">
+                                <div>
+                                    <div class="occupancy-summary-label">
+                                        <span id="occupancy-summary-text">0 of 0 Beds in Active Use</span>
+                                    </div>
+                                    <div class="occupancy-progress-wrap">
+                                        <div id="occupancy-progress-bar" class="occupancy-progress-bar low"></div>
+                                    </div>
+                                </div>
 
-                        <div class="occupancy-stats-row">
-                            <div class="occupancy-stat-box">
-                                <div class="stat-label">Total Beds</div>
-                                <div class="stat-num" id="gauge-total-beds">0</div>
+                                <div class="occupancy-stats-row">
+                                    <div class="occupancy-stat-box occ-box-total">
+                                        <div class="stat-label">Total Beds</div>
+                                        <div class="stat-num" id="gauge-total-beds">0</div>
+                                    </div>
+                                    <div class="occupancy-stat-box occ-box-occupied">
+                                        <div class="stat-label">Occupied</div>
+                                        <div class="stat-num stat-num-occupied" id="gauge-occupied-beds">0</div>
+                                    </div>
+                                    <div class="occupancy-stat-box occ-box-vacant">
+                                        <div class="stat-label">Available</div>
+                                        <div class="stat-num stat-num-vacant" id="gauge-vacant-beds">0</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="occupancy-stat-box">
-                                <div class="stat-label">Occupied</div>
-                                <div class="stat-num" id="gauge-occupied-beds" style="color: #92400e;">0</div>
-                            </div>
-                            <div class="occupancy-stat-box">
-                                <div class="stat-label">Available</div>
-                                <div class="stat-num" id="gauge-vacant-beds" style="color: #166534;">0</div>
+
+                            <div class="bed-floors-column">
+                                <div class="floor-breakdown-heading">
+                                    Floor Occupancy Breakdown
+                                </div>
+                                <div id="dashboard-floor-occupancy-list" class="dashboard-floors-grid">
+                                    <span class="dash-muted-note">Calculating floor capacities...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="occupancy-card-footer">
+                    <div class="occupancy-card-footer dash-modern-footer">
                         <a href="rooms.html" class="btn btn-sm btn-outline">Manage Beds &amp; View Ward Map &raquo;</a>
                     </div>
                 </div>
+            </div>
 
-                <div class="ar-health-card">
-                    <div class="ar-card-header">
-                        <h3>Accounts Receivable &amp; PN Health</h3>
-                        <span id="ar-status-badge" class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">Loading AR...</span>
+            <div class="dash-carousel-slide dash-slide-hidden" id="dash-slide-2">
+                <div class="ar-health-card dash-modern-card dash-theme-clearance full-width-card mb-4">
+                    <div class="ar-card-header dash-modern-header">
+                        <div class="dash-header-title-group">
+                            <span class="dash-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </span>
+                            <h3>Accounts Receivable &amp; Financial Health</h3>
+                        </div>
+                        <span id="ar-status-badge" class="badge badge-info dash-header-badge">Loading AR...</span>
                     </div>
                     <div class="ar-card-body">
-                        <div class="ar-stats-row">
-                            <div class="ar-stat-box">
-                                <div class="ar-label">Total Invoiced Billing</div>
-                                <div class="ar-num" id="health-invoiced-total" style="color: var(--primary);">₱0.00</div>
+                        <div class="ar-stats-row-4">
+                            <div class="ar-stat-box ar-box-invoiced">
+                                <div class="ar-label">Total Invoiced</div>
+                                <div class="ar-num ar-num-primary" id="health-invoiced-total">₱0.00</div>
                             </div>
-                            <div class="ar-stat-box">
-                                <div class="ar-label">Active Promissory Notes</div>
-                                <div class="ar-num" id="health-pn-count" style="color: #4338ca;">0 Notes</div>
+                            <div class="ar-stat-box ar-box-collected">
+                                <div class="ar-label">Collections Received</div>
+                                <div class="ar-num ar-num-collected" id="health-collected-total">₱0.00</div>
+                            </div>
+                            <div class="ar-stat-box ar-box-ar">
+                                <div class="ar-label">Outstanding AR</div>
+                                <div class="ar-num ar-num-danger" id="health-ar-total">₱0.00</div>
+                            </div>
+                            <div class="ar-stat-box ar-box-pn">
+                                <div class="ar-label">Promissory Notes</div>
+                                <div class="ar-num ar-num-indigo" id="health-pn-count">0 Notes</div>
                             </div>
                         </div>
 
@@ -109,23 +238,78 @@
                             <span id="ar-alert-text">Analyzing billing settlement history...</span>
                         </div>
                     </div>
-                    <div class="ar-card-footer">
-                        <a href="invoices.html" class="btn btn-sm btn-outline" style="margin-right: 6px;">Invoices Directory</a>
+                    <div class="ar-card-footer dash-modern-footer">
+                        <a href="invoices.html" class="btn btn-sm btn-outline dash-footer-btn-left">Invoices Directory</a>
                         <a href="promissory_notes.html" class="btn btn-sm btn-primary">Review Promissory Notes &raquo;</a>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3>Currently Admitted Patients</h3>
-                    <a href="admissions.html" class="btn btn-sm btn-outline">View All Admissions &raquo;</a>
-                </div>
-                <div class="card-body" style="padding: 0;">
-                    <div class="table-responsive">
-                        <div id="recent-admissions-container">
-                            <p style="padding: 20px;">Loading active admissions snapshot...</p>
+            <div class="dash-carousel-slide dash-slide-hidden" id="dash-slide-3">
+                <div class="analytics-chart-card dash-modern-card dash-theme-revenue full-width-card mb-4">
+                    <div class="analytics-card-header dash-modern-header">
+                        <div class="dash-header-title-group">
+                            <span class="dash-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </span>
+                            <h3>Revenue &amp; Collection Analytics</h3>
                         </div>
+                        <div class="analytics-header-badges">
+                            <span id="charts-tx-count-badge" class="badge badge-secondary dash-header-badge">0 Transactions</span>
+                            <span id="charts-net-revenue-badge" class="badge badge-info dash-header-badge">Net Revenue: ₱0.00</span>
+                        </div>
+                    </div>
+                    <div class="analytics-card-body">
+                        <div class="dash-charts-grid">
+                            <div class="dash-chart-panel">
+                                <div class="dash-chart-panel-head">
+                                    <span class="dash-chart-title">Departmental Revenue</span>
+                                    <span class="dash-chart-subtitle">Net charges per hospital station</span>
+                                </div>
+                                <div id="dash-dept-bar-chart" class="dash-vbar-container">
+                                    <span class="dash-muted-note">Loading department revenue graph...</span>
+                                </div>
+                            </div>
+
+                            <div class="dash-chart-panel">
+                                <div class="dash-chart-panel-head">
+                                    <div class="dash-chart-head-row">
+                                        <span class="dash-chart-title">Billing &amp; Collection Trend</span>
+                                        <div class="line-chart-legend-inline">
+                                            <span class="line-legend-tag"><span class="hbar-dot dot-collections"></span>Collections</span>
+                                            <span class="line-legend-tag"><span class="hbar-dot dot-charges"></span>Charges</span>
+                                        </div>
+                                    </div>
+                                    <span class="dash-chart-subtitle">Daily revenue &amp; cashier receipts</span>
+                                </div>
+                                <div id="dash-trend-line-chart" class="dash-line-chart-container">
+                                    <span class="dash-muted-note">Loading revenue trend line graph...</span>
+                                </div>
+                            </div>
+
+                            <div class="dash-chart-panel">
+                                <div class="dash-chart-panel-head">
+                                    <span class="dash-chart-title">Charge Category Distribution</span>
+                                    <span class="dash-chart-subtitle">Share by clinical service type</span>
+                                </div>
+                                <div id="dash-category-bars" class="dash-hbar-list">
+                                    <span class="dash-muted-note">Loading category breakdown...</span>
+                                </div>
+                            </div>
+
+                            <div class="dash-chart-panel">
+                                <div class="dash-chart-panel-head">
+                                    <span class="dash-chart-title">Collection &amp; Settlement Mix</span>
+                                    <span class="dash-chart-subtitle">Receipts vs. receivables &amp; channels</span>
+                                </div>
+                                <div id="dash-settlement-chart" class="dash-settlement-mix-wrap">
+                                    <span class="dash-muted-note">Loading collection analytics...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-card-footer dash-modern-footer">
+                        <a href="reports.html" id="btnDashOpenReports" class="btn btn-sm btn-primary">Open Full Financial Reports &amp; Analytics &raquo;</a>
                     </div>
                 </div>
             </div>
@@ -133,8 +317,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/dashboard.js?v=7.1"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/dashboard.js?v=10.0"></script>
 </body>
 </html>

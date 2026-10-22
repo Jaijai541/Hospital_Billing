@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Accounts Receivable & Promissory Notes Monitor — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
     <link rel="stylesheet" href="../css/invoices.css?v=7.1">
     <link rel="stylesheet" href="../css/archive.css">
 </head>
@@ -21,14 +21,16 @@
                     <h2>Accounts Receivable & Promissory Notes Monitor</h2>
                     <p>Centralized tracking of deferred post-discharge patient balances, installment agreements, and aging receivables.</p>
                 </div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button type="button" id="btnRefreshAR" class="btn btn-primary">Refresh AR Monitor</button>
-                </div>
             </div>
 
             <div class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <h3>Promissory Notes Ledger & Aging Portfolio</h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin: 0;">Promissory Notes Ledger & Aging Portfolio</h3>
+                        <button type="button" id="btnRefreshPromissory" class="btn-refresh" title="Refresh">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         <span id="record-count-badge" class="badge badge-secondary" style="font-size: 13px;">0 Notes Total</span>
                         <span id="record-balance-badge" class="badge" style="font-size: 13px; font-weight: 700; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;">Outstanding AR: ₱0.00</span>
@@ -36,12 +38,12 @@
                 </div>
                 <div class="card-body">
                     <div class="filter-bar">
-                        <div class="form-group" style="flex: 2; min-width: 260px;">
+                        <div class="form-group filter-capsule-search">
                             <label class="form-label" for="search_input">Search Promissory Notes</label>
                             <input type="text" id="search_input" class="form-control" placeholder="Search patient, guarantor, PN code (PN-0002), invoice, or contact...">
                         </div>
 
-                        <div class="form-group" style="flex: 1; min-width: 160px;">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_status">Status</label>
                             <select id="filter_status" class="form-select">
                                 <option value="ALL">All Statuses</option>
@@ -51,14 +53,14 @@
                             </select>
                         </div>
 
-                        <div class="form-group" style="flex: 1; min-width: 180px;">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_plan">Plan Terms</label>
                             <select id="filter_plan" class="form-select">
                                 <option value="0">All Payment Plans</option>
                             </select>
                         </div>
 
-                        <div class="form-group" style="flex: 1; min-width: 170px;">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_due">Due Date Schedule</label>
                             <select id="filter_due" class="form-select">
                                 <option value="ALL">All Due Dates</option>
@@ -68,8 +70,8 @@
                             </select>
                         </div>
 
-                        <div class="form-group" style="align-self: flex-end;">
-                            <button type="button" id="btnResetFilters" class="btn btn-secondary">Reset</button>
+                        <div class="form-group filter-capsule-action">
+                            <button type="button" id="btnResetFilters" class="btn-filter-bar-reset">Reset</button>
                         </div>
                     </div>
 
@@ -181,8 +183,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/promissory_notes.js?v=1.5"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/promissory_notes.js?v=2.0"></script>
 </body>
 </html>

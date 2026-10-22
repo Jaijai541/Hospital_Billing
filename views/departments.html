@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Departments & Stations — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/departments.css">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/departments.css?v=1.1">
 </head>
 <body>
 
@@ -23,33 +23,48 @@
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Department</button>
             </div>
             <div id="viewDepartmentModal" class="modal-overlay">
-                <div class="modal-container" style="max-width: 680px;">
+                <div class="modal-container">
                     <div class="modal-header">
                         <h3 id="view-dept-title">Department Details</h3>
                         <button type="button" class="modal-close" id="btnCloseViewDeptModal" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div id="view_dept_banner" style="margin-bottom: 18px; padding: 14px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div id="view_dept_banner" class="view-dept-banner">
+                            <div class="view-dept-banner-row">
                                 <div>
-                                    <h4 id="view_dept_name" style="margin: 0; font-size: 17px; color: var(--text-main); font-weight: 700;">Department Name</h4>
-                                    <span id="view_dept_code" style="font-size: 13px; color: var(--text-muted);">Station Code: DEPT-001</span>
+                                    <h4 id="view_dept_name" class="view-dept-name">Department Name</h4>
+                                    <span id="view_dept_code" class="view-dept-code">Station Code: DEPT-001</span>
                                 </div>
                                 <span id="view_dept_status_badge" class="badge badge-success">Active</span>
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 18px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Assigned Doctors</label>
-                                <span id="view_dept_doctors_count" class="badge badge-info" style="font-size: 12px;">0 Doctors</span>
+                        <div class="dept-modal-tabs" role="tablist" aria-label="Department Personnel Tabs">
+                            <button type="button" class="dept-modal-tab-btn active" data-dept-tab="doctors" role="tab" aria-selected="true">
+                                <span>Assigned Doctors</span>
+                                <span id="view_dept_doctors_count" class="badge badge-info dept-modal-tab-badge">0 Doctors</span>
+                            </button>
+                            <button type="button" class="dept-modal-tab-btn" data-dept-tab="users" role="tab" aria-selected="false">
+                                <span>Assigned Staff / Users</span>
+                                <span id="view_dept_users_count" class="badge badge-info dept-modal-tab-badge">0 Staff</span>
+                            </button>
+                        </div>
+
+                        <div id="dept-tab-pane-doctors" class="dept-modal-tab-pane active" role="tabpanel">
+                            <div class="dept-search-wrap">
+                                <div class="dept-search-capsule">
+                                    <label class="dept-floating-label" for="view_dept_doctors_search">Search Assigned Doctors</label>
+                                    <span class="filter-capsule-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    </span>
+                                    <input type="text" id="view_dept_doctors_search" class="form-control dept-search-input" placeholder="Search doctor code, name, classification, or status..." autocomplete="off">
+                                </div>
                             </div>
-                            <div style="max-height: 170px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                            <div class="table-responsive dept-table-wrap">
+                                <table class="data-table dept-data-table">
                                     <thead>
                                         <tr>
-                                            <th>Code</th>
-                                            <th>Doctor Name</th>
+                                            <th>Physician &amp; Code</th>
                                             <th>Classification</th>
                                             <th>Status</th>
                                         </tr>
@@ -57,29 +72,32 @@
                                     <tbody id="view_dept_doctors_tbody"></tbody>
                                 </table>
                             </div>
-                            <div id="view_dept_doctors_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No doctors assigned to this station.</div>
+                            <div id="view_dept_doctors_empty" class="text-muted text-center dept-empty-state">No doctors assigned to this station.</div>
                         </div>
 
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Assigned Staff / Users</label>
-                                <span id="view_dept_users_count" class="badge badge-info" style="font-size: 12px;">0 Staff</span>
+                        <div id="dept-tab-pane-users" class="dept-modal-tab-pane dept-tab-pane-hidden" role="tabpanel">
+                            <div class="dept-search-wrap">
+                                <div class="dept-search-capsule">
+                                    <label class="dept-floating-label" for="view_dept_users_search">Search Assigned Staff / Users</label>
+                                    <span class="filter-capsule-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    </span>
+                                    <input type="text" id="view_dept_users_search" class="form-control dept-search-input" placeholder="Search staff code, full name, username, role, or status..." autocomplete="off">
+                                </div>
                             </div>
-                            <div style="max-height: 170px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                            <div class="table-responsive dept-table-wrap">
+                                <table class="data-table dept-data-table">
                                     <thead>
                                         <tr>
-                                            <th>Code</th>
-                                            <th>Full Name</th>
-                                            <th>Username</th>
-                                            <th>Role</th>
+                                            <th>Staff Member &amp; Account</th>
+                                            <th>System Role</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_dept_users_tbody"></tbody>
                                 </table>
                             </div>
-                            <div id="view_dept_users_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No system users assigned to this station.</div>
+                            <div id="view_dept_users_empty" class="text-muted text-center dept-empty-state">No system users assigned to this station.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -90,7 +108,7 @@
             </div>
 
             <div id="formModal" class="modal-overlay">
-                <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-container">
                     <div class="modal-header">
                         <h3 id="form-title">Add New Department / Station</h3>
                         <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
@@ -106,12 +124,12 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="code_prefix">Code Prefix *</label>
-                                <input type="text" id="code_prefix" class="form-control" placeholder="e.g. NEURO, ICU, PHARM" maxlength="10" style="text-transform: uppercase;" required>
+                                <input type="text" id="code_prefix" class="form-control input-uppercase" placeholder="e.g. NEURO, ICU, PHARM" maxlength="10" required>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" id="btnArchive" class="btn btn-warning btn-archive" style="display: none;">Send to Archive</button>
+                        <button type="button" id="btnArchive" class="btn btn-warning btn-archive btn-archive-hidden">Send to Archive</button>
                         <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
                         <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
                         <button type="button" id="btnSubmit" class="btn btn-primary">Submit Department</button>
@@ -121,17 +139,22 @@
 
             <div class="content-body">
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Departments & Stations Directory</h2>
+                    <div class="card-header dept-card-header">
+                        <div class="dept-card-title-group">
+                            <h2 class="dept-card-title">Departments & Stations Directory</h2>
+                            <button type="button" id="btnRefreshDepartments" class="btn-refresh" title="Refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="filter-bar">
-                            <div class="form-group" style="min-width: 260px;">
+                            <div class="form-group filter-capsule-search">
                                 <label class="form-label" for="search_input">Search Department</label>
                                 <input type="text" id="search_input" class="form-control" placeholder="Search by department name or prefix...">
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group filter-capsule-select">
                                 <label class="form-label" for="filter_status">Status</label>
                                 <select id="filter_status" class="form-select">
                                     <option value="all">All Statuses</option>
@@ -140,7 +163,7 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group filter-capsule-select">
                                 <label class="form-label" for="sort_by">Sort By</label>
                                 <select id="sort_by" class="form-select">
                                     <option value="name_asc">Name (A to Z)</option>
@@ -162,8 +185,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/departments.js?v=6.0"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/departments.js?v=7.1"></script>
 </body>
 </html>

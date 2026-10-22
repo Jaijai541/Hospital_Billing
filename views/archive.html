@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archive / Recycle Bin — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/archive.css">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/archive.css?v=8.5">
 </head>
 <body>
 
@@ -14,46 +14,56 @@
         <main class="main-content">
             <div class="topbar">
                 <div class="topbar-title">
-                    <h1>System Archive & Recycle Bin</h1>
-                    <span class="subtitle">Restore or Permanently Purge Soft-Deleted Master Records</span>
+                    <h1>System Archive &amp; Recycle Bin</h1>
+                    <span class="subtitle">Restore or Permanently Purge Soft-Deleted Master Records Across All Modules</span>
                 </div>
             </div>
 
             <div class="content-body">
                 <div class="card">
-                    <div class="card-header">
-                        <h2>Archived Master Records</h2>
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h2 style="margin: 0;">Archived Master Records</h2>
+                            <div class="archive-info-tip">
+                                <span class="archive-info-icon">ℹ</span>
+                                <div class="archive-info-tooltip">
+                                    <strong>System Archive Hub:</strong> Records listed here were soft-deleted or archived from their respective modules. You can filter by single or multiple categories, view all archives simultaneously, and <strong>Restore</strong> records back into active operations or <strong>Permanently Delete</strong> records.
+                                </div>
+                            </div>
+                            <button type="button" id="btnRefreshArchive" class="btn-refresh" title="Refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
+                        <span id="archive_total_badge" class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">Loading archive...</span>
                     </div>
                     <div class="card-body">
-                        <div class="archive-alert-banner">
-                            <span class="banner-icon">ℹ️</span>
-                            <div>
-                                <strong>System Archive Hub:</strong> Records listed here were sent to archive from their respective directories. You can <strong>Restore</strong> records back into active operations, or <strong>Permanently Delete</strong> records that are no longer needed.
+
+                        <div class="filter-bar">
+                            <div class="form-group filter-capsule-action">
+                                <label class="form-label" for="btnOpenCategoryWindowFilter">Archive Categories</label>
+                                <button type="button" id="btnOpenCategoryWindowFilter" class="btn btn-outline">
+                                    <span id="category_button_label">🗂️ Select Categories</span>
+                                    <span class="badge badge-info" id="category_button_badge">1 Category</span>
+                                </button>
+                            </div>
+
+                            <div class="form-group filter-capsule-search">
+                                <label class="form-label" for="search_input">Search Archived Records</label>
+                                <input type="text" id="search_input" class="form-control" placeholder="Search by name, code, category, or details...">
                             </div>
                         </div>
 
-                        <div class="filter-bar">
-                            <div class="form-group" style="min-width: 250px;">
-                                <label class="form-label" for="archive_category">Archive Category</label>
-                                <select id="archive_category" class="form-select">
-                                    <option value="patients">Archived Patients</option>
-                                    <option value="doctors">Archived Doctors</option>
-                                    <option value="rooms">Archived Rooms</option>
-                                    <option value="beds">Archived Beds (Individual)</option>
-                                    <option value="catalogs">Archived Charge Catalogs</option>
-                                    <option value="discounts">Archived Billing Discounts</option>
-                                    <option value="departments">Archived Departments & Stations</option>
-                                    <option value="staff">Archived Staff & System Users</option>
-                                    <option value="specialties">Archived Medical Specialties</option>
-                                    <option value="payment_methods">Archived Payment Methods</option>
-                                    <option value="room_types">Archived Room Classifications</option>
-                                </select>
-                            </div>
+                        <div id="category_chips_container" class="category-chip-bar" style="display: none;">
+                            <span style="font-size: 12px; font-weight: 700; color: #64748b; margin-right: 4px;">Visible Categories:</span>
+                            <div id="category_chips_list" style="display: inline-flex; flex-wrap: wrap; gap: 6px;"></div>
+                            <button type="button" id="btnResetToAllCategories" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">Show All</button>
+                        </div>
 
-                            <div class="form-group" style="min-width: 300px;">
-                                <label class="form-label" for="search_input">Search Archived Records</label>
-                                <input type="text" id="search_input" class="form-control" placeholder="Search by name, code or details...">
-                            </div>
+                        <div id="batch_action_bar" class="batch-action-bar">
+                            <span class="batch-count-label">0 records selected</span>
+                            <button type="button" id="btnBatchRestore" class="btn btn-sm btn-success" style="font-weight: 600;">✔ Batch Restore</button>
+                            <button type="button" id="btnBatchDelete" class="btn btn-sm btn-danger btn-delete" style="font-weight: 600;">🗑 Batch Permanently Delete</button>
+                            <button type="button" id="btnBatchDeselect" class="batch-deselect-btn">Deselect All</button>
                         </div>
 
                         <div class="table-responsive" id="table-div">
@@ -64,9 +74,45 @@
         </main>
     </div>
 
+    <div class="modal-overlay" id="categoryWindowModal" style="display: none; z-index: 1050;">
+        <div class="modal-container" style="max-width: 680px;">
+            <div class="modal-header" style="align-items: flex-start; padding: 16px 20px 14px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-main);">Archive Categories Selection</h3>
+                        <span id="window_total_records_badge" class="badge badge-info" style="font-size: 11px; padding: 2px 7px;">0 Records</span>
+                    </div>
+                    <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">Select which categories of soft-deleted master records to display together.</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseCategoryWindowModal" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 16px 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" id="btnModalSelectAll" class="btn btn-sm btn-outline" style="font-size: 12px; font-weight: 600;">Select All (Show All)</button>
+                        <button type="button" id="btnModalClearAll" class="btn btn-sm btn-outline" style="font-size: 12px; font-weight: 600;">Clear All</button>
+                    </div>
+                    <div style="width: 220px;">
+                        <input type="text" id="category_filter_search" class="form-control form-control-sm" placeholder="Filter categories...">
+                    </div>
+                </div>
+
+                <div id="category_cards_grid" class="category-window-grid">
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 12px 20px; background-color: #f8fafc; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <span id="category_modal_selection_summary" style="font-size: 12.5px; color: #64748b; font-weight: 600;">0 categories selected</span>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btnCancelCategoryWindow" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">Cancel</button>
+                    <button type="button" id="btnApplyCategoryWindow" class="btn btn-primary" style="font-weight: 600; font-size: 13px; padding: 6px 18px;">Apply Categories</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/archive.js?v=8.0"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/archive.js?v=9.1"></script>
 </body>
 </html>

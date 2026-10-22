@@ -4,100 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interim Statement of Account &amp; Partial Bill — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
     <link rel="stylesheet" href="../css/invoice_print.css?v=7.1">
-    <link rel="stylesheet" href="../css/partial_bill.css?v=7.2">
+    <link rel="stylesheet" href="../css/partial_bill.css?v=8.0">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Interim / Partial Bill</button>
+            <button type="button" class="btn btn-primary" onclick="window.print()">Print Interim / Partial Bill</button>
         </div>
         <div class="print-toolbar-actions">
-            <a href="#" id="btnBackToChart" class="btn btn-secondary btn-sm">← Back to Patient Chart</a>
+            <a href="#" id="btnBackToChart" class="btn btn-secondary btn-sm">Back to Patient Chart</a>
         </div>
     </div>
 
     <div class="invoice-sheet">
         <div class="hospital-header">
             <h2>IN-PATIENT HOSPITAL &amp; MEDICAL CENTER</h2>
-            <p>123 Healthcare Avenue, Medical District, CDO City, Philippines</p>
-            <p>Tel. No: (02) 8888-4567 | Fax: (02) 8888-4568 | VAT Reg. TIN: 009-876-543-000</p>
+            <p>123 Healthcare Avenue, Medical District, CDO City &bull; Tel: (02) 8888-4567 &bull; VAT Reg. TIN: 009-876-543-000</p>
             <div class="doc-title">INTERIM STATEMENT OF ACCOUNT &amp; RUNNING BILL</div>
             <div class="interim-badge-wrap">
                 <span class="interim-status-pill">INTERIM RUNNING BILL — PATIENT CURRENTLY ADMITTED</span>
             </div>
         </div>
 
+        <div class="billing-section-header">PATIENT &amp; ADMISSION RECORD</div>
         <table class="soa-table compact-profile-table">
-            <thead>
-                <tr class="header-row">
-                    <th colspan="4" style="text-align: left;">ADMISSION &amp; CASE RECORD</th>
-                </tr>
-            </thead>
             <tbody>
                 <tr>
+                    <td class="label-cell">Patient Name:</td>
+                    <td class="value-cell"><strong id="pb-patient-name">Loading...</strong> (<span id="pb-patient-code">Loading...</span>)</td>
                     <td class="label-cell">Admission Code:</td>
                     <td class="value-cell"><strong id="pb-admission-code">Loading...</strong></td>
-                    <td class="label-cell">Statement Date:</td>
-                    <td class="value-cell"><strong id="pb-statement-date">Loading...</strong></td>
                 </tr>
                 <tr>
-                    <td class="label-cell">Admission Date &amp; Time:</td>
-                    <td class="value-cell" id="pb-admission-date">Loading...</td>
-                    <td class="label-cell">Length of Stay (To Date):</td>
-                    <td class="value-cell"><strong id="pb-stay-days">Loading...</strong> day(s)</td>
+                    <td class="label-cell">Demographics:</td>
+                    <td class="value-cell"><span id="pb-patient-age">Loading...</span> &bull; <span id="pb-patient-gender-blood">Loading...</span></td>
+                    <td class="label-cell">Admission Date:</td>
+                    <td class="value-cell"><span id="pb-admission-date">Loading...</span> (<strong id="pb-stay-days">1</strong> days)</td>
                 </tr>
                 <tr>
-                    <td class="label-cell">Assigned Bed / Room:</td>
+                    <td class="label-cell">Room &amp; Bed:</td>
                     <td class="value-cell"><strong id="pb-bed-room">Loading...</strong></td>
-                    <td class="label-cell">Admission Status:</td>
-                    <td class="value-cell"><strong id="pb-admission-status">Admitted</strong></td>
+                    <td class="label-cell">Statement Date:</td>
+                    <td class="value-cell"><strong id="pb-statement-date">Loading...</strong> &bull; <span id="pb-admission-status">Admitted</span></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Diagnosis:</td>
+                    <td class="value-cell"><strong id="pb-patient-diagnosis">Loading...</strong></td>
+                    <td class="label-cell">Attending MD:</td>
+                    <td class="value-cell" id="pb-patient-doctors">Loading...</td>
                 </tr>
             </tbody>
         </table>
 
-        <table class="soa-table compact-profile-table">
-            <thead>
-                <tr class="header-row">
-                    <th colspan="4" style="text-align: left;">PATIENT DEMOGRAPHIC &amp; CLINICAL PROFILE</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="label-cell">Patient Name:</td>
-                    <td class="value-cell"><strong id="pb-patient-name">Loading...</strong></td>
-                    <td class="label-cell">Patient ID / Code:</td>
-                    <td class="value-cell" id="pb-patient-code">Loading...</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Date of Birth / Age:</td>
-                    <td class="value-cell" id="pb-patient-age">Loading...</td>
-                    <td class="label-cell">Gender / Blood Type:</td>
-                    <td class="value-cell" id="pb-patient-gender-blood">Loading...</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Contact Number:</td>
-                    <td class="value-cell" id="pb-patient-contact">Loading...</td>
-                    <td class="label-cell">Residential Address:</td>
-                    <td class="value-cell" id="pb-patient-address">Loading...</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Emergency Contact:</td>
-                    <td class="value-cell" id="pb-patient-emergency">Loading...</td>
-                    <td class="label-cell">Chief Complaint:</td>
-                    <td class="value-cell" id="pb-patient-complaint">Loading...</td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Clinical Diagnosis:</td>
-                    <td class="value-cell" colspan="3"><strong id="pb-patient-diagnosis">Loading...</strong></td>
-                </tr>
-                <tr>
-                    <td class="label-cell">Attending Physician(s):</td>
-                    <td class="value-cell" colspan="3" id="pb-patient-doctors">Loading...</td>
-                </tr>
-            </tbody>
-        </table>
+        <div style="display: none;">
+            <span id="pb-patient-contact"></span>
+            <span id="pb-patient-address"></span>
+            <span id="pb-patient-emergency"></span>
+            <span id="pb-patient-complaint"></span>
+        </div>
 
         <div class="billing-section-header">HOSPITAL CHARGES (RUNNING TO DATE)</div>
         <table class="soa-table charges-breakdown-table">
@@ -118,7 +84,7 @@
             </tfoot>
         </table>
 
-        <div class="billing-section-header" style="margin-top: 20px;">PROFESSIONAL FEES (ATTENDING PHYSICIANS)</div>
+        <div class="billing-section-header" style="margin-top: 10px;">PROFESSIONAL FEES (ATTENDING PHYSICIANS)</div>
         <table class="soa-table charges-breakdown-table">
             <thead>
                 <tr class="header-row">
@@ -137,45 +103,45 @@
             </tfoot>
         </table>
 
-        <div id="pb-advance-section" style="display: none; margin-top: 20px;">
+        <div id="pb-advance-section" style="display: none; margin-top: 10px;">
             <div class="billing-section-header">ADVANCE PAYMENTS &amp; PATIENT DEPOSITS RECEIVED</div>
             <table class="soa-table charges-breakdown-table">
                 <thead>
                     <tr class="header-row">
                         <th width="25%">Official Receipt #</th>
-                        <th width="25%">Payment Date &amp; Time</th>
-                        <th width="25%">Payment Method</th>
+                        <th width="25%">Date &amp; Time</th>
+                        <th width="25%">Method</th>
                         <th width="25%" style="text-align: right;">Amount Paid</th>
                     </tr>
                 </thead>
                 <tbody id="pb-advance-tbody"></tbody>
                 <tfoot>
                     <tr class="subtotal-row">
-                        <td colspan="3"><strong>TOTAL ADVANCE PAYMENTS / DEPOSITS CREDITED:</strong></td>
+                        <td colspan="3"><strong>TOTAL ADVANCE DEPOSITS CREDITED:</strong></td>
                         <td align="right" id="pb-subtotal-advance" style="font-weight: 700;">₱0.00</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <div class="settlement-summary-box" style="margin-top: 20px;">
+        <div class="settlement-summary-box" style="margin-top: 10px;">
             <table class="soa-table summary-detail-table">
                 <thead>
                     <tr class="header-row">
-                        <th colspan="2" style="text-align: left;">BILLING &amp; RUNNING SETTLEMENT SUMMARY</th>
+                        <th colspan="2" style="text-align: left;">RUNNING SETTLEMENT SUMMARY</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td width="72%">Hospital Charges Subtotal (To Date):</td>
+                        <td width="72%">Hospital Charges Subtotal:</td>
                         <td width="28%" align="right" id="pb-sum-hosp">₱0.00</td>
                     </tr>
                     <tr>
-                        <td>Attending Physician Fees Subtotal:</td>
+                        <td>Professional Fees Subtotal:</td>
                         <td align="right" id="pb-sum-doc">₱0.00</td>
                     </tr>
                     <tr class="summary-gross-line">
-                        <td><strong>Gross Accumulated Charges to Date:</strong></td>
+                        <td><strong>Gross Accumulated Charges:</strong></td>
                         <td align="right"><strong id="pb-sum-gross">₱0.00</strong></td>
                     </tr>
                     <tr id="pb-row-returns" style="display: none;">
@@ -187,25 +153,29 @@
                         <td align="right"><strong id="pb-sum-net">₱0.00</strong></td>
                     </tr>
                     <tr id="pb-row-vat">
-                        <td>Estimated 12% Value-Added Tax (VAT included)*:</td>
+                        <td>Estimated 12% Value-Added Tax (VAT included):</td>
                         <td align="right"><strong id="pb-sum-vat">₱0.00</strong></td>
                     </tr>
                     <tr class="summary-net-line">
-                        <td><strong>Estimated Total Running Charges (VAT-Inclusive):</strong></td>
+                        <td><strong>Total Running Charges (VAT-Inclusive):</strong></td>
                         <td align="right"><strong id="pb-sum-total-with-vat">₱0.00</strong></td>
+                    </tr>
+                    <tr id="pb-row-advance-discounts" style="display: none;">
+                        <td style="color: #15803d;">Less: Discounts Credited in Advance:</td>
+                        <td align="right" id="pb-sum-advance-discounts" style="color: #15803d; font-weight: 600;">-₱0.00</td>
                     </tr>
                     <tr id="pb-row-advance-payments" style="display: none;">
                         <td>Less: Advance Payments &amp; Deposits Received:</td>
                         <td align="right" id="pb-sum-advance-payments">-₱0.00</td>
                     </tr>
                     <tr class="summary-balance-line">
-                        <td><strong style="font-size: 14px;">Estimated Net Running Balance Due:</strong></td>
-                        <td align="right"><strong style="font-size: 15px;" id="pb-sum-remaining-balance">₱0.00</strong></td>
+                        <td><strong>Estimated Net Running Balance Due:</strong></td>
+                        <td align="right"><strong id="pb-sum-remaining-balance">₱0.00</strong></td>
                     </tr>
                 </tbody>
             </table>
-            <div style="font-size: 11.5px; color: #64748b; margin-top: 6px; font-style: italic;">
-                *Note: Estimated VAT is calculated at 12%. Statutory discounts (Senior Citizen 20%, PWD) and 12% VAT exemptions are officially assessed and applied upon final patient discharge and settlement.
+            <div style="font-size: 10px; color: #64748b; margin-top: 3px; font-style: italic;">
+                *Statutory discounts (PhilHealth, Senior, PWD) and VAT exemptions are assessed upon final patient discharge.
             </div>
         </div>
 
@@ -237,12 +207,12 @@
         </table>
 
         <div class="soa-footer-note">
-            <em>This document serves as an Official Interim Partial Billing Statement generated by the In-Patient Hospital Billing System. Charges remain subject to updates and additions until patient discharge.</em>
+            Official Interim Running Bill &bull; In-Patient Hospital Billing System &bull; Charges remain subject to updates until final discharge
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/partial_bill.js?v=7.2"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/partial_bill.js?v=7.4"></script>
 </body>
 </html>

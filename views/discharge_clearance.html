@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discharge Clearance &amp; Hospital Gate Pass — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/discharge_clearance.css?v=2.0">
+</head>
+<body class="clearance-body">
+
+    <div class="no-print clearance-toolbar">
+        <button type="button" class="btn btn-primary" onclick="window.print()">Print Gate Pass</button>
+        <div class="clearance-toolbar-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-back-origin">Back</button>
+        </div>
+    </div>
+
+    <div class="clearance-sheet" id="clearance-content">
+        <div class="clearance-header">
+            <h2>IN-PATIENT HOSPITAL &amp; MEDICAL CENTER</h2>
+            <p>123 Healthcare Avenue, Medical District, CDO City &bull; Tel: (02) 8888-4567 &bull; Accredited Healthcare Facility</p>
+            <div class="clearance-banner">Official Discharge Clearance &amp; Gate Pass</div>
+        </div>
+
+        <div class="clearance-meta-grid">
+            <div class="clearance-meta-item">
+                <span class="clearance-meta-label">Gate Pass Reference</span>
+                <span class="clearance-meta-val" id="meta-pass-code" style="color: #0f766e; font-weight: 700;">Loading...</span>
+            </div>
+            <div class="clearance-meta-item">
+                <span class="clearance-meta-label">Date &amp; Time Issued</span>
+                <span class="clearance-meta-val" id="meta-clearance-date">Loading...</span>
+            </div>
+            <div class="clearance-meta-item">
+                <span class="clearance-meta-label">Admission Case #</span>
+                <span class="clearance-meta-val" id="meta-admission-code">Loading...</span>
+            </div>
+            <div class="clearance-meta-item">
+                <span class="clearance-meta-label">Invoice Ref</span>
+                <span class="clearance-meta-val" id="meta-invoice-code">Loading...</span>
+            </div>
+        </div>
+
+        <div class="clearance-section-title">Patient &amp; Confinement Record</div>
+        <table class="clearance-table">
+            <tbody>
+                <tr>
+                    <td class="label-col">Patient:</td>
+                    <td class="value-col"><strong id="pt-code-name">Loading...</strong></td>
+                    <td class="label-col">Confinement:</td>
+                    <td class="value-col" id="conf-period">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Demographics:</td>
+                    <td class="value-col" id="pt-demographics">Loading...</td>
+                    <td class="label-col">Accommodation:</td>
+                    <td class="value-col" id="conf-accommodation">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Contact &amp; Address:</td>
+                    <td class="value-col" id="pt-contact-address">Loading...</td>
+                    <td class="label-col">Attending MD:</td>
+                    <td class="value-col" id="conf-doctors">Loading...</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Emergency:</td>
+                    <td class="value-col" id="pt-emergency">Loading...</td>
+                    <td class="label-col">Diagnosis:</td>
+                    <td class="value-col" id="conf-diagnosis">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="clearance-section-title">Departmental Clearance Sign-Off</div>
+        <div class="signoff-grid">
+            <div class="signoff-card">
+                <div>
+                    <div class="signoff-card-title">1. Attending Physician</div>
+                    <div id="signoff-med-status" class="signoff-status cleared">Cleared</div>
+                    <div class="signoff-details" id="signoff-med-details">
+                        Condition stabilized. Medical clearance certified.
+                    </div>
+                </div>
+                <div class="signoff-signature-line" id="signoff-med-name">
+                    Attending Physician
+                </div>
+            </div>
+
+            <div class="signoff-card">
+                <div>
+                    <div class="signoff-card-title">2. Ward Nurse Station</div>
+                    <div id="signoff-nurse-status" class="signoff-status cleared">Cleared</div>
+                    <div class="signoff-details" id="signoff-nurse-details">
+                        IV detached. Take-home meds and care regimen provided.
+                    </div>
+                </div>
+                <div class="signoff-signature-line" id="signoff-nurse-name">
+                    Ward Nurse on Duty, RN
+                </div>
+            </div>
+
+            <div class="signoff-card">
+                <div>
+                    <div class="signoff-card-title">3. Cashier &amp; Billing</div>
+                    <div id="signoff-fin-status" class="signoff-status cleared">Settled</div>
+                    <div class="signoff-details" id="signoff-fin-details">
+                        Billing settled. Official receipt / promissory note verified.
+                    </div>
+                </div>
+                <div class="signoff-signature-line" id="signoff-fin-name">
+                    Hospital Cashier / Billing Officer
+                </div>
+            </div>
+        </div>
+
+        <div class="security-notice-box">
+            <div class="security-notice-text">
+                <strong>TO HOSPITAL SECURITY &amp; EXIT PERSONNEL:</strong> The patient named above has completed all medical, nursing, and billing settlement clearance. Cleared to exit hospital premises.
+            </div>
+            <div class="security-stamp">
+                CLEARED FOR EXIT<br>
+                <small style="font-size: 8.5px; font-weight: normal; color: #047857;">Security Gate Inspection</small>
+            </div>
+        </div>
+
+        <div class="clearance-footer-note">
+            Official Hospital Gate Pass &bull; Present at main security gate upon exit
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/discharge_clearance.js?v=2.1"></script>
+</body>
+</html>

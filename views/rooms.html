@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Rooms & Beds Directory — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/rooms.css?v=8.4">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/rooms.css?v=9.5">
 </head>
 <body>
 
@@ -23,20 +23,21 @@
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Room</button>
             </div>
             <div id="viewRoomModal" class="modal-overlay">
-                <div class="modal-container" style="max-width: 760px;">
+                <div class="modal-container room-view-modal-container">
                     <div class="modal-header">
                         <h3 id="view-room-title">Room Details</h3>
                         <button type="button" class="modal-close" id="btnCloseViewRoomModal" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div id="view_room_banner" style="margin-bottom: 18px; padding: 16px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                        <div id="view_room_banner" class="view-room-banner">
+                            <div class="view-room-banner-row">
                                 <div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <h4 id="view_room_name" style="margin: 0; font-size: 18px; color: var(--text-main); font-weight: 700;">Room Name</h4>
+                                    <div class="view-room-banner-title-row">
+                                        <h4 id="view_room_name" class="view-room-banner-name">Room Name</h4>
+                                        <span id="view_room_floor_badge" class="badge badge-secondary">Floor</span>
                                         <span id="view_room_type_badge" class="badge badge-info">Classification</span>
                                     </div>
-                                    <div style="display: flex; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap;">
+                                    <div class="view-room-banner-meta">
                                         <span id="view_room_rate">Rate: ₱ 0.00 / day</span>
                                         <span>•</span>
                                         <span id="view_room_capacity">Capacity: 0 Beds</span>
@@ -48,13 +49,20 @@
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Current Bed Occupancy</label>
-                                <span id="view_room_beds_count" class="badge badge-info" style="font-size: 12px;">0 Beds</span>
-                            </div>
-                            <div style="max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                        <div class="bed-modal-tabs" role="tablist">
+                            <button type="button" class="bed-modal-tab-btn room-modal-tab-btn active" data-room-tab="beds" role="tab" aria-selected="true">
+                                <span>Current Bed Occupancy</span>
+                                <span id="view_room_beds_count" class="badge badge-info bed-history-tab-badge">0 Beds</span>
+                            </button>
+                            <button type="button" class="bed-modal-tab-btn room-modal-tab-btn" data-room-tab="history" role="tab" aria-selected="false">
+                                <span>Room Occupancy History</span>
+                                <span id="view_room_history_count" class="badge badge-secondary bed-history-tab-badge">0 Past Stays</span>
+                            </button>
+                        </div>
+
+                        <div id="room-tab-pane-beds" class="room-modal-tab-pane active">
+                            <div class="table-responsive bed-history-table-wrap">
+                                <table class="data-table bed-history-table">
                                     <thead>
                                         <tr>
                                             <th>Bed Code</th>
@@ -67,16 +75,21 @@
                                     <tbody id="view_room_beds_tbody"></tbody>
                                 </table>
                             </div>
-                            <div id="view_room_beds_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No beds configured for this room.</div>
+                            <div id="view_room_beds_empty" class="text-muted text-center bed-history-empty">No beds configured for this room.</div>
                         </div>
 
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Room Occupancy History</label>
-                                <span id="view_room_history_count" class="badge badge-secondary" style="font-size: 12px;">0 Past Stays</span>
+                        <div id="room-tab-pane-history" class="room-modal-tab-pane bed-tab-pane-hidden">
+                            <div class="bed-history-search-wrap">
+                                <div class="bed-history-search-capsule">
+                                    <label class="bed-history-floating-label" for="view_room_history_search">Search Room Stay History</label>
+                                    <span class="filter-capsule-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    </span>
+                                    <input type="text" id="view_room_history_search" class="form-control bed-history-search-input" placeholder="Search bed code, patient name, code, admission #, stay date, or diagnosis...">
+                                </div>
                             </div>
-                            <div style="max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                            <div class="table-responsive bed-history-table-wrap">
+                                <table class="data-table bed-history-table">
                                     <thead>
                                         <tr>
                                             <th>Bed</th>
@@ -89,7 +102,7 @@
                                     <tbody id="view_room_history_tbody"></tbody>
                                 </table>
                             </div>
-                            <div id="view_room_history_empty" class="text-muted text-center" style="display: none; padding: 12px 0; font-size: 13px;">No previous patient occupancy history recorded for this room.</div>
+                            <div id="view_room_history_empty" class="text-muted text-center bed-history-empty">No previous patient occupancy history recorded for this room.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -112,6 +125,15 @@
                             <div class="form-group">
                                 <label class="form-label" for="room_name">Room Name *</label>
                                 <input type="text" id="room_name" class="form-control" placeholder="e.g. Ward A, Private 301" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="floor_id">Building Floor *</label>
+                                <div class="input-lookup-group">
+                                    <input type="hidden" id="floor_id" required>
+                                    <input type="text" id="floor_id_text" class="form-control" placeholder="Click to select floor..." readonly>
+                                    <button type="button" id="btnBrowse_floor_id" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -209,35 +231,49 @@
             </div>
 
             <div id="bedOccupancyModal" class="modal-overlay">
-                <div class="modal-container" style="max-width: 680px;">
+                <div class="modal-container bed-modal-container">
                     <div class="modal-header">
-                        <h3 id="bed-modal-title">Bed Occupancy & History</h3>
+                        <h3 id="bed-modal-title">Bed Occupancy &amp; History</h3>
                         <button type="button" class="modal-close" id="btnCloseBedModal" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div id="bed_info_banner" style="margin-bottom: 16px; padding: 12px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div id="bed_info_banner" class="bed-info-banner">
+                            <div class="bed-info-banner-row">
                                 <div>
-                                    <h4 id="bed_banner_code" style="margin: 0; font-size: 16px; color: var(--text-main); font-weight: 700;">WRD-A-001</h4>
-                                    <span id="bed_banner_room" style="font-size: 13px; color: var(--text-muted);">Ward A (Ward) — ₱ 500.00 / day</span>
+                                    <h4 id="bed_banner_code" class="bed-banner-code">WRD-A-001</h4>
+                                    <span id="bed_banner_room" class="bed-banner-room">Ward A (Ward) — ₱ 500.00 / day</span>
                                 </div>
                                 <span id="bed_banner_badge" class="badge badge-success">Vacant</span>
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 20px;">
-                            <label class="form-label" style="font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Current Occupant</label>
-                            <div id="bed_current_occupant_card" style="padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 6px; background-color: #ffffff;">
+                        <div class="bed-modal-tabs" role="tablist">
+                            <button type="button" class="bed-modal-tab-btn active" data-bed-tab="occupant" role="tab" aria-selected="true">
+                                <span>Current Occupant</span>
+                            </button>
+                            <button type="button" class="bed-modal-tab-btn" data-bed-tab="history" role="tab" aria-selected="false">
+                                <span>Occupancy Stay History</span>
+                                <span id="bed_history_count" class="badge badge-secondary bed-history-tab-badge">0 Records</span>
+                            </button>
+                        </div>
+
+                        <div id="bed-tab-pane-occupant" class="bed-modal-tab-pane active">
+                            <div id="bed_current_occupant_card" class="bed-current-occupant-card">
                             </div>
                         </div>
 
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label class="form-label" style="margin-bottom: 0; font-weight: 700; color: var(--text-main);">Occupancy Stay History</label>
-                                <span id="bed_history_count" class="badge badge-secondary" style="font-size: 12px;">0 Records</span>
+                        <div id="bed-tab-pane-history" class="bed-modal-tab-pane bed-tab-pane-hidden">
+                            <div class="bed-history-search-wrap">
+                                <div class="bed-history-search-capsule">
+                                    <label class="bed-history-floating-label" for="bed_history_search">Search Stay History</label>
+                                    <span class="filter-capsule-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    </span>
+                                    <input type="text" id="bed_history_search" class="form-control bed-history-search-input" placeholder="Search patient name, code, admission #, stay date, or diagnosis...">
+                                </div>
                             </div>
-                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                <table class="data-table" style="margin: 0; font-size: 13px;">
+                            <div class="table-responsive bed-history-table-wrap">
+                                <table class="data-table bed-history-table">
                                     <thead>
                                         <tr>
                                             <th>Patient</th>
@@ -250,7 +286,7 @@
                                     <tbody id="bed_history_tbody"></tbody>
                                 </table>
                             </div>
-                            <div id="bed_history_empty" class="text-muted text-center" style="display: none; padding: 14px 0; font-size: 13px;">No past occupancy records found for this bed.</div>
+                            <div id="bed_history_empty" class="text-muted text-center bed-history-empty">No past occupancy records found for this bed.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -258,11 +294,25 @@
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <h3 style="margin: 0;">1. Hospital Rooms & Bed Map</h3>
-                        <span id="rooms_capacity_stat" class="badge badge-info" style="font-size: 11.5px; padding: 3px 8px; display: none;"></span>
+            <div class="rooms-tab-bar" role="tablist" aria-label="Room and Bed Management Views">
+                <button type="button" id="tabBtnRoomsMap" class="rooms-tab-btn active" data-room-tab="rooms-map" role="tab" aria-selected="true">
+                    <span>Hospital Rooms &amp; Bed Map</span>
+                    <span id="tabBadgeRoomsCount" class="badge badge-primary rooms-tab-badge">0 Rooms</span>
+                </button>
+                <button type="button" id="tabBtnBedsInventory" class="rooms-tab-btn" data-room-tab="beds-inventory" role="tab" aria-selected="false">
+                    <span>Real-Time Bed Availability &amp; Inventory</span>
+                    <span id="tabBadgeBedsCount" class="badge badge-info rooms-tab-badge">0 Beds</span>
+                </button>
+            </div>
+
+            <div class="card" id="card-rooms-map">
+                <div class="card-header rooms-card-header">
+                    <div class="rooms-header-title-group">
+                        <h3 class="rooms-section-title">Hospital Rooms &amp; Bed Map</h3>
+                        <button type="button" id="btnRefreshRooms" class="btn-refresh" title="Refresh">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                        <span id="rooms_capacity_stat" class="badge badge-info rooms-capacity-stat"></span>
                     </div>
                     <div class="view-mode-toggle">
                         <button type="button" id="btnViewGrid" class="btn active">Bed Grid Map</button>
@@ -271,12 +321,12 @@
                 </div>
                 <div class="card-body">
                     <div class="filter-bar">
-                        <div class="form-group" style="min-width: 260px; max-width: 320px;">
-                            <label class="form-label" for="search_input">Search Rooms</label>
-                            <input type="text" id="search_input" class="form-control" placeholder="Search room name...">
+                        <div class="form-group filter-capsule-search">
+                            <label class="form-label" for="search_input">Search Room or Bed Code</label>
+                            <input type="text" id="search_input" class="form-control" placeholder="Search room name, bed code (e.g. ICU-001)...">
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_status">Status</label>
                             <select id="filter_status" class="form-select">
                                 <option value="all">All Statuses</option>
@@ -285,16 +335,25 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group filter-capsule-select">
+                            <label class="form-label" for="filter_floor">Floor</label>
+                            <select id="filter_floor" class="form-select">
+                                <option value="all">All Floors</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_room_type">Classification</label>
                             <select id="filter_room_type" class="form-select">
                                 <option value="all">All Classifications</option>
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="sort_by">Sort By</label>
                             <select id="sort_by" class="form-select">
+                                <option value="floor_asc" selected>Floor (Grouped Sections)</option>
+                                <option value="floor_desc">Floor (Highest to Lowest)</option>
                                 <option value="name_asc">Room Name (A to Z)</option>
                                 <option value="name_desc">Room Name (Z to A)</option>
                                 <option value="rate_desc">Highest Daily Rate</option>
@@ -303,22 +362,67 @@
                             </select>
                         </div>
                     </div>
-                    <div id="grid-div" class="rooms-grid-container"></div>
-                    <div id="table-wrap-div" class="table-responsive" style="display: none;">
+                    <div id="grid-div" class="rooms-group-wrapper"></div>
+                    <div id="table-wrap-div" class="table-responsive rooms-table-hidden">
                         <div id="table-div">
-                            <p style="padding: 20px;">Loading rooms...</p>
+                            <p class="rooms-loading-msg">Loading rooms...</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header">
-                    <h3>2. Real-Time Bed Availability & Inventory</h3>
+
+            <div class="card rooms-pane-hidden" id="card-beds-inventory">
+                <div class="card-header rooms-card-header">
+                    <div class="rooms-header-title-group">
+                        <h3 class="rooms-section-title">Real-Time Bed Availability &amp; Inventory</h3>
+                        <button type="button" id="btnRefreshBeds" class="btn-refresh" title="Refresh">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                        <span id="beds_inventory_stat" class="badge badge-success rooms-capacity-stat"></span>
+                    </div>
                 </div>
                 <div class="card-body">
+                    <div class="filter-bar">
+                        <div class="form-group filter-capsule-search">
+                            <label class="form-label" for="search_beds_input">Search Bed or Occupant</label>
+                            <input type="text" id="search_beds_input" class="form-control" placeholder="Search bed code, room name, occupant patient, code...">
+                        </div>
+
+                        <div class="form-group filter-capsule-select">
+                            <label class="form-label" for="filter_beds_avail">Availability</label>
+                            <select id="filter_beds_avail" class="form-select">
+                                <option value="all">All Availability</option>
+                                <option value="1">Vacant Beds Only</option>
+                                <option value="0">Occupied Beds Only</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group filter-capsule-select">
+                            <label class="form-label" for="filter_beds_floor">Floor</label>
+                            <select id="filter_beds_floor" class="form-select">
+                                <option value="all">All Floors</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group filter-capsule-select">
+                            <label class="form-label" for="filter_beds_type">Classification</label>
+                            <select id="filter_beds_type" class="form-select">
+                                <option value="all">All Classifications</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group filter-capsule-select">
+                            <label class="form-label" for="filter_beds_status">Status</label>
+                            <select id="filter_beds_status" class="form-select">
+                                <option value="all">All Statuses</option>
+                                <option value="1" selected>Active Only</option>
+                                <option value="0">Soft-Deleted Only</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <div id="beds-table-div">
-                            <p style="padding: 20px;">Loading individual bed inventory...</p>
+                            <p class="rooms-loading-msg">Loading individual bed inventory...</p>
                         </div>
                     </div>
                 </div>
@@ -327,9 +431,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/rooms.js?v=8.4"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/rooms.js?v=10.5"></script>
 </body>
 </html>
 

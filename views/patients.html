@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Patient Directory — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/patients.css">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/patients.css?v=4.0">
 </head>
 <body>
 
@@ -22,24 +22,158 @@
                 </div>
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Register New Patient</button>
             </div>
+
+            <div id="viewPatientModal" class="modal-overlay">
+                <div class="modal-container view-patient-modal-container">
+                    <div class="modal-header">
+                        <div class="view-patient-header-title-wrap">
+                            <h3 id="view-patient-title" class="view-patient-header-title">Patient Details &amp; Admission History</h3>
+                        </div>
+                        <button type="button" class="modal-close" id="btnCloseViewPatientModal" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="view_patient_banner" class="view-patient-banner">
+                            <div class="view-patient-banner-row">
+                                <div>
+                                    <div class="view-patient-title-row">
+                                        <h4 id="view_patient_name" class="view-patient-name">Patient Name</h4>
+                                        <span id="view_patient_code_badge" class="badge badge-primary">PAT-000</span>
+                                        <span id="view_patient_blood_badge" class="badge badge-info">Blood: -</span>
+                                    </div>
+                                    <div class="view-patient-meta-row">
+                                        <span id="view_patient_dob_age">DOB: - (Age -)</span>
+                                        <span>&bull;</span>
+                                        <span id="view_patient_gender">Gender: -</span>
+                                        <span>&bull;</span>
+                                        <span id="view_patient_contact">Contact: -</span>
+                                    </div>
+                                    <div class="view-patient-detail-line">
+                                        <strong>Address:</strong> <span id="view_patient_address">-</span>
+                                    </div>
+                                    <div class="view-patient-detail-line-tight">
+                                        <strong>Emergency Contact:</strong> <span id="view_patient_emergency">-</span>
+                                    </div>
+                                </div>
+                                <span id="view_patient_status_badge" class="badge badge-success">Active</span>
+                            </div>
+                        </div>
+
+                        <div class="patient-modal-tabs" role="tablist" aria-label="Patient Confinement &amp; History Tabs">
+                            <button type="button" class="patient-modal-tab-btn active" data-patient-tab="stay" role="tab" aria-selected="true">
+                                <span>Current Bed Stay &amp; Ward Assignment</span>
+                                <span id="view_patient_bed_badge" class="badge badge-secondary patient-modal-tab-badge">No Active Stay</span>
+                            </button>
+                            <button type="button" class="patient-modal-tab-btn" data-patient-tab="history" role="tab" aria-selected="false">
+                                <span>Hospital Admission &amp; Confinement History</span>
+                                <span id="view_patient_history_count" class="badge badge-info patient-modal-tab-badge">0 Admissions</span>
+                            </button>
+                        </div>
+
+                        <div id="patient-tab-pane-stay" class="patient-modal-tab-pane active" role="tabpanel">
+                            <div id="view_patient_bed_assignment" class="patient-bed-assignment-card">
+                                <div class="patient-bed-assignment-head">
+                                    <div class="patient-bed-assignment-label-group">
+                                        <span class="patient-bed-assignment-label">Current Bed Stay &amp; Ward Assignment</span>
+                                    </div>
+                                </div>
+                                <div id="view_patient_bed_content" class="patient-bed-content">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="patient-tab-pane-history" class="patient-modal-tab-pane patient-tab-pane-hidden" role="tabpanel">
+                            <div id="view_patient_history_summary_strip" class="patient-history-summary-strip">
+                                <div class="patient-history-stat-card patient-history-theme-total">
+                                    <div class="patient-history-stat-top">
+                                        <div class="patient-history-title-group">
+                                            <span class="patient-history-icon-box">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                            </span>
+                                            <h4 class="patient-history-stat-label">Total Admissions</h4>
+                                        </div>
+                                        <span class="patient-history-status-pill pill-neutral">Lifetime</span>
+                                    </div>
+                                    <div class="patient-history-stat-val" id="view_hist_total_count">0</div>
+                                    <div class="patient-history-footer-row">
+                                        <span class="patient-history-footer-meta">Total hospital encounters</span>
+                                    </div>
+                                </div>
+                                <div class="patient-history-stat-card patient-history-theme-active">
+                                    <div class="patient-history-stat-top">
+                                        <div class="patient-history-title-group">
+                                            <span class="patient-history-icon-box">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                                            </span>
+                                            <h4 class="patient-history-stat-label">Active Stay</h4>
+                                        </div>
+                                        <span class="patient-history-status-pill pill-neutral" id="view_hist_active_badge">None</span>
+                                    </div>
+                                    <div class="patient-history-stat-val patient-history-val-active" id="view_hist_current_stay">None</div>
+                                    <div class="patient-history-footer-row">
+                                        <span class="patient-history-footer-meta">Current inpatient confinement</span>
+                                    </div>
+                                </div>
+                                <div class="patient-history-stat-card patient-history-theme-prior">
+                                    <div class="patient-history-stat-top">
+                                        <div class="patient-history-title-group">
+                                            <span class="patient-history-icon-box">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            </span>
+                                            <h4 class="patient-history-stat-label">Prior Discharges</h4>
+                                        </div>
+                                        <span class="patient-history-status-pill pill-warning">Discharged</span>
+                                    </div>
+                                    <div class="patient-history-stat-val" id="view_hist_prior_count">0</div>
+                                    <div class="patient-history-footer-row">
+                                        <span class="patient-history-footer-meta">Completed clinical stays</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="patient-history-search-wrap">
+                                <div class="patient-history-search-capsule">
+                                    <label class="patient-history-floating-label" for="view_patient_history_search">Search Admission &amp; Confinement History (Click row to open chart)</label>
+                                    <span class="filter-capsule-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    </span>
+                                    <input type="text" id="view_patient_history_search" class="form-control patient-history-search-input" placeholder="Search case #, stay dates, room/bed, complaint, status, or settlement..." autocomplete="off">
+                                </div>
+                            </div>
+
+                            <div class="table-responsive patient-hist-table-wrap">
+                                <table class="data-table patient-hist-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Case &amp; Stay Dates</th>
+                                            <th>Room, Bed &amp; Location</th>
+                                            <th>Complaint &amp; Diagnosis</th>
+                                            <th>Status &amp; Settlement</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_patient_history_tbody">
+                                        <tr>
+                                            <td colspan="7" class="patient-hist-loading-cell">Loading admission history...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnCloseViewPatientBtn" class="btn btn-secondary">Close</button>
+                        <button type="button" id="btnOpenEditFromPatientView" class="btn btn-primary">Edit Patient Details</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="formModal" class="modal-overlay">
                 <div class="modal-container modal-lg">
                     <div class="modal-header">
-                        <h3 id="form-title">Register New Patient</h3>
+                        <h3 id="form-title" style="margin: 0;">Register New Patient</h3>
                         <button type="button" class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="patient_id" value="">
-
-                        <div id="patient_bed_info_banner" style="display: none; margin-bottom: 16px; padding: 12px 16px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <div>
-                                    <span style="font-weight: 700; color: #166534; font-size: 13.5px;">Current Bed Stay:</span>
-                                    <span id="patient_current_bed_text" style="color: #15803d; font-size: 13.5px; margin-left: 6px; font-weight: 600;"></span>
-                                </div>
-                                <span id="patient_bed_status_badge" class="badge badge-success"></span>
-                            </div>
-                        </div>
 
                         <div class="form-grid">
                             <div class="form-group">
@@ -103,24 +237,68 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" id="btnArchive" class="btn btn-warning btn-archive" style="display: none;">Send to Archive</button>
-                        <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
+                        <button type="button" id="btnReset" class="btn btn-secondary" style="margin-right: auto;">Reset</button>
                         <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
                         <button type="button" id="btnSubmit" class="btn btn-primary">Submit Patient</button>
                     </div>
                 </div>
             </div>
+
+            <div id="duplicatePatientModal" class="modal-overlay" style="display: none; z-index: 10005;">
+                <div class="modal-container" style="max-width: 540px;">
+                    <div class="modal-header" style="background: #fffbeb; border-bottom: 1px solid #fde68a;">
+                        <h2 style="color: #b45309; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                            <span>⚠️</span> Possible Duplicate Patient Detected
+                        </h2>
+                        <button type="button" class="modal-close" id="btnCloseDuplicateModal">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <p style="margin-top: 0; color: #475569; font-size: 13.5px;">
+                            A patient record with the same first and last name already exists in the hospital registry. Please review the existing profile to avoid creating redundant records:
+                        </p>
+                        <div id="duplicate-patient-card" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong id="dup_patient_code" style="color: #0284c7; font-size: 1.05rem;">PAT-000</strong>
+                                <span id="dup_patient_status" class="badge badge-info">Active</span>
+                            </div>
+                            <div style="font-size: 13.5px; line-height: 1.6; color: #1e293b;">
+                                <div><strong>Full Name:</strong> <span id="dup_patient_name">-</span></div>
+                                <div><strong>Date of Birth:</strong> <span id="dup_patient_dob">-</span></div>
+                                <div><strong>Gender / Blood Type:</strong> <span id="dup_patient_gender_blood">-</span></div>
+                                <div><strong>Contact:</strong> <span id="dup_patient_contact">-</span></div>
+                                <div><strong>Address:</strong> <span id="dup_patient_address">-</span></div>
+                            </div>
+                        </div>
+                        <p style="color: #64748b; font-size: 12.5px; margin-bottom: 0;">
+                            If this is the same individual, click <strong>View Existing Profile</strong>. If this is a different individual with the same name, click <strong>Proceed as New Patient</strong>.
+                        </p>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" id="btnCancelDuplicateModal" class="btn btn-secondary">Cancel</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="btnViewExistingPatient" class="btn btn-outline" style="font-weight: 600;">View Existing Profile</button>
+                            <button type="button" id="btnProceedNewPatient" class="btn btn-primary" style="font-weight: 600;">Proceed as New Patient</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
-                <div class="card-header">
-                    <h3>Patient Records</h3>
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin: 0;">Patient Records</h3>
+                        <button type="button" id="btnRefreshPatients" class="btn-refresh" title="Refresh">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="filter-bar">
-                        <div class="form-group" style="min-width: 260px; max-width: 320px;">
+                        <div class="form-group filter-capsule-search">
                             <label class="form-label" for="search_input">Search Patients</label>
                             <input type="text" id="search_input" class="form-control" placeholder="Search patient name or code...">
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_status">Status</label>
                             <select id="filter_status" class="form-select">
                                 <option value="all" selected>All Statuses</option>
@@ -131,14 +309,14 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="filter_blood">Blood Type</label>
                             <select id="filter_blood" class="form-select">
                                 <option value="all">All Blood Types</option>
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group filter-capsule-select">
                             <label class="form-label" for="sort_by">Sort By</label>
                             <select id="sort_by" class="form-select">
                                 <option value="code_asc">Code (A to Z)</option>
@@ -162,9 +340,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/patients.js?v=6.0"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/patients.js?v=10.0"></script>
 </body>
 </html>
-

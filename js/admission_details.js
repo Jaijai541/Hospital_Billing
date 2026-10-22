@@ -108,13 +108,17 @@ window.addEventListener('DOMContentLoaded', () => {
 const initClinicalTabs = () => {
     const tabBtns = document.querySelectorAll('.clinical-tabs-nav .tab-btn');
     const tabPanels = document.querySelectorAll('.tab-content-panel');
-    const glider = document.getElementById('subnavGlider');
-    const subnavItems = document.querySelectorAll('.clinical-slide-switcher .slide-tab-item, .clinical-subnav .subnav-btn');
-    const subPanels = document.querySelectorAll('#tab-clinical .sub-panel');
+    const clinicalGlider = document.getElementById('subnavGlider');
+    const clinicalSubnavItems = document.querySelectorAll('#clinicalSubNav .subnav-btn');
+    const clinicalSubPanels = document.querySelectorAll('#tab-clinical .sub-panel');
 
-    const activateSubtab = (subId) => {
+    const ledgerGlider = document.getElementById('ledgerSubnavGlider');
+    const ledgerSubnavItems = document.querySelectorAll('#ledgerSubNav .subnav-btn');
+    const ledgerSubPanels = document.querySelectorAll('#tab-ledger .ledger-sub-panel');
+
+    const activateClinicalSubtab = (subId) => {
         let activeIdx = 0;
-        subnavItems.forEach((btn, idx) => {
+        clinicalSubnavItems.forEach((btn, idx) => {
             if (btn.getAttribute('data-sub') === subId) {
                 btn.classList.add('active');
                 btn.setAttribute('aria-selected', 'true');
@@ -125,11 +129,11 @@ const initClinicalTabs = () => {
             }
         });
 
-        if (glider) {
-            glider.style.transform = `translateX(${activeIdx * 100}%)`;
+        if (clinicalGlider) {
+            clinicalGlider.style.transform = `translateX(calc(${activeIdx * 100}% + ${activeIdx * 4}px))`;
         }
 
-        subPanels.forEach(panel => {
+        clinicalSubPanels.forEach(panel => {
             if (panel.id === subId) {
                 panel.style.display = 'block';
                 panel.classList.remove('subpanel-slide-active');
@@ -142,12 +146,63 @@ const initClinicalTabs = () => {
         });
     };
 
+    const activateLedgerSubtab = (subId) => {
+        const targetId = (subId === 'sub-ledger-advances' || subId === 'tab-advances' || subId === 'advances')
+            ? 'sub-ledger-advances'
+            : 'sub-ledger-charges';
+
+        let activeIdx = 0;
+        ledgerSubnavItems.forEach((btn, idx) => {
+            const attr = btn.getAttribute('data-ledger-sub') || btn.getAttribute('data-sub');
+            if (attr === targetId) {
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                activeIdx = idx;
+            } else {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            }
+        });
+
+        if (ledgerGlider) {
+            ledgerGlider.style.transform = `translateX(calc(${activeIdx * 100}% + ${activeIdx * 4}px))`;
+        }
+
+        ledgerSubPanels.forEach(panel => {
+            if (panel.id === targetId) {
+                panel.style.display = 'block';
+                panel.classList.remove('sub-panel-hidden');
+                panel.classList.remove('subpanel-slide-active');
+                void panel.offsetWidth;
+                panel.classList.add('subpanel-slide-active');
+            } else {
+                panel.style.display = 'none';
+                panel.classList.add('sub-panel-hidden');
+                panel.classList.remove('subpanel-slide-active');
+            }
+        });
+
+        if (targetId === 'sub-ledger-advances') {
+            loadAdvancePayments();
+        } else {
+            loadLedger();
+            loadLedgerSummary();
+        }
+    };
+
     const activateTab = (tabId) => {
         let realTabId = tabId;
+        let subTarget = null;
+
         if (tabId === 'tab-orders' || tabId === 'tab-rounds' || tabId === 'tab-stays') {
             realTabId = 'tab-clinical';
-        } else if (tabId === 'tab-charges') {
+            subTarget = tabId.replace('tab-', 'sub-');
+        } else if (tabId === 'tab-charges' || tabId === 'sub-ledger-charges') {
             realTabId = 'tab-ledger';
+            subTarget = 'sub-ledger-charges';
+        } else if (tabId === 'tab-advances' || tabId === 'sub-ledger-advances' || tabId === 'tab-advance-deposits') {
+            realTabId = 'tab-ledger';
+            subTarget = 'sub-ledger-advances';
         }
 
         tabBtns.forEach(btn => {
@@ -166,23 +221,23 @@ const initClinicalTabs = () => {
             }
         });
 
-        if (tabId === 'tab-rounds') {
-            activateSubtab('sub-rounds');
-        } else if (tabId === 'tab-stays') {
-            activateSubtab('sub-stays');
-        } else if (tabId === 'tab-orders') {
-            activateSubtab('sub-orders');
-        }
-
-        if (realTabId === 'tab-ledger') {
-            loadLedger();
-            loadLedgerSummary();
-        } else if (realTabId === 'tab-clinical') {
+        if (realTabId === 'tab-clinical') {
+            if (subTarget) {
+                activateClinicalSubtab(subTarget);
+            }
             loadTransfers();
+        } else if (realTabId === 'tab-ledger') {
+            if (subTarget) {
+                activateLedgerSubtab(subTarget);
+            } else {
+                activateLedgerSubtab('sub-ledger-charges');
+            }
         }
     };
 
     switchClinicalTab = activateTab;
+    window.switchClinicalTab = activateTab;
+    window.activateLedgerSubtab = activateLedgerSubtab;
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -194,12 +249,33 @@ const initClinicalTabs = () => {
         });
     });
 
-    subnavItems.forEach(btn => {
+    clinicalSubnavItems.forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.getAttribute('data-sub');
-            activateSubtab(target);
+            activateClinicalSubtab(target);
         });
     });
+
+    ledgerSubnavItems.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-ledger-sub') || btn.getAttribute('data-sub');
+            activateLedgerSubtab(target);
+        });
+    });
+
+    const btnJumpToAdv = document.getElementById('btnJumpToAdvanceDeposits');
+    if (btnJumpToAdv) {
+        btnJumpToAdv.addEventListener('click', () => {
+            activateLedgerSubtab('sub-ledger-advances');
+        });
+    }
+
+    const btnJumpToCharges = document.getElementById('btnJumpToItemizedCharges');
+    if (btnJumpToCharges) {
+        btnJumpToCharges.addEventListener('click', () => {
+            activateLedgerSubtab('sub-ledger-charges');
+        });
+    }
 
     const hash = window.location.hash.replace('#', '');
     if (hash) {
@@ -410,6 +486,8 @@ const initClinicalModals = () => {
     if (btnCancelAdv) btnCancelAdv.addEventListener('click', () => closeModal('advancePaymentModal'));
     if (btnSubmitAdv) btnSubmitAdv.addEventListener('click', submitAdvancePayment);
     if (btnBrowseAdvMethod) btnBrowseAdvMethod.addEventListener('click', openAdvancePaymentMethodPicker);
+    const btnAddAdvVoucher = document.getElementById('btnAddAdvVoucher');
+    if (btnAddAdvVoucher) btnAddAdvVoucher.addEventListener('click', handleAddAdvanceVoucher);
     if (btnPayAdvExact) {
         btnPayAdvExact.addEventListener('click', () => {
             const netCharges = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
@@ -1017,6 +1095,7 @@ const initDiagnosisModal = () => {
         modal.style.display = 'none';
     }
 
+    window.openDiagnosisModal = openDiagnosisModal;
     btnEdit.addEventListener('click', openDiagnosisModal);
     if (btnClose) btnClose.addEventListener('click', closeDiagnosisModal);
     if (btnCancel) btnCancel.addEventListener('click', closeDiagnosisModal);
@@ -1067,6 +1146,9 @@ const saveDiagnosis = () => {
                     diagEl.innerHTML = `<span style="color: #0284c7; font-weight: 700;">${val}</span>`;
                 }
                 document.getElementById('diagnosisModal').style.display = 'none';
+                if (typeof renderSettlementSection === 'function') {
+                    renderSettlementSection();
+                }
                 alert(response.data.message || "Clinical diagnosis recorded successfully.");
             } else {
                 alert("Error updating diagnosis: " + (response.data.error || "Unknown error"));
@@ -1299,7 +1381,14 @@ const dischargePatientFromChart = (admId, patientName) => {
         return;
     }
 
-    showPopupConfirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`, () => {
+    const rawDiag = (admissionData && admissionData.Diagnosis) ? admissionData.Diagnosis.trim() : '';
+    const hasDiag = rawDiag && rawDiag.toLowerCase() !== 'pending clinical diagnosis' && rawDiag.toLowerCase() !== 'loading...';
+
+    const confirmMsg = !hasDiag
+        ? `Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nNotice: No clinical diagnosis was entered. Patient will be discharged under standard clearance ("Medically cleared for discharge / Under observation").\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`
+        : `Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`;
+
+    showPopupConfirm(confirmMsg, () => {
         const formData = new FormData();
         formData.append('operation', 'dischargePatient');
         formData.append('json', JSON.stringify({ admission_id: admId }));
@@ -1486,16 +1575,11 @@ const renderOrdersTable = (orders) => {
 
     let html = '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>Order #</th>';
-    html += '<th>Prescribing Physician</th>';
-    html += '<th>Item Code & Description</th>';
-    html += '<th>Category</th>';
-    html += '<th>Qty</th>';
-    html += '<th>Unit Price</th>';
-    html += '<th>Total Amount</th>';
-    html += '<th>Status</th>';
-    html += '<th>Timestamps</th>';
-    html += '<th>Actions</th>';
+    html += '<th>Order Ref & Timestamp</th>';
+    html += '<th>Prescribed Item & Doctor</th>';
+    html += '<th class="text-right">Quantity & Amount</th>';
+    html += '<th>Fulfillment Status</th>';
+    html += '<th class="text-center">Actions</th>';
     html += '</tr></thead><tbody>';
 
     orders.forEach(o => {
@@ -1504,7 +1588,7 @@ const renderOrdersTable = (orders) => {
 
         let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
         if (o.Status === 'Administered') {
-            statusBadge = `<span class="badge badge-success">Administered</span><br><small class="text-muted">(Charge Posted)</small>`;
+            statusBadge = `<span class="badge badge-success">Administered</span><span class="table-sub-text">(Charge Posted)</span>`;
         } else if (o.Status === 'Pending') {
             statusBadge = `<span class="badge badge-warning">Pending</span>`;
         } else if (o.Status === 'Cancelled') {
@@ -1520,16 +1604,11 @@ const renderOrdersTable = (orders) => {
         }
 
         html += '<tr>';
-        html += `<td><strong>ORD-${String(o.Request_ID).padStart(3, '0')}</strong></td>`;
-        html += `<td>${o.Doctor_Name}</td>`;
-        html += `<td><strong>${o.Item_Code}</strong>: ${o.Item_Name}</td>`;
-        html += `<td><span class="badge badge-info">${o.Category_Type}</span></td>`;
-        html += `<td>${parseFloat(o.Quantity)}</td>`;
-        html += `<td>₱${unitPrice}</td>`;
-        html += `<td><strong>₱${total}</strong></td>`;
+        html += `<td><span class="table-primary-text text-primary">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">Req: ${o.Request_Timestamp}${o.Administered_Timestamp ? `<br>Adm: ${o.Administered_Timestamp}` : ''}</span></td>`;
+        html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • <span class="badge badge-info">${o.Category_Type}</span></span></td>`;
+        html += `<td class="text-right"><span class="table-amount-prominent">₱${total}</span><span class="table-sub-text">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</span></td>`;
         html += `<td>${statusBadge}</td>`;
-        html += `<td><small class="text-muted">Req: ${o.Request_Timestamp}<br>Adm: ${o.Administered_Timestamp || 'Pending'}</small></td>`;
-        html += `<td>${actionHtml}</td>`;
+        html += `<td class="text-center">${actionHtml}</td>`;
         html += '</tr>';
     });
 
@@ -1680,22 +1759,18 @@ const renderRoundsTable = (rounds) => {
 
     let html = '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>Round #</th>';
-    html += '<th>Visiting Physician</th>';
-    html += '<th>Doctor Classification</th>';
-    html += '<th>Professional Fee Charged</th>';
-    html += '<th>Visit Timestamp</th>';
+    html += '<th>Round Ref & Timestamp</th>';
+    html += '<th>Attending Physician</th>';
+    html += '<th class="text-right">Professional Fee</th>';
     html += '<th>Billing Status</th>';
     html += '</tr></thead><tbody>';
 
     rounds.forEach(r => {
         const fee = parseFloat(r.Charged_Fee).toLocaleString('en-PH', {minimumFractionDigits: 2});
         html += '<tr>';
-        html += `<td><strong>RND-${String(r.Round_ID).padStart(3, '0')}</strong></td>`;
-        html += `<td><strong>${r.Doctor_Name}</strong></td>`;
-        html += `<td>${r.Doctor_Type}</td>`;
-        html += `<td><strong>₱${fee}</strong></td>`;
-        html += `<td>${r.Round_Timestamp}</td>`;
+        html += `<td><span class="table-primary-text text-primary">RND-${String(r.Round_ID).padStart(3, '0')}</span><span class="table-sub-text">${r.Round_Timestamp}</span></td>`;
+        html += `<td><span class="table-primary-text">${r.Doctor_Name}</span><span class="table-sub-text">${r.Doctor_Type}</span></td>`;
+        html += `<td class="text-right"><span class="table-amount-prominent">₱${fee}</span></td>`;
         html += `<td><span class="badge badge-success">Posted to Ledger</span></td>`;
         html += '</tr>';
     });
@@ -1785,15 +1860,10 @@ const renderTransfersTable = (transfers) => {
 
     let html = '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>#</th>';
-    html += '<th>Bed & Room</th>';
-    html += '<th>Classification</th>';
-    html += '<th>Daily Rate</th>';
-    html += '<th>Date Admitted / In</th>';
-    html += '<th>Date Out</th>';
-    html += '<th>Days Stayed</th>';
-    html += '<th>Room Charge</th>';
-    html += '<th>Status</th>';
+    html += '<th>Bed & Room Accommodation</th>';
+    html += '<th>Stay Period</th>';
+    html += '<th class="text-right">Duration & Total Charge</th>';
+    html += '<th>Occupancy Status</th>';
     html += '</tr></thead><tbody>';
 
     transfers.forEach(t => {
@@ -1803,7 +1873,7 @@ const renderTransfersTable = (transfers) => {
         const rawFee = parseFloat(t.Total_Room_Fee !== undefined && t.Total_Room_Fee !== null ? t.Total_Room_Fee : (t.Calculated_Room_Fee || 0));
         const formattedFee = isNaN(rawFee) ? '0.00' : rawFee.toLocaleString('en-PH', {minimumFractionDigits: 2});
         const fee = isCurrent 
-            ? `₱${formattedFee} <small class="text-success" style="font-weight: normal;">(Live)</small>` 
+            ? `₱${formattedFee} <small class="text-success">(Live)</small>` 
             : `₱${formattedFee}`;
 
         const stayBadge = isCurrent 
@@ -1811,18 +1881,13 @@ const renderTransfersTable = (transfers) => {
             : '<span class="badge badge-secondary">Closed & Charged</span>';
 
         const daysText = isCurrent
-            ? `${t.Total_Days || t.Calculated_Days || 1} day(s) <small class="text-success">(Active)</small>`
+            ? `${t.Total_Days || t.Calculated_Days || 1} day(s) (Active)`
             : `${t.Total_Days} day(s)`;
 
         html += '<tr>';
-        html += `<td><strong>STAY-${String(t.Transfer_ID).padStart(3, '0')}</strong></td>`;
-        html += `<td><strong>${t.Bed_Code}</strong> (${t.Room_Name})</td>`;
-        html += `<td>${t.Room_Type}</td>`;
-        html += `<td>₱${rate}/day</td>`;
-        html += `<td>${t.Date_In}</td>`;
-        html += `<td>${t.Date_Out || '<span class="text-muted">Currently In Bed</span>'}</td>`;
-        html += `<td>${daysText}</td>`;
-        html += `<td><strong>${fee}</strong></td>`;
+        html += `<td><span class="table-primary-text"><strong>${t.Bed_Code}</strong> (${t.Room_Name})</span><span class="table-sub-text">STAY-${String(t.Transfer_ID).padStart(3, '0')} • ${t.Room_Type} • ₱${rate}/day</span></td>`;
+        html += `<td><span class="table-primary-text">In: ${t.Date_In}</span><span class="table-sub-text">Out: ${t.Date_Out || 'Currently In Bed'}</span></td>`;
+        html += `<td class="text-right"><span class="table-amount-prominent">${fee}</span><span class="table-sub-text">${daysText}</span></td>`;
         html += `<td>${stayBadge}</td>`;
         html += '</tr>';
     });
@@ -1953,6 +2018,10 @@ const renderLedgerTable = (ledger) => {
     if (badgeLedger) {
         badgeLedger.textContent = `${ledger ? ledger.length : 0} items`;
     }
+    const badgeSubCharges = document.getElementById('badge_sub_charges');
+    if (badgeSubCharges) {
+        badgeSubCharges.textContent = `${ledger ? ledger.length : 0} items`;
+    }
 
     if (!ledger || ledger.length === 0) {
         container.innerHTML = '<p><em>No charges have been accumulated yet in the ledger for this admission.</em></p>';
@@ -1961,51 +2030,37 @@ const renderLedgerTable = (ledger) => {
 
     let html = '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>Ledger #</th>';
-    html += '<th>Department Station</th>';
-    html += '<th>Category</th>';
-    html += '<th>Item Description</th>';
-    html += '<th>Qty</th>';
-    html += '<th>Unit Price</th>';
-    html += '<th>Total Amount</th>';
-    html += '<th>Type</th>';
-    html += '<th>Timestamp</th>';
+    html += '<th>Ledger Ref & Station</th>';
+    html += '<th>Particulars / Catalog Item</th>';
+    html += '<th class="text-right">Quantity & Unit Rate</th>';
+    html += '<th class="text-right">Total Charge</th>';
+    html += '<th>Transaction Type</th>';
     html += '</tr></thead><tbody>';
 
     ledger.forEach(row => {
         const isReturn = row.Transaction_Type === 'Return' || row.Total_Charge < 0;
         const isActiveStay = !!row.Is_Active_Stay;
-        const formattedTotal = parseFloat(row.Total_Charge).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const unitPrice = parseFloat(row.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
         let typeBadge = '<span class="badge badge-primary">CHARGE</span>';
         if (isActiveStay) {
-            typeBadge = '<span class="badge badge-success" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 600;">ACTIVE (ACCUMULATING)</span>';
+            typeBadge = '<span class="badge badge-success badge-active-stay">ACTIVE (ACCUMULATING)</span>';
         } else if (isReturn) {
             typeBadge = '<span class="badge badge-warning">CREDIT / RETURN</span>';
         }
 
         const ledgerIdDisplay = isActiveStay 
-            ? '<span class="badge badge-info" style="font-size: 0.72rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">LIVE STAY</span>'
-            : `<strong>LDG-${String(row.Ledger_ID).padStart(4, '0')}</strong>`;
+            ? '<span class="badge badge-info badge-live-stay">LIVE STAY</span>'
+            : `<span class="table-primary-text">LDG-${String(row.Ledger_ID).padStart(4, '0')}</span>`;
 
-        let rowStyle = '';
-        if (isActiveStay) {
-            rowStyle = 'style="background-color: #f0f9ff;"';
-        } else if (isReturn) {
-            rowStyle = 'style="background-color: #f0fff4;"';
-        }
+        const rowClass = isActiveStay ? 'row-active-stay' : (isReturn ? 'row-credit-return' : '');
 
-        html += `<tr ${rowStyle}>`;
-        html += `<td>${ledgerIdDisplay}</td>`;
-        html += `<td>${row.Station_Name}</td>`;
-        html += `<td><span class="badge badge-info">${row.Category}</span></td>`;
-        html += `<td>${row.Description}</td>`;
-        html += `<td>${row.Quantity}</td>`;
-        html += `<td>₱${unitPrice}</td>`;
-        html += `<td><strong>${isReturn ? '-' : ''}₱${Math.abs(parseFloat(row.Total_Charge)).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>`;
+        html += `<tr class="${rowClass}">`;
+        html += `<td>${ledgerIdDisplay}<span class="table-sub-text">${row.Station_Name} • ${row.Timestamp}</span></td>`;
+        html += `<td><span class="table-primary-text">${row.Description}</span><span class="table-sub-text"><span class="badge badge-info table-disc-pill">${row.Category}</span></span></td>`;
+        html += `<td class="text-right"><span class="table-primary-text">${row.Quantity} ${parseFloat(row.Quantity) > 1 ? 'units' : 'unit'}</span><span class="table-sub-text">₱${unitPrice} each</span></td>`;
+        html += `<td class="text-right"><span class="table-amount-prominent ${isReturn ? 'text-success' : ''}">${isReturn ? '-' : ''}₱${Math.abs(parseFloat(row.Total_Charge)).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span></td>`;
         html += `<td>${typeBadge}</td>`;
-        html += `<td><small class="text-muted">${row.Timestamp}</small></td>`;
         html += '</tr>';
     });
 
@@ -2207,6 +2262,70 @@ const getPaymentMethodOptionsHtml = (selectedId = 1) => {
     return opts;
 };
 
+let advanceVouchersList = [];
+
+const renderAdvanceVoucherTags = () => {
+    const container = document.getElementById('adv-vouchers-tags');
+    const totalRow = document.getElementById('adv-vouchers-total-row');
+    const totalAmountEl = document.getElementById('adv-vouchers-total-amount');
+    if (!container) return;
+
+    if (advanceVouchersList.length === 0) {
+        container.innerHTML = '';
+        if (totalRow) totalRow.classList.add('adv-vouchers-total-hidden');
+        return;
+    }
+
+    let total = 0;
+    let html = '';
+    advanceVouchersList.forEach((v, idx) => {
+        total += parseFloat(v.amount || 0);
+        html += `
+            <div class="adv-voucher-pill">
+                <span>${v.name}: ₱${parseFloat(v.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+                <button type="button" class="adv-voucher-remove" data-idx="${idx}">&times;</button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.adv-voucher-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.dataset.idx, 10);
+            advanceVouchersList.splice(idx, 1);
+            renderAdvanceVoucherTags();
+        });
+    });
+
+    if (totalRow && totalAmountEl) {
+        totalRow.classList.remove('adv-vouchers-total-hidden');
+        totalAmountEl.textContent = `₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+    }
+};
+
+const handleAddAdvanceVoucher = () => {
+    const nameInput = document.getElementById('adv_discount_name_input');
+    const amtInput = document.getElementById('adv_discount_amount_input');
+    const vName = nameInput ? nameInput.value.trim() : '';
+    const vAmt = amtInput ? parseFloat(amtInput.value) : 0;
+
+    if (!vName) {
+        showPopupAlert('Please enter the assistance or voucher particular name (e.g. DSWD Aid, PCSO, Doctor Waiver).', 'warning');
+        if (nameInput) nameInput.focus();
+        return;
+    }
+    if (isNaN(vAmt) || vAmt <= 0) {
+        showPopupAlert('Please enter a valid grant / assistance amount greater than ₱0.00.', 'warning');
+        if (amtInput) amtInput.focus();
+        return;
+    }
+
+    advanceVouchersList.push({ name: vName, amount: vAmt });
+    if (nameInput) nameInput.value = '';
+    if (amtInput) amtInput.value = '';
+    renderAdvanceVoucherTags();
+};
+
 const openAdvancePaymentModal = () => {
     if (!admissionData) {
         showPopupAlert('Admission details not loaded yet.', 'warning');
@@ -2233,11 +2352,18 @@ const openAdvancePaymentModal = () => {
     const inputMethodText = document.getElementById('adv_method_id_text');
     const inputAmount = document.getElementById('adv_amount_input');
     const inputNotes = document.getElementById('adv_notes_input');
+    const inputVName = document.getElementById('adv_discount_name_input');
+    const inputVAmt = document.getElementById('adv_discount_amount_input');
 
     if (inputMethodId) inputMethodId.value = '1';
     if (inputMethodText) inputMethodText.value = 'Cash (Cash)';
     if (inputAmount) inputAmount.value = '';
     if (inputNotes) inputNotes.value = '';
+    if (inputVName) inputVName.value = '';
+    if (inputVAmt) inputVAmt.value = '';
+
+    advanceVouchersList = [];
+    renderAdvanceVoucherTags();
 
     openModal('advancePaymentModal');
 };
@@ -2291,16 +2417,22 @@ const submitAdvancePayment = () => {
     const methodInput = document.getElementById('adv_method_id');
     const methodId = methodInput && methodInput.value ? parseInt(methodInput.value, 10) : 1;
     const amountInput = document.getElementById('adv_amount_input');
-    const amt = amountInput ? parseFloat(amountInput.value) : 0;
+    const amt = amountInput && amountInput.value !== '' ? parseFloat(amountInput.value) : 0;
     const notesInput = document.getElementById('adv_notes_input');
     const notes = notesInput ? notesInput.value.trim() : '';
 
-    if (isNaN(amt) || amt <= 0) {
-        showPopupAlert('Please enter a valid deposit amount greater than 0.00.', 'warning');
+    const totalGrants = advanceVouchersList.reduce((acc, v) => acc + parseFloat(v.amount || 0), 0);
+
+    if ((isNaN(amt) || amt <= 0) && totalGrants <= 0) {
+        showPopupAlert('Please enter a deposit payment amount or add at least one medical assistance grant / voucher.', 'warning');
         return;
     }
 
-    const confirmMsg = `Confirm recording advance deposit of ₱${amt.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn official payment receipt (OR) will be issued immediately and the deposit will be credited against the patient's final bill upon discharge.`;
+    const confirmMsg = (amt > 0 && totalGrants > 0)
+        ? `Confirm recording advance deposit of ₱${amt.toLocaleString('en-PH', {minimumFractionDigits: 2})} along with ₱${totalGrants.toLocaleString('en-PH', {minimumFractionDigits: 2})} in assistance vouchers?`
+        : amt > 0
+            ? `Confirm recording advance deposit of ₱${amt.toLocaleString('en-PH', {minimumFractionDigits: 2})}?\n\nAn official payment receipt (OR) will be issued immediately and the deposit will be credited against the patient's final bill upon discharge.`
+            : `Confirm recording ₱${totalGrants.toLocaleString('en-PH', {minimumFractionDigits: 2})} in medical assistance vouchers?`;
 
     showPopupConfirm(confirmMsg, () => {
         const userJson = sessionStorage.getItem('hospital_user');
@@ -2310,8 +2442,9 @@ const submitAdvancePayment = () => {
         const payload = {
             admission_id: admissionId,
             user_id: uid,
-            payment_amount: amt,
+            payment_amount: Math.max(0, amt),
             payment_method_id: methodId,
+            discounts: advanceVouchersList,
             notes: notes || 'Advance Patient Deposit'
         };
 
@@ -2353,61 +2486,56 @@ const submitAdvancePayment = () => {
 };
 
 const renderAdvancePaymentsHistory = (advList) => {
+    const badgeSubAdvances = document.getElementById('badge_sub_advances');
+    if (badgeSubAdvances) {
+        badgeSubAdvances.textContent = (advList && Array.isArray(advList)) ? advList.length : 0;
+    }
     const container = document.getElementById('advance-payments-history-div');
     if (!container) return;
 
     let advRowsHtml = '';
     if (!advList || advList.length === 0) {
-        advRowsHtml = '<tr><td colspan="7" class="text-muted text-center" style="padding: 16px;"><em>No advance payments recorded yet for this admission. The patient or relatives may make advance deposits at any time.</em></td></tr>';
+        advRowsHtml = '<tr><td colspan="4" class="text-muted text-center py-4"><em>No advance payments recorded yet for this admission. The patient or relatives may make advance deposits at any time.</em></td></tr>';
     } else {
         advList.forEach(p => {
             const pAmt = parseFloat(p.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
             const methodBadge = `<span class="badge badge-info">${p.Payment_Method || 'Cash'}</span>`;
             advRowsHtml += `
                 <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click to view Official Receipt">
-                    <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
-                    <td>${p.Formatted_Payment_Date || p.Payment_Date}</td>
-                    <td>${methodBadge}</td>
-                    <td>${p.Cashier_Name || 'Cashier Staff'}</td>
-                    <td align="right"><strong style="color: #16a34a;">₱${pAmt}</strong></td>
-                    <td>${p.Notes || 'Advance Patient Deposit'}</td>
-                    <td align="center">
-                        <button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">Print OR</button>
+                    <td>
+                        <div class="table-primary-text font-bold text-primary">${p.Receipt_Number}</div>
+                        <div class="table-sub-text">${p.Formatted_Payment_Date || p.Payment_Date}</div>
+                    </td>
+                    <td>
+                        <div>${methodBadge}</div>
+                        <div class="table-sub-text">${p.Cashier_Name || 'Cashier Staff'} &bull; ${p.Notes || 'Advance Patient Deposit'}</div>
+                    </td>
+                    <td class="text-right">
+                        <div class="table-amount-prominent text-success font-bold">₱${pAmt}</div>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline btn-print-or" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'">Print OR</button>
                     </td>
                 </tr>
             `;
         });
     }
 
-    const showAddBtn = admissionData && admissionData.Status === 'Admitted';
-
     container.innerHTML = `
-        <div class="card p-3" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    <h3 style="margin: 0; color: #1e293b; font-size: 1.05rem;">Advance Deposits &amp; Official Receipts History</h3>
-                    <span class="text-muted" style="font-size: 13px;">Pre-discharge deposit payments credited towards final SOA settlement</span>
-                </div>
-                ${showAddBtn ? `<button type="button" class="btn btn-primary btn-sm" onclick="openAdvancePaymentModal()">Record Advance Payment</button>` : ''}
-            </div>
-            <div class="table-responsive">
-                <table class="data-table" style="font-size: 13.5px;">
-                    <thead>
-                        <tr>
-                            <th>Official Receipt #</th>
-                            <th>Date &amp; Time</th>
-                            <th>Payment Method</th>
-                            <th>Cashier</th>
-                            <th style="text-align: right;">Amount Paid</th>
-                            <th>Particulars / Notes</th>
-                            <th style="text-align: center;">Official Receipt</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${advRowsHtml}
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Receipt &amp; Timestamp</th>
+                        <th>Payment Method &amp; Cashier</th>
+                        <th class="text-right">Amount Paid</th>
+                        <th class="text-center">Official Receipt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${advRowsHtml}
+                </tbody>
+            </table>
         </div>
     `;
 };
@@ -2539,17 +2667,20 @@ const openPatientAdmissionHistoryModal = () => {
 
                 rowsHtml += `
                     <tr style="background: ${rowBg}; border-left: ${rowBorder};">
-                        <td>${seqBadge}</td>
-                        <td><strong style="color: #0f172a;">${row.Admission_Code}</strong></td>
                         <td>
-                            <div><strong>In:</strong> ${row.Admission_Date}</div>
-                            ${stayOut}
+                            <div class="table-primary-text font-bold">${seqBadge} ${row.Admission_Code}</div>
+                            <div class="table-sub-text">In: ${row.Admission_Date} ${row.Discharge_Date ? `&bull; Out: ${row.Discharge_Date}` : '<span class="badge badge-info">Active</span>'}</div>
                         </td>
-                        <td>${bedText}${roomText}</td>
-                        <td>${complaintText}${diagText}</td>
-                        <td>${statusBadge}</td>
-                        <td>${billingHtml}</td>
-                        <td style="text-align: center;">${actionBtn}</td>
+                        <td>
+                            <div class="table-primary-text">${bedText} ${row.Room_Name ? `(${row.Room_Name})` : ''}</div>
+                            <div class="table-sub-text-dark">${complaintText}</div>
+                            <div class="table-sub-text">${diagText}</div>
+                        </td>
+                        <td>
+                            <div>${statusBadge}</div>
+                            <div class="table-sub-text">${billingHtml}</div>
+                        </td>
+                        <td class="text-center">${actionBtn}</td>
                     </tr>
                 `;
             });
@@ -2580,61 +2711,140 @@ const renderAdmittedDischargeGateCard = (advList) => {
     const formattedAdv = totalAdvPaid.toLocaleString('en-PH', {minimumFractionDigits: 2});
     const formattedBal = unpaidBal.toLocaleString('en-PH', {minimumFractionDigits: 2});
 
+    const rawDiag = (admissionData && admissionData.Diagnosis) ? admissionData.Diagnosis.trim() : '';
+    const hasDiagnosis = rawDiag !== '' && rawDiag.toLowerCase() !== 'pending clinical diagnosis' && rawDiag.toLowerCase() !== 'loading...';
+
     container.innerHTML = `
-        <div class="card p-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    <h3 style="margin: 0; color: #0f172a;">Stage 3: Patient Discharge Clearance &amp; Final SOA</h3>
-                    <p class="text-muted" style="margin: 3px 0 0; font-size: 13px;">Official medical discharge clearance, bed release, and Final Statement of Account preparation</p>
+        <div class="discharge-gate-card">
+            <div class="discharge-gate-header">
+                <div class="discharge-gate-title-group">
+                    <h3>3. Patient Discharge Clearance &amp; Final SOA Gate</h3>
+                    <p>Sequential clinical clearance and bed release protocol required before issuing the Final Statement of Account.</p>
                 </div>
-                <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px; font-weight: 700;">PATIENT CURRENTLY ADMITTED</span>
+                <span class="badge badge-warning discharge-gate-badge">PATIENT CURRENTLY ADMITTED</span>
             </div>
 
-            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                <h4 style="margin: 0 0 6px; color: #1e293b; font-size: 14.5px;">Active Bed Stay &amp; Medical Clearance Status</h4>
-                <p style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.5;">
-                    The patient is currently occupying <strong>Bed ${admissionData.Bed_Code || 'Assigned Bed'}</strong> under active hospital admission. Room board & lodging and physician orders are ongoing.
-                </p>
-                <p style="margin: 8px 0 0; font-size: 13.5px; color: #475569; line-height: 1.5;">
-                    When the attending physician clears the patient for discharge, click <strong>Process Patient Discharge</strong> below. Discharging will stop room lodging charges, release the bed, and unlock the <strong>Final SOA Settlement Desk</strong> where PhilHealth, Senior/PWD discounts, and cashier clearance are processed.
-                </p>
+            <div class="clearance-protocol-container">
+                <div class="clearance-protocol-card ${hasDiagnosis ? 'protocol-cleared' : 'protocol-pending'}">
+                    <div>
+                        <div class="protocol-header">
+                            <div class="protocol-step-badge-group">
+                                <span class="protocol-number ${hasDiagnosis ? 'number-cleared' : ''}">${hasDiagnosis ? '✔' : '1'}</span>
+                                <span class="protocol-title">Step 1: Clinical Medical Clearance</span>
+                            </div>
+                            <span class="badge ${hasDiagnosis ? 'badge-success' : 'badge-info'}">
+                                ${hasDiagnosis ? 'Cleared &amp; Recorded' : 'Default / Optional'}
+                            </span>
+                        </div>
+                        <div class="protocol-body">
+                            ${hasDiagnosis ? `
+                                <div class="protocol-diagnosis-display">
+                                    <div class="protocol-diagnosis-label">Confirmed Clinical Diagnosis:</div>
+                                    <div class="protocol-diagnosis-text">${rawDiag}</div>
+                                </div>
+                            ` : `
+                                <p>No specific clinical diagnosis recorded. Patient can still be discharged under standard medical clearance (<strong>Medically cleared for discharge / Under observation</strong>), or a specific diagnosis can be added below.</p>
+                            `}
+                        </div>
+                    </div>
+                    <div class="protocol-actions">
+                        ${hasDiagnosis ? `
+                            <button type="button" class="btn btn-outline btn-sm btn-edit-diag" onclick="window.openDiagnosisModal()">
+                                ✎ Update Clinical Diagnosis
+                            </button>
+                        ` : `
+                            <button type="button" class="btn btn-outline btn-sm btn-record-diag" onclick="window.openDiagnosisModal()">
+                                + Enter Specific Diagnosis (Optional)
+                            </button>
+                        `}
+                    </div>
+                </div>
+
+                <div class="clearance-protocol-card protocol-ready">
+                    <div>
+                        <div class="protocol-header">
+                            <div class="protocol-step-badge-group">
+                                <span class="protocol-number number-ready">2</span>
+                                <span class="protocol-title">Step 2: Bed Release &amp; Final SOA</span>
+                            </div>
+                            <span class="badge badge-success">
+                                Ready for Discharge
+                            </span>
+                        </div>
+                        <div class="protocol-body">
+                            <p>
+                                Patient occupies <strong>Bed ${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Discharging will conclude board &amp; lodging charges, free the bed, and unlock the <strong>Final SOA Settlement Desk</strong> for PhilHealth, statutory discounts, and cashier settlement.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="protocol-actions">
+                        ${isNurseRole ? `
+                            <span class="badge badge-info">Discharge clearance must be authorized by Finance Staff or Hospital Administrator.</span>
+                        ` : `
+                            <button type="button" class="btn btn-warning btn-unlock-soa" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${(admissionData.Full_Name || '').replace(/'/g, "\'")}')">
+                                Process Patient Discharge &amp; Unlock Final SOA
+                            </button>
+                        `}
+                    </div>
+                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #3b82f6;">
-                    <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Accumulated Net Charges</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #1e293b; margin-top: 4px;">₱${formattedRunning}</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Net running charges to date</div>
+            <div class="discharge-metrics-grid">
+                <div class="metric-card-box metric-theme-charges">
+                    <div class="metric-card-top">
+                        <div class="metric-title-group">
+                            <span class="metric-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </span>
+                            <h4 class="metric-card-label">Accumulated Net Charges</h4>
+                        </div>
+                        <span class="metric-status-pill pill-info">Ledger</span>
+                    </div>
+                    <div class="metric-card-value">₱${formattedRunning}</div>
+                    <div class="metric-card-footer">
+                        <span class="metric-card-subtext">Net running charges to date</span>
+                    </div>
                 </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #16a34a;">
-                    <div style="font-size: 12px; font-weight: 700; color: #16a34a; text-transform: uppercase;">Pre-Discharge Advance Deposits</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #16a34a; margin-top: 4px;">₱${formattedAdv}</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Will be credited towards final bill</div>
+
+                <div class="metric-card-box metric-theme-deposits">
+                    <div class="metric-card-top">
+                        <div class="metric-title-group">
+                            <span class="metric-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </span>
+                            <h4 class="metric-card-label">Pre-Discharge Advance Deposits</h4>
+                        </div>
+                        <span class="metric-status-pill pill-success">Deposited</span>
+                    </div>
+                    <div class="metric-card-value value-deposits">₱${formattedAdv}</div>
+                    <div class="metric-card-footer">
+                        <span class="metric-card-subtext">Will be credited towards final bill</span>
+                    </div>
                 </div>
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; border-left: 4px solid #f59e0b;">
-                    <div style="font-size: 12px; font-weight: 700; color: #b45309; text-transform: uppercase;">Est. Settlement Balance Due</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #b45309; margin-top: 4px;">₱${formattedBal}</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Subject to statutory discounts at SOA</div>
+
+                <div class="metric-card-box metric-theme-balance">
+                    <div class="metric-card-top">
+                        <div class="metric-title-group">
+                            <span class="metric-icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            </span>
+                            <h4 class="metric-card-label">Est. Settlement Balance Due</h4>
+                        </div>
+                        <span class="metric-status-pill pill-warning">Estimated</span>
+                    </div>
+                    <div class="metric-card-value value-balance">₱${formattedBal}</div>
+                    <div class="metric-card-footer">
+                        <span class="metric-card-subtext">Subject to statutory discounts at SOA</span>
+                    </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
-                ${isNurseRole ? `
-                    <span class="badge badge-info" style="font-size: 13px; padding: 8px 14px; font-weight: 600;">Discharge Clearance must be processed by Finance Staff or Hospital Administrator.</span>
-                ` : `
-                    <button type="button" class="btn btn-danger" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${admissionData.Full_Name}')" style="font-size: 14px; padding: 10px 20px; font-weight: 700;">
-                        Process Patient Discharge &amp; Unlock Final SOA
-                    </button>
-                    <span class="text-muted" style="font-size: 13px;">Discharging unlocks statutory discounts (Senior/PWD/PhilHealth) and the Cashier settlement desk.</span>
-                `}
-            </div>
-
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <strong style="color: #1e40af; font-size: 13.5px;">Looking to record an advance payment or view interim partial bills?</strong>
-                    <p style="margin: 2px 0 0; font-size: 13px; color: #1e3a8a;">Partial bills, running ledger breakdowns, and pre-discharge deposit receipts are managed in the Live Ledger tab.</p>
+            <div class="discharge-footer-ledger-hint">
+                <div class="discharge-footer-hint-text">
+                    <strong>Looking to record an advance payment or view interim partial bills?</strong>
+                    <p>Partial bills, running ledger breakdowns, and pre-discharge deposit receipts are managed in the Live Ledger tab.</p>
                 </div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="switchClinicalTab('tab-ledger')" style="white-space: nowrap; font-weight: 600;">
+                <button type="button" class="btn btn-outline btn-sm btn-goto-ledger" onclick="switchClinicalTab('sub-ledger-advances')">
                     Go to Live Ledger &amp; Advance Deposits &rarr;
                 </button>
             </div>
@@ -2697,33 +2907,38 @@ const renderPaymentHistoryTable = (invId, admId, targetEl) => {
                 const bal = parseFloat(p.Balance_After || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
                 const isPaid = parseFloat(p.Balance_After || 0) <= 0;
                 const methodBadge = `<span class="badge badge-info">${p.Payment_Method || 'Cash'}</span>`;
+                const discAmt = parseFloat(p.Discount_Amount || 0);
+                const discBadge = discAmt > 0 ? `<br><span class="badge badge-success">+ Voucher: ₱${discAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>` : '';
 
                 rows += `
                     <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click row to view / print Official Receipt voucher">
-                        <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
-                        <td>${p.Payment_Date}</td>
-                        <td>${methodBadge}</td>
-                        <td>${p.Cashier_Name}</td>
-                        <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
-                        <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>
-                        <td>${p.Notes || '-'}</td>
-                        <td align="center"><button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation(); window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" style="white-space: nowrap; font-weight: 600;">Print OR</button></td>
+                        <td>
+                            <div class="table-primary-text font-bold text-info">${p.Receipt_Number}</div>
+                            <div class="table-sub-text">${p.Payment_Date}</div>
+                        </td>
+                        <td>
+                            <div>${methodBadge}</div>
+                            <div class="table-sub-text">${p.Cashier_Name} &bull; ${p.Notes || '-'}${discBadge}</div>
+                        </td>
+                        <td class="text-right">
+                            <div class="table-amount-prominent text-success font-bold">₱${amt}</div>
+                            <div class="table-sub-text">Bal: <strong class="${isPaid ? 'text-success' : 'text-danger'}">₱${bal}</strong></div>
+                        </td>
+                        <td>
+                            <span class="badge ${isPaid ? 'badge-success' : 'badge-warning'}">${isPaid ? 'Fully Paid' : 'Active Balance'}</span>
+                        </td>
                     </tr>
                 `;
             });
 
             targetEl.innerHTML = `
-                <table class="data-table" style="font-size: 13.5px;">
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Official Receipt #</th>
-                            <th>Date & Time</th>
-                            <th>Payment Method</th>
-                            <th>Cashier</th>
-                            <th style="text-align: right;">Amount Paid</th>
-                            <th style="text-align: right;">Remaining Bal</th>
-                            <th>Notes / Remarks</th>
-                            <th style="text-align: center;">Official Receipt</th>
+                            <th>Receipt &amp; Timestamp</th>
+                            <th>Method &amp; Cashier</th>
+                            <th class="text-right">Amount Paid &amp; Balance</th>
+                            <th>Settlement Status</th>
                         </tr>
                     </thead>
                     <tbody>

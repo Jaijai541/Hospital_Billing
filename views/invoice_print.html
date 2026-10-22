@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official Statement of Account — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/invoice_print.css?v=7.1">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/invoice_print.css?v=7.2">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
@@ -187,6 +187,7 @@
                         <td>Less: Total Payments Received:</td>
                         <td align="right"><strong id="summary-payment-total" style="color: #166534;">-₱0.00</strong></td>
                     </tr>
+                    <tbody id="applied-payments-itemized-tbody"></tbody>
                     <tr id="row-change-line" style="display: none;">
                         <td>Customer Change Given:</td>
                         <td align="right" id="summary-change-total">₱0.00</td>
@@ -275,7 +276,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/invoice_print.js?v=7.3"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/invoice_print.js?v=7.4"></script>
 </body>
 </html>

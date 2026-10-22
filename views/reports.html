@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Billing System — Reports & Financial Analytics</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/dashboard.css?v=7.1">
-    <link rel="stylesheet" href="../css/reports.css?v=1.6">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/dashboard.css?v=9.9">
+    <link rel="stylesheet" href="../css/reports.css?v=3.0">
 </head>
 <body>
 
@@ -26,18 +26,14 @@
 
             <div class="page-header">
                 <div class="page-title">
-                    <h2>Reports & Financial Analytics</h2>
+                    <h2>Reports &amp; Financial Analytics</h2>
                     <p>Live database reporting, revenue auditing, collection tracking, and spreadsheet export.</p>
                 </div>
-                <div class="reports-header-actions">
-                    <button type="button" id="btnExportExcel" class="btn btn-excel">
-                        <span>Export Excel (.xlsx)</span>
-                    </button>
-                    <button type="button" id="btnExportCsv" class="btn btn-csv">
-                        <span>Export CSV</span>
-                    </button>
-                    <button type="button" id="btnPrintReport" class="btn btn-outline">
-                        <span>Print Official Report</span>
+                <div class="reports-header-actions-bar">
+                    <button type="button" id="btnToggleReportDrawer" class="btn btn-primary btn-report-drawer-trigger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                        <span>Filters &amp; Actions</span>
+                        <span id="report-drawer-badge" class="report-drawer-badge">All Time</span>
                     </button>
                 </div>
             </div>
@@ -60,40 +56,100 @@
                 </button>
             </div>
 
-            <div class="report-filter-panel">
-                <div class="report-filter-grid">
-                    <div class="date-preset-group">
-                        <button type="button" class="date-preset-btn active" data-preset="all">All Time</button>
-                        <button type="button" class="date-preset-btn" data-preset="today">Today</button>
-                        <button type="button" class="date-preset-btn" data-preset="week">This Week</button>
-                        <button type="button" class="date-preset-btn" data-preset="month">This Month</button>
+            <div id="reportDrawerOverlay" class="report-drawer-overlay">
+                <aside id="reportDrawer" class="report-drawer" role="dialog" aria-label="Filters and Export Tools" aria-modal="true">
+                    <div class="report-drawer-header">
+                        <div class="report-drawer-title-group">
+                            <h3 class="report-drawer-title">Filters &amp; Report Actions</h3>
+                            <span class="report-drawer-subtitle">Configure date ranges, search records &amp; export</span>
+                        </div>
+                        <button type="button" id="btnCloseReportDrawer" class="report-drawer-close" aria-label="Close filters panel">&times;</button>
                     </div>
-
-                    <div class="filter-dates-wrap">
-                        <div class="form-group">
-                            <label for="filter_start_date">From:</label>
-                            <input type="date" id="filter_start_date" class="form-control">
+                    <div class="report-drawer-body">
+                        <div class="report-drawer-section">
+                            <div class="report-drawer-section-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Export &amp; Print</span>
+                            </div>
+                            <div class="reports-header-actions report-drawer-actions">
+                                <button type="button" id="btnExportExcel" class="btn btn-excel">
+                                    <span>Export Excel (.xlsx)</span>
+                                </button>
+                                <button type="button" id="btnExportCsv" class="btn btn-csv">
+                                    <span>Export CSV</span>
+                                </button>
+                                <button type="button" id="btnPrintReport" class="btn btn-outline">
+                                    <span>Print Official Report</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="filter_end_date">To:</label>
-                            <input type="date" id="filter_end_date" class="form-control">
-                        </div>
+                        <div class="report-drawer-section">
+                            <div class="report-drawer-section-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                <span>Filter Criteria</span>
+                            </div>
+                            <div class="report-filter-panel report-drawer-filter-panel">
+                                <div class="report-filter-toolbar">
+                                    <div class="filter-toolbar-right">
+                                        <div class="filter-search-capsule">
+                                            <label for="filter_search_query" class="capsule-floating-label">Quick Search</label>
+                                            <span class="capsule-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                            </span>
+                                            <input type="text" id="filter_search_query" class="capsule-search-input" placeholder="Quick search table...">
+                                        </div>
 
-                        <div class="form-group" id="secondary-filter-container">
-                            <label for="filter_secondary" id="filter_secondary_label">Filter:</label>
-                            <select id="filter_secondary" class="form-control">
-                                <option value="">All Records</option>
-                            </select>
+                                        <div class="filter-select-capsule" id="secondary-filter-container">
+                                            <label for="filter_secondary" id="filter_secondary_label" class="capsule-floating-label">Filter</label>
+                                            <span class="capsule-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                            </span>
+                                            <select id="filter_secondary" class="capsule-select-input">
+                                                <option value="">All Records</option>
+                                            </select>
+                                        </div>
+
+                                        <button type="button" id="btnResetFilter" class="btn-filter-reset" title="Reset all filters">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                            <span>Reset</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="filter-toolbar-left">
+                                        <div class="date-preset-group" role="group" aria-label="Quick date presets">
+                                            <span class="preset-group-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            </span>
+                                            <button type="button" class="date-preset-btn active" data-preset="all">All Time</button>
+                                            <button type="button" class="date-preset-btn" data-preset="today">Today</button>
+                                            <button type="button" class="date-preset-btn" data-preset="week">This Week</button>
+                                            <button type="button" class="date-preset-btn" data-preset="month">This Month</button>
+                                        </div>
+
+                                        <div class="filter-date-capsule">
+                                            <span class="capsule-floating-label">Date Range</span>
+                                            <span class="capsule-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                            </span>
+                                            <div class="capsule-date-field">
+                                                <label for="filter_start_date">From</label>
+                                                <input type="date" id="filter_start_date" class="capsule-date-input">
+                                            </div>
+                                            <span class="capsule-date-arrow">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                            </span>
+                                            <div class="capsule-date-field">
+                                                <label for="filter_end_date">To</label>
+                                                <input type="date" id="filter_end_date" class="capsule-date-input">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="filter-actions-wrap">
-                        <button type="button" id="btnResetFilter" class="btn btn-outline">
-                            Reset
-                        </button>
-                    </div>
-                </div>
+                </aside>
             </div>
 
             <div id="report-kpi-container" class="report-kpi-grid"></div>
@@ -101,7 +157,12 @@
             <div class="spreadsheet-card">
                 <div class="spreadsheet-header-bar">
                     <div class="spreadsheet-title-wrap">
-                        <h3 id="spreadsheet-title">Daily Cashier Collections & Remittance Spreadsheet</h3>
+                        <div class="dash-header-title-group">
+                            <h3 id="spreadsheet-title" class="dash-card-title">Daily Cashier Collections & Remittance Spreadsheet</h3>
+                            <button type="button" id="btnRefreshReports" class="btn-refresh" title="Refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
                         <p id="spreadsheet-subtitle">Itemized receipt logs, payment methods breakdown, and settlement balances.</p>
                     </div>
                     <div class="spreadsheet-meta-wrap">
@@ -145,8 +206,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/reports.js?v=1.3"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/reports.js?v=3.0"></script>
 </body>
 </html>

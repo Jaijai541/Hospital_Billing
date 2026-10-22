@@ -36,6 +36,43 @@ const setupTabSwitching = () => {
     });
 };
 
+const openReportDrawer = () => {
+    const overlay = document.getElementById("reportDrawerOverlay");
+    const drawer = document.getElementById("reportDrawer");
+    if (overlay && drawer) {
+        overlay.classList.add("active");
+        drawer.classList.add("open");
+        document.body.style.overflow = "hidden";
+    }
+};
+
+const closeReportDrawer = () => {
+    const overlay = document.getElementById("reportDrawerOverlay");
+    const drawer = document.getElementById("reportDrawer");
+    if (overlay && drawer) {
+        overlay.classList.remove("active");
+        drawer.classList.remove("open");
+        document.body.style.overflow = "";
+    }
+};
+
+const updateReportDrawerBadge = () => {
+    const badge = document.getElementById("report-drawer-badge");
+    if (!badge) return;
+    const activePreset = document.querySelector(".date-preset-btn.active");
+    if (activePreset) {
+        badge.textContent = activePreset.textContent.trim();
+        return;
+    }
+    const startInput = document.getElementById("filter_start_date");
+    const endInput = document.getElementById("filter_end_date");
+    if ((startInput && startInput.value) || (endInput && endInput.value)) {
+        badge.textContent = "Custom Dates";
+    } else {
+        badge.textContent = "All Time";
+    }
+};
+
 const setupPresetButtons = () => {
     const presetButtons = document.querySelectorAll(".date-preset-btn");
     const startInput = document.getElementById("filter_start_date");
@@ -67,6 +104,7 @@ const setupPresetButtons = () => {
                 endInput.value = formatDateYMD(new Date());
             }
 
+            updateReportDrawerBadge();
             fetchReportData();
         });
     });
@@ -82,11 +120,19 @@ const setupEventListeners = () => {
     const endInput = document.getElementById("filter_end_date");
     const handleDateChange = () => {
         document.querySelectorAll(".date-preset-btn").forEach((b) => b.classList.remove("active"));
+        updateReportDrawerBadge();
         fetchReportData();
     };
 
     if (startInput) startInput.addEventListener("change", handleDateChange);
     if (endInput) endInput.addEventListener("change", handleDateChange);
+
+    const searchInput = document.getElementById("filter_search_query");
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            applyQuickTableSearch();
+        });
+    }
 
     const btnReset = document.getElementById("btnResetFilter");
     if (btnReset) {
@@ -94,9 +140,13 @@ const setupEventListeners = () => {
             if (startInput) startInput.value = "";
             if (endInput) endInput.value = "";
             if (secondarySelect) secondarySelect.value = "";
+            if (searchInput) searchInput.value = "";
             const presetAll = document.querySelector('.date-preset-btn[data-preset="all"]');
             if (presetAll) presetAll.click();
-            else fetchReportData();
+            else {
+                updateReportDrawerBadge();
+                fetchReportData();
+            }
         });
     }
 
@@ -114,6 +164,34 @@ const setupEventListeners = () => {
     if (btnPrint) {
         btnPrint.addEventListener("click", printOfficialReport);
     }
+
+    const btnToggleDrawer = document.getElementById("btnToggleReportDrawer");
+    if (btnToggleDrawer) {
+        btnToggleDrawer.addEventListener("click", openReportDrawer);
+    }
+
+    const btnCloseDrawer = document.getElementById("btnCloseReportDrawer");
+    if (btnCloseDrawer) {
+        btnCloseDrawer.addEventListener("click", closeReportDrawer);
+    }
+
+    const overlay = document.getElementById("reportDrawerOverlay");
+    if (overlay) {
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) closeReportDrawer();
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeReportDrawer();
+        }
+    });
+
+    initRefreshBtn("btnRefreshReports", async () => {
+        await loadFilterLookups();
+        await fetchReportData();
+    });
 };
 
 const loadFilterLookups = async () => {
@@ -136,8 +214,8 @@ const updateSecondaryFilterUI = () => {
     select.innerHTML = '<option value="">All Records</option>';
 
     if (currentTab === "collections") {
-        container.style.display = "flex";
-        label.textContent = "Method:";
+        container.style.display = "inline-flex";
+        label.textContent = "Payment Method";
         lookupData.payment_methods.forEach((pm) => {
             const opt = document.createElement("option");
             opt.value = pm.Payment_Method_ID;
@@ -145,8 +223,8 @@ const updateSecondaryFilterUI = () => {
             select.appendChild(opt);
         });
     } else if (currentTab === "doctor_fees") {
-        container.style.display = "flex";
-        label.textContent = "Doctor:";
+        container.style.display = "inline-flex";
+        label.textContent = "Physician";
         lookupData.doctors.forEach((d) => {
             const opt = document.createElement("option");
             opt.value = d.Doctor_ID;
@@ -154,8 +232,8 @@ const updateSecondaryFilterUI = () => {
             select.appendChild(opt);
         });
     } else if (currentTab === "ar_aging") {
-        container.style.display = "flex";
-        label.textContent = "Status:";
+        container.style.display = "inline-flex";
+        label.textContent = "Note Status";
         [
             { val: "Active", label: "Active Notes" },
             { val: "Overdue", label: "Overdue Notes" },
@@ -244,6 +322,21 @@ const renderActiveReport = () => {
     }
 
     updatePrintHeader();
+    applyQuickTableSearch();
+};
+
+const applyQuickTableSearch = () => {
+    const searchInput = document.getElementById("filter_search_query");
+    const tbody = document.getElementById("report-table-body");
+    if (!searchInput || !tbody) return;
+
+    const query = searchInput.value.trim().toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
+    rows.forEach((row) => {
+        if (row.cells.length <= 1) return;
+        const rowText = (row.textContent || "").toLowerCase();
+        row.style.display = !query || rowText.includes(query) ? "" : "none";
+    });
 };
 
 const updatePrintHeader = () => {
@@ -296,23 +389,55 @@ const renderCollectionsReport = () => {
 
     const kpiEl = document.getElementById("report-kpi-container");
     kpiEl.innerHTML = `
-        <div class="report-kpi-card" style="border-left-color: #107c41;">
-            <div class="report-kpi-label">Total Collections</div>
-            <div class="report-kpi-value" style="color: #107c41;">${formatPesos(summary.total_collections)}</div>
+        <div class="report-kpi-card report-kpi-emerald">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Total Collections</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-success">Remitted</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.total_collections)}</div>
             <div class="report-kpi-sub">${summary.transaction_count} official payment transactions</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #0284c7;">
-            <div class="report-kpi-label">Advance Bed Deposits</div>
-            <div class="report-kpi-value" style="color: #0284c7;">${formatPesos(summary.advance_total)}</div>
+        <div class="report-kpi-card report-kpi-sky">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Advance Bed Deposits</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-info">Deposits</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.advance_total)}</div>
             <div class="report-kpi-sub">Pre-discharge admission deposits</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #6366f1;">
-            <div class="report-kpi-label">Final Settlements</div>
-            <div class="report-kpi-value" style="color: #6366f1;">${formatPesos(summary.settlement_total)}</div>
+        <div class="report-kpi-card report-kpi-indigo">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Final Settlements</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-neutral">Settled</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.settlement_total)}</div>
             <div class="report-kpi-sub">Discharge invoice settlements</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #f59e0b;">
-            <div class="report-kpi-label">Payment Methods Count</div>
+        <div class="report-kpi-card report-kpi-amber">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Payment Channels</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-warning">${summary.by_method?.length || 0} Methods</span>
+            </div>
             <div class="report-kpi-value">${summary.by_method?.length || 0} Methods</div>
             <div class="report-kpi-sub">${summary.by_method?.map((m) => m.Method_Name + ': ' + m.Transaction_Count).join(', ') || 'None'}</div>
         </div>
@@ -321,15 +446,10 @@ const renderCollectionsReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Receipt #</th>
-            <th>Payment Date & Time</th>
-            <th>Admission #</th>
-            <th>Patient Name</th>
-            <th>Payment Method</th>
-            <th>Classification</th>
-            <th class="text-right">Amount Paid</th>
-            <th class="text-right">Balance After</th>
-            <th>Cashier User</th>
+            <th>Receipt & Timestamp</th>
+            <th>Patient & Case</th>
+            <th>Payment Method & Stage</th>
+            <th class="text-right">Amount Paid & Balance</th>
             <th>Remarks / Notes</th>
         </tr>
     `;
@@ -338,7 +458,7 @@ const renderCollectionsReport = () => {
     if (records.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" style="text-align: center; padding: 30px; color: #64748b;">
+                <td colspan="5" class="text-center p-4 text-muted">
                     No payment records found matching the selected date filters.
                 </td>
             </tr>
@@ -346,20 +466,26 @@ const renderCollectionsReport = () => {
     } else {
         tbody.innerHTML = records.map((r) => `
             <tr>
-                <td style="font-weight: 700; color: #0284c7;">${r.Receipt_Number}</td>
-                <td>${r.Payment_Date}</td>
-                <td><span class="badge badge-secondary">${r.Admission_Code}</span></td>
-                <td style="font-weight: 600;">${r.Patient_Name}</td>
-                <td><span class="badge badge-info">${r.Payment_Method}</span></td>
                 <td>
-                    <span class="badge ${r.Is_Advance == 1 ? 'badge-primary' : 'badge-success'}">
-                        ${r.Payment_Type}
-                    </span>
+                    <div class="table-primary-text font-bold text-info">${r.Receipt_Number}</div>
+                    <div class="table-sub-text">${r.Payment_Date}</div>
                 </td>
-                <td class="currency-cell" style="color: #107c41;">${formatPesos(r.Amount_Paid)}</td>
-                <td class="currency-cell">${formatPesos(r.Balance_After)}</td>
-                <td>${r.Cashier_Name}</td>
-                <td style="color: #64748b; font-style: italic;">${r.Notes || '—'}</td>
+                <td>
+                    <div class="table-primary-text font-bold">${r.Patient_Name}</div>
+                    <div class="table-sub-text"><span class="badge badge-secondary">${r.Admission_Code}</span></div>
+                </td>
+                <td>
+                    <div>
+                        <span class="badge badge-info">${r.Payment_Method}</span>
+                        <span class="badge ${r.Is_Advance == 1 ? 'badge-primary' : 'badge-success'}">${r.Payment_Type}</span>
+                    </div>
+                    <div class="table-sub-text">${r.Cashier_Name}</div>
+                </td>
+                <td class="text-right">
+                    <div class="table-amount-prominent text-success font-bold">${formatPesos(r.Amount_Paid)}</div>
+                    <div class="table-sub-text">Bal After: ${formatPesos(r.Balance_After)}</div>
+                </td>
+                <td><div class="table-sub-text-dark">${r.Notes || '—'}</div></td>
             </tr>
         `).join("");
     }
@@ -367,9 +493,11 @@ const renderCollectionsReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="6" style="text-align: right; text-transform: uppercase;">Grand Total Collections:</td>
-            <td class="currency-cell" style="color: #107c41; font-size: 14px;">${formatPesos(summary.total_collections)}</td>
-            <td colspan="3"></td>
+            <td colspan="3" class="text-right font-bold uppercase">Grand Total Collections:</td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-success font-bold">${formatPesos(summary.total_collections)}</div>
+            </td>
+            <td></td>
         </tr>
     `;
 };
@@ -385,26 +513,56 @@ const renderDepartmentRevenueReport = () => {
 
     const kpiEl = document.getElementById("report-kpi-container");
     kpiEl.innerHTML = `
-        <div class="report-kpi-card" style="border-left-color: #0284c7;">
-            <div class="report-kpi-label">Gross Charges</div>
-            <div class="report-kpi-value" style="color: #0284c7;">${formatPesos(summary.grand_gross)}</div>
+        <div class="report-kpi-card report-kpi-sky">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Gross Charges</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-info">Gross</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.grand_gross)}</div>
             <div class="report-kpi-sub">${summary.grand_transactions} total ledger entries</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #ef4444;">
-            <div class="report-kpi-label">Credits & Returns</div>
-            <div class="report-kpi-value" style="color: #ef4444;">${formatPesos(summary.grand_returns)}</div>
-            <div class="report-kpi-sub">Returned medicines & voided items</div>
+        <div class="report-kpi-card report-kpi-amber">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Credits &amp; Returns</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-warning">Adjusted</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.grand_returns)}</div>
+            <div class="report-kpi-sub">Returned medicines &amp; voided items</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #107c41;">
-            <div class="report-kpi-label">Net Billed Revenue</div>
-            <div class="report-kpi-value" style="color: #107c41;">${formatPesos(summary.grand_net)}</div>
+        <div class="report-kpi-card report-kpi-emerald">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Net Billed Revenue</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-success">Net</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.grand_net)}</div>
             <div class="report-kpi-sub">Net patient clinical fees</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #8b5cf6;">
-            <div class="report-kpi-label">Top Contributing Station</div>
-            <div class="report-kpi-value" style="font-size: 17px; font-weight: 700; color: #8b5cf6;">
-                ${stations[0]?.Station_Name || 'None'}
+        <div class="report-kpi-card report-kpi-purple">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Top Station</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-purple">${stations[0]?.Revenue_Share_Pct || 0}%</span>
             </div>
+            <div class="report-kpi-value report-kpi-value-station">${stations[0]?.Station_Name || 'None'}</div>
             <div class="report-kpi-sub">${stations[0]?.Revenue_Share_Pct || 0}% share of revenue</div>
         </div>
     `;
@@ -413,10 +571,8 @@ const renderDepartmentRevenueReport = () => {
     thead.innerHTML = `
         <tr>
             <th>Station / Department</th>
-            <th>Code</th>
-            <th class="text-right">Transaction Count</th>
-            <th class="text-right">Gross Charges</th>
-            <th class="text-right">Returns / Deductions</th>
+            <th class="text-right">Transactions</th>
+            <th class="text-right">Gross Charges & Returns</th>
             <th class="text-right">Net Revenue</th>
             <th class="text-right">Share of Total</th>
         </tr>
@@ -425,25 +581,40 @@ const renderDepartmentRevenueReport = () => {
     const tbody = document.getElementById("report-table-body");
     tbody.innerHTML = stations.map((st) => `
         <tr>
-            <td style="font-weight: 700; color: #0f172a;">${st.Station_Name}</td>
-            <td><span class="badge badge-secondary">${st.Code_Prefix}</span></td>
-            <td class="number-cell">${st.Total_Transactions}</td>
-            <td class="currency-cell">${formatPesos(st.Gross_Charges)}</td>
-            <td class="currency-cell" style="color: #ef4444;">${formatPesos(st.Total_Returns)}</td>
-            <td class="currency-cell" style="color: #107c41; font-weight: 700;">${formatPesos(st.Net_Revenue)}</td>
-            <td class="number-cell" style="font-weight: 700; color: #0284c7;">${st.Revenue_Share_Pct}%</td>
+            <td>
+                <div class="table-primary-text font-bold">${st.Station_Name}</div>
+                <div class="table-sub-text"><span class="badge badge-secondary">${st.Code_Prefix}</span></div>
+            </td>
+            <td class="text-right">
+                <div class="table-primary-text font-bold">${st.Total_Transactions}</div>
+                <div class="table-sub-text">txns</div>
+            </td>
+            <td class="text-right">
+                <div class="table-sub-text-dark">${formatPesos(st.Gross_Charges)}</div>
+                <div class="table-sub-text text-danger">-${formatPesos(st.Total_Returns)} ret</div>
+            </td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-success font-bold">${formatPesos(st.Net_Revenue)}</div>
+            </td>
+            <td class="text-right">
+                <div class="table-primary-text font-bold text-info">${st.Revenue_Share_Pct}%</div>
+            </td>
         </tr>
     `).join("");
 
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="2" style="text-align: right; text-transform: uppercase;">Hospital Grand Totals:</td>
-            <td class="number-cell">${summary.grand_transactions}</td>
-            <td class="currency-cell">${formatPesos(summary.grand_gross)}</td>
-            <td class="currency-cell" style="color: #ef4444;">${formatPesos(summary.grand_returns)}</td>
-            <td class="currency-cell" style="color: #107c41; font-size: 14px;">${formatPesos(summary.grand_net)}</td>
-            <td class="number-cell" style="color: #0284c7; font-size: 14px;">100.00%</td>
+            <td class="text-right font-bold uppercase">Hospital Grand Totals:</td>
+            <td class="text-right font-bold">${summary.grand_transactions} txns</td>
+            <td class="text-right">
+                <div>${formatPesos(summary.grand_gross)}</div>
+                <div class="text-danger">-${formatPesos(summary.grand_returns)}</div>
+            </td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-success font-bold">${formatPesos(summary.grand_net)}</div>
+            </td>
+            <td class="text-right font-bold text-info">100.00%</td>
         </tr>
     `;
 };
@@ -458,24 +629,56 @@ const renderDoctorFeesReport = () => {
 
     const kpiEl = document.getElementById("report-kpi-container");
     kpiEl.innerHTML = `
-        <div class="report-kpi-card" style="border-left-color: #0284c7;">
-            <div class="report-kpi-label">Total Professional Fees</div>
-            <div class="report-kpi-value" style="color: #0284c7;">${formatPesos(summary.grand_pf_total)}</div>
+        <div class="report-kpi-card report-kpi-sky">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Total Professional Fees</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-info">Total Fees</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.grand_pf_total)}</div>
             <div class="report-kpi-sub">Total doctor round billings</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #107c41;">
-            <div class="report-kpi-label">Total Bedside Visits</div>
-            <div class="report-kpi-value" style="color: #107c41;">${summary.grand_rounds_count} Rounds</div>
+        <div class="report-kpi-card report-kpi-emerald">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Total Bedside Visits</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-success">Visits</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${summary.grand_rounds_count} Visits</div>
             <div class="report-kpi-sub">Logged in patient charts</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #6366f1;">
-            <div class="report-kpi-label">Active Doctors</div>
+        <div class="report-kpi-card report-kpi-indigo">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Active Doctors</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-neutral">${summary.doctors_count} MDs</span>
+            </div>
             <div class="report-kpi-value">${summary.doctors_count} Physicians</div>
             <div class="report-kpi-sub">In hospital medical staff</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #f59e0b;">
-            <div class="report-kpi-label">Average Fee per Round</div>
-            <div class="report-kpi-value" style="color: #f59e0b;">
+        <div class="report-kpi-card report-kpi-amber">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Average Fee per Round</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-warning">Avg Rate</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">
                 ${summary.grand_rounds_count > 0 ? formatPesos(summary.grand_pf_total / summary.grand_rounds_count) : '₱0.00'}
             </div>
             <div class="report-kpi-sub">Average round charge rate</div>
@@ -485,12 +688,9 @@ const renderDoctorFeesReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Doctor ID</th>
-            <th>Physician Full Name</th>
-            <th>Designation</th>
-            <th>Department / Station</th>
-            <th class="text-right">Standard Round Fee</th>
-            <th class="text-right">Total Rounds Conducted</th>
+            <th>Physician & Designation</th>
+            <th>Station & Standard Round Fee</th>
+            <th class="text-right">Rounds Conducted</th>
             <th class="text-right">Unique Patients</th>
             <th class="text-right">Total PF Generated</th>
         </tr>
@@ -499,24 +699,37 @@ const renderDoctorFeesReport = () => {
     const tbody = document.getElementById("report-table-body");
     tbody.innerHTML = doctors.map((d) => `
         <tr>
-            <td><span class="badge badge-secondary">${d.Doctor_Code}</span></td>
-            <td style="font-weight: 700; color: #0f172a;">${d.Doctor_Name}</td>
-            <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
-            <td>${d.Department_Station}</td>
-            <td class="currency-cell">${formatPesos(d.Base_Round_Fee)}</td>
-            <td class="number-cell" style="font-weight: 700;">${d.Total_Rounds}</td>
-            <td class="number-cell">${d.Unique_Patients_Attended}</td>
-            <td class="currency-cell" style="color: #0284c7; font-weight: 700;">${formatPesos(d.Total_PF_Generated)}</td>
+            <td>
+                <div class="table-primary-text font-bold">${d.Doctor_Name}</div>
+                <div class="table-sub-text"><span class="badge badge-secondary">${d.Doctor_Code}</span> &bull; <span class="badge badge-info">${d.Doctor_Type}</span></div>
+            </td>
+            <td>
+                <div class="table-primary-text">${d.Department_Station}</div>
+                <div class="table-sub-text">Fee: ${formatPesos(d.Base_Round_Fee)} / round</div>
+            </td>
+            <td class="text-right">
+                <div class="table-primary-text font-bold">${d.Total_Rounds}</div>
+                <div class="table-sub-text">rounds</div>
+            </td>
+            <td class="text-right">
+                <div class="table-primary-text font-bold">${d.Unique_Patients_Attended}</div>
+                <div class="table-sub-text">patients</div>
+            </td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-info font-bold">${formatPesos(d.Total_PF_Generated)}</div>
+            </td>
         </tr>
     `).join("");
 
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Professional Fees & Rounds:</td>
-            <td class="number-cell" style="font-size: 14px;">${summary.grand_rounds_count}</td>
+            <td colspan="2" class="text-right font-bold uppercase">Total Professional Fees & Rounds:</td>
+            <td class="text-right font-bold">${summary.grand_rounds_count} rounds</td>
             <td></td>
-            <td class="currency-cell" style="color: #0284c7; font-size: 14px;">${formatPesos(summary.grand_pf_total)}</td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-info font-bold">${formatPesos(summary.grand_pf_total)}</div>
+            </td>
         </tr>
     `;
 };
@@ -531,43 +744,69 @@ const renderArAgingReport = () => {
 
     const kpiEl = document.getElementById("report-kpi-container");
     kpiEl.innerHTML = `
-        <div class="report-kpi-card" style="border-left-color: #ef4444;">
-            <div class="report-kpi-label">Total Outstanding AR</div>
-            <div class="report-kpi-value" style="color: #ef4444;">${formatPesos(summary.total_active_ar)}</div>
+        <div class="report-kpi-card report-kpi-indigo">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Total Outstanding AR</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-warning">Receivables</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.total_active_ar)}</div>
             <div class="report-kpi-sub">Unsettled promissory notes balance</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #107c41;">
-            <div class="report-kpi-label">Current (Within Term)</div>
-            <div class="report-kpi-value" style="color: #107c41;">${formatPesos(summary.current_not_due)}</div>
+        <div class="report-kpi-card report-kpi-emerald">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Current (Within Term)</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-success">Current</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.current_not_due)}</div>
             <div class="report-kpi-sub">Due date has not lapsed</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #f59e0b;">
-            <div class="report-kpi-label">1 - 30 Days Overdue</div>
-            <div class="report-kpi-value" style="color: #f59e0b;">${formatPesos(summary.overdue_1_30)}</div>
+        <div class="report-kpi-card report-kpi-amber">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">1 - 30 Days Overdue</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-warning">1-30d Overdue</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${formatPesos(summary.overdue_1_30)}</div>
             <div class="report-kpi-sub">Recent overdue balances</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #991b1b;">
-            <div class="report-kpi-label">31+ Days Overdue</div>
-            <div class="report-kpi-value" style="color: #991b1b;">
+        <div class="report-kpi-card report-kpi-rose">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">31+ Days Overdue</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-danger">Extended</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">
                 ${formatPesos(summary.overdue_31_60 + summary.overdue_61_90 + summary.overdue_over_90)}
             </div>
-            <div class="report-kpi-sub">Critical collection attention required</div>
+            <div class="report-kpi-sub">Extended collection follow-up</div>
         </div>
     `;
 
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Note #</th>
-            <th>Invoice #</th>
-            <th>Patient Name</th>
-            <th>Contact</th>
+            <th>Note & Invoice</th>
+            <th>Patient & Guarantor</th>
             <th>Payment Plan</th>
-            <th class="text-right">Monthly Installment</th>
-            <th class="text-right">Balance Owed</th>
-            <th>Next Due Date</th>
-            <th>Aging Schedule</th>
-            <th>Guarantor</th>
+            <th class="text-right">Balance Owed & Aging</th>
             <th>Status</th>
         </tr>
     `;
@@ -576,7 +815,7 @@ const renderArAgingReport = () => {
     if (notes.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="11" style="text-align: center; padding: 30px; color: #64748b;">
+                <td colspan="5" class="text-center p-4 text-muted">
                     No promissory notes found matching the selected status filter.
                 </td>
             </tr>
@@ -593,16 +832,22 @@ const renderArAgingReport = () => {
 
             return `
                 <tr>
-                    <td style="font-weight: 700; color: #6366f1;">${n.Note_Code}</td>
-                    <td><span class="badge badge-secondary">${n.Invoice_Code}</span></td>
-                    <td style="font-weight: 600;">${n.Patient_Name}</td>
-                    <td>${n.Patient_Contact || '—'}</td>
-                    <td>${n.Plan_Type_Name}</td>
-                    <td class="currency-cell">${formatPesos(n.Monthly_Amount)}</td>
-                    <td class="currency-cell" style="color: #ef4444; font-weight: 700;">${formatPesos(n.Total_Balance_Owed)}</td>
-                    <td style="font-weight: 600;">${n.Due_Date}</td>
-                    <td><span class="badge ${bracketBadge}">${n.Aging_Bracket}</span></td>
-                    <td>${n.Guarantor_Name}</td>
+                    <td>
+                        <div class="table-primary-text font-mono font-bold text-primary">${n.Note_Code}</div>
+                        <div class="table-sub-text"><span class="badge badge-secondary">${n.Invoice_Code}</span></div>
+                    </td>
+                    <td>
+                        <div class="table-primary-text font-bold">${n.Patient_Name}</div>
+                        <div class="table-sub-text">Guarantor: ${n.Guarantor_Name} &bull; ${n.Patient_Contact || '—'}</div>
+                    </td>
+                    <td>
+                        <div class="table-primary-text">${n.Plan_Type_Name}</div>
+                        <div class="table-sub-text">${formatPesos(n.Monthly_Amount)} / mo</div>
+                    </td>
+                    <td class="text-right">
+                        <div class="table-amount-prominent text-danger font-bold">${formatPesos(n.Total_Balance_Owed)}</div>
+                        <div class="table-sub-text">Due: ${n.Due_Date} &bull; <span class="badge ${bracketBadge}">${n.Aging_Bracket}</span></div>
+                    </td>
                     <td><span class="badge ${statusBadge}">${n.Status}</span></td>
                 </tr>
             `;
@@ -612,9 +857,11 @@ const renderArAgingReport = () => {
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="6" style="text-align: right; text-transform: uppercase;">Total Active Accounts Receivable:</td>
-            <td class="currency-cell" style="color: #ef4444; font-size: 14px;">${formatPesos(summary.total_active_ar)}</td>
-            <td colspan="4"></td>
+            <td colspan="3" class="text-right font-bold uppercase">Total Active Accounts Receivable:</td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-danger font-bold">${formatPesos(summary.total_active_ar)}</div>
+            </td>
+            <td></td>
         </tr>
     `;
 };
@@ -630,24 +877,56 @@ const renderBedOccupancyReport = () => {
 
     const kpiEl = document.getElementById("report-kpi-container");
     kpiEl.innerHTML = `
-        <div class="report-kpi-card" style="border-left-color: #0284c7;">
-            <div class="report-kpi-label">Total Hospital Beds</div>
+        <div class="report-kpi-card report-kpi-sky">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Total Hospital Beds</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-info">Capacity</span>
+            </div>
             <div class="report-kpi-value">${summary.total_beds} Beds</div>
-            <div class="report-kpi-sub">Across ${summary.rooms_count} rooms & wards</div>
+            <div class="report-kpi-sub">Across ${summary.rooms_count} rooms &amp; wards</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #f59e0b;">
-            <div class="report-kpi-label">Occupied Beds</div>
-            <div class="report-kpi-value" style="color: #f59e0b;">${summary.occupied_beds} Beds</div>
+        <div class="report-kpi-card report-kpi-amber">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Occupied Beds</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-warning">Occupied</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${summary.occupied_beds} Beds</div>
             <div class="report-kpi-sub">Active in-patient admissions</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #107c41;">
-            <div class="report-kpi-label">Available Vacant Beds</div>
-            <div class="report-kpi-value" style="color: #107c41;">${summary.vacant_beds} Beds</div>
+        <div class="report-kpi-card report-kpi-emerald">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Available Vacant Beds</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-success">Vacant</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${summary.vacant_beds} Beds</div>
             <div class="report-kpi-sub">Ready for immediate admission</div>
         </div>
-        <div class="report-kpi-card" style="border-left-color: #8b5cf6;">
-            <div class="report-kpi-label">Occupancy Rate</div>
-            <div class="report-kpi-value" style="color: #8b5cf6;">${summary.occupancy_rate}%</div>
+        <div class="report-kpi-card report-kpi-purple">
+            <div class="report-kpi-top">
+                <div class="report-kpi-title-group">
+                    <span class="report-kpi-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    </span>
+                    <h4 class="report-kpi-label">Occupancy Rate</h4>
+                </div>
+                <span class="report-kpi-status-pill pill-purple">Index</span>
+            </div>
+            <div class="report-kpi-value report-kpi-value-accent">${summary.occupancy_rate}%</div>
             <div class="report-kpi-sub">Hospital utilization index</div>
         </div>
     `;
@@ -655,37 +934,45 @@ const renderBedOccupancyReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Room / Ward Name</th>
-            <th>Classification</th>
+            <th>Room / Ward & Classification</th>
             <th class="text-right">Daily Board Rate</th>
-            <th class="text-right">Bed Capacity</th>
-            <th class="text-right">Occupied Beds</th>
-            <th class="text-right">Available Beds</th>
-            <th class="text-right">Occupancy %</th>
+            <th class="text-right">Capacity & Occupancy</th>
+            <th class="text-right">Occupancy Rate</th>
+            <th>Status</th>
         </tr>
     `;
 
     const tbody = document.getElementById("report-table-body");
     tbody.innerHTML = rooms.map((rm) => `
         <tr>
-            <td style="font-weight: 700; color: #0f172a;">${rm.Room_Name}</td>
-            <td><span class="badge badge-info">${rm.Room_Type}</span></td>
-            <td class="currency-cell">${formatPesos(rm.Daily_Rate)}</td>
-            <td class="number-cell">${rm.Total_Beds}</td>
-            <td class="number-cell" style="color: #f59e0b; font-weight: 700;">${rm.Occupied_Beds}</td>
-            <td class="number-cell" style="color: #107c41; font-weight: 700;">${rm.Vacant_Beds}</td>
-            <td class="number-cell" style="font-weight: 700; color: #0284c7;">${rm.Occupancy_Rate}%</td>
+            <td>
+                <div class="table-primary-text font-bold">${rm.Room_Name}</div>
+                <div class="table-sub-text"><span class="badge badge-info">${rm.Room_Type}</span></div>
+            </td>
+            <td class="text-right">
+                <div class="table-amount-prominent font-bold">${formatPesos(rm.Daily_Rate)}</div>
+                <div class="table-sub-text">per day</div>
+            </td>
+            <td class="text-right">
+                <div class="table-primary-text font-bold">${rm.Total_Beds} Beds</div>
+                <div class="table-sub-text"><span class="text-warning">${rm.Occupied_Beds} occ</span> &bull; <span class="text-success">${rm.Vacant_Beds} vac</span></div>
+            </td>
+            <td class="text-right">
+                <div class="table-primary-text font-bold text-info">${rm.Occupancy_Rate}%</div>
+            </td>
+            <td>
+                <span class="badge ${rm.Occupancy_Rate >= 80 ? 'badge-danger' : (rm.Occupancy_Rate >= 50 ? 'badge-warning' : 'badge-success')}">${rm.Occupancy_Rate >= 80 ? 'High' : (rm.Occupancy_Rate >= 50 ? 'Moderate' : 'Available')}</span>
+            </td>
         </tr>
     `).join("");
 
     const tfoot = document.getElementById("report-table-foot");
     tfoot.innerHTML = `
         <tr>
-            <td colspan="3" style="text-align: right; text-transform: uppercase;">Hospital Capacity Totals:</td>
-            <td class="number-cell" style="font-size: 14px;">${summary.total_beds}</td>
-            <td class="number-cell" style="color: #f59e0b; font-size: 14px;">${summary.occupied_beds}</td>
-            <td class="number-cell" style="color: #107c41; font-size: 14px;">${summary.vacant_beds}</td>
-            <td class="number-cell" style="color: #0284c7; font-size: 14px;">${summary.occupancy_rate}%</td>
+            <td colspan="2" class="text-right font-bold uppercase">Hospital Capacity Totals:</td>
+            <td class="text-right font-bold">${summary.total_beds} beds (${summary.occupied_beds} occ / ${summary.vacant_beds} vac)</td>
+            <td class="text-right font-bold text-info">${summary.occupancy_rate}%</td>
+            <td></td>
         </tr>
     `;
 };

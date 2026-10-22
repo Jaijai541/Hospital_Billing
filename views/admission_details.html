@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=8.9">
-    <link rel="stylesheet" href="../css/admission_details.css?v=8.3">
+    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/admission_details.css?v=10.0">
 </head>
 <body>
 
@@ -16,22 +16,45 @@
         <aside id="sidebar-container" class="sidebar"></aside>
         <main class="main-content">
             <div class="topbar">
-                <div class="topbar-title">
-                    <h1>Patient Chart & Live Billing Ledger</h1>
-                    <span class="subtitle">Clinical Care, Doctor Orders, Bed Allocation & Real-Time Account</span>
+                <div class="topbar-title-group">
+                    <a href="admissions.html" class="chart-header-back-btn" title="Back to Admissions" aria-label="Back to Admissions">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    </a>
+                    <div class="topbar-title">
+                        <h1>Patient Chart & Live Billing Ledger</h1>
+                        <span class="subtitle">Clinical Care, Doctor Orders, Bed Allocation & Real-Time Account</span>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button type="button" id="btnChartDischarge" class="btn btn-danger btn-sm" style="display: none;">Discharge Patient</button>
-                    <a href="admissions.html" class="btn btn-secondary btn-sm">&larr; Back to Admissions</a>
+                <div class="chart-topbar-actions">
+                    <button type="button" id="btnOpenVoidModal" class="chart-topbar-btn chart-btn-void chart-topbar-btn-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        <span>Void Accidental Admission</span>
+                    </button>
+                    <button type="button" id="btnChartDischarge" class="chart-topbar-btn chart-btn-discharge chart-topbar-btn-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <span>Discharge Patient</span>
+                    </button>
+                    <button type="button" id="btnChartGatePass" class="chart-topbar-btn chart-btn-gatepass chart-topbar-btn-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        <span>Print Gate Pass</span>
+                    </button>
                 </div>
             </div>
 
             <div class="content-body">
                 <div class="card mb-4" id="patient-banner">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <h2>Patient & Admission Summary</h2>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <button type="button" class="btn btn-outline btn-sm" id="btnOpenAdmissionHistory">View Admission History</button>
+                    <div class="card-header patient-summary-card-header">
+                        <div class="patient-summary-title-group">
+                            <h2 class="patient-summary-title">Patient & Admission Summary</h2>
+                            <button type="button" id="btnRefreshChart" class="btn-refresh" title="Refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
+                        <div class="patient-summary-title-group">
+                            <button type="button" class="chart-btn-history" id="btnOpenAdmissionHistory">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span>View Admission History</span>
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -156,14 +179,13 @@
                     <div class="sub-panel" id="sub-orders">
                         <div class="card mb-4">
                             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <h2>Physician Orders & Requests (Medicines, Scans, Procedures)</h2>
+                                <h2>Physician Orders & Requests (Medicines, Scans, Procedures) <span class="info-tip" tabindex="0" data-tooltip="Physicians submit clinical orders here. When administered or dispensed by pharmacy/nursing, charges automatically post to the Live Billing Ledger." aria-label="Orders information">i</span></h2>
                                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                     <button type="button" class="btn btn-secondary btn-sm" id="btnOpenReturnModalPharmacy">+ Return Medicine</button>
                                     <button type="button" class="btn btn-primary btn-sm" id="btnOpenOrderModal">+ Place New Clinical Order</button>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <p class="text-muted mb-3">Physicians submit clinical orders here. When administered or dispensed by pharmacy/nursing, charges <strong>automatically post</strong> to the Live Billing Ledger.</p>
                                 <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Clinical Orders History</h3>
                                 <div class="table-responsive" id="orders-table-div">
                                 </div>
@@ -174,11 +196,10 @@
                     <div class="sub-panel" id="sub-rounds" style="display: none;">
                         <div class="card mb-4">
                             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <h2>Doctor Bedside Visits & Professional Fees</h2>
+                                <h2>Doctor Bedside Visits & Professional Fees <span class="info-tip" tabindex="0" data-tooltip="Log physician bedside visits. Professional fees are automatically posted to the Live Billing Ledger upon logging." aria-label="Visits information">i</span></h2>
                                 <button type="button" class="btn btn-primary btn-sm" id="btnOpenRoundModal">+ Log Bedside Visit</button>
                             </div>
                             <div class="card-body">
-                                <p class="text-muted mb-3">Log physician bedside visits. Professional fees are <strong>automatically posted</strong> to the Live Billing Ledger upon logging.</p>
                                 <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bedside Visits Log</h3>
                                 <div class="table-responsive" id="rounds-table-div">
                                 </div>
@@ -189,11 +210,10 @@
                     <div class="sub-panel" id="sub-stays" style="display: none;">
                         <div class="card mb-4">
                             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <h2>Board & Lodging / Bed Stays & Transfers</h2>
+                                <h2>Board & Lodging / Bed Stays & Transfers <span class="info-tip" tabindex="0" data-tooltip="Track patient bed occupancy and room upgrades. When transferred, prior room stay duration and rates are calculated and posted to the ledger." aria-label="Bed stay information">i</span></h2>
                                 <button type="button" class="btn btn-primary btn-sm" id="btnOpenTransferModal">+ Transfer Patient Bed</button>
                             </div>
                             <div class="card-body">
-                                <p class="text-muted mb-3">Track patient bed occupancy and room upgrades. When transferred, prior room stay duration and rates are calculated and posted to the ledger.</p>
                                 <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bed Occupancy & Transfer History</h3>
                                 <div class="table-responsive" id="transfers-table-div">
                                 </div>
@@ -203,25 +223,53 @@
                 </div>
 
                 <div class="tab-content-panel" id="tab-ledger" style="display: none;">
-                    <div class="card mb-4">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                            <h2 style="margin: 0;">2. Live Itemized Billing Ledger & Advance Deposits</h2>
-                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btnOpenReturnModal">+ Return Medicine</button>
-                                <button type="button" class="btn btn-outline btn-sm" id="btnTabLedgerPartialBill">Print Partial Bill (Interim)</button>
-                                <button type="button" class="btn btn-primary btn-sm" id="btnOpenAdvancePaymentModal">Record Advance Payment</button>
+                    <div class="clinical-slide-switcher clinical-subnav ledger-subnav" id="ledgerSubNav" role="tablist">
+                        <div class="slide-glider subnav-glider" id="ledgerSubnavGlider"></div>
+                        <button type="button" class="slide-tab-item subnav-btn active" data-ledger-sub="sub-ledger-charges" data-sub="sub-ledger-charges" role="tab" aria-selected="true">
+                            <span class="slide-label">Itemized Charges Statement</span>
+                            <span id="badge_sub_charges" class="subnav-count-badge">0 items</span>
+                        </button>
+                        <button type="button" class="slide-tab-item subnav-btn" data-ledger-sub="sub-ledger-advances" data-sub="sub-ledger-advances" role="tab" aria-selected="false">
+                            <span class="slide-label">Advance Deposits &amp; Official Receipts</span>
+                            <span id="badge_sub_advances" class="subnav-count-badge">0</span>
+                        </button>
+                    </div>
+
+                    <div class="sub-panel ledger-sub-panel" id="sub-ledger-charges">
+                        <div class="card mb-4">
+                            <div class="card-header ledger-card-header">
+                                <h2 class="ledger-card-title">2. Live Itemized Billing Ledger <span class="info-tip" tabindex="0" data-tooltip="Real-time running statement of all accumulated room stays, physician fees, medications, diagnostics, and patient orders." aria-label="Ledger information">i</span></h2>
+                                <div class="ledger-header-actions">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnOpenReturnModal">+ Return Medicine</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="ledger-summary-div" class="mb-4">
+                                </div>
+
+                                <div class="ledger-section-header">
+                                    <h3 class="ledger-section-title">Itemized Charges Statement</h3>
+                                    <button type="button" class="btn btn-outline btn-sm btn-jump-tab" id="btnJumpToAdvanceDeposits">View Advance Deposits &amp; Receipts &rarr;</button>
+                                </div>
+                                <div class="table-responsive" id="ledger-table-div">
+                                </div>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-3">Real-time running statement of all accumulated room stays, physician fees, medications, diagnostics, and pre-discharge advance payments.</p>
-                            <div id="ledger-summary-div" class="mb-4">
-                            </div>
+                    </div>
 
-                            <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Itemized Charges Statement</h3>
-                            <div class="table-responsive mb-4" id="ledger-table-div">
+                    <div class="sub-panel ledger-sub-panel sub-panel-hidden" id="sub-ledger-advances">
+                        <div class="card mb-4">
+                            <div class="card-header ledger-card-header">
+                                <h2 class="ledger-card-title">Advance Deposits &amp; Official Receipts History <span class="info-tip" tabindex="0" data-tooltip="Pre-discharge deposit payments and official receipts credited towards final SOA settlement." aria-label="Advance deposits history info">i</span></h2>
+                                <div class="ledger-header-actions">
+                                    <button type="button" class="btn btn-outline btn-sm btn-jump-tab" id="btnJumpToItemizedCharges">&larr; View Itemized Charges</button>
+                                    <button type="button" class="btn btn-outline btn-sm" id="btnTabLedgerPartialBill">Print Partial Bill (Interim)</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnOpenAdvancePaymentModal">Record Advance Payment</button>
+                                </div>
                             </div>
-
-                            <div id="advance-payments-history-div">
+                            <div class="card-body">
+                                <div id="advance-payments-history-div">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -229,13 +277,11 @@
 
                 <div class="tab-content-panel" id="tab-settlement" style="display: none;">
                     <div class="card mb-4">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                            <h2 style="margin: 0;">3. Discharge Clearance & Final SOA Settlement</h2>
+                        <div class="card-header settlement-card-header">
+                            <h2 class="settlement-card-title">3. Discharge Clearance &amp; Final SOA Settlement <span class="info-tip" tabindex="0" data-tooltip="Official patient discharge, statutory discounts (Senior Citizen, PWD, PhilHealth), bed release clearance, and Final Statement of Account (SOA) settlement." aria-label="Discharge settlement information">i</span></h2>
                             <button type="button" class="btn btn-primary btn-sm" id="btnTabSettlementSOA">View Final Statement of Account (SOA)</button>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted mb-3">Official patient discharge, statutory discounts (Senior Citizen, PWD, PhilHealth), bed release clearance, and Final Statement of Account (SOA) settlement.</p>
-
                             <div id="settlement-container">
                                 <p>Loading settlement section...</p>
                             </div>
@@ -248,11 +294,10 @@
     <div class="modal-overlay" id="orderModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Place New Clinical Order</h3>
+                <h3>Place New Clinical Order <span class="info-tip" tabindex="0" data-tooltip="Select the prescribing doctor and catalog item. When administered or dispensed, the charge will post to the patient ledger." aria-label="Order instructions">i</span></h3>
                 <button type="button" class="modal-close" id="btnCloseOrderModal">&times;</button>
             </div>
             <div class="modal-body" id="order-form-container">
-                <p class="text-muted mb-3" style="font-size: 0.85rem;">Select the prescribing doctor and catalog item. When administered or dispensed, the charge will post to the patient ledger.</p>
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="order_doctor_name">Ordering Physician *</label>
@@ -288,11 +333,10 @@
     <div class="modal-overlay" id="roundModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Log Bedside Visit & Professional Fee</h3>
+                <h3>Log Bedside Visit & Professional Fee <span class="info-tip" tabindex="0" data-tooltip="Record a physician bedside visit. The doctor's standard round fee will be charged to the patient ledger." aria-label="Visit instructions">i</span></h3>
                 <button type="button" class="modal-close" id="btnCloseRoundModal">&times;</button>
             </div>
             <div class="modal-body" id="round-form-container">
-                <p class="text-muted mb-3" style="font-size: 0.85rem;">Record a physician bedside visit. The doctor's standard round fee will be charged to the patient ledger.</p>
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="round_doctor_name">Visiting Physician *</label>
@@ -319,11 +363,10 @@
     <div class="modal-overlay" id="transferModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Transfer Patient Bed</h3>
+                <h3>Transfer Patient Bed <span class="info-tip" tabindex="0" data-tooltip="Transfer patient to another vacant bed. Prior bed occupancy charges will be calculated and posted to the ledger automatically." aria-label="Transfer instructions">i</span></h3>
                 <button type="button" class="modal-close" id="btnCloseTransferModal">&times;</button>
             </div>
             <div class="modal-body" id="transfer-form-container">
-                <p class="text-muted mb-3" style="font-size: 0.85rem;">Transfer patient to another vacant bed. Prior bed occupancy charges will be calculated and posted to the ledger automatically.</p>
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="transfer_bed_name">Select Target Vacant Bed *</label>
@@ -345,11 +388,10 @@
     <div class="modal-overlay" id="returnModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Process Medicine Return</h3>
+                <h3>Process Medicine Return <span class="info-tip" tabindex="0" data-tooltip="If the patient did not consume dispensed medications, return them here to post an automated negative credit to the Live Billing Ledger." aria-label="Return instructions">i</span></h3>
                 <button type="button" class="modal-close" id="btnCloseReturnModal">&times;</button>
             </div>
             <div class="modal-body" id="return-form-container">
-                <p class="text-muted mb-3" style="font-size: 0.85rem;">If the patient did not consume dispensed medications, return them here to post an automated negative credit to the Live Billing Ledger.</p>
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="return_catalog_id_text">Select Dispensed Medicine to Return *</label>
@@ -430,9 +472,8 @@
                     <div id="diag-chief-complaint" style="padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-style: italic; font-size: 0.9rem; color: #334155;"></div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="diag_input">Medical / Clinical Diagnosis *</label>
+                    <label class="form-label" for="diag_input">Medical / Clinical Diagnosis * <span class="info-tip" tabindex="0" data-tooltip="Recorded official diagnosis will appear in the patient chart, directory, and billing statements." aria-label="Diagnosis info">i</span></label>
                     <textarea id="diag_input" class="form-control" rows="3" placeholder="Enter clinical diagnosis based on complaints, lab results, and patient examination..." required></textarea>
-                    <small class="text-muted">Recorded official diagnosis will appear in the patient chart, directory, and billing statements.</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -445,7 +486,7 @@
     <div class="modal-overlay" id="advancePaymentModal" style="display: none;">
         <div class="modal-container" style="max-width: 580px;">
             <div class="modal-header">
-                <h3>Record Advance Payment / Patient Deposit</h3>
+                <h3>Record Advance Payment / Patient Deposit <span class="info-tip" tabindex="0" data-tooltip="Official Receipt (OR) will be immediately generated and printable. All advance deposits and discount credits will be automatically applied to the patient's final Statement of Account upon discharge." aria-label="Advance deposit info">i</span></h3>
                 <button type="button" class="modal-close" id="btnCloseAdvancePaymentModal">&times;</button>
             </div>
             <div class="modal-body">
@@ -456,10 +497,28 @@
                         <div><strong style="color: #64748b;">Running Charges:</strong> <span id="adv_running_charges" style="font-weight: 600;">₱0.00</span></div>
                         <div><strong style="color: #64748b;">Prior Advance Paid:</strong> <span id="adv_prior_paid" style="font-weight: 600; color: #16a34a;">₱0.00</span></div>
                     </div>
+                    <div id="adv_prior_discount_row" style="display: none; margin-top: 6px; font-size: 13.5px;">
+                        <div><strong style="color: #64748b;">Prior Advance Discounts:</strong> <span id="adv_prior_discount" style="font-weight: 600; color: #15803d;">₱0.00</span></div>
+                    </div>
                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #86efac; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 700; color: #1e3a8a; font-size: 14px;">ESTIMATED UNPAID BALANCE:</span>
                         <strong style="font-size: 17px; color: #1e3a8a;" id="adv_unpaid_balance">₱0.00</strong>
                     </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Medical Assistance &amp; Vouchers (Optional) <span class="info-tip" tabindex="0" data-tooltip="Add one or more assistance vouchers (e.g. DSWD, PCSO, LGU, Malasakit, Doctor Waiver) to credit against this advance deposit." aria-label="Assistance vouchers info">i</span></label>
+                    <div class="adv-voucher-input-group">
+                        <input type="text" id="adv_discount_name_input" class="form-control" placeholder="Particulars (e.g. DSWD Aid, PCSO, LGU Grant, Doctor Waiver)">
+                        <input type="number" id="adv_discount_amount_input" class="form-control" step="0.01" min="0.00" placeholder="Amount (₱)">
+                        <button type="button" class="btn btn-outline btn-sm" id="btnAddAdvVoucher">+ Add Grant</button>
+                    </div>
+                    <div id="adv-vouchers-tags" class="adv-vouchers-tags-container"></div>
+                    <div id="adv-vouchers-total-row" class="adv-vouchers-total-row adv-vouchers-total-hidden">
+                        <span>Total Assistance Credited:</span>
+                        <strong id="adv-vouchers-total-amount">₱0.00</strong>
+                    </div>
+                    <small class="text-muted adv-vouchers-hint">You can add multiple government grants or assistance vouchers. All will be itemized on the receipt.</small>
                 </div>
 
                 <div class="form-group mb-3">
@@ -472,20 +531,16 @@
                 </div>
 
                 <div class="form-group mb-3">
-                    <label class="form-label" for="adv_amount_input">Deposit / Payment Tendered (₱) *</label>
+                    <label class="form-label" for="adv_amount_input">Deposit / Payment Tendered (₱) * <span class="info-tip" tabindex="0" data-tooltip="Enter 0.00 if only recording a discount or assistance grant." aria-label="Deposit amount note">i</span></label>
                     <div style="display: flex; gap: 8px;">
-                        <input type="number" id="adv_amount_input" class="form-control" step="0.01" min="0.01" placeholder="0.00" style="font-weight: 700; font-size: 16px;" required>
-                        <button type="button" class="btn btn-secondary" id="btnPayAdvExactBalance" style="white-space: nowrap;">Pay Running Balance</button>
+                        <input type="number" id="adv_amount_input" class="form-control" step="0.01" min="0.00" placeholder="0.00" style="font-weight: 700; font-size: 16px;">
+                        <button type="button" class="btn btn-secondary" id="btnPayAdvExactBalance" style="white-space: nowrap;">Pay Remaining Balance</button>
                     </div>
                 </div>
 
                 <div class="form-group mb-3">
                     <label class="form-label" for="adv_notes_input">Particulars / Remarks</label>
                     <input type="text" id="adv_notes_input" class="form-control" placeholder="e.g. Initial Admission Deposit, Surgical Advance, Interim Payment">
-                </div>
-
-                <div style="background-color: #f8fafc; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; color: #64748b;">
-                    Official Receipt (OR) will be immediately generated and printable. All advance deposits will be automatically credited to the patient's final Statement of Account upon discharge.
                 </div>
             </div>
             <div class="modal-footer">
@@ -499,8 +554,7 @@
         <div class="modal-container" style="max-width: 960px; width: 95%;">
             <div class="modal-header">
                 <div>
-                    <h3 id="history_modal_title" style="margin: 0;">Patient Hospital Admission History</h3>
-                    <p class="text-muted" id="history_modal_subtitle" style="margin: 4px 0 0; font-size: 13px;">Full chronological record of hospital admissions for this patient</p>
+                    <h3 id="history_modal_title" style="margin: 0;">Patient Hospital Admission History <span class="info-tip" tabindex="0" data-tooltip="Full chronological record of hospital admissions for this patient" aria-label="History info">i</span></h3>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseHistoryModal">&times;</button>
             </div>
@@ -521,22 +575,18 @@
                 </div>
 
                 <div class="table-responsive" style="max-height: 440px; overflow-y: auto;">
-                    <table class="data-table" style="font-size: 13.5px;" id="patientHistoryTable">
+                    <table class="data-table" id="patientHistoryTable">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Admission Code</th>
-                                <th>Admission Dates</th>
-                                <th>Room &amp; Bed</th>
-                                <th>Chief Complaint &amp; Diagnosis</th>
-                                <th>Status</th>
-                                <th>Billing Settlement</th>
-                                <th style="text-align: center;">Action</th>
+                                <th>Case &amp; Stay Dates</th>
+                                <th>Room, Bed &amp; Diagnosis</th>
+                                <th>Status &amp; Billing Settlement</th>
+                                <th class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="patientHistoryTableBody">
                             <tr>
-                                <td colspan="8" class="text-center" style="padding: 24px;">Loading admission history...</td>
+                                <td colspan="4" class="text-center" style="padding: 24px;">Loading admission history...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -548,10 +598,54 @@
         </div>
     </div>
 
+    <div id="voidAdmissionModal" class="modal-overlay" style="display: none; z-index: 10006;">
+        <div class="modal-container" style="max-width: 520px;">
+            <div class="modal-header" style="background: #fef2f2; border-bottom: 1px solid #fecaca;">
+                <h3 style="margin: 0; color: #991b1b; display: flex; align-items: center; gap: 8px;">
+                    <span>🔐</span> Supervisor Authorization: Void Accidental Admission
+                </h3>
+                <button type="button" class="modal-close" id="btnCloseVoidModal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="background: #fff1f2; border-left: 4px solid #e11d48; padding: 12px 14px; border-radius: 4px; margin-bottom: 16px;">
+                    <strong style="color: #9f1239; font-size: 13.5px;">Accidental Admission Cancellation</strong>
+                    <div style="color: #881337; font-size: 12.5px; margin-top: 4px;">
+                        This will completely cancel and delete this admission record, release the occupied bed back to available inventory, and log a permanent administrative audit entry. Higher-up (Administrator) approval is required.
+                    </div>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 13px;">
+                    <div><strong>Admission:</strong> <span id="void_modal_adm_code" style="color: #0284c7;">-</span></div>
+                    <div><strong>Patient:</strong> <span id="void_modal_patient_name">-</span></div>
+                    <div><strong>Assigned Bed:</strong> <span id="void_modal_bed_name">-</span></div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="void_admin_username"><strong>Administrator Username</strong> <span class="text-danger">*</span></label>
+                    <input type="text" id="void_admin_username" class="form-control" placeholder="Enter higher-up admin username" autocomplete="off">
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" for="void_admin_password"><strong>Administrator Password</strong> <span class="text-danger">*</span></label>
+                    <input type="password" id="void_admin_password" class="form-control" placeholder="Enter higher-up admin password" autocomplete="new-password">
+                </div>
+
+                <div class="form-group mb-2">
+                    <label class="form-label" for="void_reason"><strong>Reason for Voiding</strong> <span class="text-danger">*</span></label>
+                    <textarea id="void_reason" class="form-control" rows="3" placeholder="e.g. Admitted wrong patient by mistake; patient cancelled admittance before arrival..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary" id="btnCancelVoidModal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmVoidAdmission" style="font-weight: 700;">Confirm &amp; Void Admission</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=8.5"></script>
-    <script src="../js/common.js?v=8.4"></script>
-    <script src="../js/admission_details.js?v=8.5"></script>
+    <script src="../js/sidebar.js?v=9.1"></script>
+    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/admission_details.js?v=12.0"></script>
 </body>
 </html>
 

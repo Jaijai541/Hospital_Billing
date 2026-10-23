@@ -1,3 +1,137 @@
+const evaluatePasswordStrength = (password) => {
+    if (!password || password.length === 0) {
+        return {
+            score: 0,
+            level: "none",
+            label: "",
+            text: "",
+            colorClass: "",
+            hint: "Min. 4 characters (mix letters, numbers & symbols for best security)"
+        };
+    }
+
+    let score = 0;
+    const len = password.length;
+
+    if (len >= 4) score += 1;
+    if (len >= 8) score += 1;
+    if (len >= 12) score += 1;
+
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+    const variety = [hasLower, hasUpper, hasDigit, hasSpecial].filter(Boolean).length;
+
+    if (variety >= 2) score += 1;
+    if (variety >= 3) score += 1;
+    if (variety >= 4) score += 1;
+
+    if (score <= 2) {
+        return {
+            score: 1,
+            level: "weak",
+            label: "Weak",
+            text: "Weak password",
+            colorClass: "weak",
+            hint: "Too simple; add numbers or uppercase letters"
+        };
+    }
+    if (score <= 3) {
+        return {
+            score: 2,
+            level: "fair",
+            label: "Fair",
+            text: "Fair strength",
+            colorClass: "fair",
+            hint: "Good start; add special characters (@, #, $, !)"
+        };
+    }
+    if (score <= 4) {
+        return {
+            score: 3,
+            level: "good",
+            label: "Good",
+            text: "Good password",
+            colorClass: "good",
+            hint: "Meets standard clinical security guidelines"
+        };
+    }
+    return {
+        score: 4,
+        level: "strong",
+        label: "Strong",
+        text: "Strong & secure",
+        colorClass: "strong",
+        hint: "Excellent security standard achieved"
+    };
+};
+
+const updatePasswordStrengthUI = (inputId, prefix) => {
+    const input = document.getElementById(inputId);
+    const badge = document.getElementById(`${prefix}_password_strength_badge`);
+    const text = document.getElementById(`${prefix}_password_strength_text`);
+    const hint = document.getElementById(`${prefix}_password_strength_hint`);
+    const bar1 = document.getElementById(`${prefix}_strength_bar_1`);
+    const bar2 = document.getElementById(`${prefix}_strength_bar_2`);
+    const bar3 = document.getElementById(`${prefix}_strength_bar_3`);
+    const bar4 = document.getElementById(`${prefix}_strength_bar_4`);
+
+    if (!input || !bar1) return;
+
+    const val = input.value;
+    const strength = evaluatePasswordStrength(val);
+
+    [bar1, bar2, bar3, bar4].forEach((b) => {
+        b.className = "strength-bar";
+    });
+    input.classList.remove("strength-border-weak", "strength-border-fair", "strength-border-good", "strength-border-strong");
+
+    if (badge) {
+        badge.className = "password-strength-badge";
+        badge.textContent = "";
+    }
+    if (text) {
+        text.className = "password-strength-text";
+        text.textContent = "";
+    }
+    if (hint) {
+        hint.textContent = strength.hint;
+    }
+
+    if (strength.score === 0) return;
+
+    input.classList.add(`strength-border-${strength.colorClass}`);
+
+    if (badge) {
+        badge.textContent = strength.label;
+        badge.classList.add(`badge-${strength.colorClass}`, "visible");
+    }
+    if (text) {
+        text.textContent = strength.text;
+        text.classList.add(`text-${strength.colorClass}`);
+    }
+
+    if (strength.score >= 1) bar1.classList.add(`bar-${strength.colorClass}`);
+    if (strength.score >= 2) bar2.classList.add(`bar-${strength.colorClass}`);
+    if (strength.score >= 3) bar3.classList.add(`bar-${strength.colorClass}`);
+    if (strength.score >= 4) bar4.classList.add(`bar-${strength.colorClass}`);
+};
+
+const setupPasswordToggle = (btnId, inputId) => {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    if (!btn || !input || btn.dataset.wired) return;
+    btn.dataset.wired = "true";
+    btn.addEventListener("click", () => {
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        btn.classList.toggle("revealed", isPassword);
+        btn.title = isPassword ? "Hide Password" : "Show Password";
+    });
+};
+
 const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
@@ -221,8 +355,13 @@ const openAddStaffModal = () => {
     document.getElementById("staff_role_id_text").value = "";
     document.getElementById("staff_station_id").value = "";
     document.getElementById("staff_station_id_text").value = "";
-    document.getElementById("staff_password").value = "";
-    document.getElementById("staff_password").required = true;
+    const staffPwd = document.getElementById("staff_password");
+    staffPwd.value = "";
+    staffPwd.type = "password";
+    staffPwd.required = true;
+    const btnToggle = document.getElementById("btnToggleStaffPassword");
+    if (btnToggle) btnToggle.classList.remove("revealed");
+    updatePasswordStrengthUI("staff_password", "staff");
 
     document.getElementById("staffModalTitle").textContent = "Add New Staff User";
     document.getElementById("staff_password_label").textContent = "Account Password *";
@@ -263,8 +402,13 @@ const openEditStaffModal = (userId) => {
     document.getElementById("staff_role_id_text").value = user.Role_Name || "";
     document.getElementById("staff_station_id").value = user.Station_ID || "";
     document.getElementById("staff_station_id_text").value = user.Station_Name || "General Administration";
-    document.getElementById("staff_password").value = "";
-    document.getElementById("staff_password").required = false;
+    const staffPwdEdit = document.getElementById("staff_password");
+    staffPwdEdit.value = "";
+    staffPwdEdit.type = "password";
+    staffPwdEdit.required = false;
+    const btnToggleEdit = document.getElementById("btnToggleStaffPassword");
+    if (btnToggleEdit) btnToggleEdit.classList.remove("revealed");
+    updatePasswordStrengthUI("staff_password", "staff");
 
     const activeAdminsCount = allStaff.filter(u => parseInt(u.Role_ID, 10) === 1 && parseInt(u.Is_Active, 10) === 1).length;
     const isSoleAdmin = (parseInt(user.Role_ID, 10) === 1 && activeAdminsCount <= 1) || parseInt(user.User_ID, 10) === 1;
@@ -480,8 +624,15 @@ const openResetPasswordModal = (userId, name, username) => {
     document.getElementById("reset_user_id").value = userId;
     document.getElementById("reset_staff_name").textContent = targetName;
     document.getElementById("reset_staff_username").textContent = `@${targetUsername}`;
-    document.getElementById("reset_new_password").value = "";
-    document.getElementById("reset_confirm_password").value = "";
+    const resetPwd = document.getElementById("reset_new_password");
+    resetPwd.value = "";
+    resetPwd.type = "password";
+    const resetConf = document.getElementById("reset_confirm_password");
+    resetConf.value = "";
+    resetConf.type = "password";
+    const btnToggleReset = document.getElementById("btnToggleResetPassword");
+    if (btnToggleReset) btnToggleReset.classList.remove("revealed");
+    updatePasswordStrengthUI("reset_new_password", "reset");
 
     openModal("resetPasswordModal");
 };
@@ -1181,6 +1332,25 @@ const initStaffEvents = () => {
     if (btnBrowseStation) {
         btnBrowseStation.addEventListener("click", openStationPicker);
     }
+
+    const staffPwdInput = document.getElementById("staff_password");
+    if (staffPwdInput && !staffPwdInput.dataset.wiredStrength) {
+        staffPwdInput.dataset.wiredStrength = "true";
+        staffPwdInput.addEventListener("input", () => {
+            updatePasswordStrengthUI("staff_password", "staff");
+        });
+    }
+
+    const resetPwdInput = document.getElementById("reset_new_password");
+    if (resetPwdInput && !resetPwdInput.dataset.wiredStrength) {
+        resetPwdInput.dataset.wiredStrength = "true";
+        resetPwdInput.addEventListener("input", () => {
+            updatePasswordStrengthUI("reset_new_password", "reset");
+        });
+    }
+
+    setupPasswordToggle("btnToggleStaffPassword", "staff_password");
+    setupPasswordToggle("btnToggleResetPassword", "reset_new_password");
 };
 
 document.addEventListener("click", (e) => {

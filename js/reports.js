@@ -49,7 +49,6 @@ const renderSortableHeader = (label, sortKey, alignRight = false) => {
     const isSorted = currentSort.column === sortKey;
     const dir = isSorted ? currentSort.direction : "";
     const activeClass = isSorted ? ` sorted-${dir}` : "";
-    const alignClass = alignRight ? " text-right" : "";
 
     let arrowSvg = `
         <span class="sort-icon-box" aria-hidden="true">
@@ -71,8 +70,8 @@ const renderSortableHeader = (label, sortKey, alignRight = false) => {
     }
 
     return `
-        <th class="sortable-th${alignClass}${activeClass}" data-sort="${sortKey}" role="button" tabindex="0" title="Click to sort by ${label}">
-            <div class="th-sort-wrapper${alignRight ? ' th-sort-right' : ''}">
+        <th class="sortable-th${activeClass}" data-sort="${sortKey}" role="button" tabindex="0" title="Click to sort by ${label}">
+            <div class="th-sort-wrapper">
                 <span class="th-label">${label}</span>
                 ${arrowSvg}
             </div>
@@ -775,7 +774,7 @@ const renderCollectionsReport = () => {
             ${renderSortableHeader("Receipt & Timestamp", "Payment_Date")}
             ${renderSortableHeader("Patient & Case", "Patient_Name")}
             ${renderSortableHeader("Payment Method & Stage", "Payment_Method")}
-            ${renderSortableHeader("Amount Paid & Balance", "Amount_Paid", true)}
+            ${renderSortableHeader("Amount Paid & Balance", "Amount_Paid")}
             ${renderSortableHeader("Remarks / Notes", "Notes")}
         </tr>
     `;
@@ -898,10 +897,10 @@ const renderDepartmentRevenueReport = () => {
     thead.innerHTML = `
         <tr>
             ${renderSortableHeader("Station / Department", "Station_Name")}
-            ${renderSortableHeader("Transactions", "Total_Transactions", true)}
-            ${renderSortableHeader("Gross Charges & Returns", "Gross_Charges", true)}
-            ${renderSortableHeader("Net Revenue", "Net_Revenue", true)}
-            ${renderSortableHeader("Share of Total", "Revenue_Share_Pct", true)}
+            ${renderSortableHeader("Transactions", "Total_Transactions")}
+            ${renderSortableHeader("Gross Charges & Returns", "Gross_Charges")}
+            ${renderSortableHeader("Net Revenue", "Net_Revenue")}
+            ${renderSortableHeader("Share of Total", "Revenue_Share_Pct")}
         </tr>
     `;
 
@@ -1018,9 +1017,9 @@ const renderDoctorFeesReport = () => {
         <tr>
             ${renderSortableHeader("Physician & Designation", "Doctor_Name")}
             ${renderSortableHeader("Station & Standard Round Fee", "Department_Station")}
-            ${renderSortableHeader("Rounds Conducted", "Total_Rounds", true)}
-            ${renderSortableHeader("Unique Patients", "Unique_Patients_Attended", true)}
-            ${renderSortableHeader("Total PF Generated", "Total_PF_Generated", true)}
+            ${renderSortableHeader("Rounds Conducted", "Total_Rounds")}
+            ${renderSortableHeader("Unique Patients", "Unique_Patients_Attended")}
+            ${renderSortableHeader("Total PF Generated", "Total_PF_Generated")}
         </tr>
     `;
 
@@ -1135,7 +1134,7 @@ const renderArAgingReport = () => {
             ${renderSortableHeader("Note & Invoice", "Note_Code")}
             ${renderSortableHeader("Patient & Guarantor", "Patient_Name")}
             ${renderSortableHeader("Payment Plan", "Plan_Type_Name")}
-            ${renderSortableHeader("Balance Owed & Aging", "Total_Balance_Owed", true)}
+            ${renderSortableHeader("Balance Owed & Aging", "Total_Balance_Owed")}
             ${renderSortableHeader("Status", "Status")}
         </tr>
     `;
@@ -1265,9 +1264,9 @@ const renderBedOccupancyReport = () => {
     thead.innerHTML = `
         <tr>
             ${renderSortableHeader("Room / Ward & Classification", "Room_Name")}
-            ${renderSortableHeader("Daily Board Rate", "Daily_Rate", true)}
-            ${renderSortableHeader("Capacity & Occupancy", "Total_Beds", true)}
-            ${renderSortableHeader("Occupancy Rate", "Occupancy_Rate", true)}
+            ${renderSortableHeader("Daily Board Rate", "Daily_Rate")}
+            ${renderSortableHeader("Capacity & Occupancy", "Total_Beds")}
+            ${renderSortableHeader("Occupancy Rate", "Occupancy_Rate")}
             ${renderSortableHeader("Status", "Occupancy_Rate")}
         </tr>
     `;
@@ -1325,8 +1324,8 @@ const renderPrintTable = () => {
                 <th>Patient Name</th>
                 <th>Payment Method</th>
                 <th>Classification</th>
-                <th class="text-right">Amount Paid</th>
-                <th class="text-right">Balance After</th>
+                <th>Amount Paid</th>
+                <th>Balance After</th>
                 <th>Cashier User</th>
                 <th>Remarks / Notes</th>
             </tr>
@@ -1370,11 +1369,11 @@ const renderPrintTable = () => {
             <tr>
                 <th>Station / Department</th>
                 <th>Code</th>
-                <th class="text-right">Transaction Count</th>
-                <th class="text-right">Gross Charges</th>
-                <th class="text-right">Returns / Deductions</th>
-                <th class="text-right">Net Revenue</th>
-                <th class="text-right">Share of Total</th>
+                <th>Transaction Count</th>
+                <th>Gross Charges</th>
+                <th>Returns / Deductions</th>
+                <th>Net Revenue</th>
+                <th>Share of Total</th>
             </tr>
         `;
 
@@ -1418,10 +1417,10 @@ const renderPrintTable = () => {
                 <th>Physician Full Name</th>
                 <th>Designation</th>
                 <th>Department / Station</th>
-                <th class="text-right">Standard Round Fee</th>
-                <th class="text-right">Total Rounds Conducted</th>
-                <th class="text-right">Unique Patients</th>
-                <th class="text-right">Total PF Generated</th>
+                <th>Standard Round Fee</th>
+                <th>Total Rounds Conducted</th>
+                <th>Unique Patients</th>
+                <th>Total PF Generated</th>
             </tr>
         `;
 
@@ -1465,8 +1464,8 @@ const renderPrintTable = () => {
                 <th>Patient Name</th>
                 <th>Contact</th>
                 <th>Payment Plan</th>
-                <th class="text-right">Monthly Installment</th>
-                <th class="text-right">Balance Owed</th>
+                <th>Monthly Installment</th>
+                <th>Balance Owed</th>
                 <th>Next Due Date</th>
                 <th>Aging Schedule</th>
                 <th>Guarantor</th>
@@ -1523,11 +1522,11 @@ const renderPrintTable = () => {
             <tr>
                 <th>Room / Ward Name</th>
                 <th>Classification</th>
-                <th class="text-right">Daily Board Rate</th>
-                <th class="text-right">Bed Capacity</th>
-                <th class="text-right">Occupied Beds</th>
-                <th class="text-right">Available Beds</th>
-                <th class="text-right">Occupancy Rate</th>
+                <th>Daily Board Rate</th>
+                <th>Bed Capacity</th>
+                <th>Occupied Beds</th>
+                <th>Available Beds</th>
+                <th>Occupancy Rate</th>
                 <th>Status</th>
             </tr>
         `;

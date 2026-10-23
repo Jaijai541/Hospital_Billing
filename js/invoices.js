@@ -53,9 +53,9 @@ const renderInvoicesTable = (invoices) => {
     html += '<thead><tr>';
     html += renderSortableTh("Invoice & Case", "Invoice_ID");
     html += renderSortableTh("Patient Demographic", "Patient_Name");
-    html += renderSortableTh("Gross & Discounts", "Gross_Total", true);
-    html += renderSortableTh("Net & Payments", "Net_Amount_Due", true);
-    html += renderSortableTh("Settlement Status & Balance", "Remaining_Balance", true);
+    html += renderSortableTh("Gross & Discounts", "Gross_Total");
+    html += renderSortableTh("Net & Payments", "Net_Amount_Due");
+    html += renderSortableTh("Settlement Status & Balance", "Remaining_Balance");
     html += '</tr></thead><tbody>';
 
     invoices.forEach(inv => {
@@ -364,8 +364,8 @@ const openPaymentHistoryModal = (invoiceId) => {
                             <th>Date & Time</th>
                             <th>Method</th>
                             <th>Cashier</th>
-                            <th style="text-align: right;">Amount Paid</th>
-                            <th style="text-align: right;">Remaining Bal</th>
+                            <th>Amount Paid</th>
+                            <th>Remaining Bal</th>
                             <th>Particulars / Notes</th>
                         </tr>
                     </thead>

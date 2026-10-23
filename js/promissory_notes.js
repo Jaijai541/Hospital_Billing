@@ -250,7 +250,7 @@ const renderTable = (notes) => {
         <tr>
             ${renderSortableTh("Note Code & Terms", "Note_Code")}
             ${renderSortableTh("Patient & Guarantor", "Patient_Name")}
-            ${renderSortableTh("Balance & Progress", "Remaining_Balance", true)}
+            ${renderSortableTh("Balance & Progress", "Remaining_Balance")}
             ${renderSortableTh("Next Due Date", "Next_Due_Date")}
             ${renderSortableTh("Status", "Status")}
         </tr>
@@ -569,7 +569,7 @@ const renderHistoryTable = (payments) => {
         <tr>
             <th>Receipt & Timestamp</th>
             <th>Stage & Method</th>
-            <th class="text-right">Amount Paid & Balance After</th>
+            <th>Amount Paid & Balance After</th>
             <th>Cashier</th>
         </tr>
     `;

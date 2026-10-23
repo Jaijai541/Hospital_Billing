@@ -1821,7 +1821,6 @@ const renderSortableTh = (label, sortKey, alignRight = false, currentColumn = nu
     const isSorted = currentColumn === sortKey;
     const dir = isSorted ? currentDir : "";
     const activeClass = isSorted ? ` sorted-${dir}` : "";
-    const alignClass = alignRight ? " text-right" : "";
 
     let arrowSvg = `
         <span class="sort-icon-box" aria-hidden="true">
@@ -1843,8 +1842,8 @@ const renderSortableTh = (label, sortKey, alignRight = false, currentColumn = nu
     }
 
     return `
-        <th class="sortable-th${alignClass}${activeClass}" data-sort="${sortKey}" role="button" tabindex="0" title="Click to sort by ${label}">
-            <div class="th-sort-wrapper${alignRight ? ' th-sort-right' : ''}">
+        <th class="sortable-th${activeClass}" data-sort="${sortKey}" role="button" tabindex="0" title="Click to sort by ${label}">
+            <div class="th-sort-wrapper">
                 <span class="th-label">${label}</span>
                 ${arrowSvg}
             </div>

@@ -32,3 +32,8 @@
 .admission-bed-info strong {
     color: var(--primary);
 }
+
+.doctor-picker-col-fee {
+    width: 130px;
+    text-align: left;
+}

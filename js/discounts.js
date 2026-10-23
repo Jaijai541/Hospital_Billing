@@ -131,7 +131,7 @@ const displayDiscountsTable = (discounts) => {
     thead.innerHTML = `
         <tr>
             ${renderSortableTh("Discount Scheme & Code", "Discount_Name")}
-            ${renderSortableTh("Discount Rate", "Discount_Percentage", true)}
+            ${renderSortableTh("Discount Rate", "Discount_Percentage")}
             ${renderSortableTh("VAT Status", "Is_Vat_Exempt")}
             ${renderSortableTh("Status", "Status")}
         </tr>

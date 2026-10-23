@@ -1169,8 +1169,8 @@ const displayRoomsTable = (rooms) => {
     thead.innerHTML = `
         <tr>
             ${renderSortableTh("Room & Location", "Room_Name")}
-            ${renderSortableTh("Bed Capacity & Occupancy", "Bed_Capacity", true)}
-            ${renderSortableTh("Daily Board Rate", "Daily_Rate", true)}
+            ${renderSortableTh("Bed Capacity & Occupancy", "Bed_Capacity")}
+            ${renderSortableTh("Daily Board Rate", "Daily_Rate")}
             ${renderSortableTh("Status", "Status")}
         </tr>
     `;

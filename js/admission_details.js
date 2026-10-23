@@ -1577,7 +1577,7 @@ const renderOrdersTable = (orders) => {
     html += '<thead><tr>';
     html += '<th>Order Ref & Timestamp</th>';
     html += '<th>Prescribed Item & Doctor</th>';
-    html += '<th class="text-right">Quantity & Amount</th>';
+    html += '<th>Quantity & Amount</th>';
     html += '<th>Fulfillment Status</th>';
     html += '<th class="text-center">Actions</th>';
     html += '</tr></thead><tbody>';
@@ -1761,7 +1761,7 @@ const renderRoundsTable = (rounds) => {
     html += '<thead><tr>';
     html += '<th>Round Ref & Timestamp</th>';
     html += '<th>Attending Physician</th>';
-    html += '<th class="text-right">Professional Fee</th>';
+    html += '<th>Professional Fee</th>';
     html += '<th>Billing Status</th>';
     html += '</tr></thead><tbody>';
 
@@ -1862,7 +1862,7 @@ const renderTransfersTable = (transfers) => {
     html += '<thead><tr>';
     html += '<th>Bed & Room Accommodation</th>';
     html += '<th>Stay Period</th>';
-    html += '<th class="text-right">Duration & Total Charge</th>';
+    html += '<th>Duration & Total Charge</th>';
     html += '<th>Occupancy Status</th>';
     html += '</tr></thead><tbody>';
 
@@ -2032,8 +2032,8 @@ const renderLedgerTable = (ledger) => {
     html += '<thead><tr>';
     html += '<th>Ledger Ref & Station</th>';
     html += '<th>Particulars / Catalog Item</th>';
-    html += '<th class="text-right">Quantity & Unit Rate</th>';
-    html += '<th class="text-right">Total Charge</th>';
+    html += '<th>Quantity & Unit Rate</th>';
+    html += '<th>Total Charge</th>';
     html += '<th>Transaction Type</th>';
     html += '</tr></thead><tbody>';
 
@@ -2528,7 +2528,7 @@ const renderAdvancePaymentsHistory = (advList) => {
                     <tr>
                         <th>Receipt &amp; Timestamp</th>
                         <th>Payment Method &amp; Cashier</th>
-                        <th class="text-right">Amount Paid</th>
+                        <th>Amount Paid</th>
                         <th class="text-center">Official Receipt</th>
                     </tr>
                 </thead>
@@ -2937,7 +2937,7 @@ const renderPaymentHistoryTable = (invId, admId, targetEl) => {
                         <tr>
                             <th>Receipt &amp; Timestamp</th>
                             <th>Method &amp; Cashier</th>
-                            <th class="text-right">Amount Paid &amp; Balance</th>
+                            <th>Amount Paid &amp; Balance</th>
                             <th>Settlement Status</th>
                         </tr>
                     </thead>

@@ -1207,7 +1207,7 @@ textarea.form-control {
 }
 
 .th-sort-wrapper.th-sort-right {
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .sort-icon-box {

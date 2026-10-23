@@ -208,6 +208,23 @@ const renderSettlementSummary = (hospTotal, docTotal, gross, discPct, discName, 
     if (elNetTotal) elNetTotal.textContent = `₱${formatMoney(net)}`;
     if (elPayTotal) elPayTotal.textContent = `-₱${formatMoney(amountPaid)}`;
 
+    const tbodyAppPayments = document.getElementById("applied-payments-itemized-tbody");
+    if (tbodyAppPayments) {
+        if (inv.Payments && Array.isArray(inv.Payments) && inv.Payments.length > 0) {
+            tbodyAppPayments.innerHTML = inv.Payments.map(p => {
+                const isAdv = (p.Is_Advance == 1 || String(p.Notes || '').toLowerCase().includes('advance'));
+                const typeLabel = isAdv ? 'Pre-Discharge Advance Deposit' : 'Discharge Settlement Payment';
+                const methodLabel = p.Payment_Method || 'Cash';
+                const dateLabel = p.Formatted_Payment_Date || p.Payment_Date || '';
+                const pDiscAmt = parseFloat(p.Discount_Amount || 0);
+                const discNote = pDiscAmt > 0 ? ` [Assistance: ₱${formatMoney(pDiscAmt)} ${p.Discount_Name || 'Voucher'} credited above]` : '';
+                return `<tr class="summary-payment-sub-item"><td>• ${typeLabel} (${p.Receipt_Number} • ${methodLabel}${dateLabel ? ' • ' + dateLabel : ''})${discNote}:</td><td align="right">-₱${formatMoney(parseFloat(p.Amount_Paid || 0))}</td></tr>`;
+            }).join('');
+        } else {
+            tbodyAppPayments.innerHTML = '';
+        }
+    }
+
     if (changeAmt > 0 && elChangeRow && elChangeTotal) {
         elChangeRow.style.display = "";
         elChangeTotal.textContent = `₱${formatMoney(changeAmt)}`;
@@ -597,8 +614,8 @@ const openPaymentHistoryModal = () => {
                             <th>Date & Time</th>
                             <th>Method</th>
                             <th>Cashier</th>
-                            <th style="text-align: right;">Amount Paid</th>
-                            <th style="text-align: right;">Remaining Bal</th>
+                            <th>Amount Paid</th>
+                            <th>Remaining Bal</th>
                             <th>Particulars / Notes</th>
                         </tr>
                     </thead>

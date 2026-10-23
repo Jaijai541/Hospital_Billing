@@ -177,7 +177,7 @@ const displayDepartmentsTable = (departments) => {
     thead.innerHTML = `
         <tr>
             ${renderSortableTh("Department / Station", "Station_Name")}
-            ${renderSortableTh("Assigned Personnel", "Staff_Count", true)}
+            ${renderSortableTh("Assigned Personnel", "Staff_Count")}
             ${renderSortableTh("Status", "Status")}
         </tr>
     `;

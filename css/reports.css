@@ -712,7 +712,7 @@
 }
 
 .th-sort-wrapper.th-sort-right {
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .sort-icon-box {
@@ -1249,7 +1249,6 @@
     }
 
     .spreadsheet-table .text-right,
-    .spreadsheet-table th.text-right,
     .spreadsheet-table td.text-right,
     .spreadsheet-table .currency-cell,
     .spreadsheet-table .number-cell {
@@ -1319,7 +1318,7 @@
 }
 
 .th-sort-wrapper.th-sort-right {
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .sort-icon-box {

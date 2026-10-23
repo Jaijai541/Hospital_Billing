@@ -125,7 +125,7 @@ const displayCatalogsTable = (items) => {
         <tr>
             ${renderSortableTh("Item & Catalog Code", "Item_Name")}
             ${renderSortableTh("Category", "Item_Category")}
-            ${renderSortableTh("Unit Price", "Unit_Price", true)}
+            ${renderSortableTh("Unit Price", "Unit_Price")}
             ${renderSortableTh("Status", "Status")}
         </tr>
     `;

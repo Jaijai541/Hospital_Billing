@@ -647,7 +647,7 @@ const displayDoctorsTable = (doctors) => {
         <tr>
             ${renderSortableTh("Physician & Code", "Doctor_Name")}
             ${renderSortableTh("Classification & Specialties", "Doctor_Type_Name")}
-            ${renderSortableTh("Base Round Fee", "Base_Round_Fee", true)}
+            ${renderSortableTh("Base Round Fee", "Base_Round_Fee")}
             ${renderSortableTh("Status", "Status")}
         </tr>
     `;

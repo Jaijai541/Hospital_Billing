@@ -9,6 +9,34 @@ let currentLoadedDoctor = null;
 let selectedDoctorSpecialties = [];
 let tempSelectedSpecialties = [];
 let currentFilteredSpecialties = [];
+let bypassDuplicateDoctorCheck = false;
+let matchedDuplicateDoctor = null;
+
+const openDuplicateDoctorModal = (doc) => {
+    matchedDuplicateDoctor = doc;
+    const modal = document.getElementById("duplicateDoctorModal");
+    if (!modal) return;
+    const codeFormatted = doc.Formatted_Code || `DOC-${String(doc.Doctor_ID).padStart(3, '0')}`;
+    document.getElementById("dup_doctor_code").textContent = codeFormatted;
+    const statusBadge = document.getElementById("dup_doctor_status");
+    if (statusBadge) {
+        const isActive = (doc.Is_Active == 1);
+        statusBadge.className = isActive ? "badge badge-success" : "badge badge-danger";
+        statusBadge.textContent = isActive ? "Active" : "Archived";
+    }
+    document.getElementById("dup_doctor_name").textContent = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
+    document.getElementById("dup_doctor_type").textContent = doc.Doctor_Type_Name || "Physician";
+    document.getElementById("dup_doctor_station").textContent = doc.Station_Name || "Unassigned";
+    document.getElementById("dup_doctor_fee").textContent = `₱ ${parseFloat(doc.Base_Round_Fee || 0).toFixed(2)} / round`;
+    document.getElementById("dup_doctor_specialties").textContent = doc.Specialties || "General Practice";
+    modal.style.display = "flex";
+};
+
+const closeDuplicateDoctorModal = () => {
+    const modal = document.getElementById("duplicateDoctorModal");
+    if (modal) modal.style.display = "none";
+    matchedDuplicateDoctor = null;
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDoctorLookups();
@@ -16,11 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById("btnSubmit").addEventListener("click", saveDoctor);
-
-    const docTypeInput = document.getElementById("doctor_type_id_text");
-    if (docTypeInput) docTypeInput.addEventListener("click", openDoctorTypePicker);
-    const btnBrowseDocType = document.getElementById("btnBrowse_doctor_type_id");
-    if (btnBrowseDocType) btnBrowseDocType.addEventListener("click", openDoctorTypePicker);
 
     const stationInput = document.getElementById("station_id_text");
     if (stationInput) stationInput.addEventListener("click", openStationPicker);
@@ -99,8 +122,47 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const btnCloseDupDoc = document.getElementById("btnCloseDuplicateDoctorModal");
+    if (btnCloseDupDoc) btnCloseDupDoc.addEventListener("click", closeDuplicateDoctorModal);
+    const btnCancelDupDoc = document.getElementById("btnCancelDuplicateDoctorModal");
+    if (btnCancelDupDoc) btnCancelDupDoc.addEventListener("click", closeDuplicateDoctorModal);
+
+    const btnProceedNewDoc = document.getElementById("btnProceedNewDoctor");
+    if (btnProceedNewDoc) {
+        btnProceedNewDoc.addEventListener("click", () => {
+            bypassDuplicateDoctorCheck = true;
+            closeDuplicateDoctorModal();
+            saveDoctor();
+        });
+    }
+
+    const btnViewExistingDoc = document.getElementById("btnViewExistingDoctor");
+    if (btnViewExistingDoc) {
+        btnViewExistingDoc.addEventListener("click", () => {
+            const targetId = matchedDuplicateDoctor ? matchedDuplicateDoctor.Doctor_ID : null;
+            closeDuplicateDoctorModal();
+            closeModal();
+            if (targetId) {
+                openViewDoctorModal(targetId);
+            }
+        });
+    }
+
+    const dupDocModal = document.getElementById("duplicateDoctorModal");
+    if (dupDocModal) {
+        dupDocModal.addEventListener("click", (e) => {
+            if (e.target === dupDocModal) closeDuplicateDoctorModal();
+        });
+    }
+
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
+            const dupModal = document.getElementById("duplicateDoctorModal");
+            if (dupModal && dupModal.style.display === "flex") {
+                e.stopPropagation();
+                closeDuplicateDoctorModal();
+                return;
+            }
             const pickerModal = document.getElementById("specialtyPickerModal");
             if (pickerModal && pickerModal.style.display === "flex") {
                 e.stopPropagation();
@@ -175,6 +237,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    initRefreshBtn("btnRefreshDoctors", displayDoctors);
 });
 
 const updateSpecialtiesText = () => {
@@ -403,6 +467,22 @@ const loadDoctorLookups = async () => {
             allStations = data.stations || [];
             allSpecialties = data.specialties || [];
 
+            const docTypeSelect = document.getElementById("doctor_type_id");
+            if (docTypeSelect) {
+                const curVal = docTypeSelect.value;
+                docTypeSelect.innerHTML = `<option value="">Select Classification...</option>`;
+                const validTypes = allDoctorTypes.filter(t => t.Type_Name === "Attending" || t.Type_Name === "Resident");
+                const listToRender = validTypes.length > 0 ? validTypes : allDoctorTypes;
+                listToRender.sort((a, b) => a.Type_Name.localeCompare(b.Type_Name));
+                listToRender.forEach(t => {
+                    const opt = document.createElement("option");
+                    opt.value = t.Doctor_Type_ID;
+                    opt.textContent = t.Type_Name;
+                    docTypeSelect.appendChild(opt);
+                });
+                if (curVal) docTypeSelect.value = curVal;
+            }
+
             const filterType = document.getElementById("filter_type");
             if (filterType) {
                 filterType.innerHTML = `<option value="all">All Classifications</option>`;
@@ -439,24 +519,6 @@ const loadDoctorLookups = async () => {
     } catch (error) {
         console.error("[API] Error loading doctor lookups:", error);
     }
-};
-
-const openDoctorTypePicker = async () => {
-    if (!allDoctorTypes || allDoctorTypes.length === 0) {
-        await loadDoctorLookups();
-    }
-    openGenericLookupPicker({
-        title: "Select Doctor Classification",
-        items: allDoctorTypes.map(t => ({
-            id: t.Doctor_Type_ID,
-            text: t.Type_Name
-        })),
-        selectedId: document.getElementById("doctor_type_id").value,
-        onSelect: (item) => {
-            document.getElementById("doctor_type_id").value = item.id;
-            document.getElementById("doctor_type_id_text").value = item.text;
-        }
-    });
 };
 
 const openStationPicker = async () => {
@@ -583,13 +645,10 @@ const displayDoctorsTable = (doctors) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Code</th>
-            <th>Doctor Full Name</th>
-            <th>Classification</th>
-            <th>Station</th>
-            <th>Medical Specialties</th>
-            <th>Base Round Fee</th>
-            <th>Status</th>
+            ${renderSortableTh("Physician & Code", "Doctor_Name")}
+            ${renderSortableTh("Classification & Specialties", "Doctor_Type_Name")}
+            ${renderSortableTh("Base Round Fee", "Base_Round_Fee", true)}
+            ${renderSortableTh("Status", "Status")}
         </tr>
     `;
     table.appendChild(thead);
@@ -602,12 +661,18 @@ const displayDoctorsTable = (doctors) => {
         row.className = "clickable-row";
         row.title = "Click to view doctor details & assigned patients";
         row.innerHTML = `
-            <td><strong>${doc.Formatted_Code}</strong></td>
-            <td><strong>${fullName}</strong></td>
-            <td><span class="badge badge-primary">${doc.Doctor_Type_Name}</span></td>
-            <td>${doc.Station_Name}</td>
-            <td><small>${doc.Specialties || 'General Practice'}</small></td>
-            <td>₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</td>
+            <td>
+                <div class="table-primary-text">${fullName}</div>
+                <div class="table-sub-text"><code>${doc.Formatted_Code || ''}</code> &bull; ${doc.Station_Name || 'General Station'}</div>
+            </td>
+            <td>
+                <div class="table-primary-text"><span class="badge badge-primary">${doc.Doctor_Type_Name || 'Physician'}</span></div>
+                <div class="table-sub-text">${doc.Specialties || 'General Practice'}</div>
+            </td>
+            <td>
+                <div class="table-amount-prominent">₱ ${parseFloat(doc.Base_Round_Fee).toFixed(2)}</div>
+                <div class="table-sub-text">per bedside round</div>
+            </td>
             <td>${getStatusBadge(doc.Is_Active)}</td>
         `;
         row.addEventListener("click", () => openViewDoctorModal(doc.Doctor_ID));
@@ -681,17 +746,21 @@ const openViewDoctorModal = async (doctorId) => {
                             : (isAdmitted ? "Bed Pending" : "Discharged");
                         const bedBadgeClass = isAdmitted ? "badge badge-primary" : "badge badge-secondary";
 
-                        const patName = `${p.First_Name} ${p.Last_Name} <small style="color: var(--text-muted);">(${p.Patient_Code})</small>`;
-                        const admCode = `<strong>${p.Admission_Code || ('ADM-' + String(p.Admission_ID).padStart(3, '0'))}</strong>`;
+                        const patName = `Dr. ${p.First_Name || ''} ${p.Last_Name || ''}`.trim() === 'Dr.' ? `${p.First_Name} ${p.Last_Name}` : `${p.First_Name} ${p.Last_Name}`;
+                        const admCode = p.Admission_Code || ('ADM-' + String(p.Admission_ID).padStart(3, '0'));
                         const diagnosis = p.Diagnosis || p.Chief_Complaint || "N/A";
                         const admDate = p.Formatted_Admission_Date || "N/A";
 
                         tr.innerHTML = `
-                            <td><strong style="color: var(--primary);">${patName}</strong></td>
-                            <td>${admCode}</td>
+                            <td>
+                                <div class="table-primary-text text-primary">${patName}</div>
+                                <div class="table-sub-text"><code>${p.Patient_Code}</code> &bull; <code>${admCode}</code></div>
+                            </td>
                             <td><span class="${bedBadgeClass}">${bedLocation}</span></td>
-                            <td>${diagnosis}</td>
-                            <td>${admDate}</td>
+                            <td>
+                                <div class="table-sub-text-dark">${diagnosis}</div>
+                                <div class="table-sub-text">${admDate}</div>
+                            </td>
                             <td>${statusBadge}</td>
                         `;
 
@@ -729,11 +798,14 @@ const populateDoctorForm = (doc) => {
     document.getElementById("first_name").value = doc.First_Name || "";
     document.getElementById("last_name").value = doc.Last_Name || "";
     document.getElementById("doctor_type_id").value = doc.Doctor_Type_ID || "";
-    if (doc.Doctor_Type_ID) {
-        const t = allDoctorTypes.find(dt => String(dt.Doctor_Type_ID) === String(doc.Doctor_Type_ID));
-        document.getElementById("doctor_type_id_text").value = t ? t.Type_Name : "";
-    } else {
-        document.getElementById("doctor_type_id_text").value = "";
+    const docTypeText = document.getElementById("doctor_type_id_text");
+    if (docTypeText) {
+        if (doc.Doctor_Type_ID) {
+            const t = allDoctorTypes.find(dt => String(dt.Doctor_Type_ID) === String(doc.Doctor_Type_ID));
+            docTypeText.value = t ? t.Type_Name : "";
+        } else {
+            docTypeText.value = "";
+        }
     }
     document.getElementById("station_id").value = doc.Station_ID || "";
     if (doc.Station_ID) {
@@ -803,6 +875,30 @@ const saveDoctor = async () => {
         return;
     }
 
+    const validFirst = typeof validatePersonName === "function" ? validatePersonName(firstName, "First Name", true) : { valid: !/\d/.test(firstName) };
+    if (!validFirst.valid) {
+        alert(validFirst.message || "First Name cannot contain numbers. Please use letters only.");
+        const el = document.getElementById("first_name");
+        if (el) el.focus();
+        return;
+    }
+
+    const validLast = typeof validatePersonName === "function" ? validatePersonName(lastName, "Last Name", true) : { valid: !/\d/.test(lastName) };
+    if (!validLast.valid) {
+        alert(validLast.message || "Last Name cannot contain numbers. Please use letters only.");
+        const el = document.getElementById("last_name");
+        if (el) el.focus();
+        return;
+    }
+
+    const validFee = typeof validateNumericField === "function" ? validateNumericField(fee, "Base Round Fee", 0, true) : { valid: !isNaN(parseFloat(fee)) && parseFloat(fee) >= 0 };
+    if (!validFee.valid) {
+        alert(validFee.message || "Base Round Fee must be a valid number (0 or higher).");
+        const el = document.getElementById("base_round_fee");
+        if (el) el.focus();
+        return;
+    }
+
     if (!selectedDoctorSpecialties || selectedDoctorSpecialties.length === 0) {
         alert("Please select at least one medical specialty.");
         return;
@@ -819,6 +915,17 @@ const saveDoctor = async () => {
 
     const isEdit = (doctorId !== "");
     const operation = isEdit ? "updateDoctor" : "insertDoctor";
+
+    if (!isEdit && !bypassDuplicateDoctorCheck) {
+        const match = allDoctors.find(d => 
+            (d.First_Name || "").trim().toLowerCase() === firstName.toLowerCase() && 
+            (d.Last_Name || "").trim().toLowerCase() === lastName.toLowerCase()
+        );
+        if (match) {
+            openDuplicateDoctorModal(match);
+            return;
+        }
+    }
 
     if (isEdit) {
         jsonData.doctor_id = doctorId;
@@ -838,6 +945,7 @@ const saveDoctor = async () => {
         });
 
         if (response.data == 1) {
+            bypassDuplicateDoctorCheck = false;
             alert(isEdit ? "Doctor updated successfully!" : "Doctor registered successfully!");
             resetForm();
             closeModal();
@@ -853,12 +961,14 @@ const saveDoctor = async () => {
 
 const resetForm = () => {
     currentLoadedDoctor = null;
+    bypassDuplicateDoctorCheck = false;
 
     document.getElementById("doctor_id").value = "";
     document.getElementById("first_name").value = "";
     document.getElementById("last_name").value = "";
     document.getElementById("doctor_type_id").value = "";
-    document.getElementById("doctor_type_id_text").value = "";
+    const docTypeText = document.getElementById("doctor_type_id_text");
+    if (docTypeText) docTypeText.value = "";
     document.getElementById("station_id").value = "";
     document.getElementById("station_id_text").value = "";
     document.getElementById("base_round_fee").value = "";

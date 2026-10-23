@@ -13,10 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 const initEvents = () => {
-    const btnRefresh = document.getElementById("btnRefreshAR");
-    if (btnRefresh) {
-        btnRefresh.addEventListener("click", loadPromissoryNotes);
-    }
+    initRefreshBtn("btnRefreshPromissory", loadPromissoryNotes);
 
     const searchInput = document.getElementById("search_input");
     if (searchInput) {
@@ -251,13 +248,11 @@ const renderTable = (notes) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Note Code</th>
-            <th>Patient / Case</th>
-            <th>Guarantor & Contact</th>
-            <th>Plan & Terms</th>
-            <th style="min-width: 170px;">Balance & Progress</th>
-            <th>Next Due Date</th>
-            <th>Status</th>
+            ${renderSortableTh("Note Code & Terms", "Note_Code")}
+            ${renderSortableTh("Patient & Guarantor", "Patient_Name")}
+            ${renderSortableTh("Balance & Progress", "Remaining_Balance", true)}
+            ${renderSortableTh("Next Due Date", "Next_Due_Date")}
+            ${renderSortableTh("Status", "Status")}
         </tr>
     `;
     table.appendChild(thead);
@@ -290,70 +285,53 @@ const renderTable = (notes) => {
 
         let dueBadgeHtml = "";
         if (status === "Settled") {
-            dueBadgeHtml = `<div style="font-weight: 600; color: #16a34a;">Fully Settled</div>`;
+            dueBadgeHtml = `<div class="font-bold text-success">Fully Settled</div>`;
         } else if (daysOverdue > 0) {
             dueBadgeHtml = `
-                <div style="font-weight: 700; color: #dc2626;">${note.Formatted_Next_Due_Date || note.Next_Due_Date}</div>
-                <span class="badge badge-danger" style="font-size: 11px; margin-top: 2px;">Overdue by ${daysOverdue} day${daysOverdue === 1 ? "" : "s"}</span>
+                <div class="font-bold text-danger">${note.Formatted_Next_Due_Date || note.Next_Due_Date}</div>
+                <span class="badge badge-danger table-meta-pill">Overdue by ${daysOverdue} day${daysOverdue === 1 ? "" : "s"}</span>
             `;
         } else if (daysOverdue === 0) {
             dueBadgeHtml = `
-                <div style="font-weight: 700; color: #b45309;">${note.Formatted_Next_Due_Date || note.Next_Due_Date}</div>
-                <span class="badge badge-warning" style="font-size: 11px; margin-top: 2px;">Due Today</span>
+                <div class="font-bold text-warning">${note.Formatted_Next_Due_Date || note.Next_Due_Date}</div>
+                <span class="badge badge-warning table-meta-pill">Due Today</span>
             `;
         } else {
             const daysLeft = Math.abs(daysOverdue);
             const urgencyClass = daysLeft <= 7 ? "badge-warning" : "badge-secondary";
             dueBadgeHtml = `
-                <div style="font-weight: 600;">${note.Formatted_Next_Due_Date || note.Next_Due_Date}</div>
-                <span class="badge ${urgencyClass}" style="font-size: 11px; margin-top: 2px;">In ${daysLeft} day${daysLeft === 1 ? "" : "s"}</span>
+                <div class="font-bold">${note.Formatted_Next_Due_Date || note.Next_Due_Date}</div>
+                <span class="badge ${urgencyClass} table-meta-pill">In ${daysLeft} day${daysLeft === 1 ? "" : "s"}</span>
             `;
         }
 
+        const isNr = note.Plan_Type_Code === 'Monthly_Installment' || (note.Plan_Type_Name && note.Plan_Type_Name.includes('NR'));
+        const planPill = isNr
+            ? '<span class="badge badge-info">NR</span>'
+            : '<span class="badge badge-warning">AR</span>';
+
+        const fillClass = bal <= 0 ? 'progress-fill-success' : (pctPaid >= 50 ? 'progress-fill-info' : 'progress-fill-warning');
+
         row.innerHTML = `
             <td>
-                <strong style="color: var(--primary); font-family: monospace; font-size: 14.5px;">${note.Note_Code}</strong>
-                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">${note.Formatted_Created_At || ""}</div>
+                <div class="table-primary-text font-mono text-primary font-bold">${note.Note_Code}</div>
+                <div class="table-sub-text">${planPill} ${note.Plan_Type_Name} ${note.Installment_Months > 1 ? `&bull; ${note.Installment_Months} mos (₱${monthly.toLocaleString("en-PH", { minimumFractionDigits: 2 })}/mo)` : ''}</div>
+                <div class="table-sub-text">${note.Formatted_Created_At || ""}</div>
             </td>
             <td>
-                <strong style="font-size: 14.5px;">${note.Patient_Name}</strong>
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                    <code>${note.Admission_Code}</code> &bull; <code>${note.Invoice_Code}</code>
-                </div>
+                <div class="table-primary-text font-bold">${note.Patient_Name}</div>
+                <div class="table-sub-text"><code>${note.Admission_Code}</code> &bull; <code>${note.Invoice_Code}</code></div>
+                <div class="table-sub-text">Guarantor: <strong>${note.Guarantor_Name || "-"}</strong> ${note.Guarantor_Contact ? `(${note.Guarantor_Contact})` : ''}</div>
             </td>
             <td>
-                <div style="font-weight: 600;">${note.Guarantor_Name || "-"}</div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                    ${note.Guarantor_Contact ? `📞 ${note.Guarantor_Contact}` : "No contact recorded"}
+                <div class="table-amount-prominent ${bal > 0 ? 'text-danger' : 'text-success'}">₱${bal.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</div>
+                <div class="table-sub-text">Paid ₱${paidSoFar.toLocaleString("en-PH", { minimumFractionDigits: 2 })} of ₱${netDue.toLocaleString("en-PH", { minimumFractionDigits: 2 })} (${pctPaid}%)</div>
+                <div class="table-progress-bar-track">
+                    <div class="table-progress-bar-fill ${fillClass}" style="width: ${pctPaid}%;"></div>
                 </div>
             </td>
-            <td>
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                    ${note.Plan_Type_Code === 'Monthly_Installment' || (note.Plan_Type_Name && note.Plan_Type_Name.includes('NR'))
-                        ? '<span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; padding: 2px 7px; font-weight: 700;">NR</span>'
-                        : '<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 7px; font-weight: 700;">AR</span>'}
-                    <span style="font-weight: 600; color: #1e293b;">${note.Plan_Type_Name}</span>
-                </div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                    ${note.Installment_Months > 1 ? `${note.Installment_Months} mos &bull; ₱${monthly.toLocaleString("en-PH", { minimumFractionDigits: 2 })}/mo` : "Lump sum settlement"}
-                </div>
-            </td>
-            <td>
-                <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 2px;">
-                    <span style="color: var(--text-muted);">Paid: ₱${paidSoFar.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
-                    <strong style="color: ${bal > 0 ? '#dc2626' : '#16a34a'};">₱${bal.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</strong>
-                </div>
-                <div style="background: #e2e8f0; border-radius: 999px; height: 6px; width: 100%; overflow: hidden;">
-                    <div style="background: ${bal <= 0 ? '#16a34a' : (pctPaid >= 50 ? '#0284c7' : '#f59e0b')}; width: ${pctPaid}%; height: 100%;"></div>
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 2px;">${pctPaid}% settled (Net: ₱${netDue.toLocaleString("en-PH", { minimumFractionDigits: 2 })})</div>
-            </td>
-            <td>
-                ${dueBadgeHtml}
-            </td>
-            <td>
-                ${statusBadgeHtml}
-            </td>
+            <td>${dueBadgeHtml}</td>
+            <td>${statusBadgeHtml}</td>
         `;
 
         row.addEventListener("click", () => openPaymentHistoryModal(note));
@@ -439,7 +417,17 @@ const submitInstallmentPayment = async () => {
 
     const invoiceId = parseInt(document.getElementById("pay_invoice_id")?.value) || 0;
     const paymentMethodId = parseInt(document.getElementById("pay_method_id")?.value) || 1;
-    const paymentAmount = parseFloat(document.getElementById("pay_amount_input")?.value) || 0;
+    const payInput = document.getElementById("pay_amount_input");
+    const rawAmount = payInput ? payInput.value.trim() : "";
+
+    const valAmount = typeof validateNumericField === "function" ? validateNumericField(rawAmount, "Payment Amount", 0, false) : { valid: !isNaN(parseFloat(rawAmount)) && parseFloat(rawAmount) > 0 };
+    if (!valAmount.valid) {
+        showToast(valAmount.message || "Please enter a valid payment amount greater than 0.00.", "warning");
+        if (payInput) payInput.focus();
+        return;
+    }
+
+    const paymentAmount = parseFloat(rawAmount) || 0;
     const notes = (document.getElementById("pay_notes_input")?.value || "").trim();
 
     if (paymentAmount <= 0) {
@@ -527,8 +515,8 @@ const openPaymentHistoryModal = async (note) => {
     const actionsDiv = document.getElementById("hist_modal_actions");
     if (actionsDiv) {
         actionsDiv.innerHTML = `
-            <a href="invoice_print.html?id=${note.Invoice_ID}" class="btn btn-outline btn-sm">🖨 Print Statement & Agreement</a>
-            ${bal > 0 ? `<button type="button" class="btn btn-primary btn-sm" id="btnHistPayNow">💵 Record Installment Payment</button>` : ""}
+            <a href="invoice_print.html?id=${note.Invoice_ID}" class="btn btn-outline btn-sm">Print Statement & Agreement</a>
+            ${bal > 0 ? `<button type="button" class="btn btn-primary btn-sm" id="btnHistPayNow">Record Installment Payment</button>` : ""}
         `;
         const btnHistPay = document.getElementById("btnHistPayNow");
         if (btnHistPay) {
@@ -579,12 +567,9 @@ const renderHistoryTable = (payments) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Receipt #</th>
-            <th>Payment Date</th>
-            <th>Type / Stage</th>
-            <th>Method</th>
-            <th style="text-align: right;">Amount Paid</th>
-            <th style="text-align: right;">Balance After</th>
+            <th>Receipt & Timestamp</th>
+            <th>Stage & Method</th>
+            <th class="text-right">Amount Paid & Balance After</th>
             <th>Cashier</th>
         </tr>
     `;
@@ -601,15 +586,19 @@ const renderHistoryTable = (payments) => {
         const isAdvance = p.Is_Advance == 1;
 
         row.innerHTML = `
-            <td><strong style="color: var(--primary);">${p.Receipt_Number}</strong></td>
-            <td style="white-space: nowrap;">${p.Payment_Date}</td>
             <td>
-                ${isAdvance ? '<span class="badge badge-warning">Advance Deposit</span>' : (idx === 0 && payments.length > 1 ? '<span class="badge badge-secondary">Discharge Payment</span>' : '<span class="badge badge-success">Installment</span>')}
+                <div class="table-primary-text font-bold text-primary">${p.Receipt_Number}</div>
+                <div class="table-sub-text">${p.Payment_Date}</div>
             </td>
-            <td>${p.Payment_Method}</td>
-            <td style="text-align: right; font-weight: 700; color: #16a34a;">₱${amt.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
-            <td style="text-align: right; font-weight: 600;">₱${balAfter.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
-            <td>${p.Cashier_Name || "Cashier"}</td>
+            <td>
+                <div>${isAdvance ? '<span class="badge badge-warning">Advance Deposit</span>' : (idx === 0 && payments.length > 1 ? '<span class="badge badge-secondary">Discharge Payment</span>' : '<span class="badge badge-success">Installment</span>')}</div>
+                <div class="table-sub-text">${p.Payment_Method}</div>
+            </td>
+            <td class="text-right">
+                <div class="table-amount-prominent text-success">₱${amt.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</div>
+                <div class="table-sub-text">Bal After: ₱${balAfter.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</div>
+            </td>
+            <td><div class="table-sub-text-dark">${p.Cashier_Name || "Cashier"}</div></td>
         `;
 
         row.addEventListener("click", () => {

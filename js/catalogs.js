@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter_category").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("filter_status").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("sort_by").addEventListener("change", filterAndSortCatalogs);
+
+    initRefreshBtn("btnRefreshCatalogs", displayCatalogs);
 });
 
 const displayCatalogs = async () => {
@@ -121,11 +123,10 @@ const displayCatalogsTable = (items) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Code</th>
-            <th>Item Name</th>
-            <th>Category Type</th>
-            <th>Unit Price</th>
-            <th>Status</th>
+            ${renderSortableTh("Item & Catalog Code", "Item_Name")}
+            ${renderSortableTh("Category", "Item_Category")}
+            ${renderSortableTh("Unit Price", "Unit_Price", true)}
+            ${renderSortableTh("Status", "Status")}
         </tr>
     `;
     table.appendChild(thead);
@@ -140,10 +141,15 @@ const displayCatalogsTable = (items) => {
         row.className = "clickable-row";
         row.title = "Click to view / edit catalog item";
         row.innerHTML = `
-            <td><strong>${item.Formatted_Code}</strong></td>
-            <td><strong>${item.Item_Name}</strong></td>
+            <td>
+                <div class="table-primary-text font-bold">${item.Item_Name}</div>
+                <div class="table-sub-text"><code>${item.Formatted_Code}</code></div>
+            </td>
             <td>${catBadge}</td>
-            <td>₱ ${parseFloat(item.Unit_Price).toFixed(2)}</td>
+            <td>
+                <div class="table-amount-prominent">₱ ${parseFloat(item.Unit_Price).toFixed(2)}</div>
+                <div class="table-sub-text">standard charge</div>
+            </td>
             <td>${getStatusBadge(item.Is_Active)}</td>
         `;
         row.addEventListener("click", () => loadCatalogForEdit(item.Catalog_ID));
@@ -215,6 +221,14 @@ const saveCatalogItem = async () => {
         return;
     }
 
+    const valPrice = typeof validateNumericField === "function" ? validateNumericField(price, "Unit Price", 0, true) : { valid: !isNaN(parseFloat(price)) && parseFloat(price) >= 0 };
+    if (!valPrice.valid) {
+        alert(valPrice.message || "Unit Price must be a valid number (0 or higher).");
+        const el = document.getElementById("unit_price");
+        if (el) el.focus();
+        return;
+    }
+
     const jsonData = {
         item_name: itemName,
         category_type: category,
@@ -242,13 +256,20 @@ const saveCatalogItem = async () => {
             data: formData
         });
 
-        if (response.data == 1) {
-            alert(isEdit ? "Catalog item updated successfully!" : "Catalog item added successfully!");
+        const resData = response.data;
+        const isSuccess = (resData === 1 || resData == "1" || (resData && (resData.status === 1 || resData.status == "1")));
+
+        if (isSuccess) {
+            const successMsg = (resData && resData.message)
+                ? resData.message
+                : (isEdit ? "Catalog item updated successfully!" : "Catalog item added successfully!");
+            alert(successMsg);
             resetForm();
             closeModal();
             displayCatalogs();
         } else {
-            alert("Error saving catalog item.");
+            const errorMsg = (resData && resData.message) ? resData.message : "Error saving catalog item.";
+            alert(errorMsg);
         }
     } catch (error) {
         console.error("[Error] Save request failed:", error);

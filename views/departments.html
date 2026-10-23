@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Departments & Stations — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/common.css?v=10.7">
     <link rel="stylesheet" href="../css/departments.css?v=1.1">
 </head>
 <body>
@@ -64,9 +64,9 @@
                                 <table class="data-table dept-data-table">
                                     <thead>
                                         <tr>
-                                            <th>Physician &amp; Code</th>
-                                            <th>Classification</th>
-                                            <th>Status</th>
+                                            <th class="sortable-th" data-sort="Physician" role="button" tabindex="0" title="Click to sort by Physician & Code"><div class="th-sort-wrapper"><span class="th-label">Physician & Code</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Classification" role="button" tabindex="0" title="Click to sort by Classification"><div class="th-sort-wrapper"><span class="th-label">Classification</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Status" role="button" tabindex="0" title="Click to sort by Status"><div class="th-sort-wrapper"><span class="th-label">Status</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_dept_doctors_tbody"></tbody>
@@ -89,9 +89,9 @@
                                 <table class="data-table dept-data-table">
                                     <thead>
                                         <tr>
-                                            <th>Staff Member &amp; Account</th>
-                                            <th>System Role</th>
-                                            <th>Status</th>
+                                            <th class="sortable-th" data-sort="Staff" role="button" tabindex="0" title="Click to sort by Staff Member & Account"><div class="th-sort-wrapper"><span class="th-label">Staff Member & Account</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Role" role="button" tabindex="0" title="Click to sort by System Role"><div class="th-sort-wrapper"><span class="th-label">System Role</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Status" role="button" tabindex="0" title="Click to sort by Status"><div class="th-sort-wrapper"><span class="th-label">Status</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_dept_users_tbody"></tbody>
@@ -186,7 +186,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=9.1"></script>
-    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/common.js?v=10.7"></script>
     <script src="../js/departments.js?v=7.1"></script>
 </body>
 </html>

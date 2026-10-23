@@ -16,7 +16,15 @@ window.openChart = openChart;
 const dischargePatient = (admissionId, patientName) => {
     console.log("admissions.js: Initiating discharge for admission ID:", admissionId);
 
-    showPopupConfirm(`Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`, () => {
+    const targetAdm = (allAdmissions || []).find(a => parseInt(a.Admission_ID, 10) === parseInt(admissionId, 10));
+    const targetDiag = targetAdm && targetAdm.Diagnosis ? targetAdm.Diagnosis.trim() : '';
+    const hasDiag = targetDiag && targetDiag.toLowerCase() !== 'pending clinical diagnosis' && targetDiag.toLowerCase() !== 'loading...';
+
+    const confirmMsg = !hasDiag
+        ? `Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nNotice: No clinical diagnosis was entered. Patient will be discharged under standard clearance ("Medically cleared for discharge / Under observation").\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`
+        : `Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`;
+
+    showPopupConfirm(confirmMsg, () => {
         const formData = new FormData();
         formData.append('operation', 'dischargePatient');
         formData.append('json', JSON.stringify({ admission_id: admissionId }));
@@ -480,28 +488,25 @@ const renderAdmissionsTable = (admissions) => {
     let html = '<table class="data-table">';
     html += '<thead>';
     html += '<tr>';
-    html += '<th>Admission #</th>';
-    html += '<th>Patient Code & Name</th>';
-    html += '<th>Current Bed & Room</th>';
-    html += '<th>Chief Complaint</th>';
-    html += '<th>Clinical Diagnosis</th>';
-    html += '<th>Assigned Physician(s)</th>';
-    html += '<th>Admission Date</th>';
-    html += '<th>Status</th>';
+    html += renderSortableTh("Admission & Date", "Admission_ID");
+    html += renderSortableTh("Patient & Contact", "Patient_Name");
+    html += renderSortableTh("Bed & Assigned Doctor", "Bed_Code");
+    html += renderSortableTh("Clinical Diagnosis & Complaint", "Diagnosis");
+    html += renderSortableTh("Status", "Status");
     html += '</tr>';
     html += '</thead>';
     html += '<tbody>';
 
     admissions.forEach(a => {
         const bedInfo = a.Bed_Code 
-            ? `<strong>${a.Bed_Code}</strong> (${a.Room_Name || ''} - ${a.Room_Type || ''})<br><small class="text-muted">₱${parseFloat(a.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</small>`
-            : '<span class="text-muted">None / Discharged</span>';
+            ? `<span class="table-primary-text"><strong>${a.Bed_Code}</strong> (${a.Room_Name || ''} - ${a.Room_Type || ''})</span><span class="table-sub-text">₱${parseFloat(a.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</span>`
+            : '<span class="text-muted table-sub-text">None / Discharged</span>';
 
-        const doctors = a.Assigned_Doctors ? a.Assigned_Doctors.split('; ').join('<br>') : '<span class="text-muted">None</span>';
+        const doctors = a.Assigned_Doctors ? a.Assigned_Doctors.split('; ').join(', ') : 'None assigned';
 
         let statusBadge = '<span class="badge badge-info">' + a.Status + '</span>';
         if (a.Status === 'Admitted') {
-            statusBadge = '<span class="badge badge-primary" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600;">Admitted</span>';
+            statusBadge = '<span class="badge badge-primary badge-admitted-pill">Admitted</span>';
         } else if (a.Status === 'Discharged') {
             statusBadge = '<span class="badge badge-warning">Discharged</span>';
         } else if (a.Status === 'Billed') {
@@ -511,26 +516,23 @@ const renderAdmissionsTable = (admissions) => {
                 if (a.Promissory_Next_Due_Date) {
                     const dueStr = a.Formatted_Promissory_Next_Due_Date || a.Promissory_Next_Due_Date;
                     const dueAmt = parseFloat(a.Promissory_Monthly_Amount || rem);
-                    pnInfo = `<br><span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-size: 11px; margin-top: 4px; display: inline-block;">PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
+                    pnInfo = `<span class="badge table-pn-badge">PN Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>`;
                 }
-                statusBadge = `<span class="badge badge-warning" style="background: #f59e0b; color: #fff;">Billed (Balance: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>${pnInfo}`;
+                statusBadge = `<span class="badge badge-warning badge-billed-pending">Billed (Bal: ₱${rem.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>${pnInfo ? '<br>' + pnInfo : ''}`;
             } else {
                 statusBadge = '<span class="badge badge-success">Settled (Paid in Full)</span>';
             }
         }
 
         const diagnosisBadge = a.Diagnosis 
-            ? `<strong>${a.Diagnosis}</strong>` 
-            : '<span class="badge badge-warning" style="font-size: 0.75rem;">Pending Dx</span>';
+            ? `<span class="table-primary-text">${a.Diagnosis}</span>` 
+            : '<span class="badge badge-warning table-meta-pill">Pending Diagnosis</span>';
 
         html += `<tr class="clickable-row" onclick="openChart(${a.Admission_ID})" title="Click row to open clinical chart & ledger">`;
-        html += `<td><strong>ADM-${String(a.Admission_ID).padStart(3, '0')}</strong></td>`;
-        html += `<td><strong>${a.Patient_Code}</strong><br>${a.Patient_Name}<br><small class="text-muted">Contact: ${a.Contact_Number || 'N/A'}</small></td>`;
-        html += `<td>${bedInfo}</td>`;
-        html += `<td>${a.Chief_Complaint}</td>`;
-        html += `<td>${diagnosisBadge}</td>`;
-        html += `<td><small>${doctors}</small></td>`;
-        html += `<td>${a.Admission_Date}</td>`;
+        html += `<td><span class="table-primary-text text-primary">ADM-${String(a.Admission_ID).padStart(3, '0')}</span><span class="table-sub-text">Admitted: ${a.Admission_Date}</span></td>`;
+        html += `<td><span class="table-primary-text">${a.Patient_Name}</span><span class="table-sub-text">${a.Patient_Code} • ${a.Contact_Number || 'No contact'}</span></td>`;
+        html += `<td>${bedInfo}<span class="table-sub-text">Dr: ${doctors}</span></td>`;
+        html += `<td>${diagnosisBadge}<span class="table-sub-text">Complaint: ${a.Chief_Complaint || 'None Recorded'}</span></td>`;
         html += `<td>${statusBadge}</td>`;
         html += '</tr>';
     });
@@ -540,57 +542,108 @@ const renderAdmissionsTable = (admissions) => {
 };
 
 const filterAndRenderTable = () => {
-    const rawQuery = document.getElementById('search_input').value.trim();
+    const searchElem = document.getElementById('search_input');
+    const rawQuery = searchElem ? searchElem.value.trim() : '';
     const query = rawQuery.toLowerCase();
-    if (!query) {
-        renderAdmissionsTable(allAdmissions);
-        return;
+    const sortByElem = document.getElementById('sort_by');
+    const sortBy = sortByElem ? sortByElem.value : 'id_desc';
+    const statusElem = document.getElementById('filter_status');
+    const statusFilter = statusElem ? statusElem.value : 'all';
+
+    let list = Array.isArray(allAdmissions) ? [...allAdmissions] : [];
+
+    if (statusFilter !== 'all') {
+        list = list.filter(a => {
+            if (statusFilter === 'Settled') {
+                return a.Status === 'Billed' && parseFloat(a.Remaining_Balance || 0) <= 0;
+            } else if (statusFilter === 'WithBalance') {
+                return a.Status === 'Billed' && parseFloat(a.Remaining_Balance || 0) > 0;
+            } else if (statusFilter === 'Billed') {
+                return a.Status === 'Billed';
+            } else {
+                return a.Status === statusFilter;
+            }
+        });
     }
 
-    const queryNum = query.replace(/[^0-9]/g, '');
+    if (query) {
+        const queryNum = query.replace(/[^0-9]/g, '');
+        list = list.filter(a => {
+            const admIdStr = String(a.Admission_ID || '');
+            const admCode = `adm-${admIdStr.padStart(3, '0')}`;
+            const admCodeShort = `adm-${admIdStr}`;
+            const patCode = String(a.Patient_Code || '').toLowerCase();
+            const patName = String(a.Patient_Name || '').toLowerCase();
+            const bedCode = String(a.Bed_Code || '').toLowerCase();
+            const roomName = String(a.Room_Name || '').toLowerCase();
+            const complaint = String(a.Chief_Complaint || '').toLowerCase();
+            const diagnosis = String(a.Diagnosis || '').toLowerCase();
 
-    const filtered = allAdmissions.filter(a => {
-        const admIdStr = String(a.Admission_ID || '');
-        const admCode = `adm-${admIdStr.padStart(3, '0')}`;
-        const admCodeShort = `adm-${admIdStr}`;
-        const patCode = String(a.Patient_Code || '').toLowerCase();
-        const patName = String(a.Patient_Name || '').toLowerCase();
-        const bedCode = String(a.Bed_Code || '').toLowerCase();
-        const roomName = String(a.Room_Name || '').toLowerCase();
-        const complaint = String(a.Chief_Complaint || '').toLowerCase();
-        const diagnosis = String(a.Diagnosis || '').toLowerCase();
+            const matchesAdmId = admCode.includes(query) ||
+                                 admCodeShort.includes(query) ||
+                                 admIdStr.includes(query) ||
+                                 (query.includes('adm') && queryNum && String(a.Admission_ID) === String(parseInt(queryNum, 10)));
 
-        const matchesAdmId = admCode.includes(query) ||
-                             admCodeShort.includes(query) ||
-                             admIdStr.includes(query) ||
-                             (query.includes('adm') && queryNum && String(a.Admission_ID) === String(parseInt(queryNum, 10)));
+            return matchesAdmId ||
+                   patCode.includes(query) ||
+                   patName.includes(query) ||
+                   bedCode.includes(query) ||
+                   roomName.includes(query) ||
+                   complaint.includes(query) ||
+                   diagnosis.includes(query);
+        });
+    }
 
-        return matchesAdmId ||
-               patCode.includes(query) ||
-               patName.includes(query) ||
-               bedCode.includes(query) ||
-               roomName.includes(query) ||
-               complaint.includes(query) ||
-               diagnosis.includes(query);
+    list.sort((a, b) => {
+        switch (sortBy) {
+            case 'id_desc':
+                return parseInt(b.Admission_ID || 0) - parseInt(a.Admission_ID || 0);
+            case 'id_asc':
+                return parseInt(a.Admission_ID || 0) - parseInt(b.Admission_ID || 0);
+            case 'name_asc':
+                return String(a.Patient_Name || '').localeCompare(String(b.Patient_Name || ''));
+            case 'name_desc':
+                return String(b.Patient_Name || '').localeCompare(String(a.Patient_Name || ''));
+            case 'date_desc':
+                return (new Date(b.Admission_Date).getTime() || 0) - (new Date(a.Admission_Date).getTime() || 0);
+            case 'date_asc':
+                return (new Date(a.Admission_Date).getTime() || 0) - (new Date(b.Admission_Date).getTime() || 0);
+            case 'balance_desc':
+                return parseFloat(b.Remaining_Balance || 0) - parseFloat(a.Remaining_Balance || 0);
+            case 'balance_asc':
+                return parseFloat(a.Remaining_Balance || 0) - parseFloat(b.Remaining_Balance || 0);
+            case 'status_asc': {
+                const getEffectiveStatus = (rec) => {
+                    if (rec.Status === 'Billed') {
+                        return parseFloat(rec.Remaining_Balance || 0) > 0 ? 'Billed (With Balance)' : 'Settled (Paid in Full)';
+                    }
+                    return rec.Status || '';
+                };
+                return getEffectiveStatus(a).localeCompare(getEffectiveStatus(b));
+            }
+            default:
+                return parseInt(b.Admission_ID || 0) - parseInt(a.Admission_ID || 0);
+        }
     });
 
-    renderAdmissionsTable(filtered);
+    renderAdmissionsTable(list);
 };
 
 const loadAdmissions = () => {
     console.log("admissions.js: Loading admissions list...");
     const status = document.getElementById('filter_status').value;
     const search = document.getElementById('search_input').value;
+    const sort = document.getElementById('sort_by') ? document.getElementById('sort_by').value : 'id_desc';
 
     const formData = new FormData();
     formData.append('operation', 'getAllAdmissions');
-    formData.append('json', JSON.stringify({ status: status, search: search }));
+    formData.append('json', JSON.stringify({ status: status, search: search, sort: sort }));
 
     axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
             console.log("admissions.js: Admissions received:", response.data);
             allAdmissions = response.data;
-            renderAdmissionsTable(allAdmissions);
+            filterAndRenderTable();
         })
         .catch(err => {
             console.error("admissions.js: Error fetching admissions:", err);
@@ -681,7 +734,7 @@ const submitAdmission = () => {
         });
 };
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     console.log("admissions.js: Initializing In-Patient Admissions view...");
 
     const userJson = sessionStorage.getItem("hospital_user");
@@ -718,10 +771,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById('btnSubmitAdmit').addEventListener('click', submitAdmission);
-    document.getElementById('btnRefresh').addEventListener('click', () => {
-        loadBeds();
-        loadPatients();
-        loadAdmissions();
+    initRefreshBtn("btnRefreshAdmissions", async () => {
+        await loadBeds();
+        await loadPatients();
+        await loadAdmissions();
     });
 
     document.getElementById('search_input').addEventListener('input', () => {
@@ -731,6 +784,13 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('filter_status').addEventListener('change', () => {
         loadAdmissions();
     });
+
+    const sortBySelect = document.getElementById('sort_by');
+    if (sortBySelect) {
+        sortBySelect.addEventListener('change', () => {
+            filterAndRenderTable();
+        });
+    }
 
     const patInput = document.getElementById("patient_id_text");
     if (patInput) patInput.addEventListener("click", openPatientPicker);
@@ -784,9 +844,78 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    loadPatients();
-    loadBeds();
+    await loadPatients();
+    await loadBeds();
     loadDoctors();
     loadAdmissions();
+    await handlePreselectedPatient();
 });
+
+const handlePreselectedPatient = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectPatientId = urlParams.get("patient_id");
+    const preselectBedId = urlParams.get("bed_id");
+    const shouldOpenModal = urlParams.get("admit") === "1" || Boolean(preselectPatientId) || Boolean(preselectBedId);
+
+    if (!preselectPatientId && !preselectBedId && !shouldOpenModal) return;
+
+    if (preselectBedId) {
+        if (!availableBeds || availableBeds.length === 0) {
+            await loadBeds();
+        }
+        const b = (availableBeds || []).find(item => String(item.Bed_ID) === String(preselectBedId));
+        if (b) {
+            const bId = document.getElementById("bed_id");
+            if (bId) bId.value = b.Bed_ID;
+            const bText = document.getElementById("bed_id_text");
+            if (bText) {
+                const rateVal = parseFloat(b.Daily_Rate || 0);
+                bText.value = `Bed ${b.Bed_Code} — ${b.Room_Name} (${b.Room_Type}) — ₱${rateVal.toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`;
+            }
+        }
+    }
+
+    if (!activePatients || activePatients.length === 0) {
+        await loadPatients();
+    }
+
+    if (preselectPatientId) {
+        let p = activePatients.find(item => String(item.Patient_ID) === String(preselectPatientId));
+        if (!p) {
+            try {
+                const response = await axios.get(`${getApiUrl}/patients.php`, {
+                    params: {
+                        operation: "getPatientById",
+                        json: JSON.stringify({ patient_id: preselectPatientId })
+                    }
+                });
+                if (response.status === 200 && response.data) {
+                    const d = response.data;
+                    p = {
+                        Patient_ID: d.Patient_ID,
+                        Patient_Code: d.Patient_Code,
+                        Full_Name: `${d.Last_Name}, ${d.First_Name}`
+                    };
+                }
+            } catch (err) {
+                console.error("admissions.js: Error fetching preselected patient details:", err);
+            }
+        }
+
+        if (p) {
+            const pId = document.getElementById("patient_id");
+            if (pId) pId.value = p.Patient_ID;
+            const pText = document.getElementById("patient_id_text");
+            if (pText) pText.value = `${p.Patient_Code} — ${p.Full_Name}`;
+        }
+    }
+
+    if (shouldOpenModal) {
+        openModal("formModal");
+    }
+
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+};
 

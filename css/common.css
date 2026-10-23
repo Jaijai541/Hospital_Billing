@@ -1175,7 +1175,56 @@ textarea.form-control {
 
 .data-table th:last-child {
     border-right: none;
+}
+.sortable-th,
+.data-table th.sortable-th {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
+
+.sortable-th:hover,
+.data-table th.sortable-th:hover {
+    background-color: #e2e8f0;
+    color: #0284c7;
+}
+
+.sortable-th.sorted-asc,
+.sortable-th.sorted-desc,
+.data-table th.sortable-th.sorted-asc,
+.data-table th.sortable-th.sorted-desc {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border-bottom: 2px solid #0284c7;
+}
+
+.th-sort-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.th-sort-wrapper.th-sort-right {
+    justify-content: flex-end;
+}
+
+.sort-icon-box {
+    display: inline-flex;
+    align-items: center;
+    opacity: 0.35;
+    transition: opacity 0.15s ease;
+}
+
+.sortable-th:hover .sort-icon-box {
+    opacity: 0.75;
+}
+
+.sort-icon-box.active {
+    opacity: 1;
+    color: #0284c7;
+}
+
 
 .empty-state-card {
     text-align: center;

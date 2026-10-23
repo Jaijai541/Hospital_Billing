@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
+
+    initRefreshBtn("btnRefreshDiscounts", displayDiscounts);
 });
 
 const displayDiscounts = async () => {
@@ -128,11 +130,10 @@ const displayDiscountsTable = (discounts) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Code</th>
-            <th>Discount Policy</th>
-            <th>Discount Rate</th>
-            <th>VAT Status</th>
-            <th>Status</th>
+            ${renderSortableTh("Discount Scheme & Code", "Discount_Name")}
+            ${renderSortableTh("Discount Rate", "Discount_Percentage", true)}
+            ${renderSortableTh("VAT Status", "Is_Vat_Exempt")}
+            ${renderSortableTh("Status", "Status")}
         </tr>
     `;
     table.appendChild(thead);
@@ -140,19 +141,24 @@ const displayDiscountsTable = (discounts) => {
     const tbody = document.createElement("tbody");
     discounts.forEach(disc => {
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
-        const deductionVal = `<strong style="color: var(--primary); font-size: 13.5px;">${parseFloat(disc.Discount_Percentage || 0).toFixed(2)}%</strong>`;
+        const deductionVal = `<span class="table-amount-prominent text-primary font-bold">${parseFloat(disc.Discount_Percentage || 0).toFixed(2)}%</span>`;
 
         const vatBadge = (disc.Is_Vat_Exempt == 1)
             ? '<span class="badge badge-success">VAT-Exempt</span>'
-            : '<span class="badge badge-secondary" style="opacity: 0.85;">12% VAT Applied</span>';
+            : '<span class="badge badge-secondary">12% VAT Applied</span>';
 
         const row = document.createElement("tr");
         row.className = "clickable-row";
         row.title = "Click to view / edit discount scheme";
         row.innerHTML = `
-            <td><strong>${code}</strong></td>
-            <td><strong>${disc.Discount_Name}</strong></td>
-            <td>${deductionVal}</td>
+            <td>
+                <div class="table-primary-text font-bold">${disc.Discount_Name}</div>
+                <div class="table-sub-text"><code>${code}</code></div>
+            </td>
+            <td>
+                <div>${deductionVal}</div>
+                <div class="table-sub-text">statutory deduction</div>
+            </td>
             <td>${vatBadge}</td>
             <td>${getStatusBadge(disc.Is_Active)}</td>
         `;
@@ -228,9 +234,12 @@ const saveDiscount = async () => {
         return;
     }
 
+    const valPct = typeof validateNumericField === "function" ? validateNumericField(discountPercentage, "Discount Percentage", 0, true) : { valid: !isNaN(parseFloat(discountPercentage)) && parseFloat(discountPercentage) >= 0 && parseFloat(discountPercentage) <= 100 };
     const pct = parseFloat(discountPercentage);
-    if (isNaN(pct) || pct < 0 || pct > 100) {
+    if (!valPct.valid || isNaN(pct) || pct < 0 || pct > 100) {
         alert("Please enter a valid percentage rate between 0 and 100.");
+        const el = document.getElementById("discount_percentage");
+        if (el) el.focus();
         return;
     }
 

@@ -3,6 +3,35 @@ const postApiUrl = "../api/POST";
 
 let allDepartments = [];
 let currentLoadedDepartment = null;
+let currentDeptDoctors = [];
+let currentDeptUsers = [];
+
+const switchDepartmentModalTab = (tabKey) => {
+    const viewModal = document.getElementById("viewDepartmentModal");
+    if (!viewModal) return;
+
+    viewModal.querySelectorAll(".dept-modal-tab-btn").forEach(btn => {
+        const isActive = btn.getAttribute("data-dept-tab") === tabKey;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    const doctorsPane = document.getElementById("dept-tab-pane-doctors");
+    const usersPane = document.getElementById("dept-tab-pane-users");
+
+    if (doctorsPane) {
+        const showDoctors = (tabKey === "doctors");
+        doctorsPane.classList.toggle("active", showDoctors);
+        doctorsPane.classList.toggle("dept-tab-pane-hidden", !showDoctors);
+        doctorsPane.style.display = showDoctors ? "block" : "none";
+    }
+    if (usersPane) {
+        const showUsers = (tabKey === "users");
+        usersPane.classList.toggle("active", showUsers);
+        usersPane.classList.toggle("dept-tab-pane-hidden", !showUsers);
+        usersPane.style.display = showUsers ? "block" : "none";
+    }
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     displayDepartments();
@@ -25,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter_status").addEventListener("change", filterAndSortDepartments);
     document.getElementById("sort_by").addEventListener("change", filterAndSortDepartments);
 
+    initRefreshBtn("btnRefreshDepartments", displayDepartments);
+
     const btnCloseView = document.getElementById("btnCloseViewDeptModal");
     if (btnCloseView) btnCloseView.addEventListener("click", closeViewDepartmentModal);
     const btnCloseViewBtn = document.getElementById("btnCloseViewDeptBtn");
@@ -34,6 +65,23 @@ document.addEventListener("DOMContentLoaded", () => {
         viewModal.addEventListener("click", (e) => {
             if (e.target === viewModal) closeViewDepartmentModal();
         });
+    }
+
+    document.querySelectorAll(".dept-modal-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const tabKey = btn.getAttribute("data-dept-tab") || "doctors";
+            switchDepartmentModalTab(tabKey);
+        });
+    });
+
+    const deptDoctorsSearch = document.getElementById("view_dept_doctors_search");
+    if (deptDoctorsSearch) {
+        deptDoctorsSearch.addEventListener("input", renderFilteredDeptDoctors);
+    }
+
+    const deptUsersSearch = document.getElementById("view_dept_users_search");
+    if (deptUsersSearch) {
+        deptUsersSearch.addEventListener("input", renderFilteredDeptUsers);
     }
 });
 
@@ -128,10 +176,9 @@ const displayDepartmentsTable = (departments) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Station ID</th>
-            <th>Code Prefix</th>
-            <th>Department / Station Name</th>
-            <th>Status</th>
+            ${renderSortableTh("Department / Station", "Station_Name")}
+            ${renderSortableTh("Assigned Personnel", "Staff_Count", true)}
+            ${renderSortableTh("Status", "Status")}
         </tr>
     `;
     table.appendChild(thead);
@@ -139,13 +186,21 @@ const displayDepartmentsTable = (departments) => {
     const tbody = document.createElement("tbody");
     departments.forEach(dept => {
         const formattedCode = `${dept.Code_Prefix || 'DEPT'}-${String(dept.Station_ID).padStart(3, '0')}`;
+        const docCount = parseInt(dept.Active_Doctors_Count || 0, 10);
+        const staffCount = parseInt(dept.Active_Staff_Count || 0, 10);
+
         const row = document.createElement("tr");
         row.className = "clickable-row";
         row.title = "Click to view department details & assigned personnel";
         row.innerHTML = `
-            <td><strong>${formattedCode}</strong></td>
-            <td><span class="dept-code-pill">${dept.Code_Prefix || 'N/A'}</span></td>
-            <td><strong>${dept.Station_Name}</strong></td>
+            <td>
+                <div class="table-primary-text font-bold">${dept.Station_Name}</div>
+                <div class="table-sub-text"><code>${formattedCode}</code> &bull; <span class="dept-code-pill">${dept.Code_Prefix || 'N/A'}</span></div>
+            </td>
+            <td>
+                <div class="table-sub-text-dark font-bold">${docCount} Active Doctor${docCount === 1 ? '' : 's'}</div>
+                <div class="table-sub-text">${staffCount} Active Staff Member${staffCount === 1 ? '' : 's'}</div>
+            </td>
             <td>${getStatusBadge(dept.Is_Active)}</td>
         `;
         row.addEventListener("click", () => openViewDepartmentModal(dept.Station_ID));
@@ -154,6 +209,107 @@ const displayDepartmentsTable = (departments) => {
 
     table.appendChild(tbody);
     tableDiv.appendChild(table);
+};
+
+const renderFilteredDeptDoctors = () => {
+    const docsCount = document.getElementById("view_dept_doctors_count");
+    const docsEmpty = document.getElementById("view_dept_doctors_empty");
+    const docsTbody = document.getElementById("view_dept_doctors_tbody");
+    const searchInput = document.getElementById("view_dept_doctors_search");
+    const searchTerm = (searchInput ? searchInput.value : "").trim().toLowerCase();
+
+    const filtered = currentDeptDoctors.filter(d => {
+        if (!searchTerm) return true;
+        const code = (d.Formatted_Code || "").toLowerCase();
+        const fullName = `dr. ${d.First_Name || ""} ${d.Last_Name || ""}`.toLowerCase();
+        const typeName = (d.Doctor_Type_Name || "").toLowerCase();
+        const statusStr = (d.Is_Active == 1 ? "active" : "archived");
+        return code.includes(searchTerm) || fullName.includes(searchTerm) || typeName.includes(searchTerm) || statusStr.includes(searchTerm);
+    });
+
+    if (docsCount) {
+        const total = currentDeptDoctors.length;
+        docsCount.textContent = searchTerm
+            ? `${filtered.length} of ${total} Doctors`
+            : `${total} Doctor${total === 1 ? "" : "s"}`;
+    }
+
+    if (!docsTbody) return;
+    docsTbody.innerHTML = "";
+
+    if (filtered.length === 0) {
+        if (docsEmpty) {
+            docsEmpty.textContent = searchTerm
+                ? "No assigned doctors match your search."
+                : "No doctors assigned to this station.";
+            docsEmpty.style.display = "block";
+        }
+    } else {
+        if (docsEmpty) docsEmpty.style.display = "none";
+        filtered.forEach(d => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>
+                    <div class="table-primary-text font-bold">Dr. ${d.First_Name} ${d.Last_Name}</div>
+                    <div class="table-sub-text"><code>${d.Formatted_Code}</code></div>
+                </td>
+                <td><span class="badge badge-primary">${d.Doctor_Type_Name}</span></td>
+                <td>${getStatusBadge(d.Is_Active)}</td>
+            `;
+            docsTbody.appendChild(tr);
+        });
+    }
+};
+
+const renderFilteredDeptUsers = () => {
+    const usersCount = document.getElementById("view_dept_users_count");
+    const usersEmpty = document.getElementById("view_dept_users_empty");
+    const usersTbody = document.getElementById("view_dept_users_tbody");
+    const searchInput = document.getElementById("view_dept_users_search");
+    const searchTerm = (searchInput ? searchInput.value : "").trim().toLowerCase();
+
+    const filtered = currentDeptUsers.filter(u => {
+        if (!searchTerm) return true;
+        const code = (u.Formatted_Code || "").toLowerCase();
+        const fullName = `${u.First_Name || ""} ${u.Last_Name || ""}`.toLowerCase();
+        const username = (u.Username || "").toLowerCase();
+        const roleName = (u.Role_Name || "").toLowerCase();
+        const statusStr = (u.Is_Active == 1 ? "active" : "archived");
+        return code.includes(searchTerm) || fullName.includes(searchTerm) || username.includes(searchTerm) || roleName.includes(searchTerm) || statusStr.includes(searchTerm);
+    });
+
+    if (usersCount) {
+        const total = currentDeptUsers.length;
+        usersCount.textContent = searchTerm
+            ? `${filtered.length} of ${total} Staff`
+            : `${total} Staff`;
+    }
+
+    if (!usersTbody) return;
+    usersTbody.innerHTML = "";
+
+    if (filtered.length === 0) {
+        if (usersEmpty) {
+            usersEmpty.textContent = searchTerm
+                ? "No assigned staff or users match your search."
+                : "No system users assigned to this station.";
+            usersEmpty.style.display = "block";
+        }
+    } else {
+        if (usersEmpty) usersEmpty.style.display = "none";
+        filtered.forEach(u => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>
+                    <div class="table-primary-text font-bold">${u.First_Name} ${u.Last_Name}</div>
+                    <div class="table-sub-text"><code>${u.Formatted_Code}</code> &bull; <code class="staff-username-pill">@${u.Username}</code></div>
+                </td>
+                <td><span class="badge badge-secondary">${u.Role_Name}</span></td>
+                <td>${getStatusBadge(u.Is_Active)}</td>
+            `;
+            usersTbody.appendChild(tr);
+        });
+    }
 };
 
 const openViewDepartmentModal = async (stationId) => {
@@ -182,54 +338,17 @@ const openViewDepartmentModal = async (stationId) => {
                 badge.textContent = isActive ? "Active" : "Archived";
             }
 
-            const docs = dept.assigned_doctors || [];
-            const docsCount = document.getElementById("view_dept_doctors_count");
-            const docsEmpty = document.getElementById("view_dept_doctors_empty");
-            const docsTbody = document.getElementById("view_dept_doctors_tbody");
-            if (docsCount) docsCount.textContent = `${docs.length} Doctors`;
-            if (docsTbody) {
-                docsTbody.innerHTML = "";
-                if (docs.length === 0) {
-                    if (docsEmpty) docsEmpty.style.display = "block";
-                } else {
-                    if (docsEmpty) docsEmpty.style.display = "none";
-                    docs.forEach(d => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td><strong>${d.Formatted_Code}</strong></td>
-                            <td>Dr. ${d.First_Name} ${d.Last_Name}</td>
-                            <td><span class="badge badge-primary">${d.Doctor_Type_Name}</span></td>
-                            <td>${getStatusBadge(d.Is_Active)}</td>
-                        `;
-                        docsTbody.appendChild(tr);
-                    });
-                }
-            }
+            currentDeptDoctors = dept.assigned_doctors || [];
+            currentDeptUsers = dept.assigned_users || [];
 
-            const users = dept.assigned_users || [];
-            const usersCount = document.getElementById("view_dept_users_count");
-            const usersEmpty = document.getElementById("view_dept_users_empty");
-            const usersTbody = document.getElementById("view_dept_users_tbody");
-            if (usersCount) usersCount.textContent = `${users.length} Staff`;
-            if (usersTbody) {
-                usersTbody.innerHTML = "";
-                if (users.length === 0) {
-                    if (usersEmpty) usersEmpty.style.display = "block";
-                } else {
-                    if (usersEmpty) usersEmpty.style.display = "none";
-                    users.forEach(u => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td><strong>${u.Formatted_Code}</strong></td>
-                            <td>${u.First_Name} ${u.Last_Name}</td>
-                            <td>${u.Username}</td>
-                            <td><span class="badge badge-secondary">${u.Role_Name}</span></td>
-                            <td>${getStatusBadge(u.Is_Active)}</td>
-                        `;
-                        usersTbody.appendChild(tr);
-                    });
-                }
-            }
+            const deptDoctorsSearch = document.getElementById("view_dept_doctors_search");
+            if (deptDoctorsSearch) deptDoctorsSearch.value = "";
+            const deptUsersSearch = document.getElementById("view_dept_users_search");
+            if (deptUsersSearch) deptUsersSearch.value = "";
+
+            switchDepartmentModalTab("doctors");
+            renderFilteredDeptDoctors();
+            renderFilteredDeptUsers();
 
             const btnEdit = document.getElementById("btnOpenEditFromView");
             if (btnEdit) {

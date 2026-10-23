@@ -713,11 +713,11 @@ const displayPatientsTable = (patients) => {
     const thead = document.createElement("thead");
     thead.innerHTML = `
         <tr>
-            <th>Patient Code & Record</th>
-            <th>Full Name & Demographics</th>
-            <th>Medical & Blood Profile</th>
-            <th>Contact & Emergency</th>
-            <th>Status</th>
+            ${renderSortableTh("Patient Code & Record", "Patient_Code")}
+            ${renderSortableTh("Full Name & Demographics", "Last_Name")}
+            ${renderSortableTh("Medical & Blood Profile", "Blood_Type")}
+            ${renderSortableTh("Contact & Emergency", "Contact_Number")}
+            ${renderSortableTh("Status", "Status")}
         </tr>
     `;
     table.appendChild(thead);

@@ -51,17 +51,11 @@ const renderInvoicesTable = (invoices) => {
 
     let html = '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>Invoice #</th>';
-    html += '<th>Admission #</th>';
-    html += '<th>Patient Code & Name</th>';
-    html += '<th>Gross Charges</th>';
-    html += '<th>Applied Discounts</th>';
-    html += '<th>Net Amount Due</th>';
-    html += '<th>Amount Paid</th>';
-    html += '<th>Balance Due</th>';
-    html += '<th>Payment Status</th>';
-    html += '<th>Settlement Date</th>';
-    html += '<th>Cashier</th>';
+    html += renderSortableTh("Invoice & Case", "Invoice_ID");
+    html += renderSortableTh("Patient Demographic", "Patient_Name");
+    html += renderSortableTh("Gross & Discounts", "Gross_Total", true);
+    html += renderSortableTh("Net & Payments", "Net_Amount_Due", true);
+    html += renderSortableTh("Settlement Status & Balance", "Remaining_Balance", true);
     html += '</tr></thead><tbody>';
 
     invoices.forEach(inv => {
@@ -72,45 +66,43 @@ const renderInvoicesTable = (invoices) => {
         const bal = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
         const paidVal = parseFloat(inv.Amount_Paid || 0);
 
-        let discBadge = '<span class="text-muted">None</span>';
+        let discBadge = '<span class="text-muted table-sub-text">No discounts applied</span>';
         if (inv.Discount_Summary) {
             const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
-            discBadge = discItems.map(item => `<span class="badge badge-info" style="font-size: 11px; max-width: 220px; white-space: normal; display: inline-block; text-align: left; margin-bottom: 2px;">${item}</span>`).join('<br>');
+            discBadge = discItems.map(item => `<span class="badge badge-info table-disc-pill">${item}</span>`).join('');
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            discBadge = `<span class="badge badge-info">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
+            discBadge = `<span class="badge badge-info table-disc-pill">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
         }
 
         let statusBadge = '';
         if (balVal <= 0) {
-            statusBadge = '<span class="badge badge-success" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">PAID IN FULL</span>';
+            statusBadge = '<span class="badge badge-success table-status-pill">PAID IN FULL</span>';
         } else if (inv.Promissory_Note_ID && inv.Promissory_Status === 'Active') {
             const dueStr = inv.Formatted_Promissory_Next_Due_Date || inv.Promissory_Next_Due_Date;
             const dueAmt = parseFloat(inv.Promissory_Monthly_Amount || balVal);
             statusBadge = `
-                <span class="badge" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; padding: 4px 8px; font-size: 11px;">PROMISSORY NOTE</span>
-                <div style="font-size: 11px; color: #4338ca; margin-top: 3px; font-weight: 600;">Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</div>
+                <span class="badge table-pn-badge">PROMISSORY NOTE</span>
+                <span class="table-sub-text text-danger">Due: ${dueStr} (₱${dueAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})})</span>
             `;
         } else if (paidVal > 0) {
             statusBadge = `
-                <span class="badge badge-warning" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">PARTIALLY PAID</span>
-                <div style="font-size: 11px; color: #92400e; margin-top: 3px; font-weight: 600;">Bal: ₱${bal}</div>
+                <span class="badge badge-warning table-status-pill">PARTIALLY PAID</span>
+                <span class="table-sub-text text-danger">Bal: ₱${bal}</span>
             `;
         } else {
-            statusBadge = '<span class="badge badge-danger" style="font-weight: 700; padding: 4px 8px; font-size: 11px;">PENDING PAYMENT</span>';
+            statusBadge = '<span class="badge badge-danger table-status-pill">PENDING PAYMENT</span>';
         }
 
+        const balDisplay = balVal > 0 
+            ? `<span class="table-amount-prominent text-danger">₱${bal}</span>`
+            : `<span class="table-amount-prominent text-success">₱0.00</span>`;
+
         html += `<tr class="clickable-row" onclick="openPaymentHistoryModal(${inv.Invoice_ID})" title="Click row to view payment history, official receipts, SOA, or pay balance">`;
-        html += `<td><strong>${inv.Invoice_Code}</strong></td>`;
-        html += `<td><strong>${inv.Admission_Code}</strong></td>`;
-        html += `<td><strong>${inv.Patient_Code}</strong><br>${inv.Patient_Name}</td>`;
-        html += `<td>₱${gross}</td>`;
-        html += `<td>${discBadge}</td>`;
-        html += `<td><strong style="color: var(--primary);">₱${net}</strong></td>`;
-        html += `<td>₱${paid}</td>`;
-        html += `<td><strong style="color: ${balVal > 0 ? '#dc2626' : '#16a34a'};">₱${bal}</strong></td>`;
-        html += `<td>${statusBadge}</td>`;
-        html += `<td>${inv.Settlement_Date}</td>`;
-        html += `<td>${inv.Cashier_Name}</td>`;
+        html += `<td><span class="table-primary-text text-primary">${inv.Invoice_Code}</span><span class="table-sub-text">Case: <strong>${inv.Admission_Code}</strong></span></td>`;
+        html += `<td><span class="table-primary-text">${inv.Patient_Name}</span><span class="table-sub-text">${inv.Patient_Code} • Billed: ${inv.Settlement_Date} (${inv.Cashier_Name})</span></td>`;
+        html += `<td><span class="table-primary-text">Gross: ₱${gross}</span>${discBadge}</td>`;
+        html += `<td class="text-right"><span class="table-amount-prominent text-primary">Net: ₱${net}</span><span class="table-sub-text">Paid: ₱${paid}</span></td>`;
+        html += `<td class="text-right">${statusBadge}<span class="table-sub-text">${balDisplay}</span></td>`;
         html += '</tr>';
     });
 
@@ -395,7 +387,17 @@ const submitPayment = () => {
     if (!currentPaymentInvoice) return;
 
     const invoiceId = document.getElementById('pay_invoice_id').value;
-    const amount = parseFloat(document.getElementById('pay_amount_input').value || 0);
+    const payInput = document.getElementById('pay_amount_input');
+    const rawAmount = payInput ? payInput.value.trim() : '';
+
+    const valAmount = typeof validateNumericField === 'function' ? validateNumericField(rawAmount, 'Payment Amount', 0, false) : { valid: !isNaN(parseFloat(rawAmount)) && parseFloat(rawAmount) > 0 };
+    if (!valAmount.valid) {
+        showPopupAlert(valAmount.message || "Please enter a valid payment amount greater than zero.", "warning");
+        if (payInput) payInput.focus();
+        return;
+    }
+
+    const amount = parseFloat(rawAmount);
 
     if (isNaN(amount) || amount <= 0) {
         showPopupAlert("Please enter a valid payment amount greater than zero.", "warning");
@@ -494,7 +496,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
     document.getElementById('status_filter')?.addEventListener('change', filterAndRenderInvoices);
-    document.getElementById('btnRefresh').addEventListener('click', loadInvoices);
+    initRefreshBtn("btnRefreshInvoices", loadInvoices);
 
     document.getElementById('btnClosePaymentModal')?.addEventListener('click', () => closeModal('recordPaymentModal'));
     document.getElementById('btnCancelPayment')?.addEventListener('click', () => closeModal('recordPaymentModal'));
@@ -505,6 +507,12 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnHistViewSOA')?.addEventListener('click', () => {
         if (currentPaymentInvoice) {
             viewPrintInvoice(currentPaymentInvoice.Invoice_ID);
+        }
+    });
+
+    document.getElementById('btnHistViewGatePass')?.addEventListener('click', () => {
+        if (currentPaymentInvoice) {
+            window.location.href = `discharge_clearance.html?invoice_id=${currentPaymentInvoice.Invoice_ID}&admission_id=${currentPaymentInvoice.Admission_ID}`;
         }
     });
 

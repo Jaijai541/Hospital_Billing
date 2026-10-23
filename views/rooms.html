@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Rooms & Beds Directory — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=11.1">
+    <link rel="stylesheet" href="../css/common.css?v=10.7">
     <link rel="stylesheet" href="../css/rooms.css?v=9.5">
 </head>
 <body>
@@ -65,11 +65,11 @@
                                 <table class="data-table bed-history-table">
                                     <thead>
                                         <tr>
-                                            <th>Bed Code</th>
-                                            <th>Availability</th>
-                                            <th>Current Occupant</th>
-                                            <th>Diagnosis</th>
-                                            <th>Stay Started</th>
+                                            <th class="sortable-th" data-sort="Bed" role="button" tabindex="0" title="Click to sort by Bed Code"><div class="th-sort-wrapper"><span class="th-label">Bed Code</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Availability" role="button" tabindex="0" title="Click to sort by Availability"><div class="th-sort-wrapper"><span class="th-label">Availability</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Occupant" role="button" tabindex="0" title="Click to sort by Current Occupant"><div class="th-sort-wrapper"><span class="th-label">Current Occupant</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Diagnosis" role="button" tabindex="0" title="Click to sort by Diagnosis"><div class="th-sort-wrapper"><span class="th-label">Diagnosis</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Date" role="button" tabindex="0" title="Click to sort by Stay Started"><div class="th-sort-wrapper"><span class="th-label">Stay Started</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_room_beds_tbody"></tbody>
@@ -92,11 +92,11 @@
                                 <table class="data-table bed-history-table">
                                     <thead>
                                         <tr>
-                                            <th>Bed</th>
-                                            <th>Patient</th>
-                                            <th>Stay Period</th>
-                                            <th>Duration</th>
-                                            <th>Total Fee</th>
+                                            <th class="sortable-th" data-sort="Bed" role="button" tabindex="0" title="Click to sort by Bed"><div class="th-sort-wrapper"><span class="th-label">Bed</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Patient" role="button" tabindex="0" title="Click to sort by Patient"><div class="th-sort-wrapper"><span class="th-label">Patient</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Period" role="button" tabindex="0" title="Click to sort by Stay Period"><div class="th-sort-wrapper"><span class="th-label">Stay Period</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th" data-sort="Duration" role="button" tabindex="0" title="Click to sort by Duration"><div class="th-sort-wrapper"><span class="th-label">Duration</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
+                                            <th class="sortable-th text-right" data-sort="Fee" role="button" tabindex="0" title="Click to sort by Total Fee"><div class="th-sort-wrapper th-sort-right"><span class="th-label">Total Fee</span><span class="sort-icon-box"><svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg></span></div></th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_room_history_tbody"></tbody>
@@ -432,7 +432,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=9.1"></script>
-    <script src="../js/common.js?v=10.6"></script>
+    <script src="../js/common.js?v=10.7"></script>
     <script src="../js/rooms.js?v=10.5"></script>
 </body>
 </html>

@@ -639,6 +639,22 @@
     color: #94a3b8;
 }
 
+.report-error-cell {
+    text-align: center;
+    padding: 40px;
+    color: #dc2626;
+}
+
+.report-error-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.report-error-message {
+    font-size: 12px;
+    margin-top: 4px;
+}
+
 .spreadsheet-table tfoot td {
     position: sticky;
     bottom: 0;
@@ -672,6 +688,10 @@
 
 .text-right {
     text-align: right;
+}
+
+.print-table-container {
+    display: none;
 }
 
 .print-report-header {
@@ -950,7 +970,7 @@
     .app-wrapper,
     .main-content,
     .spreadsheet-card,
-    .spreadsheet-viewport {
+    .print-table-container {
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
@@ -958,6 +978,10 @@
         overflow: visible !important;
         border: none !important;
         box-shadow: none !important;
+    }
+
+    .spreadsheet-viewport {
+        display: none !important;
     }
 
     .sidebar,
@@ -977,6 +1001,7 @@
     }
 
     .print-report-header,
+    .print-table-container,
     .print-signatures-wrap {
         display: block !important;
     }
@@ -1053,6 +1078,14 @@
     .spreadsheet-table .currency-cell,
     .spreadsheet-table .number-cell {
         white-space: nowrap !important;
+    }
+
+    .spreadsheet-table .text-right,
+    .spreadsheet-table th.text-right,
+    .spreadsheet-table td.text-right,
+    .spreadsheet-table .currency-cell,
+    .spreadsheet-table .number-cell {
+        text-align: right !important;
     }
 
     .spreadsheet-table .badge {

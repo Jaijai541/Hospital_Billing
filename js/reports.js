@@ -262,6 +262,18 @@ const fetchReportData = async () => {
         `;
     }
 
+    const printTableBody = document.getElementById("print-report-table-body");
+    if (printTableBody) {
+        printTableBody.innerHTML = `
+            <tr>
+                <td colspan="12" class="report-loading-cell">
+                    <div class="report-loading-title">Querying database records...</div>
+                    <span class="report-loading-sub">Computing financial transactions and totals</span>
+                </td>
+            </tr>
+        `;
+    }
+
     const startDate = document.getElementById("filter_start_date").value;
     const endDate = document.getElementById("filter_end_date").value;
     const secondaryVal = document.getElementById("filter_secondary").value;
@@ -297,9 +309,21 @@ const showErrorState = (msg) => {
     if (tbody) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="12" style="text-align: center; padding: 40px; color: #dc2626;">
-                    <div style="font-weight: 700; font-size: 14px;">Error Loading Report</div>
-                    <div style="font-size: 12px; margin-top: 4px;">${msg}</div>
+                <td colspan="12" class="report-error-cell">
+                    <div class="report-error-title">Error Loading Report</div>
+                    <div class="report-error-message">${msg}</div>
+                </td>
+            </tr>
+        `;
+    }
+
+    const printTbody = document.getElementById("print-report-table-body");
+    if (printTbody) {
+        printTbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="report-error-cell">
+                    <div class="report-error-title">Error Loading Report</div>
+                    <div class="report-error-message">${msg}</div>
                 </td>
             </tr>
         `;
@@ -321,6 +345,7 @@ const renderActiveReport = () => {
         renderBedOccupancyReport();
     }
 
+    renderPrintTable();
     updatePrintHeader();
     applyQuickTableSearch();
 };
@@ -328,15 +353,26 @@ const renderActiveReport = () => {
 const applyQuickTableSearch = () => {
     const searchInput = document.getElementById("filter_search_query");
     const tbody = document.getElementById("report-table-body");
-    if (!searchInput || !tbody) return;
+    const printTbody = document.getElementById("print-report-table-body");
+    if (!searchInput) return;
 
     const query = searchInput.value.trim().toLowerCase();
-    const rows = tbody.querySelectorAll("tr");
-    rows.forEach((row) => {
-        if (row.cells.length <= 1) return;
-        const rowText = (row.textContent || "").toLowerCase();
-        row.style.display = !query || rowText.includes(query) ? "" : "none";
-    });
+    if (tbody) {
+        const rows = tbody.querySelectorAll("tr");
+        rows.forEach((row) => {
+            if (row.cells.length <= 1) return;
+            const rowText = (row.textContent || "").toLowerCase();
+            row.style.display = !query || rowText.includes(query) ? "" : "none";
+        });
+    }
+    if (printTbody) {
+        const printRows = printTbody.querySelectorAll("tr");
+        printRows.forEach((row) => {
+            if (row.cells.length <= 1) return;
+            const rowText = (row.textContent || "").toLowerCase();
+            row.style.display = !query || rowText.includes(query) ? "" : "none";
+        });
+    }
 };
 
 const updatePrintHeader = () => {
@@ -977,14 +1013,478 @@ const renderBedOccupancyReport = () => {
     `;
 };
 
+const renderPrintTable = () => {
+    const thead = document.getElementById("print-report-table-head");
+    const tbody = document.getElementById("print-report-table-body");
+    const tfoot = document.getElementById("print-report-table-foot");
+    if (!thead || !tbody || !tfoot || !reportData) return;
+
+    const summary = reportData.summary || {};
+
+    if (currentTab === "collections") {
+        const records = reportData.records || [];
+        thead.innerHTML = `
+            <tr>
+                <th>Receipt #</th>
+                <th>Payment Date & Time</th>
+                <th>Admission #</th>
+                <th>Patient Name</th>
+                <th>Payment Method</th>
+                <th>Classification</th>
+                <th class="text-right">Amount Paid</th>
+                <th class="text-right">Balance After</th>
+                <th>Cashier User</th>
+                <th>Remarks / Notes</th>
+            </tr>
+        `;
+
+        if (records.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center p-4 text-muted">
+                        No payment records found matching the selected date filters.
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbody.innerHTML = records.map((r) => `
+                <tr>
+                    <td class="font-bold text-info">${r.Receipt_Number}</td>
+                    <td>${r.Payment_Date}</td>
+                    <td><span class="badge badge-secondary">${r.Admission_Code}</span></td>
+                    <td class="font-bold">${r.Patient_Name}</td>
+                    <td><span class="badge badge-info">${r.Payment_Method}</span></td>
+                    <td><span class="badge ${r.Is_Advance == 1 ? 'badge-primary' : 'badge-success'}">${r.Payment_Type}</span></td>
+                    <td class="currency-cell text-right font-bold text-success">${formatPesos(r.Amount_Paid)}</td>
+                    <td class="currency-cell text-right">${formatPesos(r.Balance_After)}</td>
+                    <td>${r.Cashier_Name}</td>
+                    <td>${r.Notes || '—'}</td>
+                </tr>
+            `).join("");
+        }
+
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-right font-bold uppercase">Grand Total Collections:</td>
+                <td class="currency-cell text-right font-bold text-success">${formatPesos(summary.total_collections)}</td>
+                <td colspan="3"></td>
+            </tr>
+        `;
+    } else if (currentTab === "department_revenue") {
+        const stations = summary.by_station || [];
+        thead.innerHTML = `
+            <tr>
+                <th>Station / Department</th>
+                <th>Code</th>
+                <th class="text-right">Transaction Count</th>
+                <th class="text-right">Gross Charges</th>
+                <th class="text-right">Returns / Deductions</th>
+                <th class="text-right">Net Revenue</th>
+                <th class="text-right">Share of Total</th>
+            </tr>
+        `;
+
+        if (stations.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center p-4 text-muted">
+                        No department revenue records found.
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbody.innerHTML = stations.map((st) => `
+                <tr>
+                    <td class="font-bold">${st.Station_Name}</td>
+                    <td><span class="badge badge-secondary">${st.Code_Prefix}</span></td>
+                    <td class="number-cell text-right">${st.Total_Transactions}</td>
+                    <td class="currency-cell text-right">${formatPesos(st.Gross_Charges)}</td>
+                    <td class="currency-cell text-right text-danger">-${formatPesos(st.Total_Returns)}</td>
+                    <td class="currency-cell text-right font-bold text-success">${formatPesos(st.Net_Revenue)}</td>
+                    <td class="number-cell text-right font-bold text-info">${st.Revenue_Share_Pct}%</td>
+                </tr>
+            `).join("");
+        }
+
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="2" class="text-right font-bold uppercase">Hospital Grand Totals:</td>
+                <td class="number-cell text-right font-bold">${summary.grand_transactions}</td>
+                <td class="currency-cell text-right font-bold">${formatPesos(summary.grand_gross)}</td>
+                <td class="currency-cell text-right font-bold text-danger">-${formatPesos(summary.grand_returns)}</td>
+                <td class="currency-cell text-right font-bold text-success">${formatPesos(summary.grand_net)}</td>
+                <td class="number-cell text-right font-bold text-info">100.00%</td>
+            </tr>
+        `;
+    } else if (currentTab === "doctor_fees") {
+        const doctors = summary.by_doctor || [];
+        thead.innerHTML = `
+            <tr>
+                <th>Doctor ID</th>
+                <th>Physician Full Name</th>
+                <th>Designation</th>
+                <th>Department / Station</th>
+                <th class="text-right">Standard Round Fee</th>
+                <th class="text-right">Total Rounds Conducted</th>
+                <th class="text-right">Unique Patients</th>
+                <th class="text-right">Total PF Generated</th>
+            </tr>
+        `;
+
+        if (doctors.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center p-4 text-muted">
+                        No doctor professional fee records found.
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbody.innerHTML = doctors.map((d) => `
+                <tr>
+                    <td><span class="badge badge-secondary">${d.Doctor_Code}</span></td>
+                    <td class="font-bold">${d.Doctor_Name}</td>
+                    <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
+                    <td>${d.Department_Station}</td>
+                    <td class="currency-cell text-right">${formatPesos(d.Base_Round_Fee)}</td>
+                    <td class="number-cell text-right font-bold">${d.Total_Rounds}</td>
+                    <td class="number-cell text-right">${d.Unique_Patients_Attended}</td>
+                    <td class="currency-cell text-right font-bold text-info">${formatPesos(d.Total_PF_Generated)}</td>
+                </tr>
+            `).join("");
+        }
+
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-right font-bold uppercase">Total Professional Fees & Rounds:</td>
+                <td class="number-cell text-right font-bold">${summary.grand_rounds_count}</td>
+                <td></td>
+                <td class="currency-cell text-right font-bold text-info">${formatPesos(summary.grand_pf_total)}</td>
+            </tr>
+        `;
+    } else if (currentTab === "ar_aging") {
+        const notes = reportData.records || [];
+        thead.innerHTML = `
+            <tr>
+                <th>Note #</th>
+                <th>Invoice #</th>
+                <th>Patient Name</th>
+                <th>Contact</th>
+                <th>Payment Plan</th>
+                <th class="text-right">Monthly Installment</th>
+                <th class="text-right">Balance Owed</th>
+                <th>Next Due Date</th>
+                <th>Aging Schedule</th>
+                <th>Guarantor</th>
+                <th>Status</th>
+            </tr>
+        `;
+
+        if (notes.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="text-center p-4 text-muted">
+                        No promissory notes found matching the selected status filter.
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbody.innerHTML = notes.map((n) => {
+                let bracketBadge = "badge-success";
+                if (n.Aging_Bracket.includes("1-30")) bracketBadge = "badge-warning";
+                else if (n.Aging_Bracket.includes("31-60") || n.Aging_Bracket.includes("61-90") || n.Aging_Bracket.includes("90+")) bracketBadge = "badge-danger";
+
+                let statusBadge = "badge-warning";
+                if (n.Status === "Settled") statusBadge = "badge-success";
+                else if (n.Status === "Overdue") statusBadge = "badge-danger";
+
+                return `
+                    <tr>
+                        <td class="font-bold text-primary">${n.Note_Code}</td>
+                        <td><span class="badge badge-secondary">${n.Invoice_Code}</span></td>
+                        <td class="font-bold">${n.Patient_Name}</td>
+                        <td>${n.Patient_Contact || '—'}</td>
+                        <td>${n.Plan_Type_Name}</td>
+                        <td class="currency-cell text-right">${formatPesos(n.Monthly_Amount)}</td>
+                        <td class="currency-cell text-right font-bold text-danger">${formatPesos(n.Total_Balance_Owed)}</td>
+                        <td>${n.Due_Date}</td>
+                        <td><span class="badge ${bracketBadge}">${n.Aging_Bracket}</span></td>
+                        <td>${n.Guarantor_Name}</td>
+                        <td><span class="badge ${statusBadge}">${n.Status}</span></td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-right font-bold uppercase">Total Active Accounts Receivable:</td>
+                <td class="currency-cell text-right font-bold text-danger">${formatPesos(summary.total_active_ar)}</td>
+                <td colspan="4"></td>
+            </tr>
+        `;
+    } else if (currentTab === "bed_occupancy") {
+        const rooms = summary.by_room || [];
+        thead.innerHTML = `
+            <tr>
+                <th>Room / Ward Name</th>
+                <th>Classification</th>
+                <th class="text-right">Daily Board Rate</th>
+                <th class="text-right">Bed Capacity</th>
+                <th class="text-right">Occupied Beds</th>
+                <th class="text-right">Available Beds</th>
+                <th class="text-right">Occupancy Rate</th>
+                <th>Status</th>
+            </tr>
+        `;
+
+        if (rooms.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center p-4 text-muted">
+                        No rooms or bed records found.
+                    </td>
+                </tr>
+            `;
+        } else {
+            tbody.innerHTML = rooms.map((rm) => `
+                <tr>
+                    <td class="font-bold">${rm.Room_Name}</td>
+                    <td><span class="badge badge-info">${rm.Room_Type}</span></td>
+                    <td class="currency-cell text-right">${formatPesos(rm.Daily_Rate)}</td>
+                    <td class="number-cell text-right">${rm.Total_Beds}</td>
+                    <td class="number-cell text-right text-warning font-bold">${rm.Occupied_Beds}</td>
+                    <td class="number-cell text-right text-success font-bold">${rm.Vacant_Beds}</td>
+                    <td class="number-cell text-right font-bold text-info">${rm.Occupancy_Rate}%</td>
+                    <td><span class="badge ${rm.Occupancy_Rate >= 80 ? 'badge-danger' : (rm.Occupancy_Rate >= 50 ? 'badge-warning' : 'badge-success')}">${rm.Occupancy_Rate >= 80 ? 'High' : (rm.Occupancy_Rate >= 50 ? 'Moderate' : 'Available')}</span></td>
+                </tr>
+            `).join("");
+        }
+
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-right font-bold uppercase">Hospital Capacity Totals:</td>
+                <td class="number-cell text-right font-bold">${summary.total_beds}</td>
+                <td class="number-cell text-right font-bold text-warning">${summary.occupied_beds}</td>
+                <td class="number-cell text-right font-bold text-success">${summary.vacant_beds}</td>
+                <td class="number-cell text-right font-bold text-info">${summary.occupancy_rate}%</td>
+                <td></td>
+            </tr>
+        `;
+    }
+};
+
+const getUncombinedReportData = () => {
+    if (!reportData) return null;
+
+    const summary = reportData.summary || {};
+    const searchInput = document.getElementById("filter_search_query");
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+    let headers = [];
+    let rows = [];
+    let footerRow = [];
+
+    if (currentTab === "collections") {
+        const records = reportData.records || [];
+        headers = [
+            "Receipt #",
+            "Payment Date & Time",
+            "Admission #",
+            "Patient Name",
+            "Payment Method",
+            "Classification",
+            "Amount Paid",
+            "Balance After",
+            "Cashier User",
+            "Remarks / Notes"
+        ];
+        rows = records.map((r) => [
+            r.Receipt_Number,
+            r.Payment_Date,
+            r.Admission_Code,
+            r.Patient_Name,
+            r.Payment_Method,
+            r.Payment_Type,
+            formatPesos(r.Amount_Paid),
+            formatPesos(r.Balance_After),
+            r.Cashier_Name,
+            r.Notes || ""
+        ]);
+        if (query) {
+            rows = rows.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(query)));
+        }
+        footerRow = [
+            "Grand Total Collections:",
+            "",
+            "",
+            "",
+            "",
+            "",
+            formatPesos(summary.total_collections),
+            "",
+            "",
+            ""
+        ];
+    } else if (currentTab === "department_revenue") {
+        const stations = summary.by_station || [];
+        headers = [
+            "Station / Department",
+            "Code",
+            "Transaction Count",
+            "Gross Charges",
+            "Returns / Deductions",
+            "Net Revenue",
+            "Share of Total"
+        ];
+        rows = stations.map((st) => [
+            st.Station_Name,
+            st.Code_Prefix,
+            st.Total_Transactions,
+            formatPesos(st.Gross_Charges),
+            formatPesos(st.Total_Returns),
+            formatPesos(st.Net_Revenue),
+            `${st.Revenue_Share_Pct}%`
+        ]);
+        if (query) {
+            rows = rows.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(query)));
+        }
+        footerRow = [
+            "Hospital Grand Totals:",
+            "",
+            `${summary.grand_transactions} txns`,
+            formatPesos(summary.grand_gross),
+            `-${formatPesos(summary.grand_returns)}`,
+            formatPesos(summary.grand_net),
+            "100.00%"
+        ];
+    } else if (currentTab === "doctor_fees") {
+        const doctors = summary.by_doctor || [];
+        headers = [
+            "Doctor ID",
+            "Physician Full Name",
+            "Designation",
+            "Department / Station",
+            "Standard Round Fee",
+            "Total Rounds Conducted",
+            "Unique Patients",
+            "Total PF Generated"
+        ];
+        rows = doctors.map((d) => [
+            d.Doctor_Code,
+            d.Doctor_Name,
+            d.Doctor_Type,
+            d.Department_Station,
+            formatPesos(d.Base_Round_Fee),
+            d.Total_Rounds,
+            d.Unique_Patients_Attended,
+            formatPesos(d.Total_PF_Generated)
+        ]);
+        if (query) {
+            rows = rows.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(query)));
+        }
+        footerRow = [
+            "Total Professional Fees & Rounds:",
+            "",
+            "",
+            "",
+            "",
+            `${summary.grand_rounds_count} rounds`,
+            "",
+            formatPesos(summary.grand_pf_total)
+        ];
+    } else if (currentTab === "ar_aging") {
+        const notes = reportData.records || [];
+        headers = [
+            "Note #",
+            "Invoice #",
+            "Patient Name",
+            "Contact",
+            "Payment Plan",
+            "Monthly Installment",
+            "Balance Owed",
+            "Next Due Date",
+            "Aging Schedule",
+            "Guarantor",
+            "Status"
+        ];
+        rows = notes.map((n) => [
+            n.Note_Code,
+            n.Invoice_Code,
+            n.Patient_Name,
+            n.Patient_Contact || "",
+            n.Plan_Type_Name,
+            formatPesos(n.Monthly_Amount),
+            formatPesos(n.Total_Balance_Owed),
+            n.Due_Date,
+            n.Aging_Bracket,
+            n.Guarantor_Name,
+            n.Status
+        ]);
+        if (query) {
+            rows = rows.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(query)));
+        }
+        footerRow = [
+            "Total Active Accounts Receivable:",
+            "",
+            "",
+            "",
+            "",
+            "",
+            formatPesos(summary.total_active_ar),
+            "",
+            "",
+            "",
+            ""
+        ];
+    } else if (currentTab === "bed_occupancy") {
+        const rooms = summary.by_room || [];
+        headers = [
+            "Room / Ward Name",
+            "Classification",
+            "Daily Board Rate",
+            "Bed Capacity",
+            "Occupied Beds",
+            "Available Beds",
+            "Occupancy Rate",
+            "Status"
+        ];
+        rows = rooms.map((rm) => [
+            rm.Room_Name,
+            rm.Room_Type,
+            formatPesos(rm.Daily_Rate),
+            rm.Total_Beds,
+            rm.Occupied_Beds,
+            rm.Vacant_Beds,
+            `${rm.Occupancy_Rate}%`,
+            rm.Occupancy_Rate >= 80 ? "High" : (rm.Occupancy_Rate >= 50 ? "Moderate" : "Available")
+        ]);
+        if (query) {
+            rows = rows.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(query)));
+        }
+        footerRow = [
+            "Hospital Capacity Totals:",
+            "",
+            "",
+            `${summary.total_beds} beds`,
+            `${summary.occupied_beds} occ`,
+            `${summary.vacant_beds} vac`,
+            `${summary.occupancy_rate}%`,
+            ""
+        ];
+    }
+
+    return { headers, rows, footerRow };
+};
+
 const exportToExcel = () => {
     if (typeof XLSX === "undefined") {
         alert("Excel export library is still loading. Please try again in a moment.");
         return;
     }
 
-    const tableEl = document.getElementById("report-table");
-    if (!tableEl) return;
+    const data = getUncombinedReportData();
+    if (!data) return;
 
     const sheetTitles = {
         collections: "Collections",
@@ -995,7 +1495,14 @@ const exportToExcel = () => {
     };
 
     const sheetName = sheetTitles[currentTab] || "Report";
-    const wb = XLSX.utils.table_to_book(tableEl, { sheet: sheetName, raw: true });
+    const aoa = [data.headers, ...data.rows];
+    if (data.footerRow && data.footerRow.length > 0) {
+        aoa.push(data.footerRow);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
     const now = new Date();
     const dateStamp = formatDateYMD(now);
@@ -1005,24 +1512,17 @@ const exportToExcel = () => {
 };
 
 const exportToCsv = () => {
-    const tableEl = document.getElementById("report-table");
-    if (!tableEl) return;
+    const data = getUncombinedReportData();
+    if (!data) return;
 
-    const rows = [];
-    const trEls = tableEl.querySelectorAll("tr");
+    const aoa = [data.headers, ...data.rows];
+    if (data.footerRow && data.footerRow.length > 0) {
+        aoa.push(data.footerRow);
+    }
 
-    trEls.forEach((tr) => {
-        const rowData = [];
-        const cells = tr.querySelectorAll("th, td");
-        cells.forEach((c) => {
-            let text = c.innerText.trim();
-            text = text.replace(/"/g, '""');
-            rowData.push(`"${text}"`);
-        });
-        if (rowData.length > 0) {
-            rows.push(rowData.join(","));
-        }
-    });
+    const rows = aoa.map((row) =>
+        row.map((val) => `"${String(val ?? "").replace(/"/g, '""')}"`).join(",")
+    );
 
     const csvContent = "\uFEFF" + rows.join("\r\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -1040,6 +1540,7 @@ const exportToCsv = () => {
 };
 
 const printOfficialReport = () => {
+    renderPrintTable();
     updatePrintHeader();
     window.print();
 };

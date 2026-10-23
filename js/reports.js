@@ -1,6 +1,253 @@
 let currentTab = "collections";
 let reportData = null;
 let lookupData = { cashiers: [], doctors: [], payment_methods: [] };
+let currentSort = { column: null, direction: "asc" };
+
+const parseSortValue = (val) => {
+    if (val === undefined || val === null) return "";
+    let str = String(val).trim();
+    if (str.startsWith("₱") || str.startsWith("$")) {
+        str = str.substring(1).replace(/,/g, "");
+    }
+    const num = Number(str);
+    if (!isNaN(num) && typeof val !== "boolean" && str !== "") {
+        return num;
+    }
+    return val;
+};
+
+const getSortedRecords = (records) => {
+    if (!currentSort.column || !records || records.length === 0) {
+        return [...records];
+    }
+
+    const { column, direction } = currentSort;
+    const factor = direction === "desc" ? -1 : 1;
+
+    return [...records].sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+
+        valA = parseSortValue(valA);
+        valB = parseSortValue(valB);
+
+        if (typeof valA === "number" && typeof valB === "number") {
+            return (valA - valB) * factor;
+        }
+
+        const dateA = Date.parse(valA);
+        const dateB = Date.parse(valB);
+        if (!isNaN(dateA) && !isNaN(dateB) && String(valA).includes("-")) {
+            return (dateA - dateB) * factor;
+        }
+
+        return String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: "base" }) * factor;
+    });
+};
+
+const renderSortableHeader = (label, sortKey, alignRight = false) => {
+    const isSorted = currentSort.column === sortKey;
+    const dir = isSorted ? currentSort.direction : "";
+    const activeClass = isSorted ? ` sorted-${dir}` : "";
+    const alignClass = alignRight ? " text-right" : "";
+
+    let arrowSvg = `
+        <span class="sort-icon-box" aria-hidden="true">
+            <svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>
+        </span>
+    `;
+    if (dir === "asc") {
+        arrowSvg = `
+            <span class="sort-icon-box active" aria-hidden="true">
+                <svg class="sort-icon-active" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+            </span>
+        `;
+    } else if (dir === "desc") {
+        arrowSvg = `
+            <span class="sort-icon-box active" aria-hidden="true">
+                <svg class="sort-icon-active" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+        `;
+    }
+
+    return `
+        <th class="sortable-th${alignClass}${activeClass}" data-sort="${sortKey}" role="button" tabindex="0" title="Click to sort by ${label}">
+            <div class="th-sort-wrapper${alignRight ? ' th-sort-right' : ''}">
+                <span class="th-label">${label}</span>
+                ${arrowSvg}
+            </div>
+        </th>
+    `;
+};
+
+const handleHeaderSort = (sortKey) => {
+    if (!sortKey) return;
+    if (currentSort.column === sortKey) {
+        if (currentSort.direction === "asc") {
+            currentSort.direction = "desc";
+        } else {
+            currentSort.column = null;
+            currentSort.direction = "asc";
+        }
+    } else {
+        currentSort.column = sortKey;
+        currentSort.direction = "asc";
+    }
+    renderActiveReport();
+};
+
+const updateActiveFiltersBar = () => {
+    const bar = document.getElementById("active-filters-bar");
+    const chipsContainer = document.getElementById("active-filters-chips");
+    if (!bar || !chipsContainer) return;
+
+    const chips = [];
+
+    const activePreset = document.querySelector(".date-preset-btn.active");
+    const startInput = document.getElementById("filter_start_date");
+    const endInput = document.getElementById("filter_end_date");
+    const secondarySelect = document.getElementById("filter_secondary");
+    const secondaryLabel = document.getElementById("filter_secondary_label");
+    const searchInput = document.getElementById("filter_search_query");
+
+    const presetName = activePreset ? activePreset.getAttribute("data-preset") : "";
+    if (presetName && presetName !== "all") {
+        chips.push({
+            type: "Period",
+            value: activePreset.textContent.trim(),
+            clearType: "date"
+        });
+    } else if (startInput && endInput && (startInput.value || endInput.value)) {
+        let dateVal = "";
+        if (startInput.value && endInput.value) {
+            dateVal = `${startInput.value} to ${endInput.value}`;
+        } else if (startInput.value) {
+            dateVal = `From ${startInput.value}`;
+        } else {
+            dateVal = `Up to ${endInput.value}`;
+        }
+        chips.push({
+            type: "Period",
+            value: dateVal,
+            clearType: "date"
+        });
+    }
+
+    if (secondarySelect && secondarySelect.value) {
+        const selectedText = secondarySelect.options[secondarySelect.selectedIndex]?.textContent.trim() || secondarySelect.value;
+        const typeLabel = secondaryLabel ? secondaryLabel.textContent.trim() : "Filter";
+        chips.push({
+            type: typeLabel,
+            value: selectedText,
+            clearType: "secondary"
+        });
+    }
+
+    if (searchInput && searchInput.value.trim()) {
+        chips.push({
+            type: "Search",
+            value: `"${searchInput.value.trim()}"`,
+            clearType: "search"
+        });
+    }
+
+    if (currentSort.column) {
+        const sortTitles = {
+            Payment_Date: "Payment Date",
+            Patient_Name: "Patient Name",
+            Payment_Method: "Payment Method",
+            Amount_Paid: "Amount Paid",
+            Notes: "Remarks",
+            Station_Name: "Station Name",
+            Total_Transactions: "Transactions",
+            Gross_Charges: "Gross Charges",
+            Net_Revenue: "Net Revenue",
+            Revenue_Share_Pct: "Share %",
+            Doctor_Name: "Physician Name",
+            Department_Station: "Department",
+            Total_Rounds: "Rounds",
+            Unique_Patients_Attended: "Unique Patients",
+            Total_PF_Generated: "PF Generated",
+            Note_Code: "Note Code",
+            Plan_Type_Name: "Payment Plan",
+            Total_Balance_Owed: "Balance Owed",
+            Status: "Status",
+            Room_Name: "Room Name",
+            Daily_Rate: "Daily Rate",
+            Total_Beds: "Bed Capacity",
+            Occupancy_Rate: "Occupancy Rate"
+        };
+        const title = sortTitles[currentSort.column] || currentSort.column;
+        const dirLabel = currentSort.direction === "asc" ? "Ascending" : "Descending";
+        chips.push({
+            type: "Sorted",
+            value: `${title} (${dirLabel})`,
+            clearType: "sort",
+            isSort: true
+        });
+    }
+
+    if (chips.length > 0) {
+        bar.classList.add("active");
+        chipsContainer.innerHTML = chips.map((c) => `
+            <div class="filter-chip${c.isSort ? ' filter-chip-sort' : ''}">
+                <span class="filter-chip-type">${c.type}:</span>
+                <span class="filter-chip-val">${c.value}</span>
+                <button type="button" class="filter-chip-remove" data-clear="${c.clearType}" title="Remove this filter">&times;</button>
+            </div>
+        `).join("");
+    } else {
+        bar.classList.remove("active");
+        chipsContainer.innerHTML = "";
+    }
+};
+
+const clearIndividualFilter = (clearType) => {
+    if (clearType === "date") {
+        const startInput = document.getElementById("filter_start_date");
+        const endInput = document.getElementById("filter_end_date");
+        if (startInput) startInput.value = "";
+        if (endInput) endInput.value = "";
+        const presetAll = document.querySelector('.date-preset-btn[data-preset="all"]');
+        if (presetAll) presetAll.click();
+        else {
+            updateReportDrawerBadge();
+            fetchReportData();
+        }
+    } else if (clearType === "secondary") {
+        const secondarySelect = document.getElementById("filter_secondary");
+        if (secondarySelect) secondarySelect.value = "";
+        fetchReportData();
+    } else if (clearType === "search") {
+        const searchInput = document.getElementById("filter_search_query");
+        if (searchInput) searchInput.value = "";
+        applyQuickTableSearch();
+        updateActiveFiltersBar();
+    } else if (clearType === "sort") {
+        currentSort = { column: null, direction: "asc" };
+        renderActiveReport();
+    }
+};
+
+const resetAllFiltersAndSort = () => {
+    const startInput = document.getElementById("filter_start_date");
+    const endInput = document.getElementById("filter_end_date");
+    const secondarySelect = document.getElementById("filter_secondary");
+    const searchInput = document.getElementById("filter_search_query");
+
+    if (startInput) startInput.value = "";
+    if (endInput) endInput.value = "";
+    if (secondarySelect) secondarySelect.value = "";
+    if (searchInput) searchInput.value = "";
+    currentSort = { column: null, direction: "asc" };
+
+    const presetAll = document.querySelector('.date-preset-btn[data-preset="all"]');
+    if (presetAll) presetAll.click();
+    else {
+        updateReportDrawerBadge();
+        fetchReportData();
+    }
+};
 
 const formatPesos = (val) => {
     const num = parseFloat(val) || 0;
@@ -30,6 +277,7 @@ const setupTabSwitching = () => {
             tabButtons.forEach((b) => b.classList.remove("active"));
             btn.classList.add("active");
             currentTab = btn.getAttribute("data-tab");
+            currentSort = { column: null, direction: "asc" };
             updateSecondaryFilterUI();
             fetchReportData();
         });
@@ -141,11 +389,50 @@ const setupEventListeners = () => {
             if (endInput) endInput.value = "";
             if (secondarySelect) secondarySelect.value = "";
             if (searchInput) searchInput.value = "";
+            currentSort = { column: null, direction: "asc" };
             const presetAll = document.querySelector('.date-preset-btn[data-preset="all"]');
             if (presetAll) presetAll.click();
             else {
                 updateReportDrawerBadge();
                 fetchReportData();
+            }
+        });
+    }
+
+    const thead = document.getElementById("report-table-head");
+    if (thead) {
+        thead.addEventListener("click", (e) => {
+            const th = e.target.closest("th.sortable-th");
+            if (th) {
+                const sortKey = th.getAttribute("data-sort");
+                handleHeaderSort(sortKey);
+            }
+        });
+        thead.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                const th = e.target.closest("th.sortable-th");
+                if (th) {
+                    e.preventDefault();
+                    const sortKey = th.getAttribute("data-sort");
+                    handleHeaderSort(sortKey);
+                }
+            }
+        });
+    }
+
+    const activeFiltersBar = document.getElementById("active-filters-bar");
+    if (activeFiltersBar) {
+        activeFiltersBar.addEventListener("click", (e) => {
+            const btnRemove = e.target.closest(".filter-chip-remove");
+            if (btnRemove) {
+                const clearType = btnRemove.getAttribute("data-clear");
+                clearIndividualFilter(clearType);
+                return;
+            }
+
+            const btnClearAll = e.target.closest("#btnClearActiveFilters");
+            if (btnClearAll) {
+                resetAllFiltersAndSort();
             }
         });
     }
@@ -348,6 +635,7 @@ const renderActiveReport = () => {
     renderPrintTable();
     updatePrintHeader();
     applyQuickTableSearch();
+    updateActiveFiltersBar();
 };
 
 const applyQuickTableSearch = () => {
@@ -373,6 +661,7 @@ const applyQuickTableSearch = () => {
             row.style.display = !query || rowText.includes(query) ? "" : "none";
         });
     }
+    updateActiveFiltersBar();
 };
 
 const updatePrintHeader = () => {
@@ -417,7 +706,8 @@ const updatePrintHeader = () => {
 
 const renderCollectionsReport = () => {
     const summary = reportData.summary || {};
-    const records = reportData.records || [];
+    const rawRecords = reportData.records || [];
+    const records = getSortedRecords(rawRecords);
 
     document.getElementById("spreadsheet-title").textContent = "Daily Cashier Collections & Remittance Spreadsheet";
     document.getElementById("spreadsheet-subtitle").textContent = "Itemized receipt audit, payment method classifications, and live cashier remittance.";
@@ -482,11 +772,11 @@ const renderCollectionsReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Receipt & Timestamp</th>
-            <th>Patient & Case</th>
-            <th>Payment Method & Stage</th>
-            <th class="text-right">Amount Paid & Balance</th>
-            <th>Remarks / Notes</th>
+            ${renderSortableHeader("Receipt & Timestamp", "Payment_Date")}
+            ${renderSortableHeader("Patient & Case", "Patient_Name")}
+            ${renderSortableHeader("Payment Method & Stage", "Payment_Method")}
+            ${renderSortableHeader("Amount Paid & Balance", "Amount_Paid", true)}
+            ${renderSortableHeader("Remarks / Notes", "Notes")}
         </tr>
     `;
 
@@ -540,7 +830,8 @@ const renderCollectionsReport = () => {
 
 const renderDepartmentRevenueReport = () => {
     const summary = reportData.summary || {};
-    const stations = summary.by_station || [];
+    const rawStations = summary.by_station || [];
+    const stations = getSortedRecords(rawStations);
     const details = reportData.records || [];
 
     document.getElementById("spreadsheet-title").textContent = "Departmental & Station Revenue Breakdown Spreadsheet";
@@ -606,11 +897,11 @@ const renderDepartmentRevenueReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Station / Department</th>
-            <th class="text-right">Transactions</th>
-            <th class="text-right">Gross Charges & Returns</th>
-            <th class="text-right">Net Revenue</th>
-            <th class="text-right">Share of Total</th>
+            ${renderSortableHeader("Station / Department", "Station_Name")}
+            ${renderSortableHeader("Transactions", "Total_Transactions", true)}
+            ${renderSortableHeader("Gross Charges & Returns", "Gross_Charges", true)}
+            ${renderSortableHeader("Net Revenue", "Net_Revenue", true)}
+            ${renderSortableHeader("Share of Total", "Revenue_Share_Pct", true)}
         </tr>
     `;
 
@@ -657,7 +948,8 @@ const renderDepartmentRevenueReport = () => {
 
 const renderDoctorFeesReport = () => {
     const summary = reportData.summary || {};
-    const doctors = summary.by_doctor || [];
+    const rawDoctors = summary.by_doctor || [];
+    const doctors = getSortedRecords(rawDoctors);
 
     document.getElementById("spreadsheet-title").textContent = "Doctor Professional Fees (PF) & Rounds Summary Spreadsheet";
     document.getElementById("spreadsheet-subtitle").textContent = "Attending physician visit counts, unique patients attended, base fees, and total PF billings.";
@@ -724,11 +1016,11 @@ const renderDoctorFeesReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Physician & Designation</th>
-            <th>Station & Standard Round Fee</th>
-            <th class="text-right">Rounds Conducted</th>
-            <th class="text-right">Unique Patients</th>
-            <th class="text-right">Total PF Generated</th>
+            ${renderSortableHeader("Physician & Designation", "Doctor_Name")}
+            ${renderSortableHeader("Station & Standard Round Fee", "Department_Station")}
+            ${renderSortableHeader("Rounds Conducted", "Total_Rounds", true)}
+            ${renderSortableHeader("Unique Patients", "Unique_Patients_Attended", true)}
+            ${renderSortableHeader("Total PF Generated", "Total_PF_Generated", true)}
         </tr>
     `;
 
@@ -772,7 +1064,8 @@ const renderDoctorFeesReport = () => {
 
 const renderArAgingReport = () => {
     const summary = reportData.summary || {};
-    const notes = reportData.records || [];
+    const rawNotes = reportData.records || [];
+    const notes = getSortedRecords(rawNotes);
 
     document.getElementById("spreadsheet-title").textContent = "Accounts Receivable (AR) & Promissory Note Aging Spreadsheet";
     document.getElementById("spreadsheet-subtitle").textContent = "Promissory note aging schedules (Current, 1-30d, 31-60d, 61-90d, 90+d overdue), installments, and guarantors.";
@@ -839,11 +1132,11 @@ const renderArAgingReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Note & Invoice</th>
-            <th>Patient & Guarantor</th>
-            <th>Payment Plan</th>
-            <th class="text-right">Balance Owed & Aging</th>
-            <th>Status</th>
+            ${renderSortableHeader("Note & Invoice", "Note_Code")}
+            ${renderSortableHeader("Patient & Guarantor", "Patient_Name")}
+            ${renderSortableHeader("Payment Plan", "Plan_Type_Name")}
+            ${renderSortableHeader("Balance Owed & Aging", "Total_Balance_Owed", true)}
+            ${renderSortableHeader("Status", "Status")}
         </tr>
     `;
 
@@ -904,7 +1197,8 @@ const renderArAgingReport = () => {
 
 const renderBedOccupancyReport = () => {
     const summary = reportData.summary || {};
-    const rooms = summary.by_room || [];
+    const rawRooms = summary.by_room || [];
+    const rooms = getSortedRecords(rawRooms);
     const occupants = reportData.records || [];
 
     document.getElementById("spreadsheet-title").textContent = "In-Patient Bed Capacity & Ward Occupancy Spreadsheet";
@@ -970,11 +1264,11 @@ const renderBedOccupancyReport = () => {
     const thead = document.getElementById("report-table-head");
     thead.innerHTML = `
         <tr>
-            <th>Room / Ward & Classification</th>
-            <th class="text-right">Daily Board Rate</th>
-            <th class="text-right">Capacity & Occupancy</th>
-            <th class="text-right">Occupancy Rate</th>
-            <th>Status</th>
+            ${renderSortableHeader("Room / Ward & Classification", "Room_Name")}
+            ${renderSortableHeader("Daily Board Rate", "Daily_Rate", true)}
+            ${renderSortableHeader("Capacity & Occupancy", "Total_Beds", true)}
+            ${renderSortableHeader("Occupancy Rate", "Occupancy_Rate", true)}
+            ${renderSortableHeader("Status", "Occupancy_Rate")}
         </tr>
     `;
 
@@ -1022,7 +1316,7 @@ const renderPrintTable = () => {
     const summary = reportData.summary || {};
 
     if (currentTab === "collections") {
-        const records = reportData.records || [];
+        const records = getSortedRecords(reportData.records || []);
         thead.innerHTML = `
             <tr>
                 <th>Receipt #</th>
@@ -1071,7 +1365,7 @@ const renderPrintTable = () => {
             </tr>
         `;
     } else if (currentTab === "department_revenue") {
-        const stations = summary.by_station || [];
+        const stations = getSortedRecords(summary.by_station || []);
         thead.innerHTML = `
             <tr>
                 <th>Station / Department</th>
@@ -1117,7 +1411,7 @@ const renderPrintTable = () => {
             </tr>
         `;
     } else if (currentTab === "doctor_fees") {
-        const doctors = summary.by_doctor || [];
+        const doctors = getSortedRecords(summary.by_doctor || []);
         thead.innerHTML = `
             <tr>
                 <th>Doctor ID</th>
@@ -1163,7 +1457,7 @@ const renderPrintTable = () => {
             </tr>
         `;
     } else if (currentTab === "ar_aging") {
-        const notes = reportData.records || [];
+        const notes = getSortedRecords(reportData.records || []);
         thead.innerHTML = `
             <tr>
                 <th>Note #</th>
@@ -1224,7 +1518,7 @@ const renderPrintTable = () => {
             </tr>
         `;
     } else if (currentTab === "bed_occupancy") {
-        const rooms = summary.by_room || [];
+        const rooms = getSortedRecords(summary.by_room || []);
         thead.innerHTML = `
             <tr>
                 <th>Room / Ward Name</th>
@@ -1286,7 +1580,7 @@ const getUncombinedReportData = () => {
     let footerRow = [];
 
     if (currentTab === "collections") {
-        const records = reportData.records || [];
+        const records = getSortedRecords(reportData.records || []);
         headers = [
             "Receipt #",
             "Payment Date & Time",
@@ -1327,7 +1621,7 @@ const getUncombinedReportData = () => {
             ""
         ];
     } else if (currentTab === "department_revenue") {
-        const stations = summary.by_station || [];
+        const stations = getSortedRecords(summary.by_station || []);
         headers = [
             "Station / Department",
             "Code",
@@ -1359,7 +1653,7 @@ const getUncombinedReportData = () => {
             "100.00%"
         ];
     } else if (currentTab === "doctor_fees") {
-        const doctors = summary.by_doctor || [];
+        const doctors = getSortedRecords(summary.by_doctor || []);
         headers = [
             "Doctor ID",
             "Physician Full Name",
@@ -1394,7 +1688,7 @@ const getUncombinedReportData = () => {
             formatPesos(summary.grand_pf_total)
         ];
     } else if (currentTab === "ar_aging") {
-        const notes = reportData.records || [];
+        const notes = getSortedRecords(reportData.records || []);
         headers = [
             "Note #",
             "Invoice #",
@@ -1438,7 +1732,7 @@ const getUncombinedReportData = () => {
             ""
         ];
     } else if (currentTab === "bed_occupancy") {
-        const rooms = summary.by_room || [];
+        const rooms = getSortedRecords(summary.by_room || []);
         headers = [
             "Room / Ward Name",
             "Classification",

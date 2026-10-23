@@ -1289,3 +1289,67 @@
         font-size: 6pt !important;
     }
 }
+.sortable-th,
+.data-table th.sortable-th {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sortable-th:hover,
+.data-table th.sortable-th:hover {
+    background-color: #e2e8f0;
+    color: #000000;
+}
+
+.sortable-th.sorted-asc,
+.sortable-th.sorted-desc,
+.data-table th.sortable-th.sorted-asc,
+.data-table th.sortable-th.sorted-desc {
+    background-color: #e0f2fe;
+    color: #000000;
+    border-bottom: 2.5px solid #000000;
+}
+
+.th-sort-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.th-sort-wrapper.th-sort-right {
+    justify-content: flex-end;
+}
+
+.sort-icon-box {
+    display: inline-flex;
+    align-items: center;
+    color: #0f172a;
+    opacity: 0.75;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.sort-icon-neutral {
+    stroke: #0f172a !important;
+    stroke-width: 2.8 !important;
+}
+
+.sortable-th:hover .sort-icon-box {
+    opacity: 1;
+    color: #000000;
+}
+
+.sortable-th:hover .sort-icon-neutral {
+    stroke: #000000 !important;
+}
+
+.sort-icon-box.active {
+    opacity: 1 !important;
+    color: #000000 !important;
+}
+
+.sort-icon-active {
+    stroke: #000000 !important;
+    stroke-width: 3.5 !important;
+}

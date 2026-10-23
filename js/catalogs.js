@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("search_input").addEventListener("input", filterAndSortCatalogs);
     document.getElementById("filter_category").addEventListener("change", filterAndSortCatalogs);
     document.getElementById("filter_status").addEventListener("change", filterAndSortCatalogs);
-    document.getElementById("sort_by").addEventListener("change", filterAndSortCatalogs);
+    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortCatalogs);
 
     initRefreshBtn("btnRefreshCatalogs", displayCatalogs);
 });
@@ -60,7 +60,7 @@ const filterAndSortCatalogs = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterCategory = document.getElementById("filter_category").value;
     const filterStatus = document.getElementById("filter_status").value;
-    const sortBy = document.getElementById("sort_by").value;
+    const sortBy = document.getElementById("sort_by")?.value || "id_desc";
 
     let filtered = allCatalogs.filter(item => {
         const name = (item.Item_Name || "").toLowerCase();

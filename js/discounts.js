@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
-    document.getElementById("sort_by").addEventListener("change", filterAndSortDiscounts);
+    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortDiscounts);
 
     initRefreshBtn("btnRefreshDiscounts", displayDiscounts);
 });
@@ -61,7 +61,7 @@ const displayDiscounts = async () => {
 const filterAndSortDiscounts = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
-    const sortBy = document.getElementById("sort_by").value;
+    const sortBy = document.getElementById("sort_by")?.value || "name_asc";
 
     let filtered = allDiscounts.filter(disc => {
         const itemCode = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`.toLowerCase();

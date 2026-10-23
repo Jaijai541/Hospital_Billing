@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filterRoomType) {
         filterRoomType.addEventListener("change", filterAndSortRooms);
     }
-    document.getElementById("sort_by").addEventListener("change", filterAndSortRooms);
+    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortRooms);
 
     const tabRooms = document.getElementById("tabBtnRoomsMap");
     if (tabRooms) {
@@ -710,7 +710,7 @@ const filterAndSortRooms = () => {
     const filterStatus = document.getElementById("filter_status").value;
     const filterFloor = document.getElementById("filter_floor") ? document.getElementById("filter_floor").value : "all";
     const filterType = document.getElementById("filter_room_type").value;
-    const sortBy = document.getElementById("sort_by").value;
+    const sortBy = document.getElementById("sort_by")?.value || "floor_asc";
 
     let filtered = allRooms.filter(r => {
         const name = (r.Room_Name || "").toLowerCase();

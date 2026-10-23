@@ -53,19 +53,19 @@ const renderSortableHeader = (label, sortKey, alignRight = false) => {
 
     let arrowSvg = `
         <span class="sort-icon-box" aria-hidden="true">
-            <svg class="sort-icon-neutral" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>
+            <svg class="sort-icon-neutral" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.8"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>
         </span>
     `;
     if (dir === "asc") {
         arrowSvg = `
             <span class="sort-icon-box active" aria-hidden="true">
-                <svg class="sort-icon-active" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+                <svg class="sort-icon-active" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3.5"><polyline points="18 15 12 9 6 15"/></svg>
             </span>
         `;
     } else if (dir === "desc") {
         arrowSvg = `
             <span class="sort-icon-box active" aria-hidden="true">
-                <svg class="sort-icon-active" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg class="sort-icon-active" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3.5"><polyline points="6 9 12 15 18 9"/></svg>
             </span>
         `;
     }

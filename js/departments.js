@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("search_input").addEventListener("input", filterAndSortDepartments);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDepartments);
-    document.getElementById("sort_by").addEventListener("change", filterAndSortDepartments);
+    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortDepartments);
 
     initRefreshBtn("btnRefreshDepartments", displayDepartments);
 
@@ -111,7 +111,7 @@ const displayDepartments = async () => {
 const filterAndSortDepartments = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
-    const sortBy = document.getElementById("sort_by").value;
+    const sortBy = document.getElementById("sort_by")?.value || "name_asc";
 
     let filtered = allDepartments.filter(dept => {
         const code = `${dept.Code_Prefix || 'DEPT'}-${dept.Station_ID}`.toLowerCase();

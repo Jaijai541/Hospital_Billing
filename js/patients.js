@@ -531,7 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("search_input").addEventListener("input", filterAndSortPatients);
     document.getElementById("filter_status").addEventListener("change", filterAndSortPatients);
     document.getElementById("filter_blood").addEventListener("change", filterAndSortPatients);
-    document.getElementById("sort_by").addEventListener("change", filterAndSortPatients);
+    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortPatients);
 
     initRefreshBtn("btnRefreshPatients", displayPatients);
 
@@ -643,7 +643,7 @@ const filterAndSortPatients = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
     const filterBlood = document.getElementById("filter_blood").value;
-    const sortBy = document.getElementById("sort_by").value;
+    const sortBy = document.getElementById("sort_by")?.value || "id_desc";
 
     let filtered = allPatients.filter(pat => {
         const fullName = `${pat.First_Name} ${pat.Last_Name}`.toLowerCase();

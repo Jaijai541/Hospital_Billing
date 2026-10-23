@@ -1175,7 +1175,8 @@ textarea.form-control {
 
 .data-table th:last-child {
     border-right: none;
-}
+}
+
 .sortable-th,
 .data-table th.sortable-th {
     cursor: pointer;
@@ -1186,7 +1187,7 @@ textarea.form-control {
 .sortable-th:hover,
 .data-table th.sortable-th:hover {
     background-color: #e2e8f0;
-    color: #0284c7;
+    color: #000000;
 }
 
 .sortable-th.sorted-asc,
@@ -1194,8 +1195,8 @@ textarea.form-control {
 .data-table th.sortable-th.sorted-asc,
 .data-table th.sortable-th.sorted-desc {
     background-color: #e0f2fe;
-    color: #0369a1;
-    border-bottom: 2px solid #0284c7;
+    color: #000000;
+    border-bottom: 2.5px solid #000000;
 }
 
 .th-sort-wrapper {
@@ -1212,18 +1213,35 @@ textarea.form-control {
 .sort-icon-box {
     display: inline-flex;
     align-items: center;
-    opacity: 0.35;
-    transition: opacity 0.15s ease;
+    color: #0f172a;
+    opacity: 0.75;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.sort-icon-neutral {
+    stroke: #0f172a !important;
+    stroke-width: 2.8 !important;
 }
 
 .sortable-th:hover .sort-icon-box {
-    opacity: 0.75;
+    opacity: 1;
+    color: #000000;
+}
+
+.sortable-th:hover .sort-icon-neutral {
+    stroke: #000000 !important;
 }
 
 .sort-icon-box.active {
-    opacity: 1;
-    color: #0284c7;
-}
+    opacity: 1 !important;
+    color: #000000 !important;
+}
+
+.sort-icon-active {
+    stroke: #000000 !important;
+    stroke-width: 3.5 !important;
+}
+
 
 
 .empty-state-card {

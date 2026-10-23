@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filterSpec) {
         filterSpec.addEventListener("change", filterAndSortDoctors);
     }
-    document.getElementById("sort_by").addEventListener("change", filterAndSortDoctors);
+    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortDoctors);
 
     const btnOpenSpec = document.getElementById("btnOpenAddSpecialtyModal");
     if (btnOpenSpec) {

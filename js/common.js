@@ -1899,6 +1899,14 @@ const defaultDomTableSort = (tableElem, th, sortKey) => {
         if (td.hasAttribute("data-sort-value")) {
             return td.getAttribute("data-sort-value").trim();
         }
+        const prim = td.querySelector(".table-primary-text");
+        if (prim) {
+            return prim.textContent.trim();
+        }
+        const badge = td.querySelector(".badge");
+        if (badge && td.children.length === 1) {
+            return badge.textContent.trim();
+        }
         return td.textContent.trim();
     };
 
@@ -1909,6 +1917,10 @@ const defaultDomTableSort = (tableElem, th, sortKey) => {
 
     const toNumeric = (str) => {
         return Number(str.replace(/[₱$,\s]/g, ""));
+    };
+
+    const isDate = (str) => {
+        return /\d{4}-\d{2}-\d{2}|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i.test(str);
     };
 
     rows.sort((rowA, rowB) => {
@@ -1923,10 +1935,12 @@ const defaultDomTableSort = (tableElem, th, sortKey) => {
             return newDir === "asc" ? numA - numB : numB - numA;
         }
 
-        const dateA = Date.parse(valA);
-        const dateB = Date.parse(valB);
-        if (!isNaN(dateA) && !isNaN(dateB) && (valA.includes("-") || valA.includes("/") || valA.includes(","))) {
-            return newDir === "asc" ? dateA - dateB : dateB - dateA;
+        if (isDate(valA) && isDate(valB)) {
+            const dateA = Date.parse(valA);
+            const dateB = Date.parse(valB);
+            if (!isNaN(dateA) && !isNaN(dateB)) {
+                return newDir === "asc" ? dateA - dateB : dateB - dateA;
+            }
         }
 
         const comp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: "base" });

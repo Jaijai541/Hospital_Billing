@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defense Demonstration Video Script — Hospital Billing System</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --tag-bg: #e0f2fe;
+            --tag-text: #0369a1;
+            --speech-bg: #f0fdf4;
+            --speech-border: #86efac;
+            --speech-text: #14532d;
+            --action-bg: #fffbeb;
+            --action-border: #fcd34d;
+            --action-text: #78350f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 0;
+        }
+
+        .header-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+
+        .header-title h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .header-title p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: 1px solid var(--primary-dark);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background-color: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px 60px;
+        }
+
+        .meta-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .meta-item strong {
+            display: block;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+
+        .meta-item span {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .timeline-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .timeline-table th, .timeline-table td {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.88rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timeline-table th {
+            background-color: #f8fafc;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .time-badge {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            border: 1px solid #bae6fd;
+        }
+
+        .step-block {
+            margin-bottom: 20px;
+        }
+
+        .step-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crud-pill {
+            display: inline-block;
+            background: #1e293b;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        .action-box {
+            background-color: var(--action-bg);
+            border-left: 4px solid var(--action-border);
+            color: var(--action-text);
+            padding: 12px 16px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .action-box strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .action-box ul {
+            margin-left: 20px;
+            margin-top: 4px;
+        }
+
+        .speech-box {
+            background-color: var(--speech-bg);
+            border-left: 4px solid var(--speech-border);
+            color: var(--speech-text);
+            padding: 14px 18px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.95rem;
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        .speech-box strong {
+            display: block;
+            font-style: normal;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+            color: #166534;
+        }
+
+        .tips-list {
+            margin-left: 20px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .tips-list li {
+            margin-bottom: 6px;
+        }
+
+        @media print {
+            .header-bar {
+                display: none;
+            }
+            body {
+                background: #ffffff;
+                color: #000000;
+            }
+            .container {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .section-card {
+                border: 1px solid #ccc;
+                box-shadow: none;
+                page-break-inside: avoid;
+                margin-bottom: 16px;
+                padding: 16px;
+            }
+            .action-box, .speech-box {
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-bar">
+        <div class="header-title">
+            <h1>Defense Demonstration Video Script</h1>
+            <p>In-Patient Hospital Information &amp; Billing Management System</p>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="btn btn-outline" id="btnBackToDashboard">Back to App</button>
+            <button type="button" class="btn btn-primary" id="btnPrintPdf">Download / Print as PDF</button>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="meta-card">
+            <div class="meta-item">
+                <strong>Target Duration</strong>
+                <span>7 &ndash; 10 Minutes</span>
+            </div>
+            <div class="meta-item">
+                <strong>Resolution</strong>
+                <span>1080p (Full Screen, Zoom 100%)</span>
+            </div>
+            <div class="meta-item">
+                <strong>Recording Tool</strong>
+                <span>OBS Studio or Windows Win + Alt + R</span>
+            </div>
+            <div class="meta-item">
+                <strong>Demonstration Focus</strong>
+                <span>Masterfiles (CRUD), Transactions, Reports</span>
+            </div>
+        </section>
+
+        <table class="timeline-table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Topic</th>
+                    <th>Timeline</th>
+                    <th>Key Objective</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Intro</strong></td>
+                    <td>System Overview &amp; Objectives</td>
+                    <td>0:00 &ndash; 0:45 (45s)</td>
+                    <td>Introduce scope, problem solved, tech stack</td>
+                </tr>
+                <tr>
+                    <td><strong>Part 1</strong></td>
+                    <td>Masterfiles &amp; Full CRUD</td>
+                    <td>0:45 &ndash; 3:00 (2m 15s)</td>
+                    <td>Demonstrate Create, Read, Update, Delete/Archive across catalogs, patients, doctors</td>
+                </tr>
+                <tr>
+                    <td><strong>Part 2</strong></td>
+                    <td>Transactions &amp; Clinical Logic</td>
+                    <td>3:00 &ndash; 6:30 (3m 30s)</td>
+                    <td>Admissions, bedside rounds, clinical orders, transfers, discounts, settlement</td>
+                </tr>
+                <tr>
+                    <td><strong>Part 3</strong></td>
+                    <td>Reports &amp; Analytical Governance</td>
+                    <td>6:30 &ndash; 8:30 (2m 00s)</td>
+                    <td>Collections, revenue, AR aging, bed occupancy, audit trail, Excel/PDF export</td>
+                </tr>
+                <tr>
+                    <td><strong>Outro</strong></td>
+                    <td>Summary &amp; Readiness</td>
+                    <td>8:30 &ndash; 9:00 (30s)</td>
+                    <td>Final conclusions and defense readiness statement</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <article class="section-card">
+            <div class="section-header">
+                <h2>Introduction &amp; System Overview</h2>
+                <span class="time-badge">0:00 &ndash; 0:45</span>
+            </div>
+
+            <div class="action-box">
+                <strong>Screen Actions:</strong>
+                <ul>
+                    <li>Open browser at <code>views/login.html</code>.</li>
+                    <li>Log in using your Admin account (username: <code>admin</code>).</li>
+                    <li>Land on the Executive Dashboard (<code>views/index.html</code>).</li>
+                </ul>
+            </div>
+
+            <div class="speech-box">
+                <strong>Word-for-Word Voiceover:</strong>
+                "Good day, respected panelists and evaluators. Today we present our comprehensive In-Patient Hospital Information &amp; Billing Management System. Hospitals handle intricate operational workflows—from continuous bed occupancy and doctor bedside rounds to statutory discounts, multi-stage settlements, and promissory note agreements. Our system provides an end-to-end digital solution organized into three main pillars: Masterfile Maintenance with Full CRUD, Transaction Processing, and Comprehensive Reporting. Let us begin with the Masterfiles and their complete CRUD lifecycle."
+            </div>
+        </article>
+
+        <article class="section-card">
+            <div class="section-header">
+                <h2>Part 1: Masterfiles (Full CRUD Demonstration)</h2>
+                <span class="time-badge">0:45 &ndash; 3:00</span>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">
+                    <span class="crud-pill">C</span> Create Operation
+                </div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Click <strong>Catalogs</strong> on the sidebar &rarr; Click <strong>+ Add Catalog Item</strong> &rarr; Select Category: <em>Medicine</em> &rarr; Name: <em>Amoxicillin 500mg Capsule</em> &rarr; Price: <em>18.50</em> &rarr; Click <strong>Save Item</strong>. Show it instantly appears in the table with its code (MED-010).
+                </div>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">
+                    <span class="crud-pill">R</span> Read / Retrieve Operation
+                </div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Type <em>Amoxicillin</em> in the search bar to demonstrate real-time search &rarr; Filter by <em>Medicines Only</em> &rarr; Change Sort By to <em>Price (Lowest First)</em> &rarr; Click the row to open the complete item inspection modal.
+                </div>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">
+                    <span class="crud-pill">U</span> Update Operation
+                </div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Inside the modal, edit the Unit Price from <em>18.50</em> to <em>22.00</em> &rarr; Click <strong>Update Item</strong> &rarr; Point cursor to the table row updating immediately to ₱22.00.
+                </div>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">
+                    <span class="crud-pill">D</span> Delete / Archive &amp; Restore Operation
+                </div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Click the item again &rarr; Click <strong>Send to Archive</strong> &rarr; Confirm the prompt &rarr; Show that the item disappears from active records &rarr; Filter by <em>Soft-Deleted Only</em> (or open <code>views/archive.html</code>) &rarr; Click <strong>Restore Record</strong> to demonstrate safe recovery with zero data loss.
+                </div>
+            </div>
+
+            <div class="speech-box">
+                <strong>Word-for-Word Voiceover:</strong>
+                "Every masterfile in our system implements a full CRUD architecture with data integrity guarantees: First, Create: when adding items, unique codes are generated automatically. Second, Read: records are retrieved with multi-column sorting, real-time search, and category filtering. Third, Update: staff can modify prices or patient demographics with instant database updates. Fourth, Delete and Archive: to prevent accidental permanent data loss in a clinical setting, records use soft-deletion. Archived items are removed from active operations but can be restored with a single click."
+            </div>
+
+            <div class="step-block" style="margin-top: 18px;">
+                <div class="step-title">Additional Masterfile Highlights</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Open <strong>Patients</strong> (<code>views/patients.html</code>) &rarr; Attempt to register an existing patient name to show the <strong>Duplicate Patient Warning Modal</strong> &rarr; Briefly show <strong>Doctors</strong> (<code>views/doctors.html</code>) with base round fees and <strong>Rooms &amp; Beds</strong> (<code>views/rooms.html</code>) with the visual green/blue bed capacity grid.
+                </div>
+            </div>
+        </article>
+
+        <article class="section-card">
+            <div class="section-header">
+                <h2>Part 2: Transactions (Core Business Logic)</h2>
+                <span class="time-badge">3:00 &ndash; 6:30</span>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">1. Patient Admission Transaction</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Click <strong>Admissions</strong> &rarr; Click <strong>+ Admit Patient</strong> &rarr; Select a registered patient &rarr; Enter Chief Complaint &amp; Diagnosis &rarr; Select an available Bed &rarr; Assign an Attending Physician &rarr; Click <strong>Submit Admission</strong> &rarr; Automatically navigates to the clinical chart (<code>views/admission_details.html</code>).
+                </div>
+                <div class="speech-box">
+                    <strong>Voiceover:</strong>
+                    "When admitting a patient, the system links the demographic profile, clinical diagnosis, and attending physician, automatically claiming an available bed and marking it occupied hospital-wide."
+                </div>
+            </div>
+
+            <div class="step-block" style="margin-top: 16px;">
+                <div class="step-title">2. Clinical Charging, Doctor Rounds &amp; Bed Transfers</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Click <strong>+ Log Doctor Round</strong> &rarr; Submit round fee &rarr; Click <strong>+ Add Charge</strong> &rarr; Add a Medicine and a Scan &rarr; Point to running ledger subtotals updating live &rarr; Click <strong>Transfer Room / Bed</strong> to showcase automated duration and board &amp; lodging calculation.
+                </div>
+                <div class="speech-box">
+                    <strong>Voiceover:</strong>
+                    "During hospitalization, staff log bedside doctor rounds, pharmacy medication issuances, and diagnostic procedures. Each transaction automatically posts to the running patient ledger with exact timestamps and station attributions. If transferred to another ward, the system closes the previous stay, calculates exact room fees, and releases the old bed."
+                </div>
+            </div>
+
+            <div class="step-block" style="margin-top: 16px;">
+                <div class="step-title">3. Discharge &amp; Final Settlement (The Core Highlight)</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Click <strong>Discharge &amp; Settle Bill</strong> &rarr; Check <strong>Senior Citizen / PWD Discount</strong> (highlight 20% discount + 12% VAT exemption badge) &rarr; Enter excess cash to show <strong>Customer Change</strong> box &rarr; Enter partial payment to show <strong>Promissory Note Agreement</strong> expanding &rarr; Select installment terms (e.g. 3 Months) &rarr; Confirm Settlement.
+                </div>
+                <div class="speech-box">
+                    <strong>Voiceover:</strong>
+                    "Here is the most critical transaction: Final Discharge Billing. When applying Senior Citizen or PWD benefits, the system computes the 20% discount and enforces the statutory 12% VAT exemption. If the patient tenders excess cash, the system calculates customer change. If the family cannot settle the full amount today, the remainder is formalized into an official Promissory Note installment agreement with guarantor accountability, releasing the patient and freeing the bed."
+                </div>
+            </div>
+        </article>
+
+        <article class="section-card">
+            <div class="section-header">
+                <h2>Part 3: Reports &amp; Official Printouts</h2>
+                <span class="time-badge">6:30 &ndash; 8:30</span>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">1. Official Statement of Account &amp; Official Receipt</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Open generated <strong>Statement of Account (SOA)</strong> (<code>views/invoice_print.html</code>) showing itemized hospital charges, doctor PF, and statutory deductions &rarr; Open <strong>Official Receipt (OR)</strong> (<code>views/payment_receipt.html</code>) showing cashier attributions.
+                </div>
+            </div>
+
+            <div class="step-block">
+                <div class="step-title">2. Financial &amp; Analytical Reports Hub</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Click <strong>Reports</strong> (<code>views/reports.html</code>) &rarr; Switch between tabs: <strong>Collections &amp; Remittance</strong>, <strong>Department Revenue</strong>, <strong>Doctor Professional Fees</strong>, <strong>AR &amp; Promissory Aging</strong>, and <strong>Bed Occupancy</strong> &rarr; Click <strong>Export Excel (.xlsx)</strong> to show spreadsheet downloading.
+                </div>
+                <div class="speech-box">
+                    <strong>Voiceover:</strong>
+                    "For executive management and financial auditing, our Reports Hub generates live analytical reports covering collections, departmental revenue, doctor fees, accounts receivable aging, and bed capacity utilization—all exportable to Excel and CSV with date range filtering."
+                </div>
+            </div>
+
+            <div class="step-block" style="margin-top: 16px;">
+                <div class="step-title">3. Audit Trail &amp; Archive Governance</div>
+                <div class="action-box">
+                    <strong>Screen Action:</strong>
+                    Briefly show <strong>Audit Log</strong> (<code>views/audit_log.html</code>) tracking all user events, logins, and updates &rarr; Show <strong>Archive</strong> (<code>views/archive.html</code>) with soft-deleted records.
+                </div>
+            </div>
+        </article>
+
+        <article class="section-card">
+            <div class="section-header">
+                <h2>Conclusion &amp; Wrap-Up</h2>
+                <span class="time-badge">8:30 &ndash; 9:00</span>
+            </div>
+
+            <div class="action-box">
+                <strong>Screen Action:</strong>
+                Navigate back to the Executive Dashboard (<code>views/index.html</code>).
+            </div>
+
+            <div class="speech-box">
+                <strong>Voiceover:</strong>
+                "In summary, our In-Patient Hospital Billing System effectively unifies masterfile integrity with complete CRUD, complex clinical transactions, and real-time financial reporting into an intuitive, secure web platform. Thank you for your time, and we are ready for your questions."
+            </div>
+        </article>
+
+        <article class="section-card">
+            <div class="section-header">
+                <h2>Technical Tips for Recording</h2>
+            </div>
+            <ul class="tips-list">
+                <li><strong>Browser Cleanliness:</strong> Hide your bookmarks bar (<code>Ctrl + Shift + B</code>) and press <code>F11</code> for full screen mode.</li>
+                <li><strong>Steady Pace:</strong> Speak clearly and allow 1 to 2 seconds for each page transition before talking.</li>
+                <li><strong>Dual Monitor / Mobile Device:</strong> Open this page on your phone or second screen to read the script without having it visible on your recording!</li>
+            </ul>
+        </article>
+
+    </main>
+
+    <script>
+        const btnPrint = document.getElementById("btnPrintPdf");
+        if (btnPrint) {
+            btnPrint.addEventListener("click", () => {
+                window.print();
+            });
+        }
+
+        const btnBack = document.getElementById("btnBackToDashboard");
+        if (btnBack) {
+            btnBack.addEventListener("click", () => {
+                window.location.href = "index.html";
+            });
+        }
+    </script>
+</body>
+</html>

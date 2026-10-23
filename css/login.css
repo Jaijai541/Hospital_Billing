@@ -277,43 +277,6 @@ body.login-body {
     box-shadow: none;
 }
 
-.login-credentials-card {
-    margin-top: 24px;
-    padding: 12px 14px;
-    border-radius: 8px;
-    background-color: #f8fafc;
-    border: 1px dashed #cbd5e1;
-    text-align: center;
-}
-
-.credentials-badge {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
-    margin-bottom: 6px;
-}
-
-.credentials-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #334155;
-}
-
-.credentials-item strong {
-    color: #0284c7;
-    font-family: monospace;
-    font-size: 13.5px;
-}
-
-.credentials-divider {
-    color: #cbd5e1;
-}
-
 @media (max-width: 860px) {
     .login-split-card {
         flex-direction: column;

@@ -1317,7 +1317,11 @@ const loadAdmissionDetails = () => {
 
             populateAssignedDoctorDropdowns();
 
-            const isNurseRole = currentUser && (parseInt(currentUser.role_id, 10) === 3 || (currentUser.role_name || '').toLowerCase() === 'nurse');
+            const isNurseRole = currentUser && (
+                currentUser.access_domain === 'Clinical' ||
+                [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
+                (currentUser.role_name || '').toLowerCase().includes('nurse')
+            );
 
             const btnDischarge = document.getElementById('btnChartDischarge');
             if (btnDischarge) {
@@ -1410,10 +1414,17 @@ const loadAdmissionDetails = () => {
                 btnOpenReturnPharm.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
             }
             const btnOpenAdvPay = document.getElementById('btnOpenAdvancePaymentModal');
+            const nurseAdvNotice = document.getElementById('nurseAdvNotice');
             if (btnOpenAdvPay) {
-                btnOpenAdvPay.disabled = !isAdmitted;
-                btnOpenAdvPay.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
-                btnOpenAdvPay.style.display = isAdmitted ? 'inline-block' : 'none';
+                if (isNurseRole) {
+                    btnOpenAdvPay.style.display = 'none';
+                    if (nurseAdvNotice) nurseAdvNotice.classList.toggle('active', isAdmitted);
+                } else {
+                    btnOpenAdvPay.disabled = !isAdmitted;
+                    btnOpenAdvPay.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                    btnOpenAdvPay.style.display = isAdmitted ? 'inline-block' : 'none';
+                    if (nurseAdvNotice) nurseAdvNotice.classList.remove('active');
+                }
             }
 
             const btnSubOrder = document.getElementById('btnSubmitOrder');
@@ -1432,7 +1443,11 @@ const loadAdmissionDetails = () => {
 };
 
 const dischargePatientFromChart = (admId, patientName) => {
-    const isNurseRole = currentUser && (parseInt(currentUser.role_id, 10) === 3 || (currentUser.role_name || '').toLowerCase() === 'nurse');
+    const isNurseRole = currentUser && (
+        currentUser.access_domain === 'Clinical' ||
+        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
+        (currentUser.role_name || '').toLowerCase().includes('nurse')
+    );
     if (isNurseRole) {
         showToast("Access Denied: Patient discharge is restricted to Finance Staff and Administrators.", "warning");
         return;
@@ -2523,6 +2538,15 @@ const handleAddAdvanceVoucher = () => {
 };
 
 const openAdvancePaymentModal = () => {
+    const isNurseRole = currentUser && (
+        currentUser.access_domain === 'Clinical' ||
+        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
+        (currentUser.role_name || '').toLowerCase().includes('nurse')
+    );
+    if (isNurseRole) {
+        showPopupAlert('Access Restricted: Advance payments and cash collections must be processed by Finance Staff or the Cashier.', 'warning');
+        return;
+    }
     if (!admissionData) {
         showPopupAlert('Admission details not loaded yet.', 'warning');
         return;
@@ -2610,6 +2634,15 @@ const showAdvanceMethodPicker = () => {
 };
 
 const submitAdvancePayment = () => {
+    const isNurseRole = currentUser && (
+        currentUser.access_domain === 'Clinical' ||
+        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
+        (currentUser.role_name || '').toLowerCase().includes('nurse')
+    );
+    if (isNurseRole) {
+        showPopupAlert('Access Restricted: Clinical nurses cannot collect payments or issue Official Receipts.', 'warning');
+        return;
+    }
     const methodInput = document.getElementById('adv_method_id');
     const methodId = methodInput && methodInput.value ? parseInt(methodInput.value, 10) : 1;
     const amountInput = document.getElementById('adv_amount_input');
@@ -2897,7 +2930,11 @@ const renderAdmittedDischargeGateCard = (advList) => {
     const container = document.getElementById('settlement-container');
     if (!container) return;
 
-    const isNurseRole = currentUser && (parseInt(currentUser.role_id, 10) === 3 || (currentUser.role_name || '').toLowerCase() === 'nurse');
+    const isNurseRole = currentUser && (
+        currentUser.access_domain === 'Clinical' ||
+        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
+        (currentUser.role_name || '').toLowerCase().includes('nurse')
+    );
 
     const runningGross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
     const totalAdvPaid = (advList || []).reduce((acc, p) => acc + parseFloat(p.Amount_Paid || 0), 0);

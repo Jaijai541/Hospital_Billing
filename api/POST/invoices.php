@@ -22,10 +22,23 @@ class InvoiceManager
             return json_encode(['error' => 'Active user session is required. Please re-login.']);
         }
 
+        $roleCheck = $conn->prepare("
+            SELECT r.Access_Domain, r.Role_Name 
+            FROM System_User u 
+            INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID 
+            WHERE u.User_ID = :uid
+        ");
+        $roleCheck->execute([':uid' => $userId]);
+        $userRole = $roleCheck->fetch(PDO::FETCH_ASSOC);
+
+        if ($userRole && ($userRole['Access_Domain'] === 'Clinical' || stripos($userRole['Role_Name'], 'Nurse') !== false)) {
+            return json_encode(['error' => 'Access Restricted: Clinical staff (Nurses/Doctors) are not authorized to collect financial deposits or issue Official Receipts.']);
+        }
+
         try {
             $conn->beginTransaction();
 
-            $admCheck = $conn->prepare("SELECT Admission_ID, Status FROM Admission WHERE Admission_ID = :aid");
+            $admCheck = $conn->prepare("SELECT Admission_ID, Status, Diagnosis FROM Admission WHERE Admission_ID = :aid");
             $admCheck->execute([':aid' => $admissionId]);
             $admission = $admCheck->fetch(PDO::FETCH_ASSOC);
 
@@ -37,6 +50,16 @@ class InvoiceManager
             if ($admission['Status'] === 'Billed') {
                 $conn->rollBack();
                 return json_encode(['error' => 'This admission has already been settled and billed.']);
+            }
+
+            $diagnosis = trim($admission['Diagnosis'] ?? '');
+            if (empty($diagnosis) || strtolower($diagnosis) === 'pending clinical diagnosis' || strtolower($diagnosis) === 'loading...') {
+                $diagnosis = 'Medically cleared for discharge / Under observation';
+                $updateDiagStmt = $conn->prepare("UPDATE Admission SET Diagnosis = :diag WHERE Admission_ID = :aid");
+                $updateDiagStmt->execute([
+                    ':diag' => $diagnosis,
+                    ':aid' => $admissionId
+                ]);
             }
 
             $currStayStmt = $conn->prepare("
@@ -157,6 +180,34 @@ class InvoiceManager
                 }
             }
 
+            $advDiscQuery = $conn->prepare("
+                SELECT ip.Discount_ID, COALESCE(ip.Discount_Name, d.Discount_Name, 'Assistance Voucher') AS Discount_Name, ip.Discount_Amount 
+                FROM Invoice_Payment ip
+                LEFT JOIN Enum_Discount d ON ip.Discount_ID = d.Discount_ID
+                WHERE ip.Admission_ID = :aid AND (ip.Invoice_ID IS NULL OR ip.Is_Advance = 1) AND ip.Discount_Amount > 0
+            ");
+            $advDiscQuery->execute([':aid' => $admissionId]);
+            $advDiscs = $advDiscQuery->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($advDiscs as $ad) {
+                $alreadyIn = false;
+                foreach ($allDiscountsToApply as $existing) {
+                    if (!empty($existing['discount_id']) && $existing['discount_id'] == $ad['Discount_ID']) {
+                        $alreadyIn = true;
+                        break;
+                    }
+                }
+                if (!$alreadyIn) {
+                    $allDiscountsToApply[] = [
+                        'discount_id' => !empty($ad['Discount_ID']) ? intval($ad['Discount_ID']) : null,
+                        'name' => $ad['Discount_Name'],
+                        'type' => 'Fixed',
+                        'pct' => 0,
+                        'fixed' => floatval($ad['Discount_Amount']),
+                        'is_vat_exempt' => 0
+                    ];
+                }
+            }
+
             $fixedDiscounts = [];
             $pctDiscounts = [];
             $isVatExempt = false;
@@ -236,9 +287,12 @@ class InvoiceManager
                 $netAmountDue = $netAfterDiscounts;
             }
 
-            $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
+            $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) AS Adv_Paid, COALESCE(SUM(Discount_Amount), 0.00) AS Adv_Disc FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
             $advStmt->execute([':aid' => $admissionId]);
-            $totalAdvancePaid = floatval($advStmt->fetchColumn());
+            $advRow = $advStmt->fetch(PDO::FETCH_ASSOC);
+            $totalAdvancePaid = floatval($advRow['Adv_Paid'] ?? 0.00);
+            $totalAdvanceDisc = floatval($advRow['Adv_Disc'] ?? 0.00);
+            $totalAdvanceCredit = round($totalAdvancePaid + $totalAdvanceDisc, 2);
 
             $remainingNetToSettle = max(0.00, round($netAmountDue - $totalAdvancePaid, 2));
 
@@ -625,7 +679,28 @@ class InvoiceManager
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
         $userId = intval($json['user_id'] ?? 0);
-        $paymentAmount = floatval($json['payment_amount'] ?? 0);
+        $paymentAmount = isset($json['payment_amount']) ? floatval($json['payment_amount']) : 0.00;
+        $discountId = !empty($json['discount_id']) ? intval($json['discount_id']) : null;
+        $discountAmount = isset($json['discount_amount']) ? max(0.00, floatval($json['discount_amount'])) : 0.00;
+        $discountName = !empty($json['discount_name']) ? trim($json['discount_name']) : '';
+
+        if (!empty($json['discounts']) && is_array($json['discounts'])) {
+            $sumD = 0.00;
+            $namesD = [];
+            foreach ($json['discounts'] as $dItem) {
+                $dAmt = max(0.00, floatval($dItem['amount'] ?? 0));
+                $dName = trim($dItem['name'] ?? 'Assistance Voucher');
+                if ($dAmt > 0) {
+                    $sumD += $dAmt;
+                    $namesD[] = "{$dName} (₱" . number_format($dAmt, 2) . ")";
+                }
+            }
+            if ($sumD > 0) {
+                $discountAmount = $sumD;
+                $discountName = implode(', ', $namesD);
+            }
+        }
+
         $paymentMethodId = !empty($json['payment_method_id']) ? intval($json['payment_method_id']) : 1;
         $notes = !empty($json['notes']) ? trim($json['notes']) : 'Advance Patient Deposit';
 
@@ -637,8 +712,8 @@ class InvoiceManager
             return json_encode(['error' => 'Active user session is required. Please re-login.']);
         }
 
-        if ($paymentAmount <= 0) {
-            return json_encode(['error' => 'Advance payment amount must be greater than zero.']);
+        if ($paymentAmount <= 0 && $discountAmount <= 0) {
+            return json_encode(['error' => 'Please enter a payment deposit amount or discount amount.']);
         }
 
         try {
@@ -656,6 +731,34 @@ class InvoiceManager
             if ($admission['Status'] === 'Billed') {
                 $conn->rollBack();
                 return json_encode(['error' => 'This admission is already settled and billed. Please use the invoice payments section.']);
+            }
+
+            if (!empty($discountId)) {
+                $dCheck = $conn->prepare("SELECT Discount_ID, Discount_Name, Fixed_Amount FROM Enum_Discount WHERE Discount_ID = :did AND Is_Active = 1 AND (Discount_Type_ID = 2 OR Fixed_Amount > 0)");
+                $dCheck->execute([':did' => $discountId]);
+                $dRow = $dCheck->fetch(PDO::FETCH_ASSOC);
+                if ($dRow) {
+                    $discountName = $dRow['Discount_Name'];
+                    if ($discountAmount <= 0) {
+                        $discountAmount = floatval($dRow['Fixed_Amount']);
+                    }
+                } else {
+                    $discountId = null;
+                    if (empty($discountName) && $discountAmount > 0) {
+                        $discountName = 'Custom Discount / Assistance';
+                    }
+                }
+            } else {
+                $discountId = null;
+                if (empty($discountName) && $discountAmount > 0) {
+                    $discountName = 'Custom Discount / Assistance';
+                }
+            }
+
+            $totalTransactionCredit = round($paymentAmount + $discountAmount, 2);
+            if ($totalTransactionCredit <= 0) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Total advance credit must be greater than zero.']);
             }
 
             $sumStmt = $conn->prepare("SELECT COALESCE(SUM(Total_Charge), 0.00) AS Gross_Total FROM Billing_Ledger WHERE Admission_ID = :aid");
@@ -682,12 +785,12 @@ class InvoiceManager
 
             $totalRunningEst = $ledgerGross + $runningRoomFee;
 
-            $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
+            $advStmt = $conn->prepare("SELECT COALESCE(SUM(Amount_Paid), 0.00) + COALESCE(SUM(Discount_Amount), 0.00) FROM Invoice_Payment WHERE Admission_ID = :aid AND (Invoice_ID IS NULL OR Is_Advance = 1)");
             $advStmt->execute([':aid' => $admissionId]);
             $priorAdvanceTotal = floatval($advStmt->fetchColumn());
 
             $balBefore = max(0.00, round($totalRunningEst - $priorAdvanceTotal, 2));
-            $balAfter = max(0.00, round($balBefore - $paymentAmount, 2));
+            $balAfter = max(0.00, round($balBefore - $totalTransactionCredit, 2));
 
             $countPayments = $conn->query("SELECT COUNT(*) FROM Invoice_Payment")->fetchColumn();
             $nextReceiptNum = intval($countPayments) + 1;
@@ -695,9 +798,9 @@ class InvoiceManager
 
             $insPay = $conn->prepare("
                 INSERT INTO Invoice_Payment 
-                    (Invoice_ID, Admission_ID, Cashier_User_ID, Receipt_Number, Amount_Paid, Balance_Before, Balance_After, Payment_Method_ID, Notes, Is_Advance, Payment_Date)
+                    (Invoice_ID, Admission_ID, Cashier_User_ID, Receipt_Number, Amount_Paid, Balance_Before, Balance_After, Payment_Method_ID, Discount_ID, Discount_Name, Discount_Amount, Notes, Is_Advance, Payment_Date)
                 VALUES 
-                    (NULL, :aid, :uid, :rnum, :paid, :bb, :ba, :pmid, :notes, 1, NOW())
+                    (NULL, :aid, :uid, :rnum, :paid, :bb, :ba, :pmid, :did, :dname, :damt, :notes, 1, NOW())
             ");
             $insPay->execute([
                 ':aid' => $admissionId,
@@ -707,6 +810,9 @@ class InvoiceManager
                 ':bb' => $balBefore,
                 ':ba' => $balAfter,
                 ':pmid' => $paymentMethodId,
+                ':did' => $discountId,
+                ':dname' => !empty($discountName) ? $discountName : null,
+                ':damt' => $discountAmount,
                 ':notes' => $notes
             ]);
             $paymentId = $conn->lastInsertId();
@@ -724,6 +830,12 @@ class InvoiceManager
             $methodName = $methodStmt->fetchColumn() ?: 'Cash';
 
             $admCode = 'ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT);
+            $logDescr = "Received advance deposit of ₱" . number_format($paymentAmount, 2) . " ({$methodName})";
+            if ($discountAmount > 0) {
+                $logDescr .= " with ₱" . number_format($discountAmount, 2) . " discount ({$discountName})";
+            }
+            $logDescr .= " for {$admCode}. Remarks: {$notes}";
+
             $logStmt = $conn->prepare("
                 INSERT INTO Audit_Log 
                     (User_ID, Admission_ID, Action_ID, Module_ID, Record_Reference, Description, Performed_By, Created_At)
@@ -737,7 +849,7 @@ class InvoiceManager
                 ':uid' => $userId,
                 ':aid' => $admissionId,
                 ':ref' => $receiptNumber,
-                ':descr' => "Received advance deposit of ₱" . number_format($paymentAmount, 2) . " ({$methodName}) for {$admCode}. Remarks: {$notes}",
+                ':descr' => $logDescr,
                 ':by' => $cashierName
             ]);
 
@@ -748,9 +860,11 @@ class InvoiceManager
                 'payment_id' => $paymentId,
                 'receipt_number' => $receiptNumber,
                 'amount_paid' => $paymentAmount,
+                'discount_amount' => $discountAmount,
+                'total_credit' => $totalTransactionCredit,
                 'balance_before' => $balBefore,
                 'balance_after' => $balAfter,
-                'total_advance_paid' => round($priorAdvanceTotal + $paymentAmount, 2)
+                'total_advance_paid' => round($priorAdvanceTotal + $totalTransactionCredit, 2)
             ]);
 
         } catch (Exception $e) {

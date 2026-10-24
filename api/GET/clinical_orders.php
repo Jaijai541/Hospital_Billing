@@ -130,14 +130,14 @@ class ClinicalOrderManager
                 d.Doctor_ID AS id,
                 'doctor' AS type,
                 CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS name,
-                COALESCE(dt.Type_Name, 'Physician') AS role_title,
+                COALESCE(dt.Type_Name, 'Attending Physician') AS role_title,
                 'Doctor' AS domain,
-                CASE WHEN ad.Admission_Doctor_ID IS NOT NULL THEN 1 ELSE 0 END AS is_assigned
-            FROM Doctor d
+                1 AS is_assigned
+            FROM Admission_Doctor ad
+            INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
             LEFT JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
-            LEFT JOIN Admission_Doctor ad ON d.Doctor_ID = ad.Doctor_ID AND ad.Admission_ID = :aid
-            WHERE d.Is_Active = 1
-            ORDER BY is_assigned DESC, d.First_Name ASC, d.Last_Name ASC
+            WHERE ad.Admission_ID = :aid AND d.Is_Active = 1
+            ORDER BY d.First_Name ASC, d.Last_Name ASC
         ");
         $doctorsStmt->execute([':aid' => $admissionId]);
         $doctors = $doctorsStmt->fetchAll(PDO::FETCH_ASSOC);

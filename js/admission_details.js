@@ -5,6 +5,7 @@ let admissionId = null;
 let admissionData = null;
 let catalogItems = [];
 let assignedDoctors = [];
+let availableHealthcarePersonnel = [];
 let availableBedsList = [];
 let dispensedMedicinesList = [];
 let currentUser = null;
@@ -396,15 +397,6 @@ const initClinicalModals = () => {
     if (btnCancelAdminister) btnCancelAdminister.addEventListener('click', () => closeModal('administerOrderModal'));
     if (btnSubmitAdminister) btnSubmitAdminister.addEventListener('click', () => submitAdministerModal());
 
-    const tabBtnNurse = document.getElementById('tabBtnNurse');
-    const tabBtnDoctor = document.getElementById('tabBtnDoctor');
-    if (tabBtnNurse) tabBtnNurse.addEventListener('click', () => switchAdministerTab('nurse'));
-    if (tabBtnDoctor) tabBtnDoctor.addEventListener('click', () => switchAdministerTab('doctor'));
-
-    const nurseSelect = document.getElementById('administer_nurse_select');
-    const doctorSelect = document.getElementById('administer_doctor_select');
-    if (nurseSelect) nurseSelect.addEventListener('change', () => updateAdministerPreview());
-    if (doctorSelect) doctorSelect.addEventListener('change', () => updateAdministerPreview());
 
     const btnOpenRound = document.getElementById('btnOpenRoundModal');
     const btnCloseRound = document.getElementById('btnCloseRoundModal');
@@ -1084,6 +1076,54 @@ const wireLookupPickers = () => {
     };
     if (btnBrowseReturnMed) btnBrowseReturnMed.addEventListener('click', handleOpenReturnMedPicker);
     if (returnMedText) returnMedText.addEventListener('click', handleOpenReturnMedPicker);
+
+    const btnBrowseAdminister = document.getElementById('btnBrowseAdministerPersonnel');
+    const administerPersonnelText = document.getElementById('administer_personnel_text');
+    const handleOpenAdministerPersonnelPicker = () => {
+        openLookupPicker({
+            title: 'Select Delivering Healthcare Personnel',
+            placeholder: 'Search nurse or doctor name, role...',
+            columns: ['Personnel Name', 'Healthcare Role', 'Category / Station'],
+            items: availableHealthcarePersonnel,
+            filterOptions: [
+                { label: 'All Personnel', value: 'all' },
+                { label: 'Licensed Nurses', value: 'Licensed Nurse' },
+                { label: 'Assigned Attending Physicians', value: 'Assigned Physician' }
+            ],
+            categoryFilterFn: (p, val) => p.category === val,
+            sortOptions: [
+                { label: 'Default Order', value: 'default' },
+                { label: 'Name (A to Z)', value: 'name_asc' },
+                { label: 'Name (Z to A)', value: 'name_desc' }
+            ],
+            sortFn: (list, val) => {
+                const arr = [...list];
+                if (val === 'name_asc') {
+                    arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                } else if (val === 'name_desc') {
+                    arr.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+                }
+                return arr;
+            },
+            filterFn: (p, q) => `${p.name || ''} ${p.role || ''} ${p.category || ''}`.toLowerCase().includes(q),
+            renderRowFn: (p) => `
+                <td><strong>${p.name}</strong></td>
+                <td><span class="badge ${p.type === 'doctor' ? 'badge-primary' : 'badge-info'}">${p.role}</span></td>
+                <td>${p.category}</td>
+            `,
+            getItemName: (p) => `${p.name} (${p.category})`,
+            onSelect: (p) => {
+                const idInput = document.getElementById('administer_personnel_id');
+                const textInput = document.getElementById('administer_personnel_text');
+                const previewBadge = document.getElementById('previewDelivererBadge');
+                if (idInput) idInput.value = p.id;
+                if (textInput) textInput.value = `${p.name} (${p.category})`;
+                if (previewBadge) previewBadge.textContent = `${p.name} (${p.role})`;
+            }
+        });
+    };
+    if (btnBrowseAdminister) btnBrowseAdminister.addEventListener('click', handleOpenAdministerPersonnelPicker);
+    if (administerPersonnelText) administerPersonnelText.addEventListener('click', handleOpenAdministerPersonnelPicker);
 };
 
 const initDiagnosisModal = () => {
@@ -1690,67 +1730,6 @@ const submitDoctorOrder = () => {
         });
 }
 
-const switchAdministerTab = (type) => {
-    const tabBtnNurse = document.getElementById('tabBtnNurse');
-    const tabBtnDoctor = document.getElementById('tabBtnDoctor');
-    const paneNurse = document.getElementById('paneNurse');
-    const paneDoctor = document.getElementById('paneDoctor');
-    const activeTabInput = document.getElementById('administer_active_tab');
-
-    if (activeTabInput) activeTabInput.value = type;
-
-    if (type === 'nurse') {
-        if (tabBtnNurse) {
-            tabBtnNurse.classList.add('active');
-            tabBtnNurse.setAttribute('aria-selected', 'true');
-        }
-        if (tabBtnDoctor) {
-            tabBtnDoctor.classList.remove('active');
-            tabBtnDoctor.setAttribute('aria-selected', 'false');
-        }
-        if (paneNurse) paneNurse.classList.add('active');
-        if (paneDoctor) paneDoctor.classList.remove('active');
-    } else {
-        if (tabBtnDoctor) {
-            tabBtnDoctor.classList.add('active');
-            tabBtnDoctor.setAttribute('aria-selected', 'true');
-        }
-        if (tabBtnNurse) {
-            tabBtnNurse.classList.remove('active');
-            tabBtnNurse.setAttribute('aria-selected', 'false');
-        }
-        if (paneDoctor) paneDoctor.classList.add('active');
-        if (paneNurse) paneNurse.classList.remove('active');
-    }
-
-    updateAdministerPreview();
-};
-
-const updateAdministerPreview = () => {
-    const activeTabInput = document.getElementById('administer_active_tab');
-    const currentTab = activeTabInput ? activeTabInput.value : 'nurse';
-    const previewBadge = document.getElementById('previewDelivererBadge');
-    if (!previewBadge) return;
-
-    if (currentTab === 'nurse') {
-        const select = document.getElementById('administer_nurse_select');
-        const selectedOpt = select && select.selectedOptions ? select.selectedOptions[0] : null;
-        if (selectedOpt && selectedOpt.value) {
-            previewBadge.textContent = selectedOpt.textContent;
-        } else {
-            previewBadge.textContent = 'None Selected (Please choose a nurse)';
-        }
-    } else {
-        const select = document.getElementById('administer_doctor_select');
-        const selectedOpt = select && select.selectedOptions ? select.selectedOptions[0] : null;
-        if (selectedOpt && selectedOpt.value) {
-            previewBadge.textContent = selectedOpt.textContent;
-        } else {
-            previewBadge.textContent = 'None Selected (Please choose a doctor)';
-        }
-    }
-};
-
 const openAdministerModal = (requestId, order, user) => {
     const hiddenInput = document.getElementById('administer_request_id');
     if (hiddenInput) hiddenInput.value = requestId;
@@ -1769,10 +1748,13 @@ const openAdministerModal = (requestId, order, user) => {
     if (qtyEl) qtyEl.textContent = order ? `${parseFloat(order.Quantity)} ${parseFloat(order.Quantity) > 1 ? 'units' : 'unit'} (₱${parseFloat(order.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})} each)` : '-';
     if (catEl) catEl.textContent = order ? order.Category_Type : '-';
 
-    const nurseSelect = document.getElementById('administer_nurse_select');
-    const doctorSelect = document.getElementById('administer_doctor_select');
-    if (nurseSelect) nurseSelect.innerHTML = '<option value="">Loading nurses...</option>';
-    if (doctorSelect) doctorSelect.innerHTML = '<option value="">Loading physicians...</option>';
+    const idInput = document.getElementById('administer_personnel_id');
+    const textInput = document.getElementById('administer_personnel_text');
+    const previewBadge = document.getElementById('previewDelivererBadge');
+
+    if (idInput) idInput.value = '';
+    if (textInput) textInput.value = '';
+    if (previewBadge) previewBadge.textContent = 'Loading authorized healthcare personnel...';
 
     const formData = new FormData();
     formData.append('operation', 'getHealthcarePersonnel');
@@ -1784,52 +1766,44 @@ const openAdministerModal = (requestId, order, user) => {
             const nurses = data.nurses || [];
             const doctors = data.doctors || [];
 
-            if (nurseSelect) {
-                nurseSelect.innerHTML = '';
-                const defNurse = document.createElement('option');
-                defNurse.value = '';
-                defNurse.textContent = '-- Select Clinical Nurse --';
-                nurseSelect.appendChild(defNurse);
+            availableHealthcarePersonnel = [
+                ...nurses.map(n => ({
+                    id: `user:${n.id}`,
+                    rawId: n.id,
+                    type: 'user',
+                    name: n.name,
+                    role: n.role_title,
+                    category: 'Licensed Nurse'
+                })),
+                ...doctors.map(d => ({
+                    id: `doctor:${d.id}`,
+                    rawId: d.id,
+                    type: 'doctor',
+                    name: d.name,
+                    role: d.role_title,
+                    category: 'Assigned Physician'
+                }))
+            ];
 
-                nurses.forEach(n => {
-                    const opt = document.createElement('option');
-                    opt.value = n.id;
-                    opt.textContent = `${n.name} (${n.role_title})`;
-                    if (String(n.id) === String(user.user_id || user.User_ID)) {
-                        opt.selected = true;
-                    }
-                    nurseSelect.appendChild(opt);
-                });
-
-                if (!nurseSelect.value && nurses.length > 0) {
-                    nurseSelect.selectedIndex = 1;
-                }
+            let defaultSelection = null;
+            const currentUserId = user ? (user.user_id || user.User_ID) : null;
+            if (currentUserId) {
+                defaultSelection = availableHealthcarePersonnel.find(p => p.type === 'user' && String(p.rawId) === String(currentUserId));
+            }
+            if (!defaultSelection && availableHealthcarePersonnel.length > 0) {
+                defaultSelection = availableHealthcarePersonnel[0];
             }
 
-            if (doctorSelect) {
-                doctorSelect.innerHTML = '';
-                const defDoc = document.createElement('option');
-                defDoc.value = '';
-                defDoc.textContent = '-- Select Attending Physician --';
-                doctorSelect.appendChild(defDoc);
-
-                doctors.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    const assignedBadge = d.is_assigned == 1 ? ' • Assigned Doctor' : '';
-                    opt.textContent = `${d.name} (${d.role_title}${assignedBadge})`;
-                    if (d.is_assigned == 1 && !doctorSelect.value) {
-                        opt.selected = true;
-                    }
-                    doctorSelect.appendChild(opt);
-                });
-
-                if (!doctorSelect.value && doctors.length > 0) {
-                    doctorSelect.selectedIndex = 1;
-                }
+            if (defaultSelection) {
+                if (idInput) idInput.value = defaultSelection.id;
+                if (textInput) textInput.value = `${defaultSelection.name} (${defaultSelection.category})`;
+                if (previewBadge) previewBadge.textContent = `${defaultSelection.name} (${defaultSelection.role})`;
+            } else {
+                if (idInput) idInput.value = '';
+                if (textInput) textInput.value = '';
+                if (previewBadge) previewBadge.textContent = 'None Selected (No eligible personnel found)';
             }
 
-            switchAdministerTab('nurse');
             openModal('administerOrderModal');
         })
         .catch(err => {
@@ -1840,28 +1814,22 @@ const openAdministerModal = (requestId, order, user) => {
 
 const submitAdministerModal = () => {
     const requestId = document.getElementById('administer_request_id').value;
-    const activeTab = document.getElementById('administer_active_tab').value;
+    const personnelVal = document.getElementById('administer_personnel_id').value;
 
-    let userId = null;
-    let doctorId = null;
-
-    if (activeTab === 'nurse') {
-        const nurseSelect = document.getElementById('administer_nurse_select');
-        const val = nurseSelect ? parseInt(nurseSelect.value, 10) : 0;
-        if (!val) {
-            alert("Please select the licensed nurse who administered/delivered this order.");
-            return;
-        }
-        userId = val;
-    } else {
-        const doctorSelect = document.getElementById('administer_doctor_select');
-        const val = doctorSelect ? parseInt(doctorSelect.value, 10) : 0;
-        if (!val) {
-            alert("Please select the attending physician who administered/delivered this order.");
-            return;
-        }
-        doctorId = val;
+    if (!personnelVal) {
+        alert("Please select the licensed nurse or assigned doctor who delivered this order.");
+        return;
     }
+
+    const [type, rawIdStr] = personnelVal.split(':');
+    const rawId = parseInt(rawIdStr, 10);
+    if (!rawId) {
+        alert("Invalid personnel selection. Please select again.");
+        return;
+    }
+
+    const userId = type === 'user' ? rawId : null;
+    const doctorId = type === 'doctor' ? rawId : null;
 
     closeModal('administerOrderModal');
     executeAdministerOrder(requestId, {

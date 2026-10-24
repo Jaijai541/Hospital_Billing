@@ -1588,7 +1588,10 @@ const renderOrdersTable = (orders) => {
 
         let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
         if (o.Status === 'Administered') {
-            statusBadge = `<span class="badge badge-success">Administered</span><span class="table-sub-text">(Charge Posted)</span>`;
+            const deliveredByText = o.Administered_By_Name 
+                ? `<span class="table-sub-text-dark">Delivered by: <strong>${o.Administered_By_Name}</strong>${o.Administered_By_Role ? ` (${o.Administered_By_Role})` : ''}</span>` 
+                : '';
+            statusBadge = `<span class="badge badge-success">Administered</span>${deliveredByText}<span class="table-sub-text">(Charge Posted)</span>`;
         } else if (o.Status === 'Pending') {
             statusBadge = `<span class="badge badge-warning">Pending</span>`;
         } else if (o.Status === 'Cancelled') {
@@ -1670,10 +1673,14 @@ const submitDoctorOrder = () => {
 window.administerOrder = (requestId) => {
     console.log("admission_details.js: Administering order ID:", requestId);
 
-    showPopupConfirm("Confirm administration / dispensation of this order?\n\nThis will mark the order as 'Administered' and automatically post the charge to the Live Billing Ledger.", () => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const staffName = user.full_name || user.username || "Current User";
+
+    showPopupConfirm(`Confirm administration / delivery of this order?\n\nStaff: ${staffName}\n\nThis will mark the order as 'Administered' and automatically post the charge to the Live Billing Ledger.`, () => {
+        const userId = user.user_id || user.User_ID || null;
         const formData = new FormData();
         formData.append('operation', 'administerOrder');
-        formData.append('json', JSON.stringify({ request_id: requestId }));
+        formData.append('json', JSON.stringify({ request_id: requestId, user_id: userId }));
 
         axios.post(`${postApiUrl}/clinical_orders.php`, formData)
             .then(response => {

@@ -42,12 +42,17 @@ class ClinicalOrderManager
                     c.Unit_Price,
                     (dor.Quantity * c.Unit_Price) AS Total_Price,
                     dor.Status,
+                    dor.Administered_By_User_ID,
+                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Administered_By_Name,
+                    r.Role_Name AS Administered_By_Role,
                     DATE_FORMAT(dor.Request_Timestamp, '%Y-%m-%d %h:%i %p') AS Request_Timestamp,
                     DATE_FORMAT(dor.Administered_Timestamp, '%Y-%m-%d %h:%i %p') AS Administered_Timestamp
                 FROM Doctor_Order_Request dor
                 INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
                 INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
                 INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                LEFT JOIN System_User u ON dor.Administered_By_User_ID = u.User_ID
+                LEFT JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
                 WHERE ad.Admission_ID = :aid
                 ORDER BY dor.Request_ID DESC";
 

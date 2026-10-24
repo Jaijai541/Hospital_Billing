@@ -43,6 +43,10 @@ class ClinicalOrderManager
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $requestId = intval($json['request_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        if (empty($userId)) {
+            $userId = null;
+        }
 
         if (empty($requestId)) {
             return json_encode(['error' => 'Request ID is required.']);
@@ -81,9 +85,9 @@ class ClinicalOrderManager
             }
 
             $administerStmt = $conn->prepare("UPDATE Doctor_Order_Request 
-                                              SET Status = 'Administered', Administered_Timestamp = NOW() 
+                                              SET Status = 'Administered', Administered_Timestamp = NOW(), Administered_By_User_ID = :uid 
                                               WHERE Request_ID = :rid");
-            $administerStmt->execute([':rid' => $requestId]);
+            $administerStmt->execute([':rid' => $requestId, ':uid' => $userId]);
 
             $stationId = 5;
             if ($order['Category_Type'] === 'Medicine') {

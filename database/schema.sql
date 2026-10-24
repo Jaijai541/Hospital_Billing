@@ -27,6 +27,14 @@ CREATE TABLE IF NOT EXISTS Enum_Room_Type (
     Is_Active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS Enum_Floor (
+    Floor_ID INT AUTO_INCREMENT PRIMARY KEY,
+    Floor_Number INT NOT NULL,
+    Floor_Name VARCHAR(50) NOT NULL,
+    Building_Wing VARCHAR(50) NULL,
+    Is_Active BOOLEAN DEFAULT TRUE
+);
+
 CREATE TABLE IF NOT EXISTS Enum_Specialty (
     Specialty_ID INT AUTO_INCREMENT PRIMARY KEY,
     Specialty_Name VARCHAR(100) NOT NULL, -- e.g., 'Internal Medicine', 'Cardiology'
@@ -66,7 +74,9 @@ CREATE TABLE IF NOT EXISTS Enum_Discount (
 
 CREATE TABLE IF NOT EXISTS Enum_User_Role (
     Role_ID INT AUTO_INCREMENT PRIMARY KEY,
-    Role_Name VARCHAR(50) NOT NULL
+    Role_Name VARCHAR(50) NOT NULL,
+    Is_Higher_Up BOOLEAN DEFAULT FALSE,
+    Is_Active BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS Enum_Payment_Method (
@@ -145,10 +155,12 @@ CREATE TABLE IF NOT EXISTS Doctor_Specialty (
 CREATE TABLE IF NOT EXISTS Room (
     Room_ID INT AUTO_INCREMENT PRIMARY KEY,
     Room_Name VARCHAR(50) NOT NULL, -- e.g., 'Ward A'
+    Floor_ID INT NOT NULL DEFAULT 1,
     Room_Type_ID INT NOT NULL,
     Capacity INT NOT NULL,          -- Default Daily_Rate defined in Enum_Room_Type
     Custom_Daily_Rate DECIMAL(10, 2) NULL, -- Optional customized rate per room preference
     Is_Active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (Floor_ID) REFERENCES Enum_Floor(Floor_ID),
     FOREIGN KEY (Room_Type_ID) REFERENCES Enum_Room_Type(Room_Type_ID)
 );
 
@@ -226,8 +238,10 @@ CREATE TABLE IF NOT EXISTS Doctor_Order_Request (
     Status VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Administered', 'Cancelled'
     Request_Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     Administered_Timestamp DATETIME NULL,
+    Administered_By_User_ID INT NULL,
     FOREIGN KEY (Admission_Doctor_ID) REFERENCES Admission_Doctor(Admission_Doctor_ID),
-    FOREIGN KEY (Catalog_ID) REFERENCES Charge_Catalogs(Catalog_ID)
+    FOREIGN KEY (Catalog_ID) REFERENCES Charge_Catalogs(Catalog_ID),
+    FOREIGN KEY (Administered_By_User_ID) REFERENCES System_User(User_ID) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS Doctor_Round_Log (
@@ -324,6 +338,9 @@ CREATE TABLE IF NOT EXISTS Invoice_Payment (
     Balance_Before DECIMAL(12, 2) NOT NULL,
     Balance_After DECIMAL(12, 2) NOT NULL,
     Payment_Method_ID INT NOT NULL DEFAULT 1,
+    Discount_ID INT NULL,
+    Discount_Name VARCHAR(255) NULL,
+    Discount_Amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     Notes VARCHAR(255) NULL,
     Is_Advance BOOLEAN DEFAULT FALSE,
     Payment_Date DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -331,7 +348,8 @@ CREATE TABLE IF NOT EXISTS Invoice_Payment (
     FOREIGN KEY (Invoice_ID) REFERENCES Final_Invoice(Invoice_ID) ON DELETE SET NULL,
     FOREIGN KEY (Admission_ID) REFERENCES Admission(Admission_ID),
     FOREIGN KEY (Cashier_User_ID) REFERENCES System_User(User_ID),
-    FOREIGN KEY (Payment_Method_ID) REFERENCES Enum_Payment_Method(Payment_Method_ID)
+    FOREIGN KEY (Payment_Method_ID) REFERENCES Enum_Payment_Method(Payment_Method_ID),
+    FOREIGN KEY (Discount_ID) REFERENCES Enum_Discount(Discount_ID)
 );
 
 CREATE TABLE IF NOT EXISTS Promissory_Note (

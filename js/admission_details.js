@@ -396,6 +396,16 @@ const initClinicalModals = () => {
     if (btnCancelAdminister) btnCancelAdminister.addEventListener('click', () => closeModal('administerOrderModal'));
     if (btnSubmitAdminister) btnSubmitAdminister.addEventListener('click', () => submitAdministerModal());
 
+    const tabBtnNurse = document.getElementById('tabBtnNurse');
+    const tabBtnDoctor = document.getElementById('tabBtnDoctor');
+    if (tabBtnNurse) tabBtnNurse.addEventListener('click', () => switchAdministerTab('nurse'));
+    if (tabBtnDoctor) tabBtnDoctor.addEventListener('click', () => switchAdministerTab('doctor'));
+
+    const nurseSelect = document.getElementById('administer_nurse_select');
+    const doctorSelect = document.getElementById('administer_doctor_select');
+    if (nurseSelect) nurseSelect.addEventListener('change', () => updateAdministerPreview());
+    if (doctorSelect) doctorSelect.addEventListener('change', () => updateAdministerPreview());
+
     const btnOpenRound = document.getElementById('btnOpenRoundModal');
     const btnCloseRound = document.getElementById('btnCloseRoundModal');
     const btnCancelRound = document.getElementById('btnCancelRound');
@@ -1680,24 +1690,89 @@ const submitDoctorOrder = () => {
         });
 }
 
+const switchAdministerTab = (type) => {
+    const tabBtnNurse = document.getElementById('tabBtnNurse');
+    const tabBtnDoctor = document.getElementById('tabBtnDoctor');
+    const paneNurse = document.getElementById('paneNurse');
+    const paneDoctor = document.getElementById('paneDoctor');
+    const activeTabInput = document.getElementById('administer_active_tab');
+
+    if (activeTabInput) activeTabInput.value = type;
+
+    if (type === 'nurse') {
+        if (tabBtnNurse) {
+            tabBtnNurse.classList.add('active');
+            tabBtnNurse.setAttribute('aria-selected', 'true');
+        }
+        if (tabBtnDoctor) {
+            tabBtnDoctor.classList.remove('active');
+            tabBtnDoctor.setAttribute('aria-selected', 'false');
+        }
+        if (paneNurse) paneNurse.classList.add('active');
+        if (paneDoctor) paneDoctor.classList.remove('active');
+    } else {
+        if (tabBtnDoctor) {
+            tabBtnDoctor.classList.add('active');
+            tabBtnDoctor.setAttribute('aria-selected', 'true');
+        }
+        if (tabBtnNurse) {
+            tabBtnNurse.classList.remove('active');
+            tabBtnNurse.setAttribute('aria-selected', 'false');
+        }
+        if (paneDoctor) paneDoctor.classList.add('active');
+        if (paneNurse) paneNurse.classList.remove('active');
+    }
+
+    updateAdministerPreview();
+};
+
+const updateAdministerPreview = () => {
+    const activeTabInput = document.getElementById('administer_active_tab');
+    const currentTab = activeTabInput ? activeTabInput.value : 'nurse';
+    const previewBadge = document.getElementById('previewDelivererBadge');
+    if (!previewBadge) return;
+
+    if (currentTab === 'nurse') {
+        const select = document.getElementById('administer_nurse_select');
+        const selectedOpt = select && select.selectedOptions ? select.selectedOptions[0] : null;
+        if (selectedOpt && selectedOpt.value) {
+            previewBadge.textContent = selectedOpt.textContent;
+        } else {
+            previewBadge.textContent = 'None Selected (Please choose a nurse)';
+        }
+    } else {
+        const select = document.getElementById('administer_doctor_select');
+        const selectedOpt = select && select.selectedOptions ? select.selectedOptions[0] : null;
+        if (selectedOpt && selectedOpt.value) {
+            previewBadge.textContent = selectedOpt.textContent;
+        } else {
+            previewBadge.textContent = 'None Selected (Please choose a doctor)';
+        }
+    }
+};
+
 const openAdministerModal = (requestId, order, user) => {
     const hiddenInput = document.getElementById('administer_request_id');
     if (hiddenInput) hiddenInput.value = requestId;
 
     const refEl = document.getElementById('adm_modal_order_ref');
+    const amtEl = document.getElementById('adm_modal_amount');
     const itemEl = document.getElementById('adm_modal_item_name');
     const docEl = document.getElementById('adm_modal_doctor_name');
-    const qtyEl = document.getElementById('adm_modal_qty_total');
+    const qtyEl = document.getElementById('adm_modal_qty');
+    const catEl = document.getElementById('adm_modal_category');
 
     if (refEl) refEl.textContent = `ORD-${String(requestId).padStart(3, '0')}`;
+    if (amtEl) amtEl.textContent = order ? `₱${parseFloat(order.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '₱0.00';
     if (itemEl) itemEl.textContent = order ? `[${order.Item_Code}] ${order.Item_Name}` : '-';
     if (docEl) docEl.textContent = order ? order.Doctor_Name : '-';
-    if (qtyEl) qtyEl.textContent = order ? `${parseFloat(order.Quantity)} ${parseFloat(order.Quantity) > 1 ? 'units' : 'unit'} — ₱${parseFloat(order.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '-';
+    if (qtyEl) qtyEl.textContent = order ? `${parseFloat(order.Quantity)} ${parseFloat(order.Quantity) > 1 ? 'units' : 'unit'} (₱${parseFloat(order.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})} each)` : '-';
+    if (catEl) catEl.textContent = order ? order.Category_Type : '-';
 
-    const select = document.getElementById('administer_personnel_select');
-    if (select) {
-        select.innerHTML = '<option value="">Loading healthcare personnel...</option>';
-    }
+    const nurseSelect = document.getElementById('administer_nurse_select');
+    const doctorSelect = document.getElementById('administer_doctor_select');
+    if (nurseSelect) nurseSelect.innerHTML = '<option value="">Loading nurses...</option>';
+    if (doctorSelect) doctorSelect.innerHTML = '<option value="">Loading physicians...</option>';
 
     const formData = new FormData();
     formData.append('operation', 'getHealthcarePersonnel');
@@ -1709,45 +1784,52 @@ const openAdministerModal = (requestId, order, user) => {
             const nurses = data.nurses || [];
             const doctors = data.doctors || [];
 
-            if (!select) return;
-            select.innerHTML = '';
+            if (nurseSelect) {
+                nurseSelect.innerHTML = '';
+                const defNurse = document.createElement('option');
+                defNurse.value = '';
+                defNurse.textContent = '-- Select Clinical Nurse --';
+                nurseSelect.appendChild(defNurse);
 
-            const optDefault = document.createElement('option');
-            optDefault.value = '';
-            optDefault.textContent = '-- Select Delivering Healthcare Staff --';
-            select.appendChild(optDefault);
-
-            if (nurses.length > 0) {
-                const groupNurse = document.createElement('optgroup');
-                groupNurse.label = 'Licensed Nurses & Clinical Staff';
                 nurses.forEach(n => {
                     const opt = document.createElement('option');
-                    opt.value = `user:${n.id}`;
+                    opt.value = n.id;
                     opt.textContent = `${n.name} (${n.role_title})`;
                     if (String(n.id) === String(user.user_id || user.User_ID)) {
                         opt.selected = true;
                     }
-                    groupNurse.appendChild(opt);
+                    nurseSelect.appendChild(opt);
                 });
-                select.appendChild(groupNurse);
+
+                if (!nurseSelect.value && nurses.length > 0) {
+                    nurseSelect.selectedIndex = 1;
+                }
             }
 
-            if (doctors.length > 0) {
-                const groupDoc = document.createElement('optgroup');
-                groupDoc.label = 'Attending & Consulting Physicians';
+            if (doctorSelect) {
+                doctorSelect.innerHTML = '';
+                const defDoc = document.createElement('option');
+                defDoc.value = '';
+                defDoc.textContent = '-- Select Attending Physician --';
+                doctorSelect.appendChild(defDoc);
+
                 doctors.forEach(d => {
                     const opt = document.createElement('option');
-                    opt.value = `doctor:${d.id}`;
+                    opt.value = d.id;
                     const assignedBadge = d.is_assigned == 1 ? ' • Assigned Doctor' : '';
                     opt.textContent = `${d.name} (${d.role_title}${assignedBadge})`;
-                    if (!select.value && d.is_assigned == 1) {
+                    if (d.is_assigned == 1 && !doctorSelect.value) {
                         opt.selected = true;
                     }
-                    groupDoc.appendChild(opt);
+                    doctorSelect.appendChild(opt);
                 });
-                select.appendChild(groupDoc);
+
+                if (!doctorSelect.value && doctors.length > 0) {
+                    doctorSelect.selectedIndex = 1;
+                }
             }
 
+            switchAdministerTab('nurse');
             openModal('administerOrderModal');
         })
         .catch(err => {
@@ -1758,22 +1840,33 @@ const openAdministerModal = (requestId, order, user) => {
 
 const submitAdministerModal = () => {
     const requestId = document.getElementById('administer_request_id').value;
-    const select = document.getElementById('administer_personnel_select');
-    const val = select ? select.value : '';
+    const activeTab = document.getElementById('administer_active_tab').value;
 
-    if (!val) {
-        alert("Please select the licensed healthcare personnel who delivered / administered this item.");
-        return;
+    let userId = null;
+    let doctorId = null;
+
+    if (activeTab === 'nurse') {
+        const nurseSelect = document.getElementById('administer_nurse_select');
+        const val = nurseSelect ? parseInt(nurseSelect.value, 10) : 0;
+        if (!val) {
+            alert("Please select the licensed nurse who administered/delivered this order.");
+            return;
+        }
+        userId = val;
+    } else {
+        const doctorSelect = document.getElementById('administer_doctor_select');
+        const val = doctorSelect ? parseInt(doctorSelect.value, 10) : 0;
+        if (!val) {
+            alert("Please select the attending physician who administered/delivered this order.");
+            return;
+        }
+        doctorId = val;
     }
-
-    const parts = val.split(':');
-    const type = parts[0];
-    const id = parseInt(parts[1], 10);
 
     closeModal('administerOrderModal');
     executeAdministerOrder(requestId, {
-        user_id: type === 'user' ? id : null,
-        doctor_id: type === 'doctor' ? id : null
+        user_id: userId,
+        doctor_id: doctorId
     });
 };
 

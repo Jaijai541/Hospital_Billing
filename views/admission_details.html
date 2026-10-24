@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=15.0">
-    <link rel="stylesheet" href="../css/admission_details.css?v=15.0">
+    <link rel="stylesheet" href="../css/admission_details.css?v=18.0">
 </head>
 <body>
 
@@ -330,7 +330,7 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="administerOrderModal">
+        <div class="modal-overlay" id="administerOrderModal">
         <div class="modal-container">
             <div class="modal-header">
                 <h3>Administer Clinical Order</h3>
@@ -338,36 +338,76 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="administer_request_id" value="">
+                <input type="hidden" id="administer_active_tab" value="nurse">
                 
                 <div class="administer-order-summary-box">
-                    <div class="administer-summary-row">
-                        <span class="text-muted">Order Reference:</span>
-                        <strong id="adm_modal_order_ref" class="text-primary">-</strong>
+                    <div class="administer-summary-header">
+                        <span id="adm_modal_order_ref" class="administer-ref-badge">ORD-000</span>
+                        <span id="adm_modal_amount" class="administer-amount-prominent">₱0.00</span>
                     </div>
-                    <div class="administer-summary-row">
-                        <span class="text-muted">Item / Medication:</span>
-                        <strong id="adm_modal_item_name">-</strong>
-                    </div>
-                    <div class="administer-summary-row">
-                        <span class="text-muted">Prescribing Doctor:</span>
-                        <span id="adm_modal_doctor_name">-</span>
-                    </div>
-                    <div class="administer-summary-row">
-                        <span class="text-muted">Quantity & Total:</span>
-                        <span id="adm_modal_qty_total">-</span>
+                    <div class="administer-summary-grid">
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Item / Medication</span>
+                            <span id="adm_modal_item_name" class="administer-cell-value">-</span>
+                        </div>
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Prescribing Doctor</span>
+                            <span id="adm_modal_doctor_name" class="administer-cell-value">-</span>
+                        </div>
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Quantity</span>
+                            <span id="adm_modal_qty" class="administer-cell-value">-</span>
+                        </div>
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Catalog Category</span>
+                            <span id="adm_modal_category" class="administer-cell-value">-</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="administer_personnel_select">Delivered / Administered By (Licensed Healthcare Personnel) *</label>
-                    <select id="administer_personnel_select" class="form-control">
-                        <option value="">Loading healthcare personnel...</option>
-                    </select>
+                <div class="form-group mb-2">
+                    <label class="form-label">Delivered / Administered By (Licensed Personnel) *</label>
+                    <div class="administer-tab-toggle" role="tablist">
+                        <button type="button" class="administer-tab-btn active" id="tabBtnNurse" data-target="nurse" role="tab" aria-selected="true">
+                            <span class="tab-btn-title">Nurse / Clinical Staff</span>
+                            <span class="tab-btn-sub">Ward & Head Nurses</span>
+                        </button>
+                        <button type="button" class="administer-tab-btn" id="tabBtnDoctor" data-target="doctor" role="tab" aria-selected="false">
+                            <span class="tab-btn-title">Attending Physician</span>
+                            <span class="tab-btn-sub">Doctors & Consultants</span>
+                        </button>
+                    </div>
+
+                    <div class="administer-tab-pane active" id="paneNurse">
+                        <label class="form-label" for="administer_nurse_select">Select Delivering Nurse *</label>
+                        <select id="administer_nurse_select" class="form-control administer-select">
+                            <option value="">Loading nurses...</option>
+                        </select>
+                    </div>
+
+                    <div class="administer-tab-pane" id="paneDoctor">
+                        <label class="form-label" for="administer_doctor_select">Select Delivering Physician *</label>
+                        <select id="administer_doctor_select" class="form-control administer-select">
+                            <option value="">Loading physicians...</option>
+                        </select>
+                    </div>
+
+                    <div class="administer-selected-preview" id="administerSelectedPreview">
+                        <span class="preview-label">Attributed Deliverer:</span>
+                        <span class="preview-badge" id="previewDelivererBadge">-</span>
+                    </div>
+
                     <div class="administer-notice-box">
                         <strong>Clinical Delegation Protocol:</strong> Only licensed healthcare personnel (Nurses and Physicians) are authorized to administer medical items. Non-clinical staff cannot deliver clinical orders.
                     </div>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelAdministerModal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitAdministerModal">Confirm Administration</button>
+            </div>
+        </div>
+    </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btnCancelAdministerModal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="btnSubmitAdministerModal">Confirm Administration</button>
@@ -691,7 +731,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=15.0"></script>
     <script src="../js/common.js?v=15.0"></script>
-    <script src="../js/admission_details.js?v=17.0"></script>
+    <script src="../js/admission_details.js?v=18.0"></script>
 </body>
 </html>
 

@@ -389,6 +389,13 @@ const initClinicalModals = () => {
     if (btnCloseOrder) btnCloseOrder.addEventListener('click', () => closeModal('orderModal'));
     if (btnCancelOrder) btnCancelOrder.addEventListener('click', () => closeModal('orderModal'));
 
+    const btnCloseAdminister = document.getElementById('btnCloseAdministerModal');
+    const btnCancelAdminister = document.getElementById('btnCancelAdministerModal');
+    const btnSubmitAdminister = document.getElementById('btnSubmitAdministerModal');
+    if (btnCloseAdminister) btnCloseAdminister.addEventListener('click', () => closeModal('administerOrderModal'));
+    if (btnCancelAdminister) btnCancelAdminister.addEventListener('click', () => closeModal('administerOrderModal'));
+    if (btnSubmitAdminister) btnSubmitAdminister.addEventListener('click', () => submitAdministerModal());
+
     const btnOpenRound = document.getElementById('btnOpenRoundModal');
     const btnCloseRound = document.getElementById('btnCloseRoundModal');
     const btnCancelRound = document.getElementById('btnCancelRound');
@@ -1560,7 +1567,10 @@ const loadOrders = () => {
         });
 }
 
+let currentOrdersList = [];
+
 const renderOrdersTable = (orders) => {
+    currentOrdersList = orders || [];
     const container = document.getElementById('orders-table-div');
 
     const badgeOrders = document.getElementById('badge_sub_orders');
@@ -1670,40 +1680,158 @@ const submitDoctorOrder = () => {
         });
 }
 
+const openAdministerModal = (requestId, order, user) => {
+    const hiddenInput = document.getElementById('administer_request_id');
+    if (hiddenInput) hiddenInput.value = requestId;
+
+    const refEl = document.getElementById('adm_modal_order_ref');
+    const itemEl = document.getElementById('adm_modal_item_name');
+    const docEl = document.getElementById('adm_modal_doctor_name');
+    const qtyEl = document.getElementById('adm_modal_qty_total');
+
+    if (refEl) refEl.textContent = `ORD-${String(requestId).padStart(3, '0')}`;
+    if (itemEl) itemEl.textContent = order ? `[${order.Item_Code}] ${order.Item_Name}` : '-';
+    if (docEl) docEl.textContent = order ? order.Doctor_Name : '-';
+    if (qtyEl) qtyEl.textContent = order ? `${parseFloat(order.Quantity)} ${parseFloat(order.Quantity) > 1 ? 'units' : 'unit'} — ₱${parseFloat(order.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '-';
+
+    const select = document.getElementById('administer_personnel_select');
+    if (select) {
+        select.innerHTML = '<option value="">Loading healthcare personnel...</option>';
+    }
+
+    const formData = new FormData();
+    formData.append('operation', 'getHealthcarePersonnel');
+    formData.append('json', JSON.stringify({ admission_id: admissionId }));
+
+    axios.post(`${getApiUrl}/clinical_orders.php`, formData)
+        .then(response => {
+            const data = response.data || {};
+            const nurses = data.nurses || [];
+            const doctors = data.doctors || [];
+
+            if (!select) return;
+            select.innerHTML = '';
+
+            const optDefault = document.createElement('option');
+            optDefault.value = '';
+            optDefault.textContent = '-- Select Delivering Healthcare Staff --';
+            select.appendChild(optDefault);
+
+            if (nurses.length > 0) {
+                const groupNurse = document.createElement('optgroup');
+                groupNurse.label = 'Licensed Nurses & Clinical Staff';
+                nurses.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = `user:${n.id}`;
+                    opt.textContent = `${n.name} (${n.role_title})`;
+                    if (String(n.id) === String(user.user_id || user.User_ID)) {
+                        opt.selected = true;
+                    }
+                    groupNurse.appendChild(opt);
+                });
+                select.appendChild(groupNurse);
+            }
+
+            if (doctors.length > 0) {
+                const groupDoc = document.createElement('optgroup');
+                groupDoc.label = 'Attending & Consulting Physicians';
+                doctors.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = `doctor:${d.id}`;
+                    const assignedBadge = d.is_assigned == 1 ? ' • Assigned Doctor' : '';
+                    opt.textContent = `${d.name} (${d.role_title}${assignedBadge})`;
+                    if (!select.value && d.is_assigned == 1) {
+                        opt.selected = true;
+                    }
+                    groupDoc.appendChild(opt);
+                });
+                select.appendChild(groupDoc);
+            }
+
+            openModal('administerOrderModal');
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error fetching healthcare personnel:", err);
+            alert("Error loading healthcare personnel list.");
+        });
+};
+
+const submitAdministerModal = () => {
+    const requestId = document.getElementById('administer_request_id').value;
+    const select = document.getElementById('administer_personnel_select');
+    const val = select ? select.value : '';
+
+    if (!val) {
+        alert("Please select the licensed healthcare personnel who delivered / administered this item.");
+        return;
+    }
+
+    const parts = val.split(':');
+    const type = parts[0];
+    const id = parseInt(parts[1], 10);
+
+    closeModal('administerOrderModal');
+    executeAdministerOrder(requestId, {
+        user_id: type === 'user' ? id : null,
+        doctor_id: type === 'doctor' ? id : null
+    });
+};
+
+const executeAdministerOrder = (requestId, { user_id, doctor_id }) => {
+    const formData = new FormData();
+    formData.append('operation', 'administerOrder');
+    formData.append('json', JSON.stringify({
+        request_id: requestId,
+        user_id: user_id,
+        doctor_id: doctor_id
+    }));
+
+    axios.post(`${postApiUrl}/clinical_orders.php`, formData)
+        .then(response => {
+            console.log("admission_details.js: Administer response:", response.data);
+            if (response.data.success) {
+                alert(response.data.message);
+                loadOrders();
+                loadLedger();
+                loadLedgerSummary();
+                loadDispensedMedicines();
+            } else {
+                alert("Administer Error: " + (response.data.error || "Unknown error."));
+            }
+        })
+        .catch(err => {
+            console.error("admission_details.js: Error administering order:", err);
+            alert("Network error administering order.");
+        });
+};
+
 window.administerOrder = (requestId) => {
     console.log("admission_details.js: Administering order ID:", requestId);
 
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-    const staffName = user.full_name || user.username || "Current User";
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1;
+    const isClinical = (user.access_domain === "Clinical") || (user.role_name && user.role_name.toLowerCase().includes("nurse")) || (user.role_name && user.role_name.toLowerCase().includes("doctor"));
 
-    showPopupConfirm(`Confirm administration / delivery of this order?\n\nStaff: ${staffName}\n\nThis will mark the order as 'Administered' and automatically post the charge to the Live Billing Ledger.`, () => {
-        const userId = user.user_id || user.User_ID || null;
-        const formData = new FormData();
-        formData.append('operation', 'administerOrder');
-        formData.append('json', JSON.stringify({ request_id: requestId, user_id: userId }));
+    if (!isHigherUp && !isClinical) {
+        alert("Access Restricted: Only licensed healthcare personnel (Nurses / Clinical Staff) or a Clinical Supervisor can administer and deliver medical orders.");
+        return;
+    }
 
-        axios.post(`${postApiUrl}/clinical_orders.php`, formData)
-            .then(response => {
-                console.log("admission_details.js: Administer response:", response.data);
-                if (response.data.success) {
-                    alert(response.data.message);
-                    loadOrders();
-                    loadLedger();
-                    loadLedgerSummary();
-                    loadDispensedMedicines();
-                } else {
-                    alert("Administer Error: " + (response.data.error || "Unknown error."));
-                }
-            })
-            .catch(err => {
-                console.error("admission_details.js: Error administering order:", err);
-                alert("Network error administering order.");
-            });
-    }, null, {
-        title: "Confirm Administration",
-        confirmText: "Administer",
-        type: "info"
-    });
+    const order = (currentOrdersList || []).find(x => String(x.Request_ID) === String(requestId));
+
+    if (isHigherUp) {
+        openAdministerModal(requestId, order, user);
+    } else {
+        const staffName = user.full_name || user.username || "Current User";
+        const roleName = user.role_name || "Nurse";
+        showPopupConfirm(`Confirm bedside administration / delivery of this order?\n\nDelivering Staff: ${staffName} (${roleName})\n\nThis will record the order as 'Administered' under your clinical account and post the official charge to the Live Billing Ledger.`, () => {
+            executeAdministerOrder(requestId, { user_id: user.user_id || user.User_ID, doctor_id: null });
+        }, null, {
+            title: "Confirm Administration",
+            confirmText: "Administer",
+            type: "info"
+        });
+    }
 };
 
 window.cancelOrder = (requestId) => {

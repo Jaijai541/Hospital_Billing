@@ -166,6 +166,7 @@ class ArchiveManager
                     }
 
                     $conn->prepare("DELETE FROM Doctor_Specialty WHERE Doctor_ID = ?")->execute([$id]);
+                    $conn->prepare("UPDATE Doctor_Order_Request SET Administered_By_Doctor_ID = NULL WHERE Administered_By_Doctor_ID = ?")->execute([$id]);
                     $stmt = $conn->prepare("DELETE FROM Doctor WHERE Doctor_ID = ?");
                     $stmt->execute([$id]);
                     break;

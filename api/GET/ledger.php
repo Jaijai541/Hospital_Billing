@@ -35,7 +35,11 @@ class LedgerManager
                     CONCAT('Dr. ', d_rnd.First_Name, ' ', d_rnd.Last_Name) AS Round_Doctor_Name,
                     dt_rnd.Type_Name AS Round_Doctor_Type,
                     CONCAT('Dr. ', d_req.First_Name, ' ', d_req.Last_Name) AS Order_Doctor_Name,
-                    CONCAT(u_adm.First_Name, ' ', u_adm.Last_Name) AS Administered_By_Name,
+                    CASE 
+                        WHEN dor.Administered_By_Doctor_ID IS NOT NULL THEN CONCAT('Dr. ', d_adm.First_Name, ' ', d_adm.Last_Name)
+                        WHEN dor.Administered_By_User_ID IS NOT NULL THEN CONCAT(u_adm.First_Name, ' ', u_adm.Last_Name)
+                        ELSE NULL 
+                    END AS Administered_By_Name,
                     r.Room_Name,
                     rb.Bed_Code,
                     rt.Type_Name AS Room_Type_Name
@@ -50,6 +54,7 @@ class LedgerManager
                 LEFT JOIN Admission_Doctor ad_req ON dor.Admission_Doctor_ID = ad_req.Admission_Doctor_ID
                 LEFT JOIN Doctor d_req ON ad_req.Doctor_ID = d_req.Doctor_ID
                 LEFT JOIN System_User u_adm ON dor.Administered_By_User_ID = u_adm.User_ID
+                LEFT JOIN Doctor d_adm ON dor.Administered_By_Doctor_ID = d_adm.Doctor_ID
                 LEFT JOIN Room_Transfer_Log rtl ON bl.Transfer_ID = rtl.Transfer_ID
                 LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 LEFT JOIN Room r ON rb.Room_ID = r.Room_ID

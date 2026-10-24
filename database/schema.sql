@@ -239,9 +239,11 @@ CREATE TABLE IF NOT EXISTS Doctor_Order_Request (
     Request_Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     Administered_Timestamp DATETIME NULL,
     Administered_By_User_ID INT NULL,
+    Administered_By_Doctor_ID INT NULL,
     FOREIGN KEY (Admission_Doctor_ID) REFERENCES Admission_Doctor(Admission_Doctor_ID),
     FOREIGN KEY (Catalog_ID) REFERENCES Charge_Catalogs(Catalog_ID),
-    FOREIGN KEY (Administered_By_User_ID) REFERENCES System_User(User_ID) ON DELETE SET NULL
+    FOREIGN KEY (Administered_By_User_ID) REFERENCES System_User(User_ID) ON DELETE SET NULL,
+    FOREIGN KEY (Administered_By_Doctor_ID) REFERENCES Doctor(Doctor_ID) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS Doctor_Round_Log (

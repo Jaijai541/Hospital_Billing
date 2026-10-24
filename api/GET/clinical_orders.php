@@ -43,8 +43,22 @@ class ClinicalOrderManager
                     (dor.Quantity * c.Unit_Price) AS Total_Price,
                     dor.Status,
                     dor.Administered_By_User_ID,
-                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Administered_By_Name,
-                    r.Role_Name AS Administered_By_Role,
+                    dor.Administered_By_Doctor_ID,
+                    CASE 
+                        WHEN dor.Administered_By_Doctor_ID IS NOT NULL THEN CONCAT('Dr. ', d_adm.First_Name, ' ', d_adm.Last_Name)
+                        WHEN dor.Administered_By_User_ID IS NOT NULL THEN CONCAT(u.First_Name, ' ', u.Last_Name)
+                        ELSE NULL 
+                    END AS Administered_By_Name,
+                    CASE 
+                        WHEN dor.Administered_By_Doctor_ID IS NOT NULL THEN 'Attending Physician'
+                        WHEN dor.Administered_By_User_ID IS NOT NULL THEN r.Role_Name
+                        ELSE NULL 
+                    END AS Administered_By_Role,
+                    CASE 
+                        WHEN dor.Administered_By_Doctor_ID IS NOT NULL THEN 'Doctor'
+                        WHEN dor.Administered_By_User_ID IS NOT NULL THEN 'Nurse'
+                        ELSE NULL 
+                    END AS Administered_By_Type,
                     DATE_FORMAT(dor.Request_Timestamp, '%Y-%m-%d %h:%i %p') AS Request_Timestamp,
                     DATE_FORMAT(dor.Administered_Timestamp, '%Y-%m-%d %h:%i %p') AS Administered_Timestamp
                 FROM Doctor_Order_Request dor
@@ -53,6 +67,7 @@ class ClinicalOrderManager
                 INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
                 LEFT JOIN System_User u ON dor.Administered_By_User_ID = u.User_ID
                 LEFT JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                LEFT JOIN Doctor d_adm ON dor.Administered_By_Doctor_ID = d_adm.Doctor_ID
                 WHERE ad.Admission_ID = :aid
                 ORDER BY dor.Request_ID DESC";
 
@@ -86,12 +101,61 @@ class ClinicalOrderManager
         $stmt->execute([':aid' => $admissionId]);
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
+
+    function getHealthcarePersonnel($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        $clinicalUsersStmt = $conn->prepare("
+            SELECT 
+                u.User_ID AS id,
+                'user' AS type,
+                CONCAT(u.First_Name, ' ', u.Last_Name) AS name,
+                r.Role_Name AS role_title,
+                r.Access_Domain AS domain
+            FROM System_User u
+            INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+            WHERE u.Is_Active = 1 
+              AND (r.Access_Domain = 'Clinical' OR r.Role_Name LIKE '%Nurse%' OR r.Role_Name LIKE '%Doctor%' OR r.Role_Name LIKE '%Physician%')
+            ORDER BY u.First_Name ASC, u.Last_Name ASC
+        ");
+        $clinicalUsersStmt->execute();
+        $clinicalUsers = $clinicalUsersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $doctorsStmt = $conn->prepare("
+            SELECT 
+                d.Doctor_ID AS id,
+                'doctor' AS type,
+                CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS name,
+                COALESCE(dt.Type_Name, 'Physician') AS role_title,
+                'Doctor' AS domain,
+                CASE WHEN ad.Admission_Doctor_ID IS NOT NULL THEN 1 ELSE 0 END AS is_assigned
+            FROM Doctor d
+            LEFT JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
+            LEFT JOIN Admission_Doctor ad ON d.Doctor_ID = ad.Doctor_ID AND ad.Admission_ID = :aid
+            WHERE d.Is_Active = 1
+            ORDER BY is_assigned DESC, d.First_Name ASC, d.Last_Name ASC
+        ");
+        $doctorsStmt->execute([':aid' => $admissionId]);
+        $doctors = $doctorsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode([
+            'nurses' => $clinicalUsers,
+            'doctors' => $doctors
+        ]);
+    }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+$method = $_SERVER['REQUEST_METHOD'] ?? '';
+$operation = '';
+$json = '{}';
+if ($method == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
-} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} else if ($method == 'POST') {
     $operation = $_POST['operation'] ?? "";
     $json = $_POST['json'] ?? "{}";
 }
@@ -106,6 +170,9 @@ switch ($operation) {
         break;
     case 'getDoctorRounds':
         echo $clinical->getDoctorRounds($json);
+        break;
+    case 'getHealthcarePersonnel':
+        echo $clinical->getHealthcarePersonnel($json);
         break;
 }
 ?>

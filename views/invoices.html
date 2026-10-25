@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Invoices & Settled Accounts — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=15.0">
-    <link rel="stylesheet" href="../css/invoices.css?v=15.0">
+    <link rel="stylesheet" href="../css/common.css?v=16.0">
+    <link rel="stylesheet" href="../css/invoices.css?v=16.0">
 </head>
 <body>
 
@@ -24,9 +24,9 @@
 
             <div class="content-body">
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <h2 style="margin:0;">In-Patient Billing Invoices & Settlement Directory</h2>
+                    <div class="card-header card-header-flex">
+                        <div class="card-header-left-title">
+                            <h2 class="card-header-title-text">In-Patient Billing Invoices &amp; Settlement Directory</h2>
                             <button type="button" id="btnRefreshInvoices" class="btn-refresh" title="Refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                             </button>
@@ -59,7 +59,7 @@
         </main>
     </div>
 
-    <div class="modal-overlay" id="recordPaymentModal" style="display: none;">
+    <div class="modal-overlay" id="recordPaymentModal">
         <div class="modal-container">
             <div class="modal-header">
                 <h3>Record Additional Payment</h3>
@@ -67,17 +67,17 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="pay_invoice_id">
-                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
-                        <div><strong style="color: #64748b;">Invoice Code:</strong> <span id="pay_invoice_code" style="font-weight: 700;"></span></div>
-                        <div><strong style="color: #64748b;">Admission Code:</strong> <span id="pay_admission_code" style="font-weight: 700;"></span></div>
-                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient Name:</strong> <span id="pay_patient_name" style="font-weight: 700;"></span></div>
-                        <div><strong style="color: #64748b;">Net Amount Due:</strong> ₱<span id="pay_net_due"></span></div>
-                        <div><strong style="color: #64748b;">Amount Paid So Far:</strong> ₱<span id="pay_amount_paid"></span></div>
+                <div class="pay-summary-box">
+                    <div class="pay-summary-grid">
+                        <div><strong class="pay-summary-label">Invoice Code:</strong> <span id="pay_invoice_code" class="pay-summary-value"></span></div>
+                        <div><strong class="pay-summary-label">Admission Code:</strong> <span id="pay_admission_code" class="pay-summary-value"></span></div>
+                        <div class="span-2"><strong class="pay-summary-label">Patient Name:</strong> <span id="pay_patient_name" class="pay-summary-value"></span></div>
+                        <div><strong class="pay-summary-label">Net Amount Due:</strong> ₱<span id="pay_net_due"></span></div>
+                        <div><strong class="pay-summary-label">Amount Paid So Far:</strong> ₱<span id="pay_amount_paid"></span></div>
                     </div>
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; color: #dc2626; font-size: 15px;">CURRENT OUTSTANDING BALANCE:</span>
-                        <strong style="font-size: 18px; color: #dc2626;">₱<span id="pay_remaining_balance"></span></strong>
+                    <div class="pay-summary-balance-row">
+                        <span class="pay-summary-balance-label">CURRENT OUTSTANDING BALANCE:</span>
+                        <strong class="pay-summary-balance-val">₱<span id="pay_remaining_balance"></span></strong>
                     </div>
                 </div>
 
@@ -92,9 +92,9 @@
 
                 <div class="form-group mb-3">
                     <label class="form-label" for="pay_amount_input">Payment Tendered / Received (₱) *</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="number" id="pay_amount_input" class="form-control" step="0.01" min="0.01" placeholder="0.00" style="font-weight: 700; font-size: 16px;" required>
-                        <button type="button" class="btn btn-secondary" id="btnPayFullBalance" style="white-space: nowrap;">Pay Exact Balance</button>
+                    <div class="pay-input-group">
+                        <input type="number" id="pay_amount_input" class="form-control pay-amount-input" step="0.01" min="0.01" placeholder="0.00" required>
+                        <button type="button" class="btn btn-secondary" id="btnPayFullBalance">Pay Exact Balance</button>
                     </div>
                 </div>
 
@@ -103,57 +103,85 @@
                     <input type="text" id="pay_notes_input" class="form-control" placeholder="e.g. 2nd Installment / Promissory Note">
                 </div>
 
-                <div style="background-color: #f1f5f9; padding: 12px 16px; border-radius: 6px; font-size: 14px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <div class="pay-change-panel">
+                    <div class="pay-change-row">
                         <span>New Balance After Payment:</span>
-                        <strong id="pay_new_balance_display" style="color: #16a34a;">₱0.00</strong>
+                        <strong id="pay_new_balance_display" class="text-success">₱0.00</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between;">
+                    <div class="pay-change-row">
                         <span>Customer Change Given:</span>
-                        <strong id="pay_change_display" style="color: #16a34a;">₱0.00</strong>
+                        <strong id="pay_change_display" class="text-success">₱0.00</strong>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btnCancelPayment">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btnSubmitPayment">Post Payment & Update Invoice</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitPayment">Post Payment &amp; Update Invoice</button>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="paymentHistoryModal" style="display: none;">
-        <div class="modal-container" style="max-width: 850px;">
+    <div class="modal-overlay" id="paymentHistoryModal">
+        <div class="modal-container history-modal-container">
             <div class="modal-header">
-                <h3>Invoice Details & Payment Transaction History</h3>
+                <h3>Invoice Details &amp; Payment Transaction History</h3>
                 <button type="button" class="modal-close" id="btnCloseHistoryModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;">
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 13.5px;">
-                        <div><strong style="color: #64748b;">Invoice Code:</strong><br><span id="hist_invoice_code" style="font-weight: 700;"></span></div>
-                        <div><strong style="color: #64748b;">Admission Code:</strong><br><span id="hist_admission_code" style="font-weight: 700;"></span></div>
-                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient:</strong><br><span id="hist_patient_name" style="font-weight: 700;"></span></div>
-                        <div><strong style="color: #64748b;">Gross Charges:</strong><br><strong>₱<span id="hist_gross_total">0.00</span></strong></div>
-                        <div><strong style="color: #64748b;">12% VAT:</strong><br><strong id="hist_vat_amount_wrap">₱<span id="hist_vat_amount">0.00</span></strong></div>
-                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Discounts Applied:</strong><br><span id="hist_discounts_summary" style="font-weight: 600; color: #166534;">None</span></div>
-                        <div><strong style="color: #64748b;">Net Amount Due:</strong><br><strong style="color: var(--primary);">₱<span id="hist_net_due">0.00</span></strong></div>
-                        <div><strong style="color: #64748b;">Total Amount Paid:</strong><br><strong style="color: #16a34a;">₱<span id="hist_amount_paid">0.00</span></strong></div>
-                        <div style="grid-column: span 2;"><strong style="color: #64748b;">Remaining Balance:</strong><br><strong id="hist_remaining_balance_wrap" style="font-size: 15px;">₱<span id="hist_remaining_balance">0.00</span></strong></div>
-                        <div id="hist_pn_wrap" style="display: none; grid-column: span 4; background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #1e1b4b;">
-                            <strong>Promissory Note Schedule:</strong> <span id="hist_pn_text"></span>
-                        </div>
+                <div class="invoice-summary-card">
+                    <table class="data-table invoice-summary-table">
+                        <tbody>
+                            <tr>
+                                <td class="invoice-summary-label">Invoice Code</td>
+                                <td class="invoice-summary-value"><span id="hist_invoice_code" class="table-primary-text text-primary"></span></td>
+                                <td class="invoice-summary-label">Admission Code</td>
+                                <td class="invoice-summary-value"><span id="hist_admission_code" class="table-primary-text"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="invoice-summary-label">Patient Name</td>
+                                <td class="invoice-summary-value" colspan="3"><span id="hist_patient_name" class="table-primary-text"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="invoice-summary-label">Gross Charges</td>
+                                <td class="invoice-summary-value"><strong>₱<span id="hist_gross_total">0.00</span></strong></td>
+                                <td class="invoice-summary-label">12% VAT</td>
+                                <td class="invoice-summary-value"><strong id="hist_vat_amount_wrap">₱<span id="hist_vat_amount">0.00</span></strong></td>
+                            </tr>
+                            <tr>
+                                <td class="invoice-summary-label">Discounts Applied</td>
+                                <td class="invoice-summary-value" colspan="3"><span id="hist_discounts_summary" class="invoice-discount-text">None</span></td>
+                            </tr>
+                            <tr>
+                                <td class="invoice-summary-label">Net Amount Due</td>
+                                <td class="invoice-summary-value"><strong class="text-primary font-bold">₱<span id="hist_net_due">0.00</span></strong></td>
+                                <td class="invoice-summary-label">Total Amount Paid</td>
+                                <td class="invoice-summary-value"><strong class="text-success font-bold">₱<span id="hist_amount_paid">0.00</span></strong></td>
+                            </tr>
+                            <tr>
+                                <td class="invoice-summary-label">Remaining Balance</td>
+                                <td class="invoice-summary-value" colspan="3"><strong id="hist_remaining_balance_wrap" class="invoice-balance-highlight">₱<span id="hist_remaining_balance">0.00</span></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div id="hist_pn_wrap" class="invoice-pn-alert">
+                        <strong>Promissory Note Schedule:</strong> <span id="hist_pn_text"></span>
                     </div>
+                </div>
+
+                <div class="history-section-header">
+                    <h4>Payment &amp; Transaction Ledger</h4>
+                    <span class="history-section-subtitle">Official Receipt vouchers issued for this billing account</span>
                 </div>
                 <div class="table-responsive" id="history-modal-table-div">
                     <p class="text-muted">Loading transactions...</p>
                 </div>
             </div>
-            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="modal-footer history-modal-footer">
+                <div class="history-modal-actions">
                     <button type="button" class="btn btn-primary" id="btnHistViewSOA">View Statement of Account (SOA)</button>
-                    <button type="button" class="btn btn-outline" id="btnHistViewGatePass" style="font-weight: 600; border-color: #0f766e; color: #0f766e;">Print Gate Pass</button>
-                    <button type="button" class="btn btn-warning" id="btnHistPayBalance" style="display: none; font-weight: 600;">Pay Balance</button>
-                    <span id="histPaidInFullBadge" class="badge badge-success" style="display: none; font-size: 13px; padding: 7px 14px;">Paid in Full</span>
+                    <button type="button" class="btn btn-outline btn-gatepass" id="btnHistViewGatePass">Print Gate Pass</button>
+                    <button type="button" class="btn btn-warning" id="btnHistPayBalance">Pay Balance</button>
+                    <span id="histPaidInFullBadge" class="badge badge-success badge-paid-full">Paid in Full</span>
                 </div>
                 <button type="button" class="btn btn-secondary" id="btnDismissHistoryModal">Close</button>
             </div>
@@ -161,9 +189,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=15.0"></script>
-    <script src="../js/common.js?v=15.0"></script>
-    <script src="../js/invoices.js?v=15.0"></script>
+    <script src="../js/sidebar.js?v=16.0"></script>
+    <script src="../js/common.js?v=16.0"></script>
+    <script src="../js/invoices.js?v=16.0"></script>
 </body>
 </html>
 

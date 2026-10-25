@@ -1,11 +1,3 @@
-.filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
 .invoice-badge-none {
     color: var(--text-muted);
     font-style: italic;
@@ -28,4 +20,201 @@
     font-size: 14px;
     font-weight: 700;
     color: var(--text-main);
+}
+
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header-left-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-header-title-text {
+    margin: 0;
+}
+
+.history-modal-container {
+    max-width: 920px;
+    width: 95%;
+}
+
+.invoice-summary-card {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.invoice-summary-table {
+    margin: 0;
+    width: 100%;
+    font-size: 13px;
+    border-collapse: collapse;
+}
+
+.invoice-summary-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.invoice-summary-table tr:last-child td {
+    border-bottom: none;
+}
+
+.invoice-summary-label {
+    width: 18%;
+    color: #64748b;
+    font-weight: 600;
+    background-color: #f8fafc;
+}
+
+.invoice-summary-value {
+    width: 32%;
+    color: #0f172a;
+    background-color: #ffffff;
+}
+
+.invoice-discount-text {
+    font-weight: 600;
+    color: #166534;
+}
+
+.invoice-balance-highlight {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.invoice-pn-alert {
+    background: #e0e7ff;
+    border-top: 1px solid #c7d2fe;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #1e1b4b;
+}
+
+.history-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+
+.history-section-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.history-section-subtitle {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.history-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.history-modal-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-gatepass {
+    font-weight: 600;
+    border-color: #0f766e;
+    color: #0f766e;
+}
+
+.badge-paid-full {
+    font-size: 13px;
+    padding: 7px 14px;
+}
+
+.pay-summary-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.pay-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.pay-summary-label {
+    color: #64748b;
+}
+
+.pay-summary-value {
+    font-weight: 700;
+}
+
+.pay-summary-balance-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pay-summary-balance-label {
+    font-weight: 700;
+    color: #dc2626;
+    font-size: 15px;
+}
+
+.pay-summary-balance-val {
+    font-size: 18px;
+    color: #dc2626;
+}
+
+.pay-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.pay-amount-input {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.pay-change-panel {
+    background-color: #f1f5f9;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.pay-change-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.pay-change-row:last-child {
+    margin-bottom: 0;
+}
+
+#hist_pn_wrap,
+#btnHistPayBalance,
+#histPaidInFullBadge {
+    display: none;
 }

@@ -255,9 +255,9 @@ const openPaymentHistoryModal = (invoiceId) => {
     const elVatWrap = document.getElementById('hist_vat_amount_wrap');
     if (elVatWrap) {
         if (isExempt) {
-            elVatWrap.innerHTML = '<span class="badge badge-success" style="font-size: 11px;">0% (VAT-Exempt)</span>';
+            elVatWrap.innerHTML = '<span class="badge badge-success table-status-pill">0% (VAT-Exempt)</span>';
         } else {
-            elVatWrap.innerHTML = `₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="text-muted" style="font-size: 11px;">(12% included)</span>`;
+            elVatWrap.innerHTML = `₱${vatAmt.toLocaleString('en-PH', {minimumFractionDigits: 2})} <span class="table-sub-text">(12% included)</span>`;
         }
     }
 
@@ -265,9 +265,9 @@ const openPaymentHistoryModal = (invoiceId) => {
     if (elDiscSumm) {
         if (inv.Discount_Summary) {
             const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
-            elDiscSumm.innerHTML = discItems.join('<br>');
+            elDiscSumm.innerHTML = discItems.map(item => `<span class="badge badge-info table-disc-pill">${item}</span>`).join(' ');
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            elDiscSumm.textContent = `${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            elDiscSumm.innerHTML = `<span class="badge badge-info table-disc-pill">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
         } else {
             elDiscSumm.textContent = 'None';
         }
@@ -282,7 +282,7 @@ const openPaymentHistoryModal = (invoiceId) => {
         elBal.textContent = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
         const wrap = document.getElementById('hist_remaining_balance_wrap');
         if (wrap) {
-            wrap.style.color = balVal > 0 ? '#dc2626' : '#16a34a';
+            wrap.className = balVal > 0 ? 'invoice-balance-highlight text-danger' : 'invoice-balance-highlight text-success';
         }
     }
 
@@ -332,7 +332,7 @@ const openPaymentHistoryModal = (invoiceId) => {
             }
 
             if (!Array.isArray(list) || list.length === 0) {
-                container.innerHTML = '<p class="text-muted" style="margin: 12px 0;"><em>No payment transactions recorded for this invoice yet.</em></p>';
+                container.innerHTML = '<div class="empty-state-panel"><p class="text-muted">No payment transactions recorded for this invoice yet.</p></div>';
                 openModal('paymentHistoryModal');
                 return;
             }
@@ -340,33 +340,55 @@ const openPaymentHistoryModal = (invoiceId) => {
             let rows = '';
             list.forEach(p => {
                 const amt = parseFloat(p.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
-                const bal = parseFloat(p.Balance_After || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
-                const isPaid = parseFloat(p.Balance_After || 0) <= 0;
+                const pBalVal = parseFloat(p.Balance_After || 0);
+                const bal = pBalVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                const isPaid = pBalVal <= 0;
+                const statusBadge = isPaid
+                    ? '<span class="badge badge-success table-status-pill">PAID IN FULL</span>'
+                    : '<span class="badge badge-warning table-status-pill">ACTIVE BALANCE</span>';
 
                 rows += `
                     <tr class="clickable-row" onclick="window.location.href='payment_receipt.html?payment_id=${p.Payment_ID}'" title="Click row to view / print Official Receipt voucher">
-                        <td><strong style="color: #0284c7;">${p.Receipt_Number}</strong></td>
-                        <td>${p.Payment_Date}</td>
-                        <td><span class="badge badge-info">${p.Payment_Method || 'Cash'}</span></td>
-                        <td>${p.Cashier_Name}</td>
-                        <td align="right"><strong style="color: #16a34a;">₱${amt}</strong></td>
-                        <td align="right"><strong style="color: ${isPaid ? '#16a34a' : '#dc2626'};">₱${bal}</strong></td>
-                        <td>${p.Notes || '-'}</td>
+                        <td>
+                            <span class="table-primary-text text-primary font-bold">${p.Receipt_Number}</span>
+                            <span class="table-sub-text">${p.Payment_Date}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-info table-disc-pill">${p.Payment_Method || 'Cash'}</span>
+                            <span class="table-sub-text">Cashier: <strong>${p.Cashier_Name}</strong></span>
+                        </td>
+                        <td>
+                            <span class="table-primary-text">${p.Notes || 'Official Settlement Payment'}</span>
+                        </td>
+                        <td class="text-right">
+                            <span class="table-amount-prominent text-success">₱${amt}</span>
+                            <span class="table-sub-text">Paid</span>
+                        </td>
+                        <td class="text-right">
+                            <span class="table-amount-prominent ${isPaid ? 'text-success' : 'text-danger'}">₱${bal}</span>
+                            <span class="table-sub-text">Balance</span>
+                        </td>
+                        <td class="text-right">
+                            ${statusBadge}
+                        </td>
+                        <td class="text-center">
+                            <a href="payment_receipt.html?payment_id=${p.Payment_ID}" class="btn btn-outline btn-sm" title="View / Print Receipt">Print OR &rarr;</a>
+                        </td>
                     </tr>
                 `;
             });
 
             container.innerHTML = `
-                <table class="data-table" style="font-size: 13px;">
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Official Receipt #</th>
-                            <th>Date & Time</th>
-                            <th>Method</th>
-                            <th>Cashier</th>
-                            <th>Amount Paid</th>
-                            <th>Remaining Bal</th>
+                            <th>Official Receipt &amp; Date</th>
+                            <th>Payment Method &amp; Cashier</th>
                             <th>Particulars / Notes</th>
+                            <th class="text-right">Amount Paid</th>
+                            <th class="text-right">Remaining Balance</th>
+                            <th class="text-right">Settlement Status</th>
+                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=16.0">
-    <link rel="stylesheet" href="../css/admission_details.css?v=29.0">
+    <link rel="stylesheet" href="../css/admission_details.css?v=30.0">
 </head>
 <body>
 
@@ -80,8 +80,8 @@
                     <span id="banner-doctors" class="hero-hidden-meta"></span>
                     <button type="button" id="btnEditDiagnosis" class="hero-hidden-meta"></button>
                 </div>
-                <div class="workflow-stepper" id="workflowStepper" role="navigation" aria-label="Workflow progress">
-                    <div class="step-item" id="step-admission" title="Jump to Patient &amp; Admission Summary" role="button" tabindex="0">
+                <div class="workflow-stepper" id="workflowStepper" aria-label="Workflow progress">
+                    <div class="step-item" id="step-admission">
                         <div class="step-badge" id="badge-admission">1</div>
                         <div class="step-text">
                             <strong>1. Admission &amp; Bed</strong>
@@ -89,7 +89,7 @@
                         </div>
                     </div>
                     <div class="step-connector"></div>
-                    <div class="step-item" id="step-charges" title="Jump to Clinical Care &amp; Charges" role="button" tabindex="0">
+                    <div class="step-item" id="step-charges">
                         <div class="step-badge" id="badge-charges">2</div>
                         <div class="step-text">
                             <strong>2. Clinical Charges &amp; Advance Deposits</strong>
@@ -97,7 +97,7 @@
                         </div>
                     </div>
                     <div class="step-connector"></div>
-                    <div class="step-item" id="step-discharge" title="Jump to Discharge Clearance &amp; Final SOA" role="button" tabindex="0">
+                    <div class="step-item" id="step-discharge">
                         <div class="step-badge" id="badge-discharge">3</div>
                         <div class="step-text">
                             <strong>3. Discharge &amp; Final SOA</strong>
@@ -105,7 +105,7 @@
                         </div>
                     </div>
                     <div class="step-connector"></div>
-                    <div class="step-item" id="step-cashier" title="Jump to Cashier &amp; Settlement" role="button" tabindex="0">
+                    <div class="step-item" id="step-cashier">
                         <div class="step-badge" id="badge-cashier">4</div>
                         <div class="step-text">
                             <strong>4. Cashier &amp; Receipts</strong>
@@ -806,7 +806,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=15.0"></script>
     <script src="../js/common.js?v=15.0"></script>
-    <script src="../js/admission_details.js?v=29.0"></script>
+    <script src="../js/admission_details.js?v=30.0"></script>
 </body>
 </html>
 

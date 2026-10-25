@@ -1357,7 +1357,7 @@ const loadAdmissionDetails = () => {
             const sumDoctorsEl = document.getElementById('summary-doctors-list');
             if (sumDoctorsEl) {
                 if (assignedDoctors && assignedDoctors.length > 0) {
-                    sumDoctorsEl.innerHTML = assignedDoctors.map(d => `<span class="doctor-badge-pill">👨‍⚕️ ${d.Doctor_Name} <small>(${d.Doctor_Type})</small></span>`).join(' ');
+                    sumDoctorsEl.innerHTML = assignedDoctors.map(d => `<span class="doctor-badge-pill">${d.Doctor_Name} <small>(${d.Doctor_Type})</small></span>`).join('');
                 } else {
                     sumDoctorsEl.innerHTML = '<span class="text-muted">No physician assigned to this admission yet.</span>';
                 }

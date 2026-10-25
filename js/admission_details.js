@@ -286,20 +286,6 @@ const initClinicalTabs = () => {
         });
     }
 
-    const btnSumClinical = document.getElementById('btnSummaryToClinical');
-    if (btnSumClinical) {
-        btnSumClinical.addEventListener('click', () => {
-            activateTab('tab-clinical');
-        });
-    }
-
-    const btnSumLedger = document.getElementById('btnSummaryToLedger');
-    if (btnSumLedger) {
-        btnSumLedger.addEventListener('click', () => {
-            activateTab('tab-ledger');
-        });
-    }
-
     const btnSumHist = document.getElementById('btnSummaryOpenHistory');
     if (btnSumHist) {
         btnSumHist.addEventListener('click', () => {

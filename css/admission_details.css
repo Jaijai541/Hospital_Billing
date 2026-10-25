@@ -1941,13 +1941,6 @@ button:disabled, .btn:disabled {
     font-weight: 400;
 }
 
-.summary-nav-shortcuts {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 4px;
-}
-
 @media (max-width: 1200px) {
     .summary-grid-3col {
         grid-template-columns: repeat(2, 1fr);

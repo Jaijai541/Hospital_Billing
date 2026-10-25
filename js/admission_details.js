@@ -300,6 +300,14 @@ const initClinicalTabs = () => {
         });
     }
 
+    const btnSumHist = document.getElementById('btnSummaryOpenHistory');
+    if (btnSumHist) {
+        btnSumHist.addEventListener('click', () => {
+            const histBtn = document.getElementById('btnOpenAdmissionHistory');
+            if (histBtn) histBtn.click();
+        });
+    }
+
     const hash = window.location.hash.replace('#', '');
     if (hash) {
         activateTab(hash);

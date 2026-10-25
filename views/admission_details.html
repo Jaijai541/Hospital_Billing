@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=16.0">
-    <link rel="stylesheet" href="../css/admission_details.css?v=22.0">
+    <link rel="stylesheet" href="../css/admission_details.css?v=23.0">
 </head>
 <body>
 
@@ -133,7 +133,7 @@
 
                 <div class="tab-content-panel active" id="tab-summary">
                     <div class="summary-tab-container">
-                        <div class="summary-grid-top">
+                        <div class="summary-grid-3col">
                             <div class="card summary-card summary-card-patient">
                                 <div class="card-header summary-card-header">
                                     <div class="summary-card-header-left">
@@ -168,6 +168,11 @@
                                             <span class="summary-label">Emergency Contact</span>
                                             <span class="summary-value" id="summary-patient-emergency">--</span>
                                         </div>
+                                    </div>
+                                    <div class="summary-card-action-bar">
+                                        <button type="button" class="btn btn-outline btn-sm" id="btnSummaryOpenHistory">
+                                            <span>View Admission History &rarr;</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -208,49 +213,40 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="card summary-card summary-card-clinical mb-4">
-                            <div class="card-header summary-card-header">
-                                <div class="summary-card-header-left">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                                    <h3>Clinical Assessment &amp; Care Team</h3>
+                            <div class="card summary-card summary-card-clinical">
+                                <div class="card-header summary-card-header">
+                                    <div class="summary-card-header-left">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                                        <h3>Clinical Assessment &amp; Care Team</h3>
+                                    </div>
+                                    <span class="badge badge-primary" id="summary-clinical-status">Active Inpatient</span>
                                 </div>
-                                <div class="summary-header-actions">
-                                    <button type="button" class="btn btn-primary btn-sm" id="btnOpenAssessmentModal">
-                                        <span>✎ Edit Clinical Assessment</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="clinical-assessment-grid">
-                                    <div class="clinical-box clinical-box-diagnosis">
-                                        <div class="clinical-box-header">
-                                            <span class="clinical-box-tag">Official Medical Diagnosis</span>
-                                            <small class="text-muted">Editable before discharge</small>
+                                <div class="card-body">
+                                    <div class="summary-data-table">
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Medical Diagnosis</span>
+                                            <span class="summary-value" id="summary-diagnosis-text">
+                                                <span class="badge badge-warning">Loading diagnosis...</span>
+                                            </span>
                                         </div>
-                                        <div class="clinical-box-content" id="summary-diagnosis-text">
-                                            <span class="badge badge-warning">Loading diagnosis...</span>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Chief Complaint</span>
+                                            <span class="summary-value clinical-quote-val" id="summary-complaint-text">Loading complaint...</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Attending Care Team</span>
+                                            <span class="summary-value" id="summary-doctors-list">Loading care team...</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Assessment Status</span>
+                                            <span class="summary-value text-muted">Editable before discharge</span>
                                         </div>
                                     </div>
-
-                                    <div class="clinical-box clinical-box-complaint">
-                                        <div class="clinical-box-header">
-                                            <span class="clinical-box-tag">Chief Complaint (On Admission)</span>
-                                            <small class="text-muted">Recorded upon intake</small>
-                                        </div>
-                                        <div class="clinical-box-content clinical-quote" id="summary-complaint-text">
-                                            Loading complaint...
-                                        </div>
-                                    </div>
-
-                                    <div class="clinical-box clinical-box-doctors">
-                                        <div class="clinical-box-header">
-                                            <span class="clinical-box-tag">Assigned Attending &amp; Consulting Physicians</span>
-                                        </div>
-                                        <div class="clinical-box-content" id="summary-doctors-list">
-                                            Loading care team...
-                                        </div>
+                                    <div class="summary-card-action-bar">
+                                        <button type="button" class="btn btn-outline btn-sm" id="btnOpenAssessmentModal">
+                                            <span>✎ Edit Clinical Assessment</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -810,7 +806,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=15.0"></script>
     <script src="../js/common.js?v=15.0"></script>
-    <script src="../js/admission_details.js?v=22.0"></script>
+    <script src="../js/admission_details.js?v=23.0"></script>
 </body>
 </html>
 

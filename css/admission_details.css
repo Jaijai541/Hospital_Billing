@@ -1784,10 +1784,11 @@ button:disabled, .btn:disabled {
     gap: 18px;
 }
 
-.summary-grid-top {
+.summary-grid-3col {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 18px;
+    margin-bottom: 20px;
 }
 
 .summary-card {
@@ -1860,78 +1861,37 @@ button:disabled, .btn:disabled {
     justify-content: flex-end;
 }
 
-.clinical-assessment-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-}
-
-.clinical-box {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 14px 16px;
-    background: #f8fafc;
-}
-
-.clinical-box-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.clinical-box-tag {
-    font-size: 0.76rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #475569;
-}
-
-.clinical-box-diagnosis {
-    border-left: 4px solid #0284c7;
-}
-
-.clinical-box-complaint {
-    border-left: 4px solid #f59e0b;
-}
-
-.clinical-box-doctors {
-    grid-column: 1 / -1;
-    border-left: 4px solid #10b981;
-}
-
-.clinical-quote {
+.clinical-quote-val {
     font-style: italic;
-    color: #334155;
-    font-size: 0.92rem;
-    line-height: 1.45;
+    color: #475569;
+    max-width: 250px;
+    text-align: right;
+    word-break: break-word;
 }
 
 .diagnosis-badge {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 3px 8px;
     background: #e0f2fe;
     color: #0369a1;
-    border-radius: 6px;
+    border-radius: 4px;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     border: 1px solid #bae6fd;
 }
 
 .doctor-badge-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    background: #ffffff;
+    gap: 4px;
+    padding: 3px 8px;
+    background: #f1f5f9;
     border: 1px solid #cbd5e1;
-    border-radius: 20px;
-    font-size: 0.82rem;
+    border-radius: 4px;
+    font-size: 0.80rem;
     font-weight: 600;
     color: #1e293b;
-    margin-right: 6px;
-    margin-bottom: 6px;
+    margin: 2px;
 }
 
 .doctor-badge-pill small {
@@ -1946,6 +1906,15 @@ button:disabled, .btn:disabled {
     margin-top: 4px;
 }
 
+@media (max-width: 1200px) {
+    .summary-grid-3col {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .summary-card-clinical {
+        grid-column: 1 / -1;
+    }
+}
+
 @media (max-width: 900px) {
     .chart-patient-hero {
         flex-direction: column;
@@ -1955,13 +1924,19 @@ button:disabled, .btn:disabled {
         width: 100%;
         justify-content: space-between;
     }
-    .summary-grid-top {
-        grid-template-columns: 1fr;
-    }
-    .clinical-assessment-grid {
-        grid-template-columns: 1fr;
-    }
     .clinical-tabs-nav {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .summary-grid-3col {
+        grid-template-columns: 1fr;
+    }
+    .summary-card-clinical {
+        grid-column: auto;
+    }
+    .clinical-tabs-nav {
+        grid-template-columns: 1fr;
     }
 }

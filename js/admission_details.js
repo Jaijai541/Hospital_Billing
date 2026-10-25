@@ -308,6 +308,34 @@ const initClinicalTabs = () => {
         });
     }
 
+    const stepAdmit = document.getElementById('step-admission');
+    if (stepAdmit) {
+        stepAdmit.addEventListener('click', () => {
+            activateTab('tab-summary');
+        });
+    }
+
+    const stepCharges = document.getElementById('step-charges');
+    if (stepCharges) {
+        stepCharges.addEventListener('click', () => {
+            activateTab('tab-clinical');
+        });
+    }
+
+    const stepDischarge = document.getElementById('step-discharge');
+    if (stepDischarge) {
+        stepDischarge.addEventListener('click', () => {
+            activateTab('tab-settlement');
+        });
+    }
+
+    const stepCashier = document.getElementById('step-cashier');
+    if (stepCashier) {
+        stepCashier.addEventListener('click', () => {
+            activateTab('tab-settlement');
+        });
+    }
+
     const hash = window.location.hash.replace('#', '');
     if (hash) {
         activateTab(hash);

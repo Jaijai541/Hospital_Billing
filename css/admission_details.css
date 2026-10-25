@@ -309,19 +309,32 @@
 
 .clinical-slide-switcher,
 .clinical-subnav {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 5px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: inline-flex;
+    align-items: flex-end;
+    width: auto;
+    max-width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: -1px;
+    margin-left: 8px;
+    position: relative;
+    z-index: 5;
+    gap: 4px;
+    user-select: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    box-shadow: none;
 }
 
 .clinical-subnav.ledger-subnav {
-    grid-template-columns: repeat(2, 1fr);
+    margin-left: 8px;
+}
+
+.clinical-slide-switcher::-webkit-scrollbar,
+.clinical-subnav::-webkit-scrollbar {
+    display: none;
 }
 
 .slide-glider,
@@ -331,47 +344,65 @@
 
 .slide-tab-item,
 .clinical-subnav .subnav-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: #f8fafc !important;
+    padding: 8px 18px;
+    background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 6px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
-    color: #334155;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    color: #64748b;
     font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.16s ease;
+    transition: all 0.15s ease;
     text-align: center;
-    width: 100%;
+    white-space: nowrap;
+    width: auto;
     min-width: 0;
     line-height: 1.25;
+    box-shadow: none !important;
+    margin-bottom: 0;
 }
 
 .slide-tab-item:hover,
 .clinical-subnav .subnav-btn:hover {
-    background: #f1f5f9 !important;
+    background: #e2e8f0 !important;
     border-color: #94a3b8 !important;
     color: #0f172a;
-    transform: translateY(-1px);
 }
 
 .slide-tab-item.active,
 .clinical-subnav .subnav-btn.active {
-    background: #0284c7 !important;
-    border-color: #0284c7 !important;
-    color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-top: 3px solid #0284c7 !important;
+    border-bottom: 1px solid #ffffff !important;
+    color: #0284c7 !important;
     font-weight: 700;
-    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.28) !important;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.04) !important;
     transform: none;
 }
 
 .slide-tab-item .slide-label,
 .clinical-subnav .subnav-btn .slide-label {
     white-space: nowrap;
+}
+
+.sub-panel .card,
+.ledger-sub-panel .card {
+    position: relative;
+    z-index: 1;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-top: 0;
+    margin-bottom: 16px;
 }
 
 .subpanel-slide-active {
@@ -1943,13 +1974,7 @@ button:disabled, .btn:disabled {
     .clinical-tabs-nav {
         grid-template-columns: 1fr;
     }
-    .clinical-slide-switcher,
-    .clinical-subnav {
-        grid-template-columns: 1fr;
-    }
-    .clinical-subnav.ledger-subnav {
-        grid-template-columns: 1fr;
-    }
+
 }
 
 @media (max-width: 768px) {

@@ -20,60 +20,52 @@
 }
 
 .clinical-tabs-nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: transparent;
-    padding: 0;
-    border: none;
-    border-bottom: 2px solid #e2e8f0;
-    border-radius: 0;
-    box-shadow: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px;
     margin-bottom: 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.clinical-tabs-nav::-webkit-scrollbar {
-    display: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .clinical-tabs-nav .tab-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
     gap: 8px;
-    padding: 9px 18px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: #64748b;
-    background: transparent !important;
-    border: none !important;
-    border-bottom: 2px solid transparent !important;
-    border-radius: 0;
-    margin-bottom: -2px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
     cursor: pointer;
-    transition: color 0.16s ease, border-color 0.16s ease;
+    transition: all 0.16s ease;
     user-select: none;
-    white-space: nowrap;
-    width: auto;
+    width: 100%;
     min-width: 0;
-    line-height: 1.3;
+    line-height: 1.25;
 }
 
 .clinical-tabs-nav .tab-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
     color: #0f172a;
-    border-bottom-color: #cbd5e1 !important;
-    background: transparent !important;
-    transform: none;
+    transform: translateY(-1px);
 }
 
 .clinical-tabs-nav .tab-btn.active {
-    color: #0284c7 !important;
-    font-weight: 600;
-    border-bottom-color: #0284c7 !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(2, 132, 199, 0.32) !important;
     transform: none;
 }
 
@@ -84,7 +76,7 @@
 
 .clinical-tabs-nav .tab-btn .tab-title {
     display: inline-block;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .tab-content-panel {
@@ -210,50 +202,48 @@
 }
 
 .workflow-stepper {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 7px 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    box-shadow: none;
-    margin-bottom: 14px;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    scrollbar-width: none;
-}
-
-.workflow-stepper::-webkit-scrollbar {
-    display: none;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .step-item {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 9px;
+    padding: 7px 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
     cursor: pointer;
     user-select: none;
     transition: all 0.16s ease;
-    padding: 3px 6px;
-    border-radius: 4px;
-    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    min-width: 0;
 }
 
 .step-item:hover {
     background: #f1f5f9;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
 }
 
 .step-badge {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 11px;
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #64748b;
     border: 1.5px solid #cbd5e1;
     flex-shrink: 0;
@@ -261,30 +251,37 @@
 }
 
 .step-text {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     line-height: 1.2;
 }
 
 .step-text strong {
     font-size: 0.80rem;
     font-weight: 600;
-    color: #334155;
+    color: #1e293b;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .step-text span {
-    font-size: 0.72rem;
+    font-size: 0.70rem;
     color: #64748b;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .step-connector {
-    width: 16px;
-    height: 1px;
-    background: #cbd5e1;
-    flex-shrink: 0;
+    display: none;
+}
+
+.step-item.active {
+    border-color: #0284c7;
+    background: #f0f9ff;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.15);
 }
 
 .step-item.active .step-badge {
@@ -298,6 +295,11 @@
     color: #0284c7;
 }
 
+.step-item.completed {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
 .step-item.completed .step-badge {
     background: #16a34a;
     color: #ffffff;
@@ -305,34 +307,28 @@
 }
 
 .step-item.completed .step-text strong {
-    color: #16a34a;
+    color: #15803d;
 }
 
 .step-item.pending {
-    opacity: 0.65;
+    opacity: 0.75;
 }
 
 .clinical-slide-switcher,
 .clinical-subnav {
-    display: inline-flex;
-    align-items: center;
-    width: auto;
-    max-width: 100%;
-    background: #f1f5f9;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    padding: 3px;
-    margin-bottom: 12px;
-    box-shadow: none;
-    user-select: none;
-    overflow-x: auto;
-    gap: 3px;
-    scrollbar-width: none;
+    border-radius: 8px;
+    padding: 5px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.clinical-slide-switcher::-webkit-scrollbar,
-.clinical-subnav::-webkit-scrollbar {
-    display: none;
+.clinical-subnav.ledger-subnav {
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .slide-glider,
@@ -342,41 +338,42 @@
 
 .slide-tab-item,
 .clinical-subnav .subnav-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 5px 14px;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    outline: none !important;
-    box-shadow: none !important;
-    color: #64748b;
-    font-size: 0.82rem;
-    font-weight: 500;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    color: #334155;
+    font-size: 0.84rem;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 16px;
     transition: all 0.16s ease;
     text-align: center;
-    white-space: nowrap;
-    width: auto;
+    width: 100%;
     min-width: 0;
-    line-height: 1.3;
+    line-height: 1.25;
 }
 
 .slide-tab-item:hover,
 .clinical-subnav .subnav-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
     color: #0f172a;
-    background: rgba(255, 255, 255, 0.5) !important;
+    transform: translateY(-1px);
 }
 
 .slide-tab-item.active,
 .clinical-subnav .subnav-btn.active {
-    background: #ffffff !important;
-    color: #0284c7 !important;
-    font-weight: 600;
-    border-color: #e2e8f0 !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.28) !important;
+    transform: none;
 }
 
 .slide-tab-item .slide-label,
@@ -473,8 +470,14 @@ button:disabled, .btn:disabled {
 }
 
 .clinical-tabs-nav .tab-btn.active .tab-count-badge {
-    background: #e0f2fe;
-    color: #0284c7;
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.slide-tab-item.active .subnav-count-badge,
+.clinical-subnav .subnav-btn.active .subnav-count-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
 }
 
 .slide-tab-item .subnav-count-badge {
@@ -1932,7 +1935,28 @@ button:disabled, .btn:disabled {
         width: 100%;
         justify-content: space-between;
     }
+    .workflow-stepper {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .clinical-tabs-nav {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
+@media (max-width: 650px) {
+    .workflow-stepper {
+        grid-template-columns: 1fr;
+    }
+    .clinical-tabs-nav {
+        grid-template-columns: 1fr;
+    }
+    .clinical-slide-switcher,
+    .clinical-subnav {
+        grid-template-columns: 1fr;
+    }
+    .clinical-subnav.ledger-subnav {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {

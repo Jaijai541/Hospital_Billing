@@ -1792,10 +1792,20 @@ button:disabled, .btn:disabled {
 }
 
 .summary-card {
+    display: flex;
+    flex-direction: column;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     background: #ffffff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.summary-card .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    padding: 16px 18px;
 }
 
 .summary-card-header {
@@ -1827,35 +1837,63 @@ button:disabled, .btn:disabled {
 .summary-data-table {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
 }
 
 .summary-data-row {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid #f8fafc;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1f5f9;
     font-size: 0.88rem;
+}
+
+.summary-data-row:first-child {
+    padding-top: 0;
 }
 
 .summary-data-row:last-child {
     border-bottom: none;
+    padding-bottom: 0;
 }
 
 .summary-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
     color: #64748b;
-    font-weight: 500;
+    line-height: 1.2;
+    user-select: none;
 }
 
 .summary-value {
-    color: #1e293b;
-    text-align: right;
+    font-size: 0.93rem;
+    font-weight: 600;
+    color: #0f172a;
+    text-align: left;
+    line-height: 1.45;
+    word-break: break-word;
+    width: 100%;
+}
+
+.summary-name-highlight {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0284c7;
+}
+
+.summary-rate-highlight {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #0284c7;
 }
 
 .summary-card-action-bar {
-    margin-top: 14px;
-    padding-top: 12px;
+    margin-top: auto;
+    padding-top: 14px;
     border-top: 1px solid #f1f5f9;
     display: flex;
     justify-content: flex-end;
@@ -1863,35 +1901,51 @@ button:disabled, .btn:disabled {
 
 .clinical-quote-val {
     font-style: italic;
-    color: #475569;
-    max-width: 250px;
-    text-align: right;
-    word-break: break-word;
+    color: #334155;
+    background: #f8fafc;
+    border-left: 3px solid #38bdf8;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 2px;
 }
 
 .diagnosis-badge {
     display: inline-block;
-    padding: 3px 8px;
+    padding: 4px 10px;
     background: #e0f2fe;
     color: #0369a1;
-    border-radius: 4px;
+    border-radius: 6px;
     font-weight: 700;
-    font-size: 0.88rem;
+    font-size: 0.90rem;
     border: 1px solid #bae6fd;
+    margin-top: 2px;
+}
+
+.summary-doctors-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+    width: 100%;
 }
 
 .doctor-badge-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
+    gap: 5px;
+    padding: 4px 10px;
     background: #f1f5f9;
     border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    font-size: 0.80rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
     font-weight: 600;
     color: #1e293b;
-    margin: 2px;
+    margin: 0;
 }
 
 .doctor-badge-pill small {

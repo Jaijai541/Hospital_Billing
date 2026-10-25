@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=16.0">
-    <link rel="stylesheet" href="../css/admission_details.css?v=23.0">
+    <link rel="stylesheet" href="../css/admission_details.css?v=24.0">
 </head>
 <body>
 
@@ -146,7 +146,7 @@
                                     <div class="summary-data-table">
                                         <div class="summary-data-row">
                                             <span class="summary-label">Full Legal Name</span>
-                                            <strong class="summary-value" id="summary-patient-name">Loading...</strong>
+                                            <strong class="summary-value summary-name-highlight" id="summary-patient-name">Loading...</strong>
                                         </div>
                                         <div class="summary-data-row">
                                             <span class="summary-label">Date of Birth &amp; Age</span>
@@ -197,7 +197,7 @@
                                         </div>
                                         <div class="summary-data-row">
                                             <span class="summary-label">Daily Board Rate</span>
-                                            <strong class="summary-value text-primary" id="summary-daily-rate">--</strong>
+                                            <strong class="summary-value text-primary summary-rate-highlight" id="summary-daily-rate">--</strong>
                                         </div>
                                         <div class="summary-data-row">
                                             <span class="summary-label">Bed Assigned Since</span>
@@ -225,21 +225,21 @@
                                 <div class="card-body">
                                     <div class="summary-data-table">
                                         <div class="summary-data-row">
-                                            <span class="summary-label">Medical Diagnosis</span>
+                                            <span class="summary-label">Official Medical Diagnosis</span>
                                             <span class="summary-value" id="summary-diagnosis-text">
                                                 <span class="badge badge-warning">Loading diagnosis...</span>
                                             </span>
                                         </div>
                                         <div class="summary-data-row">
-                                            <span class="summary-label">Chief Complaint</span>
+                                            <span class="summary-label">Chief Complaint (On Admission)</span>
                                             <span class="summary-value clinical-quote-val" id="summary-complaint-text">Loading complaint...</span>
                                         </div>
                                         <div class="summary-data-row">
                                             <span class="summary-label">Attending Care Team</span>
-                                            <span class="summary-value" id="summary-doctors-list">Loading care team...</span>
+                                            <div class="summary-value summary-doctors-wrap" id="summary-doctors-list">Loading care team...</div>
                                         </div>
                                         <div class="summary-data-row">
-                                            <span class="summary-label">Assessment Status</span>
+                                            <span class="summary-label">Assessment Modification Policy</span>
                                             <span class="summary-value text-muted">Editable before discharge</span>
                                         </div>
                                     </div>
@@ -806,7 +806,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=15.0"></script>
     <script src="../js/common.js?v=15.0"></script>
-    <script src="../js/admission_details.js?v=23.0"></script>
+    <script src="../js/admission_details.js?v=24.0"></script>
 </body>
 </html>
 

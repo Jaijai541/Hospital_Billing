@@ -118,6 +118,7 @@ class AdmissionManager
                     rtl.Transfer_ID,
                     rtl.Bed_ID,
                     rtl.Date_In,
+                    GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) AS Calculated_Days,
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     rb.Bed_Code,
                     r.Room_Name
@@ -140,10 +141,7 @@ class AdmissionManager
                 return json_encode(['error' => 'Patient is already assigned to this bed.']);
             }
 
-            $dateIn = new DateTime($currentStay['Date_In']);
-            $now = new DateTime();
-            $diffDays = $now->diff($dateIn)->days;
-            $totalDays = max(1, $diffDays);
+            $totalDays = max(1, intval($currentStay['Calculated_Days'] ?? 1));
             $dailyRate = floatval($currentStay['Daily_Rate']);
             $totalRoomFee = $totalDays * $dailyRate;
 
@@ -240,6 +238,7 @@ class AdmissionManager
                     rtl.Transfer_ID,
                     rtl.Bed_ID,
                     rtl.Date_In,
+                    GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) AS Calculated_Days,
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
                 FROM Room_Transfer_Log rtl
                 INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
@@ -251,10 +250,7 @@ class AdmissionManager
             $currentStay = $currStayStmt->fetch(PDO::FETCH_ASSOC);
 
             if ($currentStay) {
-                $dateIn = new DateTime($currentStay['Date_In']);
-                $now = new DateTime();
-                $diffDays = $now->diff($dateIn)->days;
-                $totalDays = max(1, $diffDays);
+                $totalDays = max(1, intval($currentStay['Calculated_Days'] ?? 1));
                 $dailyRate = floatval($currentStay['Daily_Rate']);
                 $totalRoomFee = $totalDays * $dailyRate;
 

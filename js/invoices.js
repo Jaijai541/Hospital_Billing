@@ -371,9 +371,6 @@ const openPaymentHistoryModal = (invoiceId) => {
                         <td class="text-right">
                             ${statusBadge}
                         </td>
-                        <td class="text-center">
-                            <a href="payment_receipt.html?payment_id=${p.Payment_ID}" class="btn btn-outline btn-sm" title="View / Print Receipt">Print OR &rarr;</a>
-                        </td>
                     </tr>
                 `;
             });
@@ -388,7 +385,6 @@ const openPaymentHistoryModal = (invoiceId) => {
                             <th class="text-right">Amount Paid</th>
                             <th class="text-right">Remaining Balance</th>
                             <th class="text-right">Settlement Status</th>
-                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>

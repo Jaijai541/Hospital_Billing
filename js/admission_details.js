@@ -278,9 +278,33 @@ const initClinicalTabs = () => {
         });
     }
 
+    const btnJumpTransfers = document.getElementById('btnJumpToBedTransfers');
+    if (btnJumpTransfers) {
+        btnJumpTransfers.addEventListener('click', () => {
+            activateTab('tab-clinical');
+            activateClinicalSubtab('sub-stays');
+        });
+    }
+
+    const btnSumClinical = document.getElementById('btnSummaryToClinical');
+    if (btnSumClinical) {
+        btnSumClinical.addEventListener('click', () => {
+            activateTab('tab-clinical');
+        });
+    }
+
+    const btnSumLedger = document.getElementById('btnSummaryToLedger');
+    if (btnSumLedger) {
+        btnSumLedger.addEventListener('click', () => {
+            activateTab('tab-ledger');
+        });
+    }
+
     const hash = window.location.hash.replace('#', '');
     if (hash) {
         activateTab(hash);
+    } else {
+        activateTab('tab-summary');
     }
 };
 
@@ -1128,32 +1152,45 @@ const wireLookupPickers = () => {
 
 const initDiagnosisModal = () => {
     const btnEdit = document.getElementById('btnEditDiagnosis');
+    const btnEditSummary = document.getElementById('btnOpenAssessmentModal');
     const modal = document.getElementById('diagnosisModal');
     const btnClose = document.getElementById('btnCloseDiagnosisModal');
     const btnCancel = document.getElementById('btnCancelDiagnosis');
     const btnSave = document.getElementById('btnSaveDiagnosis');
 
-    if (!btnEdit || !modal) return;
+    if (!modal) return;
 
     const openDiagnosisModal = () => {
         if (!admissionData) return;
         if (admissionData.Status === 'Billed') {
-            alert("Diagnosis cannot be modified because this admission is already billed and settled.");
+            alert("Clinical assessment cannot be modified because this admission is already billed and settled.");
             return;
         }
-        document.getElementById('diagnosis-modal-title').textContent = `Record / Update Diagnosis (${admissionData.Patient_Code} - ${admissionData.Full_Name})`;
-        document.getElementById('diag-chief-complaint').textContent = admissionData.Chief_Complaint || 'None Recorded';
-        document.getElementById('diag_input').value = admissionData.Diagnosis || '';
+        const titleEl = document.getElementById('diagnosis-modal-title');
+        if (titleEl) {
+            titleEl.textContent = `Update Clinical Assessment (${admissionData.Patient_Code} - ${admissionData.Full_Name})`;
+        }
+        const complaintInput = document.getElementById('diag_complaint_input');
+        if (complaintInput) {
+            complaintInput.value = admissionData.Chief_Complaint || '';
+        }
+        const diagInput = document.getElementById('diag_input');
+        if (diagInput) {
+            diagInput.value = admissionData.Diagnosis || '';
+        }
         modal.style.display = 'flex';
-        setTimeout(() => document.getElementById('diag_input').focus(), 100);
-    }
+        setTimeout(() => {
+            if (diagInput) diagInput.focus();
+        }, 100);
+    };
 
     const closeDiagnosisModal = () => {
         modal.style.display = 'none';
-    }
+    };
 
     window.openDiagnosisModal = openDiagnosisModal;
-    btnEdit.addEventListener('click', openDiagnosisModal);
+    if (btnEdit) btnEdit.addEventListener('click', openDiagnosisModal);
+    if (btnEditSummary) btnEditSummary.addEventListener('click', openDiagnosisModal);
     if (btnClose) btnClose.addEventListener('click', closeDiagnosisModal);
     if (btnCancel) btnCancel.addEventListener('click', closeDiagnosisModal);
 
@@ -1172,22 +1209,25 @@ const initDiagnosisModal = () => {
 
 const saveDiagnosis = () => {
     if (admissionData && admissionData.Status === 'Billed') {
-        alert("Diagnosis cannot be modified because this admission is already billed and settled.");
+        alert("Clinical assessment cannot be modified because this admission is already billed and settled.");
         return;
     }
 
     const diagInput = document.getElementById('diag_input');
-    const val = diagInput.value.trim();
+    const diagVal = diagInput ? diagInput.value.trim() : '';
+    const complaintInput = document.getElementById('diag_complaint_input');
+    const complaintVal = complaintInput ? complaintInput.value.trim() : '';
 
-    if (!val) {
+    if (!diagVal) {
         alert("Please enter the medical diagnosis.");
-        diagInput.focus();
+        if (diagInput) diagInput.focus();
         return;
     }
 
     const payload = {
         admission_id: admissionId,
-        diagnosis: val
+        diagnosis: diagVal,
+        chief_complaint: complaintVal
     };
 
     const formData = new FormData();
@@ -1197,25 +1237,41 @@ const saveDiagnosis = () => {
     axios.post(`${postApiUrl}/admissions.php`, formData)
         .then(response => {
             if (response.data.success) {
-                admissionData.Diagnosis = val;
+                admissionData.Diagnosis = diagVal;
+                admissionData.Chief_Complaint = complaintVal;
+
                 const diagEl = document.getElementById('banner-diagnosis');
                 if (diagEl) {
-                    diagEl.innerHTML = `<span style="color: #0284c7; font-weight: 700;">${val}</span>`;
+                    diagEl.innerHTML = `<span style="color: #0284c7; font-weight: 700;">${diagVal}</span>`;
                 }
+                const complaintEl = document.getElementById('banner-complaint');
+                if (complaintEl) {
+                    complaintEl.textContent = complaintVal || 'None Recorded';
+                }
+
+                const sumDiagEl = document.getElementById('summary-diagnosis-text');
+                if (sumDiagEl) {
+                    sumDiagEl.innerHTML = `<span class="diagnosis-badge">${diagVal}</span>`;
+                }
+                const sumComplaintEl = document.getElementById('summary-complaint-text');
+                if (sumComplaintEl) {
+                    sumComplaintEl.textContent = complaintVal ? `"${complaintVal}"` : 'No chief complaint recorded upon intake.';
+                }
+
                 document.getElementById('diagnosisModal').style.display = 'none';
                 if (typeof renderSettlementSection === 'function') {
                     renderSettlementSection();
                 }
-                alert(response.data.message || "Clinical diagnosis recorded successfully.");
+                alert(response.data.message || "Clinical assessment recorded successfully.");
             } else {
-                alert("Error updating diagnosis: " + (response.data.error || "Unknown error"));
+                alert("Error updating assessment: " + (response.data.error || "Unknown error"));
             }
         })
         .catch(err => {
             console.error("admission_details.js: Error saving diagnosis:", err);
-            alert("Network error saving diagnosis.");
+            alert("Network error saving assessment.");
         });
-}
+};
 
 const loadAdmissionDetails = () => {
     console.log("admission_details.js: Fetching admission profile for ID:", admissionId);
@@ -1237,6 +1293,16 @@ const loadAdmissionDetails = () => {
             admissionData = response.data;
             assignedDoctors = admissionData.Assigned_Doctors || [];
 
+            const rawNames = (admissionData.Full_Name || '').trim().split(' ');
+            let initials = '--';
+            if (rawNames.length > 1) {
+                initials = `${rawNames[0][0]}${rawNames[rawNames.length - 1][0]}`.toUpperCase();
+            } else if (rawNames[0]) {
+                initials = rawNames[0].substring(0, 2).toUpperCase();
+            }
+            const heroAvatar = document.getElementById('hero-patient-avatar');
+            if (heroAvatar) heroAvatar.textContent = initials;
+
             document.getElementById('banner-patient-name').textContent = admissionData.Full_Name;
             document.getElementById('banner-patient-code').textContent = admissionData.Patient_Code;
             document.getElementById('banner-patient-age').textContent = `${admissionData.Date_Of_Birth} (${admissionData.Age} yrs old)`;
@@ -1245,6 +1311,49 @@ const loadAdmissionDetails = () => {
             document.getElementById('banner-bed').textContent = admissionData.Bed_Code || 'Discharged / None';
             document.getElementById('banner-room').textContent = admissionData.Room_Name ? `${admissionData.Room_Name} (${admissionData.Room_Type})` : 'N/A';
             document.getElementById('banner-rate').textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
+
+            const setFieldTxt = (id, txt) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = txt;
+            };
+
+            setFieldTxt('summary-patient-name', admissionData.Full_Name || 'N/A');
+            setFieldTxt('summary-patient-code', admissionData.Patient_Code || 'N/A');
+            setFieldTxt('summary-patient-dob', `${admissionData.Date_Of_Birth || 'N/A'} (${admissionData.Age || 0} yrs old)`);
+            setFieldTxt('summary-patient-gender-blood', `${admissionData.Gender_Name || 'N/A'} • Blood: ${admissionData.Blood_Type_Name || 'N/A'}`);
+            setFieldTxt('summary-patient-contact', admissionData.Contact_Number || 'None recorded');
+            setFieldTxt('summary-patient-address', admissionData.Address || 'None recorded');
+            setFieldTxt('summary-patient-emergency', admissionData.Emergency_Contact_Name ? `${admissionData.Emergency_Contact_Name} (${admissionData.Emergency_Contact_Number || 'No phone'})` : 'None recorded');
+
+            setFieldTxt('summary-bed-code', admissionData.Bed_Code || 'Discharged / None');
+            setFieldTxt('summary-room-name', admissionData.Room_Name || 'N/A');
+            setFieldTxt('summary-room-type', admissionData.Room_Type || 'N/A');
+            setFieldTxt('summary-daily-rate', admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})} / day` : 'N/A');
+            setFieldTxt('summary-bed-in', admissionData.Bed_Date_In || admissionData.Admission_Date || 'N/A');
+            setFieldTxt('summary-stay-duration', `${admissionData.Calculated_Days || 1} day(s) (12:00 AM Midnight standard)`);
+
+            const sumComplaintEl = document.getElementById('summary-complaint-text');
+            if (sumComplaintEl) {
+                sumComplaintEl.textContent = admissionData.Chief_Complaint ? `"${admissionData.Chief_Complaint}"` : 'No chief complaint recorded upon intake.';
+            }
+
+            const sumDiagEl = document.getElementById('summary-diagnosis-text');
+            if (sumDiagEl) {
+                if (admissionData.Diagnosis) {
+                    sumDiagEl.innerHTML = `<span class="diagnosis-badge">${admissionData.Diagnosis}</span>`;
+                } else {
+                    sumDiagEl.innerHTML = `<span class="badge badge-warning">Pending Clinical Diagnosis</span>`;
+                }
+            }
+
+            const sumDoctorsEl = document.getElementById('summary-doctors-list');
+            if (sumDoctorsEl) {
+                if (assignedDoctors && assignedDoctors.length > 0) {
+                    sumDoctorsEl.innerHTML = assignedDoctors.map(d => `<span class="doctor-badge-pill">👨‍⚕️ ${d.Doctor_Name} <small>(${d.Doctor_Type})</small></span>`).join(' ');
+                } else {
+                    sumDoctorsEl.innerHTML = '<span class="text-muted">No physician assigned to this admission yet.</span>';
+                }
+            }
 
 
 

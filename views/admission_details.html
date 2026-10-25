@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=15.0">
-    <link rel="stylesheet" href="../css/admission_details.css?v=21.0">
+    <link rel="stylesheet" href="../css/common.css?v=16.0">
+    <link rel="stylesheet" href="../css/admission_details.css?v=22.0">
 </head>
 <body>
 
@@ -42,74 +42,43 @@
             </div>
 
             <div class="content-body">
-                <div class="card mb-4" id="patient-banner">
-                    <div class="card-header patient-summary-card-header">
-                        <div class="patient-summary-title-group">
-                            <h2 class="patient-summary-title">Patient & Admission Summary</h2>
-                            <button type="button" id="btnRefreshChart" class="btn-refresh" title="Refresh">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                            </button>
-                        </div>
-                        <div class="patient-summary-title-group">
-                            <button type="button" class="chart-btn-history" id="btnOpenAdmissionHistory">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span>View Admission History</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-grid">
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Patient Name</label>
-                                <div><strong id="banner-patient-name" style="font-size: 1.1rem;">Loading...</strong></div>
+                <div class="chart-patient-hero mb-4" id="patient-hero-bar">
+                    <div class="hero-identity-left">
+                        <div class="hero-avatar" id="hero-patient-avatar">--</div>
+                        <div class="hero-name-group">
+                            <div class="hero-name-row">
+                                <h1 class="hero-patient-name" id="banner-patient-name">Loading Patient...</h1>
+                                <span class="badge badge-primary hero-code-badge" id="banner-patient-code">PAT-000</span>
+                                <span class="badge badge-success hero-bed-badge" id="banner-bed">Bed --</span>
                             </div>
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Patient Code</label>
-                                <div><strong id="banner-patient-code" style="font-size: 1.1rem;">Loading...</strong></div>
-                            </div>
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">DOB / Age</label>
-                                <div id="banner-patient-age">Loading...</div>
-                            </div>
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Gender / Blood Type</label>
-                                <div id="banner-patient-gender-blood">Loading...</div>
-                            </div>
-
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Current Bed</label>
-                                <div><strong id="banner-bed" class="text-primary">Loading...</strong></div>
-                            </div>
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Room / Classification</label>
-                                <div id="banner-room">Loading...</div>
-                            </div>
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Daily Board Rate</label>
-                                <div id="banner-rate">Loading...</div>
-                            </div>
-                            <div>
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Admission Status</label>
-                                <div id="banner-status">Loading...</div>
-                            </div>
-
-                            <div class="span-2">
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Chief Complaint (On Admission)</label>
-                                <div id="banner-complaint" style="font-style: italic; color: #334155;">Loading...</div>
-                            </div>
-                            <div class="span-2">
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; display: block;">Clinical Medical Diagnosis</label>
-                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <div id="banner-diagnosis" style="font-weight: 600; color: #0284c7;">Loading...</div>
-                                    <button type="button" id="btnEditDiagnosis" class="btn-icon btn-action-edit btn-action-icon" title="Edit Clinical Diagnosis" aria-label="Edit Clinical Diagnosis" style="width: 24px; height: 24px; min-width: 24px; font-size: 12px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer;">✎</button>
-                                </div>
-                            </div>
-                            <div style="grid-column: 1 / -1;">
-                                <label class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Assigned Physician(s)</label>
-                                <div id="banner-doctors">Loading...</div>
+                            <div class="hero-meta-row">
+                                <span class="hero-meta-item" id="banner-room">Room --</span>
+                                <span class="hero-meta-bullet">&bull;</span>
+                                <span class="hero-meta-item" id="banner-patient-age">-- yrs old</span>
+                                <span class="hero-meta-bullet">&bull;</span>
+                                <span class="hero-meta-item" id="banner-patient-gender-blood">-- / Blood: --</span>
                             </div>
                         </div>
                     </div>
+                    <div class="hero-identity-right">
+                        <div class="hero-status-wrap" id="banner-status">
+                            <span class="badge badge-primary">Admitted</span>
+                        </div>
+                        <div class="hero-actions-wrap">
+                            <button type="button" class="btn btn-outline btn-sm" id="btnOpenAdmissionHistory" title="View Admission History">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span>Admission History</span>
+                            </button>
+                            <button type="button" id="btnRefreshChart" class="btn btn-outline btn-sm btn-icon" title="Refresh Patient Chart">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <span id="banner-rate" class="hero-hidden-meta"></span>
+                    <span id="banner-complaint" class="hero-hidden-meta"></span>
+                    <span id="banner-diagnosis" class="hero-hidden-meta"></span>
+                    <span id="banner-doctors" class="hero-hidden-meta"></span>
+                    <button type="button" id="btnEditDiagnosis" class="hero-hidden-meta"></button>
                 </div>
                 <div class="workflow-stepper" id="workflowStepper">
                     <div class="step-item" id="step-admission">
@@ -146,20 +115,155 @@
                 </div>
 
                 <div class="clinical-tabs-nav" id="clinicalTabsNav">
-                    <button type="button" class="tab-btn active" data-tab="tab-clinical">
-                        <span class="tab-title">1. Clinical Care & Charges</span>
+                    <button type="button" class="tab-btn active" data-tab="tab-summary">
+                        <span class="tab-title">1. Patient &amp; Admission Summary</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="tab-clinical">
+                        <span class="tab-title">2. Clinical Care &amp; Charges</span>
                     </button>
                     <button type="button" class="tab-btn" data-tab="tab-ledger">
-                        <span class="tab-title">2. Live Ledger & Advance Deposits</span>
+                        <span class="tab-title">3. Live Ledger &amp; Advance Deposits</span>
                         <span id="badge_tab_ledger" class="tab-count-badge">0 items</span>
                     </button>
                     <button type="button" class="tab-btn" data-tab="tab-settlement">
-                        <span class="tab-title">3. Discharge Clearance & Final SOA</span>
+                        <span class="tab-title">4. Discharge Clearance &amp; Final SOA</span>
                         <span id="badge_tab_settlement" class="tab-count-badge">Admitted</span>
                     </button>
                 </div>
 
-                <div class="tab-content-panel active" id="tab-clinical">
+                <div class="tab-content-panel active" id="tab-summary">
+                    <div class="summary-tab-container">
+                        <div class="summary-grid-top">
+                            <div class="card summary-card summary-card-patient">
+                                <div class="card-header summary-card-header">
+                                    <div class="summary-card-header-left">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        <h3>Patient Demographics &amp; Identity</h3>
+                                    </div>
+                                    <span class="badge badge-info" id="summary-patient-code">PAT-000</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="summary-data-table">
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Full Legal Name</span>
+                                            <strong class="summary-value" id="summary-patient-name">Loading...</strong>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Date of Birth &amp; Age</span>
+                                            <span class="summary-value" id="summary-patient-dob">--</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Gender &amp; Blood Type</span>
+                                            <span class="summary-value" id="summary-patient-gender-blood">--</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Contact Number</span>
+                                            <span class="summary-value" id="summary-patient-contact">--</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Residential Address</span>
+                                            <span class="summary-value" id="summary-patient-address">--</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Emergency Contact</span>
+                                            <span class="summary-value" id="summary-patient-emergency">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card summary-card summary-card-room">
+                                <div class="card-header summary-card-header">
+                                    <div class="summary-card-header-left">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                                        <h3>Bed &amp; Lodging Accommodation</h3>
+                                    </div>
+                                    <span class="badge badge-success" id="summary-bed-code">Bed --</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="summary-data-table">
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Ward &amp; Room Name</span>
+                                            <strong class="summary-value" id="summary-room-name">--</strong>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Room Classification</span>
+                                            <span class="summary-value" id="summary-room-type">--</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Daily Board Rate</span>
+                                            <strong class="summary-value text-primary" id="summary-daily-rate">--</strong>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Bed Assigned Since</span>
+                                            <span class="summary-value" id="summary-bed-in">--</span>
+                                        </div>
+                                        <div class="summary-data-row">
+                                            <span class="summary-label">Elapsed Inpatient Stays</span>
+                                            <span class="summary-value" id="summary-stay-duration">--</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card-action-bar">
+                                        <button type="button" class="btn btn-outline btn-sm btn-jump-transfers" id="btnJumpToBedTransfers">Transfer Room / Bed &rarr;</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card summary-card summary-card-clinical mb-4">
+                            <div class="card-header summary-card-header">
+                                <div class="summary-card-header-left">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                                    <h3>Clinical Assessment &amp; Care Team</h3>
+                                </div>
+                                <div class="summary-header-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnOpenAssessmentModal">
+                                        <span>✎ Edit Clinical Assessment</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="clinical-assessment-grid">
+                                    <div class="clinical-box clinical-box-diagnosis">
+                                        <div class="clinical-box-header">
+                                            <span class="clinical-box-tag">Official Medical Diagnosis</span>
+                                            <small class="text-muted">Editable before discharge</small>
+                                        </div>
+                                        <div class="clinical-box-content" id="summary-diagnosis-text">
+                                            <span class="badge badge-warning">Loading diagnosis...</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="clinical-box clinical-box-complaint">
+                                        <div class="clinical-box-header">
+                                            <span class="clinical-box-tag">Chief Complaint (On Admission)</span>
+                                            <small class="text-muted">Recorded upon intake</small>
+                                        </div>
+                                        <div class="clinical-box-content clinical-quote" id="summary-complaint-text">
+                                            Loading complaint...
+                                        </div>
+                                    </div>
+
+                                    <div class="clinical-box clinical-box-doctors">
+                                        <div class="clinical-box-header">
+                                            <span class="clinical-box-tag">Assigned Attending &amp; Consulting Physicians</span>
+                                        </div>
+                                        <div class="clinical-box-content" id="summary-doctors-list">
+                                            Loading care team...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="summary-nav-shortcuts">
+                            <button type="button" class="btn btn-outline" id="btnSummaryToClinical">Proceed to Clinical Orders &amp; Pharmacy &rarr;</button>
+                            <button type="button" class="btn btn-outline" id="btnSummaryToLedger">View Live Billing Ledger &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content-panel" id="tab-clinical" style="display: none;">
                     <div class="clinical-slide-switcher clinical-subnav" id="clinicalSubNav" role="tablist">
                         <div class="slide-glider subnav-glider" id="subnavGlider"></div>
                         <button type="button" class="slide-tab-item subnav-btn active" data-sub="sub-orders" role="tab" aria-selected="true">
@@ -524,13 +628,13 @@
     <div class="modal-overlay" id="diagnosisModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3 id="diagnosis-modal-title">Record / Update Clinical Diagnosis</h3>
+                <h3 id="diagnosis-modal-title">Update Clinical Assessment (Complaint &amp; Diagnosis)</h3>
                 <button type="button" class="modal-close" id="btnCloseDiagnosisModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group mb-3">
-                    <label class="form-label" style="font-size: 0.85rem; color: #64748b;">Patient's Chief Complaint</label>
-                    <div id="diag-chief-complaint" style="padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-style: italic; font-size: 0.9rem; color: #334155;"></div>
+                    <label class="form-label" for="diag_complaint_input">Patient's Chief Complaint</label>
+                    <textarea id="diag_complaint_input" class="form-control" rows="2" placeholder="Enter patient's chief complaint on admission..."></textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="diag_input">Medical / Clinical Diagnosis * <span class="info-tip" tabindex="0" data-tooltip="Recorded official diagnosis will appear in the patient chart, directory, and billing statements." aria-label="Diagnosis info">i</span></label>
@@ -539,7 +643,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btnCancelDiagnosis">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btnSaveDiagnosis">Save Diagnosis</button>
+                <button type="button" class="btn btn-primary" id="btnSaveDiagnosis">Save Assessment</button>
             </div>
         </div>
     </div>
@@ -706,7 +810,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=15.0"></script>
     <script src="../js/common.js?v=15.0"></script>
-    <script src="../js/admission_details.js?v=21.0"></script>
+    <script src="../js/admission_details.js?v=22.0"></script>
 </body>
 </html>
 

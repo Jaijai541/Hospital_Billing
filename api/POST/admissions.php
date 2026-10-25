@@ -305,6 +305,7 @@ class AdmissionManager
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
         $diagnosis = trim($json['diagnosis'] ?? '');
+        $chiefComplaint = trim($json['chief_complaint'] ?? '');
 
         if (empty($admissionId)) {
             return json_encode(['error' => 'Admission ID is required.']);
@@ -324,23 +325,34 @@ class AdmissionManager
             }
 
             if ($currentStatus === 'Billed') {
-                return json_encode(['error' => 'Diagnosis cannot be modified because this admission is already billed and settled.']);
+                return json_encode(['error' => 'Clinical assessment cannot be modified because this admission is already billed and settled.']);
             }
 
-            $sql = "UPDATE Admission SET Diagnosis = :diagnosis WHERE Admission_ID = :aid";
-            $stmt = $conn->prepare($sql);
-            $stmt->execute([
-                ':diagnosis' => $diagnosis,
-                ':aid' => $admissionId
-            ]);
+            if ($chiefComplaint !== '') {
+                $sql = "UPDATE Admission SET Diagnosis = :diagnosis, Chief_Complaint = :complaint WHERE Admission_ID = :aid";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([
+                    ':diagnosis' => $diagnosis,
+                    ':complaint' => $chiefComplaint,
+                    ':aid' => $admissionId
+                ]);
+            } else {
+                $sql = "UPDATE Admission SET Diagnosis = :diagnosis WHERE Admission_ID = :aid";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([
+                    ':diagnosis' => $diagnosis,
+                    ':aid' => $admissionId
+                ]);
+            }
 
             return json_encode([
                 'success' => true,
-                'message' => 'Clinical diagnosis recorded successfully.',
-                'diagnosis' => $diagnosis
+                'message' => 'Clinical assessment recorded successfully.',
+                'diagnosis' => $diagnosis,
+                'chief_complaint' => $chiefComplaint
             ]);
         } catch (PDOException $e) {
-            return json_encode(['error' => 'Database error updating diagnosis: ' . $e->getMessage()]);
+            return json_encode(['error' => 'Database error updating clinical assessment: ' . $e->getMessage()]);
         }
     }
 }
@@ -365,6 +377,7 @@ switch ($operation) {
         echo $admission->dischargePatient($json);
         break;
     case 'updateDiagnosis':
+    case 'updateClinicalAssessment':
         echo $admission->updateDiagnosis($json);
         break;
 }

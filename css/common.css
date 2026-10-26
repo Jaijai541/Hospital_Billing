@@ -3422,3 +3422,7 @@ textarea.form-control {
     font-size: 12px;
     font-weight: 600;
 }
+
+.is-hidden {
+    display: none !important;
+}

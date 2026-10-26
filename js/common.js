@@ -2336,7 +2336,6 @@ const ensureClinicalNotificationsModal = () => {
     modal = document.createElement("div");
     modal.id = "clinicalNotifModal";
     modal.className = "modal-overlay";
-    modal.style.display = "none";
     modal.innerHTML = `
         <div class="modal-container notif-modal-container">
             <div class="modal-header">
@@ -2356,17 +2355,11 @@ const ensureClinicalNotificationsModal = () => {
                         <p class="text-muted">Loading clinical alerts...</p>
                     </div>
                 </div>
-                <div id="notif-tab-content-queue" style="display: none;">
+                <div id="notif-tab-content-queue" class="is-hidden">
                     <div class="queue-station-filter-bar">
-                        <label for="notif-queue-station-select" class="form-label font-bold">Filter Department Queue:</label>
+                        <label for="notif-queue-station-select" class="form-label font-bold" id="notif-queue-station-label">Department Queue:</label>
                         <select id="notif-queue-station-select" class="form-control queue-station-dropdown">
-                            <option value="0">All Hospital Stations</option>
-                            <option value="1">Central Pharmacy (PHARM)</option>
-                            <option value="2">Radiology &amp; Imaging (RAD)</option>
-                            <option value="3">Cardiology Station (CARD)</option>
-                            <option value="4">Laboratory (LAB)</option>
-                            <option value="5">Nurse Station (NRS)</option>
-                            <option value="9">Emergency Department (ER)</option>
+                            <option value="0">Loading Stations...</option>
                         </select>
                     </div>
                     <div class="table-responsive" id="notif-queue-table-div">
@@ -2396,14 +2389,14 @@ const ensureClinicalNotificationsModal = () => {
         tabAlerts.addEventListener("click", () => {
             tabAlerts.classList.add("active");
             tabQueue.classList.remove("active");
-            if (contentAlerts) contentAlerts.style.display = "";
-            if (contentQueue) contentQueue.style.display = "none";
+            if (contentAlerts) contentAlerts.classList.remove("is-hidden");
+            if (contentQueue) contentQueue.classList.add("is-hidden");
         });
         tabQueue.addEventListener("click", () => {
             tabQueue.classList.add("active");
             tabAlerts.classList.remove("active");
-            if (contentAlerts) contentAlerts.style.display = "none";
-            if (contentQueue) contentQueue.style.display = "";
+            if (contentAlerts) contentAlerts.classList.add("is-hidden");
+            if (contentQueue) contentQueue.classList.remove("is-hidden");
             fetchDepartmentOrdersQueue();
         });
     }
@@ -2417,13 +2410,16 @@ const ensureClinicalNotificationsModal = () => {
         });
     }
 
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    setupQueueStationSelect(user);
+
     const markAllBtn = document.getElementById("btnMarkAllNotifsRead");
     if (markAllBtn) {
         markAllBtn.addEventListener("click", () => {
-            const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
             const fd = new FormData();
             fd.append("operation", "markNotificationRead");
-            fd.append("json", JSON.stringify({ user_id: user.user_id, mark_all: 1 }));
+            fd.append("json", JSON.stringify({ user_id: curUser.user_id, mark_all: 1 }));
             axios.post("../api/POST/clinical_orders.php", fd).then(() => {
                 fetchRealtimeNotifications();
             });
@@ -2583,24 +2579,117 @@ const fetchRealtimeNotifications = () => {
     }).catch(() => {});
 };
 
+const setupQueueStationSelect = (user) => {
+    const select = document.getElementById("notif-queue-station-select");
+    const label = document.getElementById("notif-queue-station-label");
+    if (!select) return;
+
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1;
+
+    if (isHigherUp) {
+        if (label) label.textContent = "Filter Department Queue:";
+        select.disabled = false;
+        if (!select.dataset.loadedHigherUp) {
+            axios.get("../api/GET/departments.php", {
+                params: { operation: "getActiveDepartments" }
+            }).then(res => {
+                const depts = res.data || [];
+                let html = '<option value="0">All Hospital Stations</option>';
+                depts.forEach(d => {
+                    const prefix = d.Code_Prefix ? ` (${d.Code_Prefix})` : '';
+                    html += `<option value="${d.Station_ID}">${d.Station_Name}${prefix}</option>`;
+                });
+                select.innerHTML = html;
+                select.dataset.loadedHigherUp = "true";
+                if (select.dataset.pendingValue) {
+                    select.value = select.dataset.pendingValue;
+                    delete select.dataset.pendingValue;
+                }
+            }).catch(() => {
+                select.innerHTML = `
+                    <option value="0">All Hospital Stations</option>
+                    <option value="1">Central Pharmacy (PHARM)</option>
+                    <option value="2">Radiology &amp; Imaging (RAD)</option>
+                    <option value="3">Cardiology Station (CARD)</option>
+                    <option value="4">Laboratory (LAB)</option>
+                    <option value="5">Nurse Station (NRS)</option>
+                    <option value="9">Emergency Department (ER)</option>
+                `;
+            });
+        }
+        return;
+    }
+
+    const assigned = Array.isArray(user.assigned_stations) ? user.assigned_stations : [];
+    if (assigned.length === 0 && user.station_id) {
+        assigned.push({
+            Station_ID: parseInt(user.station_id, 10),
+            Station_Name: user.station_name || "Assigned Station",
+            Code_Prefix: ""
+        });
+    }
+
+    if (assigned.length === 0) {
+        if (label) label.textContent = "Department Queue:";
+        select.innerHTML = '<option value="0">No Department Assigned</option>';
+        select.disabled = true;
+        return;
+    }
+
+    if (assigned.length === 1) {
+        const st = assigned[0];
+        const prefix = st.Code_Prefix ? ` (${st.Code_Prefix})` : '';
+        if (label) label.textContent = "Assigned Department Queue:";
+        select.innerHTML = `<option value="${st.Station_ID}">${st.Station_Name}${prefix}</option>`;
+        select.disabled = true;
+        select.value = String(st.Station_ID);
+        return;
+    }
+
+    if (label) label.textContent = "My Department Queues:";
+    select.disabled = false;
+    let html = '<option value="0">All My Assigned Departments</option>';
+    assigned.forEach(st => {
+        const prefix = st.Code_Prefix ? ` (${st.Code_Prefix})` : '';
+        html += `<option value="${st.Station_ID}">${st.Station_Name}${prefix}</option>`;
+    });
+    select.innerHTML = html;
+};
+
 const fetchDepartmentOrdersQueue = (customStationId = null) => {
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const container = document.getElementById("notif-queue-table-div");
     if (!container) return;
 
-    const assignedStationIds = user.assigned_station_ids || (user.station_id ? [user.station_id] : []);
+    setupQueueStationSelect(user);
+
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1;
+    const assigned = Array.isArray(user.assigned_stations) ? user.assigned_stations : [];
+    const assignedStationIds = (user.assigned_station_ids || (user.station_id ? [user.station_id] : (assigned.map(a => a.Station_ID)))).map(id => parseInt(id, 10)).filter(id => id > 0);
+
+    if (!isHigherUp && assignedStationIds.length === 0) {
+        container.innerHTML = '<p class="text-muted">You are not currently assigned to any clinical station. Please contact your administrator for department assignment.</p>';
+        return;
+    }
+
     const stationSelect = document.getElementById("notif-queue-station-select");
     let targetStation = 0;
     if (customStationId !== null) {
         targetStation = customStationId;
     } else if (stationSelect && stationSelect.value !== "" && stationSelect.dataset.userChanged === "true") {
         targetStation = parseInt(stationSelect.value, 10);
+    } else if (!isHigherUp && assignedStationIds.length === 1) {
+        targetStation = parseInt(assignedStationIds[0], 10);
     } else {
-        targetStation = parseInt(user.station_id || user.Station_ID || user.doctor_station_id || 0, 10);
+        targetStation = 0;
     }
 
     if (stationSelect && customStationId === null && targetStation > 0 && stationSelect.dataset.userChanged !== "true") {
-        stationSelect.value = String(targetStation);
+        if (stationSelect.dataset.loadedHigherUp || !isHigherUp) {
+            stationSelect.value = String(targetStation);
+        } else {
+            stationSelect.dataset.pendingValue = String(targetStation);
+        }
     }
 
     axios.get("../api/GET/clinical_orders.php", {
@@ -2686,6 +2775,7 @@ const prepareDepartmentOrderDirect = (requestId) => {
 window.prepareDepartmentOrderDirect = prepareDepartmentOrderDirect;
 window.fetchRealtimeNotifications = fetchRealtimeNotifications;
 window.fetchDepartmentOrdersQueue = fetchDepartmentOrdersQueue;
+window.setupQueueStationSelect = setupQueueStationSelect;
 
 const initClinicalNotificationsSystem = () => {
     ensureClinicalNotificationsModal();

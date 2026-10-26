@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Invoices & Settled Accounts â€” Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.6">
+    <title>Invoices & Settled Accounts — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=18.7">
     <link rel="stylesheet" href="../css/invoices.css?v=18.3">
 </head>
 <body>
@@ -72,12 +72,12 @@
                         <div><strong class="pay-summary-label">Invoice Code:</strong> <span id="pay_invoice_code" class="pay-summary-value"></span></div>
                         <div><strong class="pay-summary-label">Admission Code:</strong> <span id="pay_admission_code" class="pay-summary-value"></span></div>
                         <div class="span-2"><strong class="pay-summary-label">Patient Name:</strong> <span id="pay_patient_name" class="pay-summary-value"></span></div>
-                        <div><strong class="pay-summary-label">Net Amount Due:</strong> â‚±<span id="pay_net_due"></span></div>
-                        <div><strong class="pay-summary-label">Amount Paid So Far:</strong> â‚±<span id="pay_amount_paid"></span></div>
+                        <div><strong class="pay-summary-label">Net Amount Due:</strong> ₱<span id="pay_net_due"></span></div>
+                        <div><strong class="pay-summary-label">Amount Paid So Far:</strong> ₱<span id="pay_amount_paid"></span></div>
                     </div>
                     <div class="pay-summary-balance-row">
                         <span class="pay-summary-balance-label">CURRENT OUTSTANDING BALANCE:</span>
-                        <strong class="pay-summary-balance-val">â‚±<span id="pay_remaining_balance"></span></strong>
+                        <strong class="pay-summary-balance-val">₱<span id="pay_remaining_balance"></span></strong>
                     </div>
                 </div>
 
@@ -91,7 +91,7 @@
                 </div>
 
                 <div class="form-group mb-3">
-                    <label class="form-label" for="pay_amount_input">Payment Tendered / Received (â‚±) *</label>
+                    <label class="form-label" for="pay_amount_input">Payment Tendered / Received (₱) *</label>
                     <div class="pay-input-group">
                         <input type="number" id="pay_amount_input" class="form-control pay-amount-input" step="0.01" min="0.01" placeholder="0.00" required>
                         <button type="button" class="btn btn-secondary" id="btnPayFullBalance">Pay Exact Balance</button>
@@ -106,11 +106,11 @@
                 <div class="pay-change-panel">
                     <div class="pay-change-row">
                         <span>New Balance After Payment:</span>
-                        <strong id="pay_new_balance_display" class="text-success">â‚±0.00</strong>
+                        <strong id="pay_new_balance_display" class="text-success">₱0.00</strong>
                     </div>
                     <div class="pay-change-row">
                         <span>Customer Change Given:</span>
-                        <strong id="pay_change_display" class="text-success">â‚±0.00</strong>
+                        <strong id="pay_change_display" class="text-success">₱0.00</strong>
                     </div>
                 </div>
             </div>
@@ -143,9 +143,9 @@
                             </tr>
                             <tr>
                                 <td class="invoice-summary-label">Gross Charges</td>
-                                <td class="invoice-summary-value"><strong>â‚±<span id="hist_gross_total">0.00</span></strong></td>
+                                <td class="invoice-summary-value"><strong>₱<span id="hist_gross_total">0.00</span></strong></td>
                                 <td class="invoice-summary-label">12% VAT</td>
-                                <td class="invoice-summary-value"><strong id="hist_vat_amount_wrap">â‚±<span id="hist_vat_amount">0.00</span></strong></td>
+                                <td class="invoice-summary-value"><strong id="hist_vat_amount_wrap">₱<span id="hist_vat_amount">0.00</span></strong></td>
                             </tr>
                             <tr>
                                 <td class="invoice-summary-label">Discounts Applied</td>
@@ -153,13 +153,13 @@
                             </tr>
                             <tr>
                                 <td class="invoice-summary-label">Net Amount Due</td>
-                                <td class="invoice-summary-value"><strong class="text-primary font-bold">â‚±<span id="hist_net_due">0.00</span></strong></td>
+                                <td class="invoice-summary-value"><strong class="text-primary font-bold">₱<span id="hist_net_due">0.00</span></strong></td>
                                 <td class="invoice-summary-label">Total Amount Paid</td>
-                                <td class="invoice-summary-value"><strong class="text-success font-bold">â‚±<span id="hist_amount_paid">0.00</span></strong></td>
+                                <td class="invoice-summary-value"><strong class="text-success font-bold">₱<span id="hist_amount_paid">0.00</span></strong></td>
                             </tr>
                             <tr>
                                 <td class="invoice-summary-label">Remaining Balance</td>
-                                <td class="invoice-summary-value" colspan="3"><strong id="hist_remaining_balance_wrap" class="invoice-balance-highlight">â‚±<span id="hist_remaining_balance">0.00</span></strong></td>
+                                <td class="invoice-summary-value" colspan="3"><strong id="hist_remaining_balance_wrap" class="invoice-balance-highlight">₱<span id="hist_remaining_balance">0.00</span></strong></td>
                             </tr>
                         </tbody>
                     </table>
@@ -190,7 +190,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=18.3"></script>
-    <script src="../js/common.js?v=18.6"></script>
+    <script src="../js/common.js?v=18.7"></script>
     <script src="../js/invoices.js?v=18.3"></script>
 </body>
 </html>

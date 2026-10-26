@@ -201,7 +201,7 @@ const displayDepartmentsTable = (departments) => {
 
         let orderBadge = `<span class="badge badge-outline">0 Pending</span>`;
         if (pendingCount > 0) {
-            orderBadge = `<span class="badge badge-warning font-bold">🔔 ${pendingCount} Pending Order${pendingCount === 1 ? '' : 's'}</span>`;
+            orderBadge = `<span class="badge badge-warning font-bold">${pendingCount} Pending Order${pendingCount === 1 ? '' : 's'}</span>`;
         }
 
         const row = document.createElement("tr");

@@ -258,16 +258,15 @@ class ClinicalOrderManager
         $roleId = intval($json['role_id'] ?? 0);
         $status = trim($json['status'] ?? '');
 
-        $stationIds = [];
-        if (!empty($json['station_ids'])) {
-            if (is_array($json['station_ids'])) {
-                $stationIds = array_map('intval', $json['station_ids']);
-            } else {
-                $stationIds = array_map('intval', explode(',', $json['station_ids']));
-            }
+        $isHigherUp = ($roleId === 1) ? 1 : 0;
+        if ($roleId > 0 && !$isHigherUp) {
+            $rStmt = $conn->prepare("SELECT Is_Higher_Up FROM Enum_User_Role WHERE Role_ID = :rid LIMIT 1");
+            $rStmt->execute([':rid' => $roleId]);
+            $isHigherUp = intval($rStmt->fetchColumn() ?: 0);
         }
 
-        if ($stationId <= 0 && $userId > 0) {
+        $assignedStationIds = [];
+        if ($userId > 0) {
             $stStmt = $conn->prepare("
                 SELECT DISTINCT Station_ID FROM (
                     SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid
@@ -282,20 +281,36 @@ class ClinicalOrderManager
             $stStmt->execute([':uid' => $userId]);
             $dbStationIds = $stStmt->fetchAll(PDO::FETCH_COLUMN);
             foreach ($dbStationIds as $sid) {
-                $stationIds[] = intval($sid);
+                $assignedStationIds[] = intval($sid);
             }
         }
-        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
+        $assignedStationIds = array_values(array_unique(array_filter($assignedStationIds, fn($id) => $id > 0)));
 
         $where = "WHERE 1=1";
         $params = [];
-        if ($stationId > 0) {
-            $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
-            $params[':sid'] = $stationId;
-        } else if (!empty($stationIds) && $roleId !== 1) {
-            $stationIdList = implode(",", $stationIds);
-            $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
+
+        if (!$isHigherUp) {
+            if (empty($assignedStationIds)) {
+                return json_encode([]);
+            }
+
+            if ($stationId > 0) {
+                if (!in_array($stationId, $assignedStationIds)) {
+                    return json_encode([]);
+                }
+                $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+                $params[':sid'] = $stationId;
+            } else {
+                $stationIdList = implode(",", $assignedStationIds);
+                $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
+            }
+        } else {
+            if ($stationId > 0) {
+                $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+                $params[':sid'] = $stationId;
+            }
         }
+
         if (!empty($status)) {
             $where .= " AND dor.Status = :status";
             $params[':status'] = $status;

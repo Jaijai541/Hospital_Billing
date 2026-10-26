@@ -1103,7 +1103,7 @@ const wireLookupPickers = () => {
         openLookupPicker({
             title: 'Select Delivering Healthcare Personnel',
             placeholder: 'Search nurse or doctor name, role, department, specialty...',
-            columns: ['Personnel Name', 'Healthcare Role', 'Department / Station', 'Specialties'],
+            columns: ['Personnel Name', 'Healthcare Role', 'Department & Specialties'],
             items: availableHealthcarePersonnel,
             filterOptions: [
                 { label: 'All Personnel', value: 'all' },
@@ -1135,8 +1135,10 @@ const wireLookupPickers = () => {
                     <div class="table-sub-text">${p.category}</div>
                 </td>
                 <td><span class="badge ${p.type === 'doctor' ? 'badge-primary' : 'badge-info'}">${p.role}</span></td>
-                <td><span class="dept-code-pill">${p.department || '-'}</span></td>
-                <td><span class="badge badge-outline">${p.specialties || '-'}</span></td>
+                <td>
+                    <div class="table-primary-text font-bold">${p.department || '-'}</div>
+                    <div class="table-sub-text">${p.specialties || '-'}</div>
+                </td>
             `,
             getItemName: (p) => `${p.name} (${p.department || p.category})`,
             onSelect: (p) => {

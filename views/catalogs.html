@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Charge Catalogs — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.1">
+    <link rel="stylesheet" href="../css/common.css?v=18.2">
     <link rel="stylesheet" href="../css/catalogs.css">
 </head>
 <body>
@@ -47,12 +47,26 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="code_prefix">Code Prefix</label>
-                                <input type="text" id="code_prefix" class="form-control" placeholder="MED" readonly style="background-color: #f1f5f9;">
+                                <label class="form-label" for="station_id">Owning Department / Station *</label>
+                                <select id="station_id" class="form-select" required>
+                                    <option value="1">Central Pharmacy (Medicines &amp; Drugs)</option>
+                                    <option value="2">Radiology &amp; Imaging (X-Ray, Ultrasound, CT)</option>
+                                    <option value="3">Cardiology Station (ECG, Echo)</option>
+                                    <option value="4">Laboratory (CBC, Blood Chemistry)</option>
+                                    <option value="5">Nurse Station (Supplies &amp; Ward Care)</option>
+                                    <option value="6">Physical Therapy &amp; Rehab</option>
+                                    <option value="9">Emergency Department</option>
+                                    <option value="11">Intensive Care Unit (ICU)</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="unit_price">Standard Unit Price (?)</label>
+                                <label class="form-label" for="code_prefix">Code Prefix</label>
+                                <input type="text" id="code_prefix" class="form-control" placeholder="MED" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="unit_price">Standard Unit Price (₱)</label>
                                 <input type="number" step="0.01" min="0" id="unit_price" class="form-control" placeholder="0.00" required>
                             </div>
                         </div>
@@ -94,6 +108,19 @@
                             </div>
 
                             <div class="form-group filter-capsule-select">
+                                <label class="form-label" for="filter_station">Department Station</label>
+                                <select id="filter_station" class="form-select">
+                                    <option value="all">All Departments</option>
+                                    <option value="1">Central Pharmacy</option>
+                                    <option value="2">Radiology &amp; Imaging</option>
+                                    <option value="3">Cardiology Station</option>
+                                    <option value="4">Laboratory</option>
+                                    <option value="5">Nurse Station</option>
+                                    <option value="6">Physical Therapy</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group filter-capsule-select">
                                 <label class="form-label" for="filter_status">Status</label>
                                 <select id="filter_status" class="form-select">
                                     <option value="all">All Records</option>
@@ -112,9 +139,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=15.0"></script>
-    <script src="../js/common.js?v=18.1"></script>
-    <script src="../js/catalogs.js?v=15.0"></script>
+    <script src="../js/sidebar.js?v=18.2"></script>
+    <script src="../js/common.js?v=18.2"></script>
+    <script src="../js/catalogs.js?v=18.2"></script>
 </body>
 </html>
 

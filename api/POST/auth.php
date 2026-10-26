@@ -19,9 +19,11 @@ class Auth
             ]);
         }
 
-        $sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.Username, u.Password_Hash, u.Role_ID, r.Role_Name 
+        $sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.Username, u.Password_Hash, u.Role_ID, r.Role_Name, r.Access_Domain, r.Permissions, r.Is_Higher_Up,
+                       d.Doctor_ID, d.Station_ID AS Doctor_Station_ID
                 FROM System_User u 
                 INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID 
+                LEFT JOIN Doctor d ON u.User_ID = d.User_ID AND d.Is_Active = 1
                 WHERE u.Username = :username AND u.Is_Active = 1";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":username", $username);
@@ -29,14 +31,26 @@ class Auth
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['Password_Hash'])) {
+            $perms = [];
+            if (!empty($user['Permissions'])) {
+                $decoded = json_decode($user['Permissions'], true);
+                if (is_array($decoded)) {
+                    $perms = $decoded;
+                }
+            }
             return json_encode([
                 "status" => 1,
                 "user" => [
-                    "user_id"   => $user['User_ID'],
-                    "username"  => $user['Username'],
-                    "full_name" => $user['First_Name'] . " " . $user['Last_Name'],
-                    "role_name" => $user['Role_Name'],
-                    "role_id"   => $user['Role_ID']
+                    "user_id"           => $user['User_ID'],
+                    "username"          => $user['Username'],
+                    "full_name"         => $user['First_Name'] . " " . $user['Last_Name'],
+                    "role_name"         => $user['Role_Name'],
+                    "role_id"           => $user['Role_ID'],
+                    "access_domain"     => $user['Access_Domain'] ?? 'Clinical',
+                    "is_higher_up"      => intval($user['Is_Higher_Up'] ?? 0),
+                    "permissions"       => $perms,
+                    "doctor_id"         => !empty($user['Doctor_ID']) ? intval($user['Doctor_ID']) : null,
+                    "doctor_station_id" => !empty($user['Doctor_Station_ID']) ? intval($user['Doctor_Station_ID']) : null
                 ]
             ]);
         } else {

@@ -1467,6 +1467,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initInfoTooltips();
     initInputValidationGuards();
     schedulePermissionsEnforcement();
+    initClinicalNotificationsSystem();
     try {
         const obs = new MutationObserver(() => schedulePermissionsEnforcement());
         obs.observe(document.body, { childList: true, subtree: true });
@@ -2091,3 +2092,247 @@ document.addEventListener("keydown", (e) => {
         defaultDomTableSort(table, th, th.getAttribute("data-sort") || "");
     }
 });
+
+const ensureClinicalNotificationsModal = () => {
+    let modal = document.getElementById("clinicalNotifModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "clinicalNotifModal";
+    modal.className = "modal-overlay";
+    modal.style.display = "none";
+    modal.innerHTML = `
+        <div class="modal-container notif-modal-container">
+            <div class="modal-header">
+                <div>
+                    <h3>Clinical Orders &amp; Department Alerts</h3>
+                    <div class="table-sub-text">Real-time clinical order tracking and department fulfillment</div>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseClinicalNotifModal" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="notif-tabs" role="tablist">
+                    <button type="button" class="notif-tab-btn active" id="btnTabNotifAlerts">Real-Time Alerts (<span id="notif-tab-badge">0</span>)</button>
+                    <button type="button" class="notif-tab-btn" id="btnTabNotifQueue">Department Orders Queue</button>
+                </div>
+                <div id="notif-tab-content-alerts">
+                    <div id="notif-alerts-list">
+                        <p class="text-muted">Loading clinical alerts...</p>
+                    </div>
+                </div>
+                <div id="notif-tab-content-queue" style="display: none;">
+                    <div class="table-responsive" id="notif-queue-table-div">
+                        <p class="text-muted">Loading department orders...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnMarkAllNotifsRead" class="btn btn-secondary">Mark All as Read</button>
+                <button type="button" id="btnCloseNotifFooter" class="btn btn-primary">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const closeBtn = document.getElementById("btnCloseClinicalNotifModal");
+    if (closeBtn) closeBtn.addEventListener("click", () => closeModal("clinicalNotifModal"));
+    const closeFooter = document.getElementById("btnCloseNotifFooter");
+    if (closeFooter) closeFooter.addEventListener("click", () => closeModal("clinicalNotifModal"));
+
+    const tabAlerts = document.getElementById("btnTabNotifAlerts");
+    const tabQueue = document.getElementById("btnTabNotifQueue");
+    const contentAlerts = document.getElementById("notif-tab-content-alerts");
+    const contentQueue = document.getElementById("notif-tab-content-queue");
+
+    if (tabAlerts && tabQueue) {
+        tabAlerts.addEventListener("click", () => {
+            tabAlerts.classList.add("active");
+            tabQueue.classList.remove("active");
+            if (contentAlerts) contentAlerts.style.display = "";
+            if (contentQueue) contentQueue.style.display = "none";
+        });
+        tabQueue.addEventListener("click", () => {
+            tabQueue.classList.add("active");
+            tabAlerts.classList.remove("active");
+            if (contentAlerts) contentAlerts.style.display = "none";
+            if (contentQueue) contentQueue.style.display = "";
+            fetchDepartmentOrdersQueue();
+        });
+    }
+
+    const markAllBtn = document.getElementById("btnMarkAllNotifsRead");
+    if (markAllBtn) {
+        markAllBtn.addEventListener("click", () => {
+            const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const fd = new FormData();
+            fd.append("operation", "markNotificationRead");
+            fd.append("json", JSON.stringify({ user_id: user.user_id, mark_all: 1 }));
+            axios.post("../api/POST/clinical_orders.php", fd).then(() => {
+                fetchRealtimeNotifications();
+            });
+        });
+    }
+
+    return modal;
+};
+
+const fetchRealtimeNotifications = () => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    if (!user || !user.role_id) return;
+
+    axios.get("../api/GET/clinical_orders.php", {
+        params: {
+            operation: "getNotifications",
+            json: JSON.stringify({
+                user_id: user.user_id || user.User_ID || 0,
+                role_id: user.role_id || 0,
+                station_id: user.doctor_station_id || 0
+            })
+        }
+    }).then(res => {
+        const data = res.data || {};
+        const unreadCount = parseInt(data.unread_count || 0, 10);
+        const badge = document.getElementById("clinical-notif-badge");
+        const tabBadge = document.getElementById("notif-tab-badge");
+        if (badge) {
+            badge.textContent = unreadCount;
+            badge.style.display = unreadCount > 0 ? "inline-block" : "none";
+        }
+        if (tabBadge) {
+            tabBadge.textContent = unreadCount;
+        }
+
+        const listContainer = document.getElementById("notif-alerts-list");
+        if (listContainer && data.notifications) {
+            if (data.notifications.length === 0) {
+                listContainer.innerHTML = '<p class="text-muted">No clinical alerts recorded yet.</p>';
+                return;
+            }
+            let html = "";
+            data.notifications.forEach(n => {
+                const unreadClass = (parseInt(n.Is_Read, 10) === 0) ? "unread" : "";
+                let typeBadge = '<span class="badge badge-info">Alert</span>';
+                if (n.Notification_Type === "Order_Requested") typeBadge = '<span class="badge badge-warning">Order Requested</span>';
+                else if (n.Notification_Type === "Order_Prepared") typeBadge = '<span class="badge badge-primary">Order Prepared</span>';
+                else if (n.Notification_Type === "Order_Administered") typeBadge = '<span class="badge badge-success">Administered</span>';
+
+                html += `
+                    <div class="notif-item-card ${unreadClass}" data-notif-id="${n.Notification_ID}">
+                        <div class="notif-item-header">
+                            <div class="notif-item-title">${n.Title}</div>
+                            <div class="notif-item-time">${n.Formatted_Date} ${n.Formatted_Time}</div>
+                        </div>
+                        <div class="notif-item-msg">${n.Message}</div>
+                        <div class="notif-item-footer">
+                            <div>${typeBadge} • <span class="table-sub-text">Patient: <strong>${n.Patient_Name} (${n.Patient_Code})</strong></span></div>
+                            <a href="admission_details.html?id=${n.Admission_ID}&sub=sub-orders" class="btn btn-sm btn-outline">View Order</a>
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+    }).catch(() => {});
+};
+
+const fetchDepartmentOrdersQueue = () => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const container = document.getElementById("notif-queue-table-div");
+    if (!container) return;
+
+    axios.get("../api/GET/clinical_orders.php", {
+        params: {
+            operation: "getDepartmentOrders",
+            json: JSON.stringify({
+                station_id: user.doctor_station_id || 0
+            })
+        }
+    }).then(res => {
+        const orders = res.data || [];
+        if (orders.length === 0) {
+            container.innerHTML = '<p class="text-muted">No pending department orders at this time.</p>';
+            return;
+        }
+
+        let html = '<table class="data-table"><thead><tr>';
+        html += '<th>Order & Patient</th>';
+        html += '<th>Prescribed Item & Instructions</th>';
+        html += '<th>Status</th>';
+        html += '<th class="text-center">Action</th>';
+        html += '</tr></thead><tbody>';
+
+        orders.forEach(o => {
+            let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
+            let actionBtn = `<a href="admission_details.html?id=${o.Admission_ID}&sub=sub-orders" class="btn btn-sm btn-outline">Open Chart</a>`;
+
+            if (o.Status === 'Requested' || o.Status === 'Pending') {
+                statusBadge = '<span class="badge badge-warning">Requested</span>';
+                actionBtn = `<button type="button" class="btn btn-sm btn-primary" onclick="prepareDepartmentOrderDirect(${o.Request_ID})">Mark Prepared</button>`;
+            } else if (o.Status === 'Prepared') {
+                statusBadge = '<span class="badge badge-primary">Prepared (Ready)</span>';
+                actionBtn = `<a href="admission_details.html?id=${o.Admission_ID}&sub=sub-orders" class="btn btn-sm btn-success">Deliver / Administer</a>`;
+            } else if (o.Status === 'Administered') {
+                statusBadge = '<span class="badge badge-success">Administered</span>';
+            }
+
+            const dosageText = o.Dosage_Instructions ? `<div class="table-sub-text-dark">Instructions: <em>${o.Dosage_Instructions}</em></div>` : '';
+
+            html += `<tr>`;
+            html += `<td><span class="table-primary-text font-bold">ORD-${String(o.Request_ID).padStart(3, '0')}</span><div class="table-sub-text">${o.Patient_Name} (${o.Room_Name} - ${o.Bed_Code})</div></td>`;
+            html += `<td><div class="table-primary-text">${o.Item_Name} (${parseFloat(o.Quantity)} unit)</div>${dosageText}<div class="table-sub-text">${o.Doctor_Name} • ${o.Target_Station_Name}</div></td>`;
+            html += `<td>${statusBadge}</td>`;
+            html += `<td class="text-center">${actionBtn}</td>`;
+            html += `</tr>`;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }).catch(() => {
+        container.innerHTML = '<p class="text-danger">Failed to load department orders queue.</p>';
+    });
+};
+
+const prepareDepartmentOrderDirect = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    showPopupConfirm("Mark this order as Prepared and dispatch an alert to Nurse Station?", () => {
+        const fd = new FormData();
+        fd.append("operation", "prepareOrder");
+        fd.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID
+        }));
+        axios.post("../api/POST/clinical_orders.php", fd).then(res => {
+            if (res.data.success) {
+                alert(res.data.message);
+                fetchDepartmentOrdersQueue();
+                fetchRealtimeNotifications();
+            } else {
+                alert(res.data.error || "Failed to prepare order.");
+            }
+        });
+    }, null, {
+        title: "Confirm Department Preparation",
+        confirmText: "Mark Prepared & Notify Nurse",
+        type: "info"
+    });
+};
+
+window.prepareDepartmentOrderDirect = prepareDepartmentOrderDirect;
+window.fetchRealtimeNotifications = fetchRealtimeNotifications;
+window.fetchDepartmentOrdersQueue = fetchDepartmentOrdersQueue;
+
+const initClinicalNotificationsSystem = () => {
+    ensureClinicalNotificationsModal();
+    const btnSidebarNotif = document.getElementById("btn-sidebar-notif");
+    if (btnSidebarNotif && !btnSidebarNotif.dataset.wired) {
+        btnSidebarNotif.dataset.wired = "true";
+        btnSidebarNotif.addEventListener("click", () => {
+            openModal("clinicalNotifModal");
+            fetchRealtimeNotifications();
+        });
+    }
+    fetchRealtimeNotifications();
+    setInterval(fetchRealtimeNotifications, 15000);
+};
+
+window.initClinicalNotificationsSystem = initClinicalNotificationsSystem;

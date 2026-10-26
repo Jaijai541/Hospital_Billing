@@ -39,11 +39,19 @@ class ClinicalOrderManager
                     c.Category_Type,
                     CONCAT(c.Code_Prefix, '-', LPAD(c.Catalog_ID, 3, '0')) AS Item_Code,
                     dor.Quantity,
+                    dor.Dosage_Instructions,
+                    dor.Target_Station_ID,
+                    COALESCE(s.Station_Name, 'General') AS Target_Station_Name,
                     c.Unit_Price,
                     (dor.Quantity * c.Unit_Price) AS Total_Price,
                     dor.Status,
+                    dor.Prepared_By_User_ID,
                     dor.Administered_By_User_ID,
                     dor.Administered_By_Doctor_ID,
+                    CASE 
+                        WHEN u_prep.User_ID IS NOT NULL THEN CONCAT(u_prep.First_Name, ' ', u_prep.Last_Name)
+                        ELSE NULL 
+                    END AS Prepared_By_Name,
                     CASE 
                         WHEN dor.Administered_By_Doctor_ID IS NOT NULL THEN CONCAT('Dr. ', d_adm.First_Name, ' ', d_adm.Last_Name)
                         WHEN dor.Administered_By_User_ID IS NOT NULL THEN CONCAT(u.First_Name, ' ', u.Last_Name)
@@ -60,11 +68,14 @@ class ClinicalOrderManager
                         ELSE NULL 
                     END AS Administered_By_Type,
                     DATE_FORMAT(dor.Request_Timestamp, '%Y-%m-%d %h:%i %p') AS Request_Timestamp,
+                    DATE_FORMAT(dor.Prepared_Timestamp, '%Y-%m-%d %h:%i %p') AS Prepared_Timestamp,
                     DATE_FORMAT(dor.Administered_Timestamp, '%Y-%m-%d %h:%i %p') AS Administered_Timestamp
                 FROM Doctor_Order_Request dor
                 INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
                 INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
                 INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                LEFT JOIN Enum_Department_Station s ON dor.Target_Station_ID = s.Station_ID
+                LEFT JOIN System_User u_prep ON dor.Prepared_By_User_ID = u_prep.User_ID
                 LEFT JOIN System_User u ON dor.Administered_By_User_ID = u.User_ID
                 LEFT JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
                 LEFT JOIN Doctor d_adm ON dor.Administered_By_Doctor_ID = d_adm.Doctor_ID
@@ -147,6 +158,107 @@ class ClinicalOrderManager
             'doctors' => $doctors
         ]);
     }
+
+    function getNotifications($json = '{}')
+    {
+        include "connection.php";
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $userId = intval($json['user_id'] ?? 0);
+        $roleId = intval($json['role_id'] ?? 0);
+        $stationId = intval($json['station_id'] ?? 0);
+        $isAdmin = ($roleId === 1) ? 1 : 0;
+
+        $sql = "SELECT cn.Notification_ID, cn.Admission_ID, cn.Request_ID, cn.Sender_User_ID,
+                       cn.Target_Role_ID, cn.Target_Station_ID, cn.Target_User_ID,
+                       cn.Title, cn.Message, cn.Notification_Type, cn.Is_Read,
+                       DATE_FORMAT(cn.Created_At, '%h:%i %p') AS Formatted_Time,
+                       DATE_FORMAT(cn.Created_At, '%b %d, %Y') AS Formatted_Date,
+                       CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
+                       CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                       COALESCE(c.Item_Name, 'Clinical Service') AS Item_Name,
+                       dor.Status AS Order_Status
+                FROM Clinical_Notification cn
+                INNER JOIN Admission a ON cn.Admission_ID = a.Admission_ID
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                LEFT JOIN Doctor_Order_Request dor ON cn.Request_ID = dor.Request_ID
+                LEFT JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                WHERE (:is_admin = 1 
+                   OR cn.Target_User_ID = :uid 
+                   OR (cn.Target_Station_ID IS NOT NULL AND cn.Target_Station_ID = :sid)
+                   OR (cn.Target_Role_ID IS NOT NULL AND cn.Target_Role_ID = :rid)
+                   OR (cn.Target_Role_ID IS NULL AND cn.Target_Station_ID IS NULL AND cn.Target_User_ID IS NULL))
+                ORDER BY cn.Created_At DESC
+                LIMIT 40";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':is_admin' => $isAdmin,
+            ':uid' => $userId,
+            ':sid' => $stationId,
+            ':rid' => $roleId
+        ]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $unreadCount = 0;
+        foreach ($rows as $r) {
+            if (intval($r['Is_Read']) === 0) {
+                $unreadCount++;
+            }
+        }
+
+        return json_encode([
+            'unread_count' => $unreadCount,
+            'notifications' => $rows
+        ]);
+    }
+
+    function getDepartmentOrders($json = '{}')
+    {
+        include "connection.php";
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $stationId = intval($json['station_id'] ?? 0);
+        $status = trim($json['status'] ?? '');
+
+        $where = "WHERE 1=1";
+        $params = [];
+        if ($stationId > 0) {
+            $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+            $params[':sid'] = $stationId;
+        }
+        if (!empty($status)) {
+            $where .= " AND dor.Status = :status";
+            $params[':status'] = $status;
+        }
+
+        $sql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity,
+                       dor.Dosage_Instructions, dor.Status, dor.Target_Station_ID,
+                       c.Item_Name, c.Category_Type, c.Unit_Price, (dor.Quantity * c.Unit_Price) AS Total_Price,
+                       CONCAT(c.Code_Prefix, '-', LPAD(c.Catalog_ID, 3, '0')) AS Item_Code,
+                       DATE_FORMAT(dor.Request_Timestamp, '%Y-%m-%d %h:%i %p') AS Request_Timestamp,
+                       DATE_FORMAT(dor.Prepared_Timestamp, '%Y-%m-%d %h:%i %p') AS Prepared_Timestamp,
+                       DATE_FORMAT(dor.Administered_Timestamp, '%Y-%m-%d %h:%i %p') AS Administered_Timestamp,
+                       CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                       ad.Admission_ID,
+                       CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
+                       CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                       COALESCE(r.Room_Name, 'Not Assigned') AS Room_Name,
+                       COALESCE(rb.Bed_Code, 'Bed N/A') AS Bed_Code,
+                       COALESCE(s.Station_Name, 'General') AS Target_Station_Name
+                FROM Doctor_Order_Request dor
+                INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+                INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                LEFT JOIN Enum_Department_Station s ON dor.Target_Station_ID = s.Station_ID
+                LEFT JOIN Room_Transfer_Log rtl ON a.Admission_ID = rtl.Admission_ID AND rtl.Date_Out IS NULL
+                LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                $where
+                ORDER BY dor.Request_ID DESC LIMIT 100";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? '';
@@ -173,6 +285,12 @@ switch ($operation) {
         break;
     case 'getHealthcarePersonnel':
         echo $clinical->getHealthcarePersonnel($json);
+        break;
+    case 'getNotifications':
+        echo $clinical->getNotifications($json);
+        break;
+    case 'getDepartmentOrders':
+        echo $clinical->getDepartmentOrders($json);
         break;
 }
 ?>

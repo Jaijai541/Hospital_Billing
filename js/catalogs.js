@@ -28,6 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("search_input").addEventListener("input", filterAndSortCatalogs);
     document.getElementById("filter_category").addEventListener("change", filterAndSortCatalogs);
+    const filterStationElem = document.getElementById("filter_station");
+    if (filterStationElem) filterStationElem.addEventListener("change", filterAndSortCatalogs);
     document.getElementById("filter_status").addEventListener("change", filterAndSortCatalogs);
     const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortCatalogs);
 
@@ -59,6 +61,7 @@ const displayCatalogs = async () => {
 const filterAndSortCatalogs = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterCategory = document.getElementById("filter_category").value;
+    const filterStation = document.getElementById("filter_station")?.value || "all";
     const filterStatus = document.getElementById("filter_status").value;
     const sortBy = document.getElementById("sort_by")?.value || "id_desc";
 
@@ -71,11 +74,14 @@ const filterAndSortCatalogs = () => {
         let matchesCat = true;
         if (filterCategory !== "all") matchesCat = (item.Category_Type === filterCategory);
 
+        let matchesStation = true;
+        if (filterStation !== "all") matchesStation = (String(item.Station_ID) === String(filterStation));
+
         let matchesStatus = true;
         if (filterStatus === "1") matchesStatus = (item.Is_Active == 1);
         else if (filterStatus === "0") matchesStatus = (item.Is_Active == 0);
 
-        return matchesSearch && matchesCat && matchesStatus;
+        return matchesSearch && matchesCat && matchesStation && matchesStatus;
     });
 
     filtered.sort((a, b) => {
@@ -125,6 +131,7 @@ const displayCatalogsTable = (items) => {
         <tr>
             ${renderSortableTh("Item & Catalog Code", "Item_Name")}
             ${renderSortableTh("Category", "Item_Category")}
+            ${renderSortableTh("Owning Department", "Station_Name")}
             ${renderSortableTh("Unit Price", "Unit_Price")}
             ${renderSortableTh("Status", "Status")}
         </tr>
@@ -146,6 +153,7 @@ const displayCatalogsTable = (items) => {
                 <div class="table-sub-text"><code>${item.Formatted_Code}</code></div>
             </td>
             <td>${catBadge}</td>
+            <td><span class="badge badge-secondary">${item.Station_Name || 'Nurse Station'}</span></td>
             <td>
                 <div class="table-amount-prominent">₱ ${parseFloat(item.Unit_Price).toFixed(2)}</div>
                 <div class="table-sub-text">standard charge</div>
@@ -167,6 +175,8 @@ const populateCatalogForm = (item) => {
     document.getElementById("category_type_text").value = item.Category_Type || "";
     document.getElementById("code_prefix").value = item.Code_Prefix || "";
     document.getElementById("unit_price").value = item.Unit_Price || "";
+    const stationElem = document.getElementById("station_id");
+    if (stationElem) stationElem.value = item.Station_ID || 1;
 };
 
 const loadCatalogForEdit = async (catalogId) => {
@@ -232,6 +242,7 @@ const saveCatalogItem = async () => {
     const jsonData = {
         item_name: itemName,
         category_type: category,
+        station_id: parseInt(document.getElementById("station_id")?.value || 1, 10),
         code_prefix: prefix,
         unit_price: parseFloat(price)
     };
@@ -291,10 +302,18 @@ const openCategoryPicker = () => {
             document.getElementById("category_type").value = item.id;
             document.getElementById("category_type_text").value = item.text;
             const prefixInput = document.getElementById("code_prefix");
+            const stationSelect = document.getElementById("station_id");
             if (prefixInput) {
-                if (item.id === "Medicine") prefixInput.value = "MED";
-                else if (item.id === "Equipment Scan") prefixInput.value = "RAD";
-                else if (item.id === "Service") prefixInput.value = "SRV";
+                if (item.id === "Medicine") {
+                    prefixInput.value = "MED";
+                    if (stationSelect) stationSelect.value = "1";
+                } else if (item.id === "Equipment Scan") {
+                    prefixInput.value = "RAD";
+                    if (stationSelect) stationSelect.value = "2";
+                } else if (item.id === "Service") {
+                    prefixInput.value = "SRV";
+                    if (stationSelect) stationSelect.value = "5";
+                }
             }
         }
     });
@@ -309,6 +328,8 @@ const resetForm = () => {
     document.getElementById("category_type_text").value = "";
     document.getElementById("code_prefix").value = "";
     document.getElementById("unit_price").value = "";
+    const stationElem = document.getElementById("station_id");
+    if (stationElem) stationElem.value = "1";
 
     const btnArchive = document.getElementById("btnArchive");
     if (btnArchive) btnArchive.style.display = "none";

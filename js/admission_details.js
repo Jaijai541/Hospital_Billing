@@ -1767,23 +1767,34 @@ const renderOrdersTable = (orders) => {
         const total = parseFloat(o.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
 
         let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
+        let actionHtml = '<span class="text-muted">—</span>';
+
         if (o.Status === 'Administered') {
             const deliveredByText = o.Administered_By_Name 
                 ? `<span class="table-sub-text-dark">Delivered by: <strong>${o.Administered_By_Name}</strong>${o.Administered_By_Role ? ` (${o.Administered_By_Role})` : ''}</span>` 
                 : '';
             statusBadge = `<span class="badge badge-success">Administered</span>${deliveredByText}<span class="table-sub-text">(Charge Posted)</span>`;
-        } else if (o.Status === 'Pending') {
-            statusBadge = `<span class="badge badge-warning">Pending</span>`;
+            actionHtml = '<span class="badge badge-success">Completed</span>';
+        } else if (o.Status === 'Prepared') {
+            const prepBy = o.Prepared_By_Name ? `<span class="table-sub-text-dark">Prepared by: <strong>${o.Prepared_By_Name}</strong></span>` : '';
+            statusBadge = `<span class="badge badge-primary">Prepared (Ready for Nurse)</span>${prepBy}<span class="table-sub-text">${o.Target_Station_Name || 'Department'}</span>`;
+            actionHtml = `
+                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">Deliver &amp; Administer</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+            `;
+        } else if (o.Status === 'Requested' || o.Status === 'Pending') {
+            statusBadge = `<span class="badge badge-warning">Requested (Awaiting Dept)</span><span class="table-sub-text">Target: <strong>${o.Target_Station_Name || o.Category_Type}</strong></span>`;
+            actionHtml = `
+                <button type="button" class="btn btn-sm btn-primary" onclick="prepareOrder(${o.Request_ID})">Mark Prepared</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">Administer</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+            `;
         } else if (o.Status === 'Cancelled') {
             statusBadge = `<span class="badge badge-danger">Cancelled</span>`;
         }
 
-        let actionHtml = '<span class="text-muted">—</span>';
-        if (o.Status === 'Pending') {
-            actionHtml = `
-                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">Administer</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
-            `;
+        if (o.Dosage_Instructions) {
+            statusBadge += `<span class="table-sub-text-dark">Instructions: <em>${o.Dosage_Instructions}</em></span>`;
         }
 
         html += '<tr>';
@@ -1797,14 +1808,14 @@ const renderOrdersTable = (orders) => {
 
     html += '</tbody></table>';
     container.innerHTML = html;
-}
+};
 
 const submitDoctorOrder = () => {
-    console.log("admission_details.js: Submitting new doctor order...");
-
     const doctorId = document.getElementById('order_doctor_id').value;
     const catalogId = document.getElementById('order_catalog_id').value;
     const qty = parseFloat(document.getElementById('order_qty').value);
+    const dosage = document.getElementById('order_dosage')?.value.trim() || '';
+    const user = JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
 
     if (!doctorId) {
         alert("Please select the prescribing physician.");
@@ -1824,7 +1835,9 @@ const submitDoctorOrder = () => {
     const payload = {
         admission_doctor_id: doctorId,
         catalog_id: catalogId,
-        quantity: qty
+        quantity: qty,
+        dosage_instructions: dosage,
+        user_id: user.user_id || user.User_ID
     };
 
     const formData = new FormData();
@@ -1833,22 +1846,21 @@ const submitDoctorOrder = () => {
 
     axios.post(`${postApiUrl}/clinical_orders.php`, formData)
         .then(response => {
-            console.log("admission_details.js: Order creation response:", response.data);
             if (response.data.success) {
                 alert(response.data.message);
                 closeModal('orderModal');
                 document.getElementById('order_catalog_id').value = '';
                 document.getElementById('order_qty').value = '1';
+                if (document.getElementById('order_dosage')) document.getElementById('order_dosage').value = '';
                 loadOrders();
             } else {
                 alert("Error: " + (response.data.error || "Failed to create order."));
             }
         })
         .catch(err => {
-            console.error("admission_details.js: Error creating order:", err);
             alert("Network error creating order.");
         });
-}
+};
 
 const openAdministerModal = (requestId, order, user) => {
     const hiddenInput = document.getElementById('administer_request_id');
@@ -2013,6 +2025,36 @@ window.administerOrder = (requestId) => {
             type: "info"
         });
     }
+};
+
+window.prepareOrder = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    showPopupConfirm("Mark this order as Prepared by Department?\n\nThis will update the order status to 'Prepared' and automatically alert the Nurse Station for collection and delivery.", () => {
+        const formData = new FormData();
+        formData.append("operation", "prepareOrder");
+        formData.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID
+        }));
+
+        axios.post(`${postApiUrl}/clinical_orders.php`, formData)
+            .then(res => {
+                if (res.data.success) {
+                    alert(res.data.message);
+                    loadOrders();
+                    if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+                } else {
+                    alert(res.data.error || "Failed to prepare order.");
+                }
+            })
+            .catch(err => {
+                alert("Network error preparing order.");
+            });
+    }, null, {
+        title: "Confirm Department Preparation",
+        confirmText: "Mark Prepared & Alert Nurse",
+        type: "info"
+    });
 };
 
 window.cancelOrder = (requestId) => {

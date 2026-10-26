@@ -1095,7 +1095,8 @@ textarea.form-control {
 
 .btn:disabled,
 .btn-icon:disabled,
-.btn-action-icon:disabled {
+.btn-action-icon:disabled,
+.btn-permission-disabled {
     opacity: 0.4 !important;
     cursor: not-allowed !important;
     background-color: #f1f5f9 !important;
@@ -1103,6 +1104,7 @@ textarea.form-control {
     color: #94a3b8 !important;
     box-shadow: none !important;
     transform: none !important;
+    pointer-events: auto !important;
 }
 
 .btn-sm {

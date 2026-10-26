@@ -213,21 +213,9 @@ const applyGlobalActionPermissions = () => {
     if (!userCanAdd) {
         addSelectors.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
-                el.style.display = "none";
-            });
-        });
-
-        if (currentPage.includes("staff")) {
-            const roleButtons = ["#btnOpenManageRolesModalTopbar", "#btnOpenManageRolesModalInline"];
-            roleButtons.forEach(sel => {
-                document.querySelectorAll(sel).forEach(el => {
-                    el.style.display = "none";
-                });
-            });
-        }
-    } else {
-        addSelectors.forEach(sel => {
-            document.querySelectorAll(sel).forEach(el => {
+                el.disabled = true;
+                el.setAttribute("title", "Access Restricted: Your assigned user role does not have authorization to add records in this module.");
+                el.classList.add("btn-permission-disabled");
                 if (el.style.display === "none") {
                     el.style.display = "";
                 }
@@ -238,6 +226,34 @@ const applyGlobalActionPermissions = () => {
             const roleButtons = ["#btnOpenManageRolesModalTopbar", "#btnOpenManageRolesModalInline"];
             roleButtons.forEach(sel => {
                 document.querySelectorAll(sel).forEach(el => {
+                    el.disabled = true;
+                    el.setAttribute("title", "Access Restricted: Role management requires administrator privileges.");
+                    el.classList.add("btn-permission-disabled");
+                    if (el.style.display === "none") {
+                        el.style.display = "";
+                    }
+                });
+            });
+        }
+    } else {
+        addSelectors.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                el.disabled = false;
+                el.removeAttribute("title");
+                el.classList.remove("btn-permission-disabled");
+                if (el.style.display === "none") {
+                    el.style.display = "";
+                }
+            });
+        });
+
+        if (currentPage.includes("staff")) {
+            const roleButtons = ["#btnOpenManageRolesModalTopbar", "#btnOpenManageRolesModalInline"];
+            roleButtons.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    el.disabled = false;
+                    el.removeAttribute("title");
+                    el.classList.remove("btn-permission-disabled");
                     if (el.style.display === "none") {
                         el.style.display = "";
                     }
@@ -1110,6 +1126,7 @@ const initModalControls = (modalId = "formModal", openBtnId = "btnOpenAddModal",
     const btnOpen = document.getElementById(openBtnId);
     if (btnOpen) {
         btnOpen.addEventListener("click", () => {
+            if (btnOpen.disabled || btnOpen.classList.contains("btn-permission-disabled")) return;
             if (onReset) onReset();
             openModal(modalId);
         });

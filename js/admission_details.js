@@ -1102,8 +1102,8 @@ const wireLookupPickers = () => {
     const handleOpenAdministerPersonnelPicker = () => {
         openLookupPicker({
             title: 'Select Delivering Healthcare Personnel',
-            placeholder: 'Search nurse or doctor name, role...',
-            columns: ['Personnel Name', 'Healthcare Role', 'Category / Station'],
+            placeholder: 'Search nurse or doctor name, role, department, specialty...',
+            columns: ['Personnel Name', 'Healthcare Role', 'Department / Station', 'Specialties'],
             items: availableHealthcarePersonnel,
             filterOptions: [
                 { label: 'All Personnel', value: 'all' },
@@ -1114,7 +1114,8 @@ const wireLookupPickers = () => {
             sortOptions: [
                 { label: 'Default Order', value: 'default' },
                 { label: 'Name (A to Z)', value: 'name_asc' },
-                { label: 'Name (Z to A)', value: 'name_desc' }
+                { label: 'Name (Z to A)', value: 'name_desc' },
+                { label: 'Department (A to Z)', value: 'dept_asc' }
             ],
             sortFn: (list, val) => {
                 const arr = [...list];
@@ -1122,23 +1123,29 @@ const wireLookupPickers = () => {
                     arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 } else if (val === 'name_desc') {
                     arr.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+                } else if (val === 'dept_asc') {
+                    arr.sort((a, b) => (a.department || '').localeCompare(b.department || ''));
                 }
                 return arr;
             },
-            filterFn: (p, q) => `${p.name || ''} ${p.role || ''} ${p.category || ''}`.toLowerCase().includes(q),
+            filterFn: (p, q) => `${p.name || ''} ${p.role || ''} ${p.category || ''} ${p.department || ''} ${p.specialties || ''}`.toLowerCase().includes(q),
             renderRowFn: (p) => `
-                <td><strong>${p.name}</strong></td>
+                <td>
+                    <strong>${p.name}</strong>
+                    <div class="table-sub-text">${p.category}</div>
+                </td>
                 <td><span class="badge ${p.type === 'doctor' ? 'badge-primary' : 'badge-info'}">${p.role}</span></td>
-                <td>${p.category}</td>
+                <td><span class="dept-code-pill">${p.department || '-'}</span></td>
+                <td><span class="badge badge-outline">${p.specialties || '-'}</span></td>
             `,
-            getItemName: (p) => `${p.name} (${p.category})`,
+            getItemName: (p) => `${p.name} (${p.department || p.category})`,
             onSelect: (p) => {
                 const idInput = document.getElementById('administer_personnel_id');
                 const textInput = document.getElementById('administer_personnel_text');
                 const previewBadge = document.getElementById('previewDelivererBadge');
                 if (idInput) idInput.value = p.id;
-                if (textInput) textInput.value = `${p.name} (${p.category})`;
-                if (previewBadge) previewBadge.textContent = `${p.name} (${p.role})`;
+                if (textInput) textInput.value = `${p.name} (${p.department} • ${p.specialties})`;
+                if (previewBadge) previewBadge.textContent = `${p.name} (${p.role} • ${p.department} • ${p.specialties})`;
             }
         });
     };
@@ -1924,7 +1931,9 @@ const openAdministerModal = (requestId, order, user) => {
                     type: 'user',
                     name: n.name,
                     role: n.role_title,
-                    category: 'Licensed Nurse'
+                    category: 'Licensed Nurse',
+                    department: n.department || 'Nurse Station',
+                    specialties: n.specialties || 'In-Patient Nursing Care'
                 })),
                 ...doctors.map(d => ({
                     id: `doctor:${d.id}`,
@@ -1932,7 +1941,9 @@ const openAdministerModal = (requestId, order, user) => {
                     type: 'doctor',
                     name: d.name,
                     role: d.role_title,
-                    category: 'Assigned Physician'
+                    category: 'Assigned Physician',
+                    department: d.department || 'Clinical Department',
+                    specialties: d.specialties || 'General Practice'
                 }))
             ];
 
@@ -1947,8 +1958,8 @@ const openAdministerModal = (requestId, order, user) => {
 
             if (defaultSelection) {
                 if (idInput) idInput.value = defaultSelection.id;
-                if (textInput) textInput.value = `${defaultSelection.name} (${defaultSelection.category})`;
-                if (previewBadge) previewBadge.textContent = `${defaultSelection.name} (${defaultSelection.role})`;
+                if (textInput) textInput.value = `${defaultSelection.name} (${defaultSelection.department} • ${defaultSelection.specialties})`;
+                if (previewBadge) previewBadge.textContent = `${defaultSelection.name} (${defaultSelection.role} • ${defaultSelection.department} • ${defaultSelection.specialties})`;
             } else {
                 if (idInput) idInput.value = '';
                 if (textInput) textInput.value = '';

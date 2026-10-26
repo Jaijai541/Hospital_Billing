@@ -126,11 +126,20 @@ class ClinicalOrderManager
                 'user' AS type,
                 CONCAT(u.First_Name, ' ', u.Last_Name) AS name,
                 r.Role_Name AS role_title,
-                r.Access_Domain AS domain
+                r.Access_Domain AS domain,
+                COALESCE(GROUP_CONCAT(DISTINCT st_all.Station_Name ORDER BY uds.Is_Primary DESC, st_all.Station_Name SEPARATOR ', '), s.Station_Name, 'Nurse Station') AS department,
+                COALESCE(NULLIF(GROUP_CONCAT(DISTINCT doc_s.Specialty_Name ORDER BY doc_s.Specialty_Name SEPARATOR ', '), ''), 'In-Patient Nursing Care') AS specialties
             FROM System_User u
             INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+            LEFT JOIN Enum_Department_Station s ON u.Station_ID = s.Station_ID
+            LEFT JOIN User_Department_Station uds ON u.User_ID = uds.User_ID
+            LEFT JOIN Enum_Department_Station st_all ON uds.Station_ID = st_all.Station_ID
+            LEFT JOIN Doctor doc ON u.User_ID = doc.User_ID
+            LEFT JOIN Doctor_Specialty doc_ds ON doc.Doctor_ID = doc_ds.Doctor_ID
+            LEFT JOIN Enum_Specialty doc_s ON doc_ds.Specialty_ID = doc_s.Specialty_ID
             WHERE u.Is_Active = 1 
               AND (r.Access_Domain = 'Clinical' OR r.Role_Name LIKE '%Nurse%' OR r.Role_Name LIKE '%Doctor%' OR r.Role_Name LIKE '%Physician%')
+            GROUP BY u.User_ID
             ORDER BY u.First_Name ASC, u.Last_Name ASC
         ");
         $clinicalUsersStmt->execute();
@@ -143,11 +152,19 @@ class ClinicalOrderManager
                 CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS name,
                 COALESCE(dt.Type_Name, 'Attending Physician') AS role_title,
                 'Doctor' AS domain,
-                1 AS is_assigned
+                1 AS is_assigned,
+                COALESCE(GROUP_CONCAT(DISTINCT all_st.Station_Name ORDER BY dds.Is_Primary DESC, all_st.Station_Name SEPARATOR ', '), st.Station_Name, 'General Practice') AS department,
+                COALESCE(NULLIF(GROUP_CONCAT(DISTINCT s.Specialty_Name ORDER BY s.Specialty_Name SEPARATOR ', '), ''), 'General Practice') AS specialties
             FROM Admission_Doctor ad
             INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
             LEFT JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
+            LEFT JOIN Enum_Department_Station st ON d.Station_ID = st.Station_ID 
+            LEFT JOIN Doctor_Department_Station dds ON d.Doctor_ID = dds.Doctor_ID
+            LEFT JOIN Enum_Department_Station all_st ON dds.Station_ID = all_st.Station_ID
+            LEFT JOIN Doctor_Specialty ds ON d.Doctor_ID = ds.Doctor_ID 
+            LEFT JOIN Enum_Specialty s ON ds.Specialty_ID = s.Specialty_ID 
             WHERE ad.Admission_ID = :aid AND d.Is_Active = 1
+            GROUP BY d.Doctor_ID
             ORDER BY d.First_Name ASC, d.Last_Name ASC
         ");
         $doctorsStmt->execute([':aid' => $admissionId]);

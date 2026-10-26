@@ -19,11 +19,16 @@ class Auth
             ]);
         }
 
-        $sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.Username, u.Password_Hash, u.Role_ID, r.Role_Name, r.Access_Domain, r.Permissions, r.Is_Higher_Up,
-                       d.Doctor_ID, d.Station_ID AS Doctor_Station_ID
+        $sql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.Username, u.Password_Hash, u.Role_ID, u.Station_ID,
+                       r.Role_Name, r.Access_Domain, r.Permissions, r.Is_Higher_Up,
+                       d.Doctor_ID, d.Station_ID AS Doctor_Station_ID,
+                       COALESCE(s_user.Station_Name, s_doc.Station_Name) AS Station_Name,
+                       COALESCE(u.Station_ID, d.Station_ID) AS Effective_Station_ID
                 FROM System_User u 
                 INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID 
                 LEFT JOIN Doctor d ON u.User_ID = d.User_ID AND d.Is_Active = 1
+                LEFT JOIN Enum_Department_Station s_user ON u.Station_ID = s_user.Station_ID
+                LEFT JOIN Enum_Department_Station s_doc ON d.Station_ID = s_doc.Station_ID
                 WHERE u.Username = :username AND u.Is_Active = 1";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":username", $username);
@@ -38,6 +43,7 @@ class Auth
                     $perms = $decoded;
                 }
             }
+            $effStationId = !empty($user['Effective_Station_ID']) ? intval($user['Effective_Station_ID']) : null;
             return json_encode([
                 "status" => 1,
                 "user" => [
@@ -49,8 +55,10 @@ class Auth
                     "access_domain"     => $user['Access_Domain'] ?? 'Clinical',
                     "is_higher_up"      => intval($user['Is_Higher_Up'] ?? 0),
                     "permissions"       => $perms,
+                    "station_id"        => $effStationId,
+                    "station_name"      => $user['Station_Name'] ?? null,
                     "doctor_id"         => !empty($user['Doctor_ID']) ? intval($user['Doctor_ID']) : null,
-                    "doctor_station_id" => !empty($user['Doctor_Station_ID']) ? intval($user['Doctor_Station_ID']) : null
+                    "doctor_station_id" => !empty($user['Doctor_Station_ID']) ? intval($user['Doctor_Station_ID']) : $effStationId
                 ]
             ]);
         } else {

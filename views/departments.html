@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Departments & Stations — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.3">
-    <link rel="stylesheet" href="../css/departments.css?v=18.3">
+    <link rel="stylesheet" href="../css/common.css?v=18.4">
+    <link rel="stylesheet" href="../css/departments.css?v=18.4">
 </head>
 <body>
 
@@ -47,6 +47,10 @@
                             <button type="button" class="dept-modal-tab-btn" data-dept-tab="users" role="tab" aria-selected="false">
                                 <span>Assigned Staff / Users</span>
                                 <span id="view_dept_users_count" class="badge badge-info dept-modal-tab-badge">0 Staff</span>
+                            </button>
+                            <button type="button" class="dept-modal-tab-btn" data-dept-tab="orders" role="tab" aria-selected="false">
+                                <span>Active Orders &amp; Alerts</span>
+                                <span id="view_dept_orders_count" class="badge badge-warning dept-modal-tab-badge">0 Orders</span>
                             </button>
                         </div>
 
@@ -98,6 +102,23 @@
                                 </table>
                             </div>
                             <div id="view_dept_users_empty" class="text-muted text-center dept-empty-state">No system users assigned to this station.</div>
+                        </div>
+
+                        <div id="dept-tab-pane-orders" class="dept-modal-tab-pane dept-tab-pane-hidden" role="tabpanel">
+                            <div class="table-responsive dept-table-wrap">
+                                <table class="data-table dept-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order &amp; Patient</th>
+                                            <th>Prescribed Item &amp; Details</th>
+                                            <th>Status</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_dept_orders_tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="view_dept_orders_empty" class="text-muted text-center dept-empty-state">No orders assigned to this station.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -173,8 +194,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=18.3"></script>
-    <script src="../js/common.js?v=18.3"></script>
-    <script src="../js/departments.js?v=18.3"></script>
+    <script src="../js/sidebar.js?v=18.4"></script>
+    <script src="../js/common.js?v=18.4"></script>
+    <script src="../js/departments.js?v=18.4"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ let allDepartments = [];
 let currentLoadedDepartment = null;
 let currentDeptDoctors = [];
 let currentDeptUsers = [];
+let currentDeptOrders = [];
 
 const switchDepartmentModalTab = (tabKey) => {
     const viewModal = document.getElementById("viewDepartmentModal");
@@ -18,6 +19,7 @@ const switchDepartmentModalTab = (tabKey) => {
 
     const doctorsPane = document.getElementById("dept-tab-pane-doctors");
     const usersPane = document.getElementById("dept-tab-pane-users");
+    const ordersPane = document.getElementById("dept-tab-pane-orders");
 
     if (doctorsPane) {
         const showDoctors = (tabKey === "doctors");
@@ -30,6 +32,12 @@ const switchDepartmentModalTab = (tabKey) => {
         usersPane.classList.toggle("active", showUsers);
         usersPane.classList.toggle("dept-tab-pane-hidden", !showUsers);
         usersPane.style.display = showUsers ? "block" : "none";
+    }
+    if (ordersPane) {
+        const showOrders = (tabKey === "orders");
+        ordersPane.classList.toggle("active", showOrders);
+        ordersPane.classList.toggle("dept-tab-pane-hidden", !showOrders);
+        ordersPane.style.display = showOrders ? "block" : "none";
     }
 };
 
@@ -178,6 +186,7 @@ const displayDepartmentsTable = (departments) => {
         <tr>
             ${renderSortableTh("Department / Station", "Station_Name")}
             ${renderSortableTh("Assigned Personnel", "Staff_Count")}
+            ${renderSortableTh("Active Orders & Alerts", "Pending_Orders_Count")}
             ${renderSortableTh("Status", "Status")}
         </tr>
     `;
@@ -188,6 +197,12 @@ const displayDepartmentsTable = (departments) => {
         const formattedCode = `${dept.Code_Prefix || 'DEPT'}-${String(dept.Station_ID).padStart(3, '0')}`;
         const docCount = parseInt(dept.Active_Doctors_Count || 0, 10);
         const staffCount = parseInt(dept.Active_Staff_Count || 0, 10);
+        const pendingCount = parseInt(dept.Pending_Orders_Count || 0, 10);
+
+        let orderBadge = `<span class="badge badge-outline">0 Pending</span>`;
+        if (pendingCount > 0) {
+            orderBadge = `<span class="badge badge-warning font-bold">🔔 ${pendingCount} Pending Order${pendingCount === 1 ? '' : 's'}</span>`;
+        }
 
         const row = document.createElement("tr");
         row.className = "clickable-row";
@@ -201,6 +216,7 @@ const displayDepartmentsTable = (departments) => {
                 <div class="table-sub-text-dark font-bold">${docCount} Active Doctor${docCount === 1 ? '' : 's'}</div>
                 <div class="table-sub-text">${staffCount} Active Staff Member${staffCount === 1 ? '' : 's'}</div>
             </td>
+            <td>${orderBadge}</td>
             <td>${getStatusBadge(dept.Is_Active)}</td>
         `;
         row.addEventListener("click", () => openViewDepartmentModal(dept.Station_ID));
@@ -340,15 +356,19 @@ const openViewDepartmentModal = async (stationId) => {
 
             currentDeptDoctors = dept.assigned_doctors || [];
             currentDeptUsers = dept.assigned_users || [];
+            currentDeptOrders = dept.assigned_orders || [];
 
             const deptDoctorsSearch = document.getElementById("view_dept_doctors_search");
             if (deptDoctorsSearch) deptDoctorsSearch.value = "";
             const deptUsersSearch = document.getElementById("view_dept_users_search");
             if (deptUsersSearch) deptUsersSearch.value = "";
 
-            switchDepartmentModalTab("doctors");
             renderFilteredDeptDoctors();
             renderFilteredDeptUsers();
+            renderDeptOrders();
+
+            const hasPending = currentDeptOrders.some(o => o.Status === "Requested" || o.Status === "Pending");
+            switchDepartmentModalTab(hasPending ? "orders" : "doctors");
 
             const btnEdit = document.getElementById("btnOpenEditFromView");
             if (btnEdit) {
@@ -369,6 +389,93 @@ const openViewDepartmentModal = async (stationId) => {
 const closeViewDepartmentModal = () => {
     closeModal("viewDepartmentModal");
 };
+
+const renderDeptOrders = () => {
+    const ordersCount = document.getElementById("view_dept_orders_count");
+    const ordersEmpty = document.getElementById("view_dept_orders_empty");
+    const ordersTbody = document.getElementById("view_dept_orders_tbody");
+
+    const total = currentDeptOrders.length;
+    const pendingCount = currentDeptOrders.filter(o => o.Status === "Requested" || o.Status === "Pending").length;
+
+    if (ordersCount) {
+        ordersCount.textContent = `${total} Order${total === 1 ? "" : "s"}${pendingCount > 0 ? ` (${pendingCount} Pending)` : ""}`;
+        ordersCount.className = pendingCount > 0 ? "badge badge-warning dept-modal-tab-badge" : "badge badge-info dept-modal-tab-badge";
+    }
+
+    if (!ordersTbody) return;
+    ordersTbody.innerHTML = "";
+
+    if (total === 0) {
+        if (ordersEmpty) {
+            ordersEmpty.textContent = "No orders assigned to this station.";
+            ordersEmpty.style.display = "block";
+        }
+    } else {
+        if (ordersEmpty) ordersEmpty.style.display = "none";
+        currentDeptOrders.forEach(o => {
+            const tr = document.createElement("tr");
+            let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
+            let actionBtn = `<span class="text-muted font-sm">Complete</span>`;
+
+            if (o.Status === "Requested" || o.Status === "Pending") {
+                statusBadge = '<span class="badge badge-warning">Requested</span>';
+                actionBtn = `<button type="button" class="btn btn-sm btn-primary" onclick="prepareDeptOrderInModal(${o.Request_ID})">Mark Prepared</button>`;
+            } else if (o.Status === "Prepared") {
+                statusBadge = '<span class="badge badge-primary">Prepared (Ready)</span>';
+                actionBtn = '<span class="badge badge-outline">Nurse Delivery Pending</span>';
+            } else if (o.Status === "Administered") {
+                statusBadge = '<span class="badge badge-success">Administered</span>';
+            }
+
+            const dosage = o.Dosage_Instructions ? `<div class="table-sub-text">Note: <em>${o.Dosage_Instructions}</em></div>` : '';
+
+            tr.innerHTML = `
+                <td>
+                    <div class="table-primary-text font-bold">ORD-${String(o.Request_ID).padStart(3, '0')}</div>
+                    <div class="table-sub-text">${o.Patient_Name} (${o.Room_Name} - ${o.Bed_Code})</div>
+                </td>
+                <td>
+                    <div class="table-primary-text">${o.Item_Name} (${parseFloat(o.Quantity)} unit)</div>
+                    ${dosage}
+                    <div class="table-sub-text">${o.Doctor_Name} &bull; ${o.Request_Timestamp}</div>
+                </td>
+                <td>${statusBadge}</td>
+                <td class="text-center">${actionBtn}</td>
+            `;
+            ordersTbody.appendChild(tr);
+        });
+    }
+};
+
+const prepareDeptOrderInModal = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    showPopupConfirm("Mark this order as Prepared and dispatch an alert to Nurse Station?", () => {
+        const fd = new FormData();
+        fd.append("operation", "prepareOrder");
+        fd.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID
+        }));
+        axios.post(`${postApiUrl}/clinical_orders.php`, fd).then(res => {
+            if (res.data.success) {
+                alert(res.data.message);
+                if (currentLoadedDepartment && currentLoadedDepartment.Station_ID) {
+                    openViewDepartmentModal(currentLoadedDepartment.Station_ID);
+                }
+                displayDepartments();
+                if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+            } else {
+                alert(res.data.error || "Failed to prepare order.");
+            }
+        });
+    }, null, {
+        title: "Confirm Department Preparation",
+        confirmText: "Mark Prepared & Notify Nurse",
+        type: "info"
+    });
+};
+window.prepareDeptOrderInModal = prepareDeptOrderInModal;
 
 const populateDepartmentForm = (dept) => {
     document.getElementById("station_id").value = dept.Station_ID || "";

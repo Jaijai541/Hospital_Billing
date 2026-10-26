@@ -2121,6 +2121,18 @@ const ensureClinicalNotificationsModal = () => {
                     </div>
                 </div>
                 <div id="notif-tab-content-queue" style="display: none;">
+                    <div class="queue-station-filter-bar">
+                        <label for="notif-queue-station-select" class="form-label font-bold">Filter Department Queue:</label>
+                        <select id="notif-queue-station-select" class="form-control queue-station-dropdown">
+                            <option value="0">All Hospital Stations</option>
+                            <option value="1">Central Pharmacy (PHARM)</option>
+                            <option value="2">Radiology &amp; Imaging (RAD)</option>
+                            <option value="3">Cardiology Station (CARD)</option>
+                            <option value="4">Laboratory (LAB)</option>
+                            <option value="5">Nurse Station (NRS)</option>
+                            <option value="9">Emergency Department (ER)</option>
+                        </select>
+                    </div>
                     <div class="table-responsive" id="notif-queue-table-div">
                         <p class="text-muted">Loading department orders...</p>
                     </div>
@@ -2160,6 +2172,15 @@ const ensureClinicalNotificationsModal = () => {
         });
     }
 
+    const stationSelect = document.getElementById("notif-queue-station-select");
+    if (stationSelect && !stationSelect.dataset.wired) {
+        stationSelect.dataset.wired = "true";
+        stationSelect.addEventListener("change", () => {
+            stationSelect.dataset.userChanged = "true";
+            fetchDepartmentOrdersQueue(parseInt(stationSelect.value, 10));
+        });
+    }
+
     const markAllBtn = document.getElementById("btnMarkAllNotifsRead");
     if (markAllBtn) {
         markAllBtn.addEventListener("click", () => {
@@ -2176,9 +2197,82 @@ const ensureClinicalNotificationsModal = () => {
     return modal;
 };
 
+let lastKnownNotifCount = -1;
+const shownToastIds = new Set();
+
+const playClinicalChime = () => {
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+    } catch (e) {}
+};
+
+const showClinicalToastAlert = (n) => {
+    if (!n || shownToastIds.has(n.Notification_ID)) return;
+    shownToastIds.add(n.Notification_ID);
+
+    let container = document.getElementById("clinical-toast-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "clinical-toast-container";
+        container.className = "clinical-toast-container";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = "clinical-toast-card";
+    toast.innerHTML = `
+        <div class="toast-indicator"></div>
+        <div class="toast-content">
+            <div class="toast-header-row">
+                <span class="toast-badge">🔔 NEW CLINICAL ALERT</span>
+                <button type="button" class="toast-close" aria-label="Close notification">&times;</button>
+            </div>
+            <div class="toast-title">${n.Title || "Clinical Order Alert"}</div>
+            <div class="toast-body">${n.Message || ""}</div>
+            <div class="toast-footer-row">
+                <span class="toast-time">${n.Formatted_Time || "Just now"}</span>
+                <button type="button" class="btn btn-xs btn-primary btn-toast-open">Open Department Queue</button>
+            </div>
+        </div>
+    `;
+
+    toast.querySelector(".toast-close").addEventListener("click", () => toast.remove());
+    toast.querySelector(".btn-toast-open").addEventListener("click", () => {
+        toast.remove();
+        openModal("clinicalNotifModal");
+        const tabQueue = document.getElementById("btnTabNotifQueue");
+        if (tabQueue) tabQueue.click();
+    });
+
+    container.appendChild(toast);
+    playClinicalChime();
+
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.classList.add("toast-fade-out");
+            setTimeout(() => toast.remove(), 400);
+        }
+    }, 12000);
+};
+
 const fetchRealtimeNotifications = () => {
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     if (!user || !user.role_id) return;
+
+    const userStationId = user.station_id || user.Station_ID || user.doctor_station_id || 0;
 
     axios.get("../api/GET/clinical_orders.php", {
         params: {
@@ -2186,7 +2280,7 @@ const fetchRealtimeNotifications = () => {
             json: JSON.stringify({
                 user_id: user.user_id || user.User_ID || 0,
                 role_id: user.role_id || 0,
-                station_id: user.doctor_station_id || 0
+                station_id: userStationId
             })
         }
     }).then(res => {
@@ -2194,6 +2288,8 @@ const fetchRealtimeNotifications = () => {
         const unreadCount = parseInt(data.unread_count || 0, 10);
         const badge = document.getElementById("clinical-notif-badge");
         const tabBadge = document.getElementById("notif-tab-badge");
+        const btnSidebarNotif = document.getElementById("btn-sidebar-notif");
+
         if (badge) {
             badge.textContent = unreadCount;
             badge.style.display = unreadCount > 0 ? "inline-block" : "none";
@@ -2201,6 +2297,21 @@ const fetchRealtimeNotifications = () => {
         if (tabBadge) {
             tabBadge.textContent = unreadCount;
         }
+        if (btnSidebarNotif) {
+            btnSidebarNotif.classList.toggle("sidebar-notif-pulse", unreadCount > 0);
+        }
+
+        if (data.notifications && data.notifications.length > 0) {
+            const firstUnread = data.notifications.find(n => parseInt(n.Is_Read, 10) === 0);
+            if (firstUnread) {
+                if (lastKnownNotifCount !== -1 && unreadCount > lastKnownNotifCount) {
+                    showClinicalToastAlert(firstUnread);
+                } else if (lastKnownNotifCount === -1 && unreadCount > 0) {
+                    showClinicalToastAlert(firstUnread);
+                }
+            }
+        }
+        lastKnownNotifCount = unreadCount;
 
         const listContainer = document.getElementById("notif-alerts-list");
         if (listContainer && data.notifications) {
@@ -2235,16 +2346,31 @@ const fetchRealtimeNotifications = () => {
     }).catch(() => {});
 };
 
-const fetchDepartmentOrdersQueue = () => {
+const fetchDepartmentOrdersQueue = (customStationId = null) => {
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const container = document.getElementById("notif-queue-table-div");
     if (!container) return;
+
+    const stationSelect = document.getElementById("notif-queue-station-select");
+    let targetStation = 0;
+    if (customStationId !== null) {
+        targetStation = customStationId;
+    } else if (stationSelect && stationSelect.value !== "" && stationSelect.dataset.userChanged === "true") {
+        targetStation = parseInt(stationSelect.value, 10);
+    } else {
+        targetStation = parseInt(user.station_id || user.Station_ID || user.doctor_station_id || 0, 10);
+    }
+
+    if (stationSelect && customStationId === null && targetStation > 0 && stationSelect.dataset.userChanged !== "true") {
+        stationSelect.value = String(targetStation);
+    }
 
     axios.get("../api/GET/clinical_orders.php", {
         params: {
             operation: "getDepartmentOrders",
             json: JSON.stringify({
-                station_id: user.doctor_station_id || 0
+                station_id: targetStation,
+                user_id: user.user_id || user.User_ID || 0
             })
         }
     }).then(res => {

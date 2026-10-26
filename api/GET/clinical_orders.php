@@ -166,6 +166,19 @@ class ClinicalOrderManager
         $userId = intval($json['user_id'] ?? 0);
         $roleId = intval($json['role_id'] ?? 0);
         $stationId = intval($json['station_id'] ?? 0);
+
+        if ($stationId <= 0 && $userId > 0) {
+            $stStmt = $conn->prepare("SELECT COALESCE(u.Station_ID, d.Station_ID, 0) AS User_Station_ID 
+                                      FROM System_User u 
+                                      LEFT JOIN Doctor d ON u.User_ID = d.User_ID 
+                                      WHERE u.User_ID = :uid LIMIT 1");
+            $stStmt->execute([':uid' => $userId]);
+            $foundSt = $stStmt->fetch(PDO::FETCH_ASSOC);
+            if (!empty($foundSt['User_Station_ID'])) {
+                $stationId = intval($foundSt['User_Station_ID']);
+            }
+        }
+
         $isAdmin = ($roleId === 1) ? 1 : 0;
 
         $sql = "SELECT cn.Notification_ID, cn.Admission_ID, cn.Request_ID, cn.Sender_User_ID,
@@ -216,7 +229,20 @@ class ClinicalOrderManager
         include "connection.php";
         $json = is_array($json) ? $json : json_decode($json, true);
         $stationId = intval($json['station_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
         $status = trim($json['status'] ?? '');
+
+        if ($stationId <= 0 && $userId > 0) {
+            $stStmt = $conn->prepare("SELECT COALESCE(u.Station_ID, d.Station_ID, 0) AS User_Station_ID 
+                                      FROM System_User u 
+                                      LEFT JOIN Doctor d ON u.User_ID = d.User_ID 
+                                      WHERE u.User_ID = :uid LIMIT 1");
+            $stStmt->execute([':uid' => $userId]);
+            $foundSt = $stStmt->fetch(PDO::FETCH_ASSOC);
+            if (!empty($foundSt['User_Station_ID'])) {
+                $stationId = intval($foundSt['User_Station_ID']);
+            }
+        }
 
         $where = "WHERE 1=1";
         $params = [];

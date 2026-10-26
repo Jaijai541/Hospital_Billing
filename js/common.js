@@ -121,29 +121,26 @@ const enforcePageRbacGuard = (user) => {
     return true;
 };
 
-const canUserAddModule = (modulePage) => {
+const canUserAddModule = (modulePage = null) => {
     const u = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     if (!u || !u.role_id) return false;
     if (parseInt(u.role_id, 10) === 1) return true;
     const perms = Array.isArray(u.permissions) ? u.permissions : [];
     if (perms.includes("can_add")) return true;
 
-    const pageMap = {
-        "patients.html": "can_add_patient",
-        "doctors.html": "can_add_doctor",
-        "departments.html": "can_add_department",
-        "rooms.html": "can_add_room",
-        "catalogs.html": "can_add_catalog",
-        "discounts.html": "can_add_discount",
-        "admissions.html": "can_add_admission",
-        "admission_details.html": "can_add_admission",
-        "invoices.html": "can_add_payment",
-        "promissory_notes.html": "can_add_promissory",
-        "staff.html": "can_add_staff"
-    };
+    const page = (modulePage || window.location.pathname || "").toLowerCase();
+    if (page.includes("patient")) return perms.includes("can_add_patient");
+    if (page.includes("doctor")) return perms.includes("can_add_doctor");
+    if (page.includes("department")) return perms.includes("can_add_department");
+    if (page.includes("room")) return perms.includes("can_add_room");
+    if (page.includes("catalog")) return perms.includes("can_add_catalog");
+    if (page.includes("discount")) return perms.includes("can_add_discount");
+    if (page.includes("admission")) return perms.includes("can_add_admission");
+    if (page.includes("invoice")) return perms.includes("can_add_payment");
+    if (page.includes("promissory")) return perms.includes("can_add_promissory");
+    if (page.includes("staff")) return perms.includes("can_add_staff");
 
-    const targetPerm = pageMap[modulePage];
-    return targetPerm ? perms.includes(targetPerm) : false;
+    return false;
 };
 
 const canUserAddData = (specificAction = null) => {
@@ -186,44 +183,64 @@ const applyGlobalActionPermissions = () => {
     const userCanDelete = canUserDelete();
     const userCanPrint = canUserPrint();
 
+    const addSelectors = [
+        "#btnOpenAddModal",
+        "#btnOpenAddPatientModal",
+        "#btnOpenAddStaffModal",
+        "#btnOpenAddSpecialtyModal",
+        "#btnOpenAddRoomTypeModal",
+        "#btnAddAdvVoucher",
+        "#btnOpenOrderModal",
+        "#btnOpenRoundModal",
+        "#btnOpenTransferModal",
+        "#btnOpenReturnModal",
+        "#btnOpenReturnModalPharmacy",
+        "#btnOpenAdvancePaymentModal",
+        "#btnNewPatient",
+        "#btnNewRecord",
+        "#btnSubmitSpecialty",
+        "#btnSubmitRoomType",
+        "#btnOpenEditFromPatientView",
+        "#btnOpenEditFromDoctorView",
+        "#btnOpenEditFromView",
+        "#btnOpenEditFromRoomView",
+        "#btnHistPayBalance",
+        ".btn-add-action",
+        ".btn-register-action",
+        ".btn-pay-action"
+    ];
+
     if (!userCanAdd) {
-        const addSelectors = [
-            "#btnOpenAddModal",
-            "#btnOpenAddPatientModal",
-            "#btnOpenAddStaffModal",
-            "#btnOpenAddSpecialtyModal",
-            "#btnOpenAddRoomTypeModal",
-            "#btnAddAdvVoucher",
-            "#btnOpenOrderModal",
-            "#btnOpenRoundModal",
-            "#btnOpenTransferModal",
-            "#btnOpenReturnModal",
-            "#btnOpenReturnModalPharmacy",
-            "#btnOpenAdvancePaymentModal",
-            "#btnNewPatient",
-            "#btnNewRecord",
-            "#btnSubmitSpecialty",
-            "#btnSubmitRoomType",
-            "#btnOpenEditFromPatientView",
-            "#btnOpenEditFromDoctorView",
-            "#btnOpenEditFromView",
-            "#btnOpenEditFromRoomView",
-            "#btnHistPayBalance",
-            ".btn-add-action",
-            ".btn-register-action",
-            ".btn-pay-action"
-        ];
         addSelectors.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
                 el.style.display = "none";
             });
         });
 
-        if (currentPage === "staff.html") {
+        if (currentPage.includes("staff")) {
             const roleButtons = ["#btnOpenManageRolesModalTopbar", "#btnOpenManageRolesModalInline"];
             roleButtons.forEach(sel => {
                 document.querySelectorAll(sel).forEach(el => {
                     el.style.display = "none";
+                });
+            });
+        }
+    } else {
+        addSelectors.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                if (el.style.display === "none") {
+                    el.style.display = "";
+                }
+            });
+        });
+
+        if (currentPage.includes("staff")) {
+            const roleButtons = ["#btnOpenManageRolesModalTopbar", "#btnOpenManageRolesModalInline"];
+            roleButtons.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    if (el.style.display === "none") {
+                        el.style.display = "";
+                    }
                 });
             });
         }

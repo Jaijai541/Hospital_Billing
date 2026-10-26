@@ -525,17 +525,23 @@ const openStationPicker = async () => {
     if (!allStations || allStations.length === 0) {
         await loadDoctorLookups();
     }
-    openGenericLookupPicker({
-        title: "Select Department / Station",
-        items: allStations.map(st => ({
-            id: st.Station_ID,
-            text: st.Station_Name,
-            subtext: st.Code_Prefix ? `Code: ${st.Code_Prefix}` : ""
-        })),
-        selectedId: document.getElementById("station_id").value,
-        onSelect: (item) => {
-            document.getElementById("station_id").value = item.id;
-            document.getElementById("station_id_text").value = item.text;
+    const rawVal = document.getElementById("station_id").value || "";
+    const selectedIds = rawVal.split(",").map(id => id.trim()).filter(id => id !== "");
+    const items = allStations.map(st => ({
+        id: String(st.Station_ID),
+        text: st.Station_Name,
+        subtext: st.Code_Prefix ? `Code: ${st.Code_Prefix}` : ""
+    }));
+
+    openMultiLookupPicker({
+        title: "Select Assigned Department Station(s)",
+        items: items,
+        selectedIds: selectedIds,
+        onConfirm: (confirmedIds, confirmedItems) => {
+            document.getElementById("station_id").value = confirmedIds.join(",");
+            document.getElementById("station_id_text").value = confirmedItems.length > 0 
+                ? confirmedItems.map(item => item.text).join(", ") 
+                : "";
         }
     });
 };
@@ -579,8 +585,9 @@ const filterAndSortDoctors = () => {
     let filtered = allDoctors.filter(doc => {
         const name = `${doc.First_Name} ${doc.Last_Name}`.toLowerCase();
         const code = (doc.Formatted_Code || "").toLowerCase();
+        const stations = (doc.All_Station_Names || doc.Station_Name || "").toLowerCase();
 
-        const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm);
+        const matchesSearch = name.includes(searchTerm) || code.includes(searchTerm) || stations.includes(searchTerm);
 
         let matchesStatus = true;
         if (filterStatus === "1") matchesStatus = (doc.Is_Active == 1);
@@ -590,7 +597,10 @@ const filterAndSortDoctors = () => {
         if (filterType !== "all") matchesType = (doc.Doctor_Type_ID == filterType);
 
         let matchesStation = true;
-        if (filterStation !== "all") matchesStation = (doc.Station_ID == filterStation);
+        if (filterStation !== "all") {
+            const docStationIds = (doc.All_Station_IDs || String(doc.Station_ID || "")).split(",");
+            matchesStation = docStationIds.includes(String(filterStation));
+        }
 
         let matchesSpec = true;
         if (filterSpec !== "all") {
@@ -656,6 +666,7 @@ const displayDoctorsTable = (doctors) => {
     const tbody = document.createElement("tbody");
     doctors.forEach(doc => {
         const fullName = `Dr. ${doc.First_Name} ${doc.Last_Name}`;
+        const stationDisplay = doc.All_Station_Names || doc.Station_Name || 'General Station';
 
         const row = document.createElement("tr");
         row.className = "clickable-row";
@@ -663,7 +674,7 @@ const displayDoctorsTable = (doctors) => {
         row.innerHTML = `
             <td>
                 <div class="table-primary-text">${fullName}</div>
-                <div class="table-sub-text"><code>${doc.Formatted_Code || ''}</code> &bull; ${doc.Station_Name || 'General Station'}</div>
+                <div class="table-sub-text"><code>${doc.Formatted_Code || ''}</code> &bull; ${stationDisplay}</div>
             </td>
             <td>
                 <div class="table-primary-text"><span class="badge badge-primary">${doc.Doctor_Type_Name || 'Physician'}</span></div>
@@ -704,7 +715,8 @@ const openViewDoctorModal = async (doctorId) => {
             document.getElementById("view_doc_name").textContent = fullName;
             document.getElementById("view_doc_code").textContent = `Code: ${codeFormatted}`;
             document.getElementById("view_doc_type_badge").textContent = doc.Doctor_Type_Name || "Physician";
-            document.getElementById("view_doc_station").textContent = `Station: ${doc.Station_Name || "Unassigned"}`;
+            const stationDisplay = doc.all_station_names || doc.All_Station_Names || doc.Station_Name || "Unassigned";
+            document.getElementById("view_doc_station").textContent = `Station: ${stationDisplay}`;
             document.getElementById("view_doc_fee").textContent = `Fee: ₱ ${parseFloat(doc.Base_Round_Fee || 0).toFixed(2)} / round`;
             document.getElementById("view_doc_specialties").textContent = doc.Specialties || "General Practice";
 
@@ -807,13 +819,9 @@ const populateDoctorForm = (doc) => {
             docTypeText.value = "";
         }
     }
-    document.getElementById("station_id").value = doc.Station_ID || "";
-    if (doc.Station_ID) {
-        const st = allStations.find(s => String(s.Station_ID) === String(doc.Station_ID));
-        document.getElementById("station_id_text").value = st ? st.Station_Name : "";
-    } else {
-        document.getElementById("station_id_text").value = "";
-    }
+    const assignedStationIds = doc.assigned_station_ids || doc.station_ids_array || (doc.Station_ID ? [doc.Station_ID] : []);
+    document.getElementById("station_id").value = assignedStationIds.join(",");
+    document.getElementById("station_id_text").value = doc.all_station_names || doc.All_Station_Names || doc.Station_Name || "";
     document.getElementById("base_round_fee").value = doc.Base_Round_Fee || "";
 
     const assignedSpecs = doc.specialty_ids_array || [];
@@ -867,11 +875,13 @@ const saveDoctor = async () => {
     const firstName = document.getElementById("first_name").value.trim();
     const lastName = document.getElementById("last_name").value.trim();
     const typeId = document.getElementById("doctor_type_id").value;
-    const stationId = document.getElementById("station_id").value;
+    const rawStationVal = document.getElementById("station_id").value || "";
+    const stationIds = rawStationVal.split(",").map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id) && id > 0);
+    const stationId = stationIds.length > 0 ? stationIds[0] : null;
     const fee = document.getElementById("base_round_fee").value;
 
-    if (!firstName || !lastName || !typeId || !stationId || fee === "") {
-        alert("Please fill in First Name, Last Name, Classification, Station, and Base Round Fee.");
+    if (!firstName || !lastName || !typeId || stationIds.length === 0 || fee === "") {
+        alert("Please fill in First Name, Last Name, Classification, Department Station(s), and Base Round Fee.");
         return;
     }
 
@@ -909,6 +919,7 @@ const saveDoctor = async () => {
         last_name: lastName,
         doctor_type_id: typeId,
         station_id: stationId,
+        station_ids: stationIds,
         base_round_fee: parseFloat(fee),
         specialty_ids: selectedDoctorSpecialties
     };

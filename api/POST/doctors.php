@@ -10,17 +10,41 @@ class DoctorMaster
 
         $json = json_decode($json, true);
 
+        $stationIds = [];
+        if (!empty($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', $json['station_ids']));
+            }
+        } else if (!empty($json['station_id'])) {
+            $stationIds = [intval($json['station_id'])];
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
+        $primaryStationId = !empty($stationIds) ? $stationIds[0] : intval($json['station_id'] ?? 0);
+
         $sql = "INSERT INTO Doctor (First_Name, Last_Name, Doctor_Type_ID, Station_ID, Code_Prefix, Base_Round_Fee, Is_Active) 
                 VALUES (:first_name, :last_name, :type_id, :station_id, 'DOC', :round_fee, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":first_name", $json['first_name']);
         $stmt->bindParam(":last_name", $json['last_name']);
         $stmt->bindParam(":type_id", $json['doctor_type_id']);
-        $stmt->bindParam(":station_id", $json['station_id']);
+        $stmt->bindParam(":station_id", $primaryStationId);
         $stmt->bindParam(":round_fee", $json['base_round_fee']);
         $stmt->execute();
 
         $doctorId = $conn->lastInsertId();
+
+        if (!empty($stationIds)) {
+            $stmtDds = $conn->prepare("INSERT INTO Doctor_Department_Station (Doctor_ID, Station_ID, Is_Primary, Created_At) VALUES (:doc_id, :sid, :is_prim, NOW())");
+            foreach ($stationIds as $idx => $sid) {
+                $stmtDds->execute([
+                    ':doc_id'  => $doctorId,
+                    ':sid'     => $sid,
+                    ':is_prim' => ($idx === 0 ? 1 : 0)
+                ]);
+            }
+        }
 
         if (!empty($json['specialty_ids']) && is_array($json['specialty_ids'])) {
             $stmtSpec = $conn->prepare("INSERT INTO Doctor_Specialty (Doctor_ID, Specialty_ID) VALUES (:doc_id, :spec_id)");
@@ -42,6 +66,19 @@ class DoctorMaster
         $json = json_decode($json, true);
         $doctorId = $json['doctor_id'];
 
+        $stationIds = [];
+        if (!empty($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', $json['station_ids']));
+            }
+        } else if (!empty($json['station_id'])) {
+            $stationIds = [intval($json['station_id'])];
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
+        $primaryStationId = !empty($stationIds) ? $stationIds[0] : intval($json['station_id'] ?? 0);
+
         $sql = "UPDATE Doctor 
                 SET First_Name     = :first_name, 
                     Last_Name      = :last_name, 
@@ -53,10 +90,22 @@ class DoctorMaster
         $stmt->bindParam(":first_name", $json['first_name']);
         $stmt->bindParam(":last_name", $json['last_name']);
         $stmt->bindParam(":type_id", $json['doctor_type_id']);
-        $stmt->bindParam(":station_id", $json['station_id']);
+        $stmt->bindParam(":station_id", $primaryStationId);
         $stmt->bindParam(":round_fee", $json['base_round_fee']);
         $stmt->bindParam(":id", $doctorId);
         $stmt->execute();
+
+        $conn->prepare("DELETE FROM Doctor_Department_Station WHERE Doctor_ID = ?")->execute([$doctorId]);
+        if (!empty($stationIds)) {
+            $stmtDds = $conn->prepare("INSERT INTO Doctor_Department_Station (Doctor_ID, Station_ID, Is_Primary, Created_At) VALUES (:doc_id, :sid, :is_prim, NOW())");
+            foreach ($stationIds as $idx => $sid) {
+                $stmtDds->execute([
+                    ':doc_id'  => $doctorId,
+                    ':sid'     => $sid,
+                    ':is_prim' => ($idx === 0 ? 1 : 0)
+                ]);
+            }
+        }
 
         $conn->prepare("DELETE FROM Doctor_Specialty WHERE Doctor_ID = ?")->execute([$doctorId]);
         if (!empty($json['specialty_ids']) && is_array($json['specialty_ids'])) {

@@ -36,14 +36,22 @@ class UserManager
                        u.Username,
                        u.Role_ID,
                        r.Role_Name,
+                       r.Access_Domain,
+                       r.Permissions,
+                       r.Is_Higher_Up,
                        u.Station_ID,
                        COALESCE(s.Station_Name, 'General Administration') AS Station_Name,
                        s.Code_Prefix AS Station_Code_Prefix,
-                       u.Is_Active
+                       u.Is_Active,
+                       COALESCE(GROUP_CONCAT(DISTINCT st_all.Station_Name ORDER BY uds.Is_Primary DESC, st_all.Station_Name SEPARATOR ', '), s.Station_Name, 'General Administration') AS Assigned_Stations_Text,
+                       COALESCE(GROUP_CONCAT(DISTINCT st_all.Station_ID ORDER BY uds.Is_Primary DESC), CAST(u.Station_ID AS CHAR), '') AS Assigned_Station_IDs
                 FROM System_User u
                 INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
                 LEFT JOIN Enum_Department_Station s ON u.Station_ID = s.Station_ID
+                LEFT JOIN User_Department_Station uds ON u.User_ID = uds.User_ID
+                LEFT JOIN Enum_Department_Station st_all ON uds.Station_ID = st_all.Station_ID
                 $whereClause
+                GROUP BY u.User_ID
                 ORDER BY u.User_ID ASC";
 
         $stmt = $conn->prepare($sql);
@@ -72,6 +80,9 @@ class UserManager
                        u.Username,
                        u.Role_ID,
                        r.Role_Name,
+                       r.Access_Domain,
+                       r.Permissions,
+                       r.Is_Higher_Up,
                        u.Station_ID,
                        COALESCE(s.Station_Name, 'General Administration') AS Station_Name,
                        u.Is_Active
@@ -84,6 +95,32 @@ class UserManager
         $stmt->execute([':id' => $id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        if ($user) {
+            $stStmt = $conn->prepare("
+                SELECT s.Station_ID, s.Station_Name, s.Code_Prefix, uds.Is_Primary
+                FROM User_Department_Station uds
+                INNER JOIN Enum_Department_Station s ON uds.Station_ID = s.Station_ID
+                WHERE uds.User_ID = :id
+                ORDER BY uds.Is_Primary DESC, s.Station_Name ASC
+            ");
+            $stStmt->execute([':id' => $id]);
+            $assignedStations = $stStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $assignedStationIds = [];
+            $assignedStationNames = [];
+            foreach ($assignedStations as $st) {
+                $assignedStationIds[] = intval($st['Station_ID']);
+                $assignedStationNames[] = $st['Station_Name'];
+            }
+            if (empty($assignedStationIds) && !empty($user['Station_ID'])) {
+                $assignedStationIds[] = intval($user['Station_ID']);
+                $assignedStationNames[] = $user['Station_Name'];
+            }
+            $user['assigned_station_ids'] = $assignedStationIds;
+            $user['assigned_stations'] = $assignedStations;
+            $user['assigned_stations_text'] = implode(', ', $assignedStationNames);
+        }
+
         return json_encode($user ?: null);
     }
 
@@ -91,7 +128,11 @@ class UserManager
     {
         include "connection.php";
 
-        $sql = "SELECT Role_ID, Role_Name FROM Enum_User_Role ORDER BY Role_ID ASC";
+        $sql = "SELECT r.Role_ID, r.Role_Name, r.Access_Domain, r.Permissions, r.Is_Higher_Up, r.Is_Active,
+                       (SELECT COUNT(*) FROM System_User u WHERE u.Role_ID = r.Role_ID) AS User_Count
+                FROM Enum_User_Role r 
+                WHERE r.Is_Active = 1 
+                ORDER BY r.Role_ID ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $roles = $stmt->fetchAll(PDO::FETCH_ASSOC);

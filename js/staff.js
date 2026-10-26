@@ -194,25 +194,23 @@ const openStationPicker = async () => {
     if (!stationsList || stationsList.length === 0) {
         await loadStations();
     }
-    const items = [
-        {
-            id: "",
-            text: "General Administration",
-            subtext: "Unassigned / Hospital-wide"
-        },
-        ...stationsList.map(s => ({
-            id: s.Station_ID,
-            text: s.Station_Name,
-            subtext: s.Code_Prefix ? `Code: ${s.Code_Prefix}` : ""
-        }))
-    ];
-    openGenericLookupPicker({
-        title: "Select Department / Station",
+    const rawVal = document.getElementById("staff_station_id").value || "";
+    const selectedIds = rawVal.split(",").map(id => id.trim()).filter(id => id !== "");
+    const items = stationsList.map(s => ({
+        id: String(s.Station_ID),
+        text: s.Station_Name,
+        subtext: s.Code_Prefix ? `Code: ${s.Code_Prefix}` : ""
+    }));
+
+    openMultiLookupPicker({
+        title: "Select Assigned Department Station(s)",
         items: items,
-        selectedId: document.getElementById("staff_station_id").value,
-        onSelect: (item) => {
-            document.getElementById("staff_station_id").value = item.id;
-            document.getElementById("staff_station_id_text").value = item.text;
+        selectedIds: selectedIds,
+        onConfirm: (confirmedIds, confirmedItems) => {
+            document.getElementById("staff_station_id").value = confirmedIds.join(",");
+            document.getElementById("staff_station_id_text").value = confirmedItems.length > 0 
+                ? confirmedItems.map(item => item.text).join(", ") 
+                : "General Administration";
         }
     });
 };
@@ -279,7 +277,8 @@ const filterAndRenderStaff = () => {
             || (u.Username && u.Username.toLowerCase().includes(query))
             || (u.User_Code && u.User_Code.toLowerCase().includes(query))
             || (u.Role_Name && u.Role_Name.toLowerCase().includes(query))
-            || (u.Station_Name && u.Station_Name.toLowerCase().includes(query));
+            || (u.Station_Name && u.Station_Name.toLowerCase().includes(query))
+            || (u.Assigned_Stations_Text && u.Assigned_Stations_Text.toLowerCase().includes(query));
 
         const matchesRole = roleVal === "all" || String(u.Role_ID) === String(roleVal);
 
@@ -315,7 +314,7 @@ const renderStaffTable = (staff) => {
     html += '<thead><tr>';
     html += renderSortableTh("Staff Member & Account", "Full_Name");
     html += renderSortableTh("System Role", "Role_Name");
-    html += renderSortableTh("Assigned Station", "Station_Name");
+    html += renderSortableTh("Assigned Station(s)", "Station_Name");
     html += renderSortableTh("Account Status", "Is_Active");
     html += '</tr></thead><tbody>';
 
@@ -326,6 +325,7 @@ const renderStaffTable = (staff) => {
             : '<span class="badge badge-danger">Archived</span>';
 
         const roleBadge = getRoleBadge(u.Role_Name, u.Access_Domain, u.Is_Higher_Up);
+        const stationDisplay = u.Assigned_Stations_Text || u.Station_Name || 'General Administration';
 
         html += `<tr class="clickable-row" onclick="openEditStaffModal(${u.User_ID})" title="Click to view / edit staff user account">`;
         html += `<td>
@@ -333,7 +333,7 @@ const renderStaffTable = (staff) => {
             <div class="table-sub-text"><span class="staff-code-pill">${u.User_Code}</span> &bull; <code class="staff-username-pill">@${u.Username}</code></div>
         </td>`;
         html += `<td>${roleBadge}</td>`;
-        html += `<td><div class="table-sub-text-dark">${u.Station_Name || 'General Administration'}</div></td>`;
+        html += `<td><div class="table-sub-text-dark">${stationDisplay}</div></td>`;
         html += `<td>${statusBadge}</td>`;
         html += '</tr>';
     });
@@ -400,8 +400,8 @@ const openEditStaffModal = (userId) => {
     document.getElementById("staff_username").value = user.Username || "";
     document.getElementById("staff_role_id").value = user.Role_ID || "";
     document.getElementById("staff_role_id_text").value = user.Role_Name || "";
-    document.getElementById("staff_station_id").value = user.Station_ID || "";
-    document.getElementById("staff_station_id_text").value = user.Station_Name || "General Administration";
+    document.getElementById("staff_station_id").value = user.Assigned_Station_IDs || user.Station_ID || "";
+    document.getElementById("staff_station_id_text").value = user.Assigned_Stations_Text || user.Station_Name || "General Administration";
     const staffPwdEdit = document.getElementById("staff_password");
     staffPwdEdit.value = "";
     staffPwdEdit.type = "password";
@@ -473,7 +473,6 @@ const saveStaffForm = (e) => {
     const lastName = document.getElementById("staff_last_name").value.trim();
     const username = document.getElementById("staff_username").value.trim();
     const roleId = document.getElementById("staff_role_id").value;
-    const stationId = document.getElementById("staff_station_id").value;
     const password = document.getElementById("staff_password").value.trim();
 
     if (!firstName || !lastName || !username || !roleId) {
@@ -526,12 +525,17 @@ const saveStaffForm = (e) => {
     }
     const operation = isEdit ? "updateUser" : "addUser";
 
+    const rawStationVal = document.getElementById("staff_station_id").value || "";
+    const stationIds = rawStationVal.split(",").map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id) && id > 0);
+    const stationId = stationIds.length > 0 ? stationIds[0] : null;
+
     const payload = {
         first_name: firstName,
         last_name: lastName,
         username: username,
         role_id: roleId,
-        station_id: stationId || null
+        station_id: stationId,
+        station_ids: stationIds
     };
 
     if (isEdit) {

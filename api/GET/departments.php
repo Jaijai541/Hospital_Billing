@@ -9,8 +9,14 @@ class Department
         include "connection.php";
 
         $sql = "SELECT s.Station_ID, s.Station_Name, s.Code_Prefix, s.Is_Active,
-                       (SELECT COUNT(*) FROM Doctor d WHERE d.Station_ID = s.Station_ID AND d.Is_Active = 1) AS Active_Doctors_Count,
-                       (SELECT COUNT(*) FROM System_User u WHERE u.Station_ID = s.Station_ID AND u.Is_Active = 1) AS Active_Staff_Count,
+                       (SELECT COUNT(DISTINCT d.Doctor_ID) 
+                        FROM Doctor d 
+                        LEFT JOIN Doctor_Department_Station dds ON d.Doctor_ID = dds.Doctor_ID 
+                        WHERE (d.Station_ID = s.Station_ID OR dds.Station_ID = s.Station_ID) AND d.Is_Active = 1) AS Active_Doctors_Count,
+                       (SELECT COUNT(DISTINCT u.User_ID) 
+                        FROM System_User u 
+                        LEFT JOIN User_Department_Station uds ON u.User_ID = uds.User_ID 
+                        WHERE (u.Station_ID = s.Station_ID OR uds.Station_ID = s.Station_ID) AND u.Is_Active = 1) AS Active_Staff_Count,
                        (SELECT COUNT(*) FROM Doctor_Order_Request dor WHERE dor.Target_Station_ID = s.Station_ID AND dor.Status IN ('Requested', 'Pending')) AS Pending_Orders_Count
                 FROM Enum_Department_Station s 
                 ORDER BY s.Is_Active DESC, s.Station_Name ASC";
@@ -50,22 +56,24 @@ class Department
         $rs = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($rs) {
-            $docSql = "SELECT d.Doctor_ID, d.First_Name, d.Last_Name, dt.Type_Name AS Doctor_Type_Name, d.Is_Active,
+            $docSql = "SELECT DISTINCT d.Doctor_ID, d.First_Name, d.Last_Name, dt.Type_Name AS Doctor_Type_Name, d.Is_Active,
                               CONCAT('DOC-', LPAD(d.Doctor_ID, 3, '0')) AS Formatted_Code
                        FROM Doctor d
                        INNER JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
-                       WHERE d.Station_ID = :id
+                       LEFT JOIN Doctor_Department_Station dds ON d.Doctor_ID = dds.Doctor_ID
+                       WHERE (d.Station_ID = :id OR dds.Station_ID = :id)
                        ORDER BY d.Is_Active DESC, d.Last_Name ASC";
             $docStmt = $conn->prepare($docSql);
             $docStmt->bindParam(":id", $json['station_id']);
             $docStmt->execute();
             $rs['assigned_doctors'] = $docStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $userSql = "SELECT u.User_ID, u.First_Name, u.Last_Name, u.Username, r.Role_Name, u.Is_Active,
+            $userSql = "SELECT DISTINCT u.User_ID, u.First_Name, u.Last_Name, u.Username, r.Role_Name, u.Is_Active,
                                CONCAT('USR-', LPAD(u.User_ID, 3, '0')) AS Formatted_Code
                         FROM System_User u
                         INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
-                        WHERE u.Station_ID = :id
+                        LEFT JOIN User_Department_Station uds ON u.User_ID = uds.User_ID
+                        WHERE (u.Station_ID = :id OR uds.Station_ID = :id)
                         ORDER BY u.Is_Active DESC, u.Last_Name ASC";
             $userStmt = $conn->prepare($userSql);
             $userStmt->bindParam(":id", $json['station_id']);

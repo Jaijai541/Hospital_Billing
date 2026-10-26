@@ -1456,6 +1456,242 @@ const renderGenericLookupList = () => {
     });
 };
 
+let multiLookupPickerState = {
+    title: "Select Items",
+    items: [],
+    selectedIds: [],
+    onConfirm: null
+};
+
+const openMultiLookupPicker = (options) => {
+    let modal = document.getElementById("system-generic-multi-lookup-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "system-generic-multi-lookup-modal";
+        modal.className = "modal-overlay picker-modal-overlay";
+        modal.innerHTML = `
+            <div class="modal-container lookup-picker-modal-container">
+                <div class="modal-header">
+                    <h3 id="generic_multi_lookup_title">Select Items</h3>
+                    <button type="button" class="modal-close" id="btnCloseGenericMultiLookup" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="modal-body lookup-picker-modal-body">
+                    <div class="lookup-picker-controls">
+                        <input type="text" id="generic_multi_lookup_search" class="form-control lookup-picker-search-input" placeholder="Search..." autocomplete="off">
+                        <select id="generic_multi_lookup_filter" class="form-select lookup-picker-select">
+                            <option value="all">All</option>
+                            <option value="selected">Selected</option>
+                            <option value="unselected">Unselected</option>
+                        </select>
+                        <select id="generic_multi_lookup_sort" class="form-select lookup-picker-select">
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="selected_first">Selected First</option>
+                        </select>
+                    </div>
+                    <div class="multi-picker-toolbar">
+                        <label class="multi-picker-select-all">
+                            <input type="checkbox" id="generic_multi_select_all" class="multi-picker-cb"> Select All
+                        </label>
+                        <span id="generic_multi_selected_count" class="multi-picker-count">0 Selected</span>
+                    </div>
+                    <div id="generic_multi_lookup_list" class="lookup-picker-list-container"></div>
+                </div>
+                <div class="modal-footer lookup-picker-modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelGenericMultiLookup">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmGenericMultiLookup">Done</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closePicker = () => {
+            modal.style.display = "none";
+            modal.classList.remove("active");
+        };
+
+        document.getElementById("btnCloseGenericMultiLookup").addEventListener("click", closePicker);
+        document.getElementById("btnCancelGenericMultiLookup").addEventListener("click", closePicker);
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                closePicker();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && (modal.classList.contains("active") || modal.style.display === "flex")) {
+                e.stopImmediatePropagation();
+                closePicker();
+            }
+        });
+
+        document.getElementById("generic_multi_lookup_search").addEventListener("input", renderGenericMultiLookupList);
+        document.getElementById("generic_multi_lookup_filter").addEventListener("change", renderGenericMultiLookupList);
+        document.getElementById("generic_multi_lookup_sort").addEventListener("change", renderGenericMultiLookupList);
+
+        document.getElementById("generic_multi_select_all").addEventListener("change", (e) => {
+            const isChecked = e.target.checked;
+            if (isChecked) {
+                multiLookupPickerState.selectedIds = multiLookupPickerState.items.map(i => String(i.id));
+            } else {
+                multiLookupPickerState.selectedIds = [];
+            }
+            updateGenericMultiStatus();
+            renderGenericMultiLookupList();
+        });
+
+        document.getElementById("btnConfirmGenericMultiLookup").addEventListener("click", () => {
+            if (typeof multiLookupPickerState.onConfirm === "function") {
+                const selectedItems = multiLookupPickerState.items.filter(item => multiLookupPickerState.selectedIds.includes(String(item.id)));
+                multiLookupPickerState.onConfirm(multiLookupPickerState.selectedIds, selectedItems);
+            }
+            closePicker();
+        });
+    }
+
+    multiLookupPickerState.title = options.title || "Select Items";
+    multiLookupPickerState.items = options.items || [];
+    multiLookupPickerState.selectedIds = Array.isArray(options.selectedIds) ? options.selectedIds.map(id => String(id)) : [];
+    multiLookupPickerState.onConfirm = options.onConfirm || null;
+
+    document.getElementById("generic_multi_lookup_title").textContent = multiLookupPickerState.title;
+    document.getElementById("generic_multi_lookup_search").value = "";
+    document.getElementById("generic_multi_lookup_filter").value = "all";
+    document.getElementById("generic_multi_lookup_sort").value = "name_asc";
+
+    updateGenericMultiStatus();
+    renderGenericMultiLookupList();
+
+    modal.classList.add("active");
+    modal.style.display = "flex";
+    modal.style.zIndex = "1300";
+    setTimeout(() => {
+        const searchInput = document.getElementById("generic_multi_lookup_search");
+        if (searchInput) searchInput.focus();
+    }, 50);
+};
+
+window.openMultiLookupPicker = openMultiLookupPicker;
+
+const updateGenericMultiStatus = () => {
+    const countEl = document.getElementById("generic_multi_selected_count");
+    const selectAllCb = document.getElementById("generic_multi_select_all");
+    const count = multiLookupPickerState.selectedIds.length;
+    if (countEl) {
+        countEl.textContent = `${count} Selected`;
+    }
+    if (selectAllCb && multiLookupPickerState.items.length > 0) {
+        selectAllCb.checked = (count === multiLookupPickerState.items.length);
+        selectAllCb.indeterminate = (count > 0 && count < multiLookupPickerState.items.length);
+    }
+};
+
+const renderGenericMultiLookupList = () => {
+    const listContainer = document.getElementById("generic_multi_lookup_list");
+    if (!listContainer) return;
+
+    const searchStr = (document.getElementById("generic_multi_lookup_search").value || "").toLowerCase().trim();
+    const filterVal = document.getElementById("generic_multi_lookup_filter").value;
+    const sortVal = document.getElementById("generic_multi_lookup_sort").value;
+
+    let filtered = multiLookupPickerState.items.filter(item => {
+        const matchesSearch = !searchStr || 
+            (item.text && item.text.toLowerCase().includes(searchStr)) || 
+            (item.subtext && item.subtext.toLowerCase().includes(searchStr));
+
+        if (!matchesSearch) return false;
+
+        const isSelected = multiLookupPickerState.selectedIds.includes(String(item.id));
+        if (filterVal === "selected") return isSelected;
+        if (filterVal === "unselected") return !isSelected;
+        return true;
+    });
+
+    filtered.sort((a, b) => {
+        const aSelected = multiLookupPickerState.selectedIds.includes(String(a.id));
+        const bSelected = multiLookupPickerState.selectedIds.includes(String(b.id));
+
+        if (sortVal === "selected_first") {
+            if (aSelected && !bSelected) return -1;
+            if (!aSelected && bSelected) return 1;
+        }
+
+        const nameA = (a.text || "").toLowerCase();
+        const nameB = (b.text || "").toLowerCase();
+        if (sortVal === "name_desc") {
+            return nameB.localeCompare(nameA);
+        }
+        return nameA.localeCompare(nameB);
+    });
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = '<div class="picker-empty-state">No matching items found.</div>';
+        return;
+    }
+
+    listContainer.innerHTML = "";
+    filtered.forEach(item => {
+        const itemId = String(item.id);
+        const isSelected = multiLookupPickerState.selectedIds.includes(itemId);
+
+        const row = document.createElement("div");
+        row.className = `picker-item-row${isSelected ? ' selected' : ''}`;
+
+        const leftBox = document.createElement("div");
+        leftBox.className = "multi-picker-item-left";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = isSelected;
+        cb.className = "multi-picker-cb";
+
+        const labelBox = document.createElement("div");
+        labelBox.className = "picker-item-content";
+
+        const titleEl = document.createElement("div");
+        titleEl.textContent = item.text;
+        titleEl.className = "picker-item-title";
+        labelBox.appendChild(titleEl);
+
+        if (item.subtext) {
+            const subEl = document.createElement("div");
+            subEl.textContent = item.subtext;
+            subEl.className = "picker-item-sub";
+            labelBox.appendChild(subEl);
+        }
+
+        leftBox.appendChild(cb);
+        leftBox.appendChild(labelBox);
+
+        const badgeBox = document.createElement("div");
+        badgeBox.className = "picker-item-badge-wrap";
+        if (isSelected) {
+            badgeBox.innerHTML = '<span class="badge badge-primary">Selected</span>';
+        }
+
+        row.appendChild(leftBox);
+        row.appendChild(badgeBox);
+
+        const toggleItem = () => {
+            const idx = multiLookupPickerState.selectedIds.indexOf(itemId);
+            if (idx > -1) {
+                multiLookupPickerState.selectedIds.splice(idx, 1);
+            } else {
+                multiLookupPickerState.selectedIds.push(itemId);
+            }
+            updateGenericMultiStatus();
+            renderGenericMultiLookupList();
+        };
+
+        row.addEventListener("click", toggleItem);
+        cb.addEventListener("click", (e) => e.stopPropagation());
+        cb.addEventListener("change", toggleItem);
+
+        listContainer.appendChild(row);
+    });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof renderSidebar !== "undefined") {
         renderSidebar();
@@ -2273,6 +2509,7 @@ const fetchRealtimeNotifications = () => {
     if (!user || !user.role_id) return;
 
     const userStationId = user.station_id || user.Station_ID || user.doctor_station_id || 0;
+    const assignedStationIds = user.assigned_station_ids || (userStationId ? [userStationId] : []);
 
     axios.get("../api/GET/clinical_orders.php", {
         params: {
@@ -2280,7 +2517,8 @@ const fetchRealtimeNotifications = () => {
             json: JSON.stringify({
                 user_id: user.user_id || user.User_ID || 0,
                 role_id: user.role_id || 0,
-                station_id: userStationId
+                station_id: userStationId,
+                station_ids: assignedStationIds
             })
         }
     }).then(res => {
@@ -2351,6 +2589,7 @@ const fetchDepartmentOrdersQueue = (customStationId = null) => {
     const container = document.getElementById("notif-queue-table-div");
     if (!container) return;
 
+    const assignedStationIds = user.assigned_station_ids || (user.station_id ? [user.station_id] : []);
     const stationSelect = document.getElementById("notif-queue-station-select");
     let targetStation = 0;
     if (customStationId !== null) {
@@ -2370,7 +2609,9 @@ const fetchDepartmentOrdersQueue = (customStationId = null) => {
             operation: "getDepartmentOrders",
             json: JSON.stringify({
                 station_id: targetStation,
-                user_id: user.user_id || user.User_ID || 0
+                station_ids: assignedStationIds,
+                user_id: user.user_id || user.User_ID || 0,
+                role_id: user.role_id || 0
             })
         }
     }).then(res => {

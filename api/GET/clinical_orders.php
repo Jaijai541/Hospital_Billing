@@ -167,19 +167,45 @@ class ClinicalOrderManager
         $roleId = intval($json['role_id'] ?? 0);
         $stationId = intval($json['station_id'] ?? 0);
 
-        if ($stationId <= 0 && $userId > 0) {
-            $stStmt = $conn->prepare("SELECT COALESCE(u.Station_ID, d.Station_ID, 0) AS User_Station_ID 
-                                      FROM System_User u 
-                                      LEFT JOIN Doctor d ON u.User_ID = d.User_ID 
-                                      WHERE u.User_ID = :uid LIMIT 1");
-            $stStmt->execute([':uid' => $userId]);
-            $foundSt = $stStmt->fetch(PDO::FETCH_ASSOC);
-            if (!empty($foundSt['User_Station_ID'])) {
-                $stationId = intval($foundSt['User_Station_ID']);
+        $stationIds = [];
+        if (!empty($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', $json['station_ids']));
             }
         }
+        if ($stationId > 0) {
+            $stationIds[] = $stationId;
+        }
+
+        if ($userId > 0) {
+            $stStmt = $conn->prepare("
+                SELECT DISTINCT Station_ID FROM (
+                    SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid
+                    UNION
+                    SELECT dds.Station_ID FROM Doctor_Department_Station dds INNER JOIN Doctor d ON dds.Doctor_ID = d.Doctor_ID WHERE d.User_ID = :uid
+                    UNION
+                    SELECT Station_ID FROM System_User WHERE User_ID = :uid AND Station_ID IS NOT NULL
+                    UNION
+                    SELECT d.Station_ID FROM Doctor d WHERE d.User_ID = :uid AND d.Station_ID IS NOT NULL
+                ) AS sub WHERE Station_ID > 0
+            ");
+            $stStmt->execute([':uid' => $userId]);
+            $dbStationIds = $stStmt->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($dbStationIds as $sid) {
+                $stationIds[] = intval($sid);
+            }
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
 
         $isAdmin = ($roleId === 1) ? 1 : 0;
+
+        $stationCondition = "0 = 1";
+        if (!empty($stationIds)) {
+            $stationIdList = implode(",", $stationIds);
+            $stationCondition = "cn.Target_Station_ID IN ($stationIdList)";
+        }
 
         $sql = "SELECT cn.Notification_ID, cn.Admission_ID, cn.Request_ID, cn.Sender_User_ID,
                        cn.Target_Role_ID, cn.Target_Station_ID, cn.Target_User_ID,
@@ -197,7 +223,7 @@ class ClinicalOrderManager
                 LEFT JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
                 WHERE (:is_admin = 1 
                    OR cn.Target_User_ID = :uid 
-                   OR (cn.Target_Station_ID IS NOT NULL AND cn.Target_Station_ID = :sid)
+                   OR (cn.Target_Station_ID IS NOT NULL AND $stationCondition)
                    OR (cn.Target_Role_ID IS NOT NULL AND cn.Target_Role_ID = :rid)
                    OR (cn.Target_Role_ID IS NULL AND cn.Target_Station_ID IS NULL AND cn.Target_User_ID IS NULL))
                 ORDER BY cn.Created_At DESC
@@ -206,7 +232,6 @@ class ClinicalOrderManager
         $stmt->execute([
             ':is_admin' => $isAdmin,
             ':uid' => $userId,
-            ':sid' => $stationId,
             ':rid' => $roleId
         ]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -230,25 +255,46 @@ class ClinicalOrderManager
         $json = is_array($json) ? $json : json_decode($json, true);
         $stationId = intval($json['station_id'] ?? 0);
         $userId = intval($json['user_id'] ?? 0);
+        $roleId = intval($json['role_id'] ?? 0);
         $status = trim($json['status'] ?? '');
 
-        if ($stationId <= 0 && $userId > 0) {
-            $stStmt = $conn->prepare("SELECT COALESCE(u.Station_ID, d.Station_ID, 0) AS User_Station_ID 
-                                      FROM System_User u 
-                                      LEFT JOIN Doctor d ON u.User_ID = d.User_ID 
-                                      WHERE u.User_ID = :uid LIMIT 1");
-            $stStmt->execute([':uid' => $userId]);
-            $foundSt = $stStmt->fetch(PDO::FETCH_ASSOC);
-            if (!empty($foundSt['User_Station_ID'])) {
-                $stationId = intval($foundSt['User_Station_ID']);
+        $stationIds = [];
+        if (!empty($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', $json['station_ids']));
             }
         }
+
+        if ($stationId <= 0 && $userId > 0) {
+            $stStmt = $conn->prepare("
+                SELECT DISTINCT Station_ID FROM (
+                    SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid
+                    UNION
+                    SELECT dds.Station_ID FROM Doctor_Department_Station dds INNER JOIN Doctor d ON dds.Doctor_ID = d.Doctor_ID WHERE d.User_ID = :uid
+                    UNION
+                    SELECT Station_ID FROM System_User WHERE User_ID = :uid AND Station_ID IS NOT NULL
+                    UNION
+                    SELECT d.Station_ID FROM Doctor d WHERE d.User_ID = :uid AND d.Station_ID IS NOT NULL
+                ) AS sub WHERE Station_ID > 0
+            ");
+            $stStmt->execute([':uid' => $userId]);
+            $dbStationIds = $stStmt->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($dbStationIds as $sid) {
+                $stationIds[] = intval($sid);
+            }
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
 
         $where = "WHERE 1=1";
         $params = [];
         if ($stationId > 0) {
             $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
             $params[':sid'] = $stationId;
+        } else if (!empty($stationIds) && $roleId !== 1) {
+            $stationIdList = implode(",", $stationIds);
+            $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
         }
         if (!empty($status)) {
             $where .= " AND dor.Status = :status";

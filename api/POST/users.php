@@ -16,6 +16,19 @@ class UserManager
         $roleId = intval($json['role_id'] ?? 0);
         $stationId = !empty($json['station_id']) ? intval($json['station_id']) : null;
 
+        $stationIds = [];
+        if (!empty($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', $json['station_ids']));
+            }
+        } else if (!empty($stationId)) {
+            $stationIds = [$stationId];
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
+        $primaryStationId = !empty($stationIds) ? $stationIds[0] : $stationId;
+
         if (empty($firstName) || empty($lastName) || empty($username) || empty($password) || $roleId <= 0) {
             return json_encode([
                 "status" => 0,
@@ -45,11 +58,21 @@ class UserManager
             ':uname' => $username,
             ':hash' => $passwordHash,
             ':role_id' => $roleId,
-            ':station_id' => $stationId
+            ':station_id' => $primaryStationId
         ]);
 
         if ($res) {
             $newId = $conn->lastInsertId();
+            if (!empty($stationIds)) {
+                $udsStmt = $conn->prepare("INSERT INTO User_Department_Station (User_ID, Station_ID, Is_Primary, Created_At) VALUES (:uid, :sid, :is_prim, NOW())");
+                foreach ($stationIds as $idx => $sid) {
+                    $udsStmt->execute([
+                        ':uid' => $newId,
+                        ':sid' => $sid,
+                        ':is_prim' => ($idx === 0 ? 1 : 0)
+                    ]);
+                }
+            }
             return json_encode([
                 "status" => 1,
                 "message" => "Staff account created successfully.",
@@ -80,6 +103,19 @@ class UserManager
         $password = trim($json['password'] ?? '');
         $roleId = intval($json['role_id'] ?? 0);
         $stationId = !empty($json['station_id']) ? intval($json['station_id']) : null;
+
+        $stationIds = [];
+        if (!empty($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', $json['station_ids']));
+            }
+        } else if (!empty($stationId)) {
+            $stationIds = [$stationId];
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
+        $primaryStationId = !empty($stationIds) ? $stationIds[0] : $stationId;
 
         if ($userId <= 0 || empty($firstName) || empty($lastName) || empty($username) || $roleId <= 0) {
             return json_encode([
@@ -126,7 +162,7 @@ class UserManager
             ':lname' => $lastName,
             ':uname' => $username,
             ':role_id' => $roleId,
-            ':station_id' => $stationId,
+            ':station_id' => $primaryStationId,
             ':id' => $userId
         ];
 
@@ -155,6 +191,20 @@ class UserManager
         $res = $stmt->execute($params);
 
         if ($res) {
+            $delUds = $conn->prepare("DELETE FROM User_Department_Station WHERE User_ID = :id");
+            $delUds->execute([':id' => $userId]);
+
+            if (!empty($stationIds)) {
+                $udsStmt = $conn->prepare("INSERT INTO User_Department_Station (User_ID, Station_ID, Is_Primary, Created_At) VALUES (:uid, :sid, :is_prim, NOW())");
+                foreach ($stationIds as $idx => $sid) {
+                    $udsStmt->execute([
+                        ':uid' => $userId,
+                        ':sid' => $sid,
+                        ':is_prim' => ($idx === 0 ? 1 : 0)
+                    ]);
+                }
+            }
+
             return json_encode([
                 "status" => 1,
                 "message" => "Staff account updated successfully.",

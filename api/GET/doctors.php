@@ -12,11 +12,15 @@ class DoctorMaster
                        dt.Type_Name AS Doctor_Type_Name,
                        st.Station_Name,
                        CONCAT(d.Code_Prefix, '-', LPAD(d.Doctor_ID, 3, '0')) AS Formatted_Code,
-                       COALESCE(GROUP_CONCAT(s.Specialty_Name ORDER BY s.Specialty_Name SEPARATOR ', '), 'General Practice') AS Specialties,
-                       COALESCE(GROUP_CONCAT(s.Specialty_ID), '') AS Specialty_IDs
+                       COALESCE(GROUP_CONCAT(DISTINCT s.Specialty_Name ORDER BY s.Specialty_Name SEPARATOR ', '), 'General Practice') AS Specialties,
+                       COALESCE(GROUP_CONCAT(DISTINCT ds.Specialty_ID), '') AS Specialty_IDs,
+                       COALESCE(GROUP_CONCAT(DISTINCT all_st.Station_Name ORDER BY dds.Is_Primary DESC, all_st.Station_Name SEPARATOR ', '), st.Station_Name) AS All_Station_Names,
+                       COALESCE(GROUP_CONCAT(DISTINCT all_st.Station_ID ORDER BY dds.Is_Primary DESC), CAST(d.Station_ID AS CHAR)) AS All_Station_IDs
                 FROM Doctor d 
                 INNER JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID 
-                INNER JOIN Enum_Department_Station st ON d.Station_ID = st.Station_ID 
+                LEFT JOIN Enum_Department_Station st ON d.Station_ID = st.Station_ID 
+                LEFT JOIN Doctor_Department_Station dds ON d.Doctor_ID = dds.Doctor_ID
+                LEFT JOIN Enum_Department_Station all_st ON dds.Station_ID = all_st.Station_ID
                 LEFT JOIN Doctor_Specialty ds ON d.Doctor_ID = ds.Doctor_ID 
                 LEFT JOIN Enum_Specialty s ON ds.Specialty_ID = s.Specialty_ID 
                 GROUP BY d.Doctor_ID 
@@ -68,6 +72,31 @@ class DoctorMaster
 
         if ($rs) {
             $rs['specialty_ids_array'] = !empty($rs['Specialty_IDs']) ? explode(',', $rs['Specialty_IDs']) : [];
+
+            $ddsStmt = $conn->prepare("
+                SELECT s.Station_ID, s.Station_Name, s.Code_Prefix, dds.Is_Primary
+                FROM Doctor_Department_Station dds
+                INNER JOIN Enum_Department_Station s ON dds.Station_ID = s.Station_ID
+                WHERE dds.Doctor_ID = :id
+                ORDER BY dds.Is_Primary DESC, s.Station_Name ASC
+            ");
+            $ddsStmt->execute([':id' => $json['doctor_id']]);
+            $assignedStations = $ddsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $assignedStationIds = [];
+            $assignedStationNames = [];
+            foreach ($assignedStations as $st) {
+                $assignedStationIds[] = intval($st['Station_ID']);
+                $assignedStationNames[] = $st['Station_Name'];
+            }
+            if (empty($assignedStationIds) && !empty($rs['Station_ID'])) {
+                $assignedStationIds[] = intval($rs['Station_ID']);
+                $assignedStationNames[] = $rs['Station_Name'];
+            }
+            $rs['assigned_station_ids'] = $assignedStationIds;
+            $rs['assigned_stations'] = $assignedStations;
+            $rs['station_ids_array'] = $assignedStationIds;
+            $rs['all_station_names'] = implode(', ', $assignedStationNames);
 
             $patSql = "SELECT a.Admission_ID, a.Patient_ID, a.Chief_Complaint, a.Diagnosis, a.Status AS Admission_Status,
                               DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Admission_Date,

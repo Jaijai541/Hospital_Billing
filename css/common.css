@@ -2208,6 +2208,85 @@ textarea.form-control {
     margin-top: 2px;
 }
 
+.multi-picker-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.multi-picker-select-all {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.multi-picker-count {
+    font-size: 0.82rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.multi-picker-cb {
+    margin-right: 12px;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.multi-picker-item-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.lookup-picker-modal-container {
+    max-width: 580px;
+    width: 100%;
+}
+
+.lookup-picker-modal-body {
+    padding: 16px 20px;
+}
+
+.lookup-picker-list-container {
+    max-height: 330px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+}
+
+.lookup-picker-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+}
+
+.picker-empty-state {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.picker-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.picker-item-badge-wrap {
+    flex-shrink: 0;
+}
+
 .picker-row {
     cursor: pointer;
     transition: background-color 0.15s ease;

@@ -121,12 +121,41 @@ const enforcePageRbacGuard = (user) => {
     return true;
 };
 
-const canUserAddData = () => {
+const canUserAddModule = (modulePage) => {
     const u = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     if (!u || !u.role_id) return false;
     if (parseInt(u.role_id, 10) === 1) return true;
     const perms = Array.isArray(u.permissions) ? u.permissions : [];
-    return perms.includes("can_add");
+    if (perms.includes("can_add")) return true;
+
+    const pageMap = {
+        "patients.html": "can_add_patient",
+        "doctors.html": "can_add_doctor",
+        "departments.html": "can_add_department",
+        "rooms.html": "can_add_room",
+        "catalogs.html": "can_add_catalog",
+        "discounts.html": "can_add_discount",
+        "admissions.html": "can_add_admission",
+        "admission_details.html": "can_add_admission",
+        "invoices.html": "can_add_payment",
+        "promissory_notes.html": "can_add_promissory",
+        "staff.html": "can_add_staff"
+    };
+
+    const targetPerm = pageMap[modulePage];
+    return targetPerm ? perms.includes(targetPerm) : false;
+};
+
+const canUserAddData = (specificAction = null) => {
+    const u = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    if (!u || !u.role_id) return false;
+    if (parseInt(u.role_id, 10) === 1) return true;
+    const perms = Array.isArray(u.permissions) ? u.permissions : [];
+    if (perms.includes("can_add")) return true;
+    if (specificAction) {
+        return perms.includes(specificAction);
+    }
+    return perms.some(p => typeof p === "string" && p.startsWith("can_add_"));
 };
 
 const canUserDelete = () => {
@@ -150,7 +179,10 @@ const applyGlobalActionPermissions = () => {
     const userJson = sessionStorage.getItem("hospital_user");
     if (!userJson) return;
 
-    const userCanAdd = canUserAddData();
+    const pathParts = window.location.pathname.split("/");
+    const currentPage = (pathParts[pathParts.length - 1] || "").toLowerCase();
+
+    const userCanAdd = canUserAddModule(currentPage);
     const userCanDelete = canUserDelete();
     const userCanPrint = canUserPrint();
 
@@ -170,14 +202,31 @@ const applyGlobalActionPermissions = () => {
             "#btnOpenAdvancePaymentModal",
             "#btnNewPatient",
             "#btnNewRecord",
+            "#btnSubmitSpecialty",
+            "#btnSubmitRoomType",
+            "#btnOpenEditFromPatientView",
+            "#btnOpenEditFromDoctorView",
+            "#btnOpenEditFromView",
+            "#btnOpenEditFromRoomView",
+            "#btnHistPayBalance",
             ".btn-add-action",
-            ".btn-register-action"
+            ".btn-register-action",
+            ".btn-pay-action"
         ];
         addSelectors.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
                 el.style.display = "none";
             });
         });
+
+        if (currentPage === "staff.html") {
+            const roleButtons = ["#btnOpenManageRolesModalTopbar", "#btnOpenManageRolesModalInline"];
+            roleButtons.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    el.style.display = "none";
+                });
+            });
+        }
     }
 
     if (!userCanDelete) {
@@ -258,6 +307,7 @@ const schedulePermissionsEnforcement = () => {
 };
 
 window.canUserAddData = canUserAddData;
+window.canUserAddModule = canUserAddModule;
 window.canUserDelete = canUserDelete;
 window.canUserPrint = canUserPrint;
 window.applyGlobalActionPermissions = applyGlobalActionPermissions;

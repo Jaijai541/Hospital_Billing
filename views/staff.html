@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Staff & System Users — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=16.0">
-    <link rel="stylesheet" href="../css/staff.css?v=16.0">
+    <link rel="stylesheet" href="../css/common.css?v=16.1">
+    <link rel="stylesheet" href="../css/staff.css?v=16.1">
 </head>
 <body>
 
@@ -289,89 +289,223 @@
 
                             <div class="role-perm-panes-wrap">
                                 <div class="role-perm-pane role-perm-pane-grid" id="pane-master_files">
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="patients.html">
-                                        <span><strong>Patients Directory</strong><br><small class="text-muted role-perm-desc">Patient demographics &amp; history</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="doctors.html">
-                                        <span><strong>Doctors &amp; Fees</strong><br><small class="text-muted role-perm-desc">Physicians &amp; consultation rates</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="departments.html">
-                                        <span><strong>Departments &amp; Stations</strong><br><small class="text-muted role-perm-desc">Hospital medical units &amp; wings</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="rooms.html">
-                                        <span><strong>Rooms &amp; Beds</strong><br><small class="text-muted role-perm-desc">Wards, rooms &amp; bed inventory</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="catalogs.html">
-                                        <span><strong>Charge Catalogs</strong><br><small class="text-muted role-perm-desc">Hospital items, tests &amp; charges</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="discounts.html">
-                                        <span><strong>Billing Discounts</strong><br><small class="text-muted role-perm-desc">Senior, PWD &amp; special schemes</small></span>
-                                    </label>
+                                    <div class="role-module-card" data-module="patients.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="patients.html">
+                                                <span><strong>Patients Directory</strong><br><small class="text-muted role-perm-desc">Patient demographics &amp; history</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_patient" data-parent-module="patients.html">
+                                                <span>Add Patient Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="doctors.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="doctors.html">
+                                                <span><strong>Doctors &amp; Fees</strong><br><small class="text-muted role-perm-desc">Physicians &amp; consultation rates</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_doctor" data-parent-module="doctors.html">
+                                                <span>Add Doctor Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="departments.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="departments.html">
+                                                <span><strong>Departments &amp; Stations</strong><br><small class="text-muted role-perm-desc">Hospital medical units &amp; wings</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_department" data-parent-module="departments.html">
+                                                <span>Add Department Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="rooms.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="rooms.html">
+                                                <span><strong>Rooms &amp; Beds</strong><br><small class="text-muted role-perm-desc">Wards, rooms &amp; bed inventory</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_room" data-parent-module="rooms.html">
+                                                <span>Add Room Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="catalogs.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="catalogs.html">
+                                                <span><strong>Charge Catalogs</strong><br><small class="text-muted role-perm-desc">Hospital items, tests &amp; charges</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_catalog" data-parent-module="catalogs.html">
+                                                <span>Add Catalog Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="discounts.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="discounts.html">
+                                                <span><strong>Billing Discounts</strong><br><small class="text-muted role-perm-desc">Senior, PWD &amp; special schemes</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_discount" data-parent-module="discounts.html">
+                                                <span>Add Discount Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="role-perm-pane role-perm-pane-col role-perm-pane-hidden" id="pane-clinical_care">
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="admissions.html">
-                                        <span><strong>Admissions &amp; Bed Board</strong><br><small class="text-muted role-perm-desc">Inpatient admission intake, bed assignments, clinical charting &amp; discharge orders</small></span>
-                                    </label>
+                                    <div class="role-module-card" data-module="admissions.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="admissions.html">
+                                                <span><strong>Admissions &amp; Bed Board</strong><br><small class="text-muted role-perm-desc">Inpatient admission intake, bed assignments, clinical charting &amp; discharge orders</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_admission" data-parent-module="admissions.html">
+                                                <span>Admit &amp; Clinical Orders Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="role-perm-pane role-perm-pane-grid role-perm-pane-hidden" id="pane-billing_settlement">
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="invoices.html">
-                                        <span><strong>Invoices &amp; Settlement</strong><br><small class="text-muted role-perm-desc">Billing folios, cashier payments &amp; receipts</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="promissory_notes.html">
-                                        <span><strong>Promissory Notes &amp; AR</strong><br><small class="text-muted role-perm-desc">Deferred payment terms &amp; guarantors</small></span>
-                                    </label>
+                                    <div class="role-module-card" data-module="invoices.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="invoices.html">
+                                                <span><strong>Invoices &amp; Settlement</strong><br><small class="text-muted role-perm-desc">Billing folios, cashier payments &amp; receipts</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_payment" data-parent-module="invoices.html">
+                                                <span>Settle &amp; Post Payment Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="promissory_notes.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="promissory_notes.html">
+                                                <span><strong>Promissory Notes &amp; AR</strong><br><small class="text-muted role-perm-desc">Deferred payment terms &amp; guarantors</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_promissory" data-parent-module="promissory_notes.html">
+                                                <span>Add Promissory Note Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="role-perm-pane role-perm-pane-col role-perm-pane-hidden" id="pane-reports_management">
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="reports.html">
-                                        <span><strong>Reports &amp; Analytics</strong><br><small class="text-muted role-perm-desc">Financial summaries, collection ledgers, census reports &amp; department analytics</small></span>
-                                    </label>
+                                    <div class="role-module-card" data-module="reports.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="reports.html">
+                                                <span><strong>Reports &amp; Analytics</strong><br><small class="text-muted role-perm-desc">Financial summaries, collection ledgers, census reports &amp; department analytics</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row role-module-action-info">
+                                            <span class="role-module-action-notice">View &amp; Export Analytics (Managed by Printing Access)</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="role-perm-pane role-perm-pane-grid role-perm-pane-hidden" id="pane-system_tools">
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="staff.html">
-                                        <span><strong>Staff &amp; Users</strong><br><small class="text-muted role-perm-desc">Staff accounts, stations &amp; role governance</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="audit_log.html">
-                                        <span><strong>Audit Log</strong><br><small class="text-muted role-perm-desc">System-wide chronological activity trail</small></span>
-                                    </label>
-                                    <label class="role-perm-item-label">
-                                        <input type="checkbox" class="role-perm-check" value="archive.html">
-                                        <span><strong>System Archive</strong><br><small class="text-muted role-perm-desc">Archived records &amp; data retention</small></span>
-                                    </label>
+                                    <div class="role-module-card" data-module="staff.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="staff.html">
+                                                <span><strong>Staff &amp; Users</strong><br><small class="text-muted role-perm-desc">Staff accounts, stations &amp; role governance</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row">
+                                            <label class="role-module-action-label">
+                                                <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_staff" data-parent-module="staff.html">
+                                                <span>Add Staff &amp; Role Access</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="audit_log.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="audit_log.html">
+                                                <span><strong>Audit Log</strong><br><small class="text-muted role-perm-desc">System-wide chronological activity trail</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row role-module-action-info">
+                                            <span class="role-module-action-notice">Automated System Audit Trail (Read-only)</span>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="archive.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="archive.html">
+                                                <span><strong>System Archive</strong><br><small class="text-muted role-perm-desc">Archived records &amp; data retention</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row role-module-action-info">
+                                            <span class="role-module-action-notice">Data Retention Archive (Managed by Deletion Access)</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="role-action-caps-card">
                             <div class="role-action-caps-header">
-                                <span class="role-action-caps-title">Action &amp; Operation Permissions</span>
-                                <span id="role_action_caps_count_badge" class="role-action-caps-count-badge">2 of 3 capabilities enabled</span>
+                                <div>
+                                    <span class="role-action-caps-title">Action &amp; Operation Permissions</span>
+                                    <span class="role-action-caps-subtitle">System actions, data creation scope and operational authority</span>
+                                </div>
+                                <span id="role_action_caps_count_badge" class="role-action-caps-count-badge">0 Actions Active</span>
                             </div>
                             <div class="role-action-caps-grid">
-                                <label class="role-perm-item-label role-action-cap-item">
-                                    <input type="checkbox" id="perm_can_add" class="role-action-perm-check" value="can_add" checked>
-                                    <span><strong>Add Data</strong><br><small class="text-muted role-perm-desc">Create, admit &amp; register records in permitted modules</small></span>
-                                </label>
-                                <label class="role-perm-item-label role-action-cap-item">
+                                <div class="role-action-cap-item role-action-cap-add-summary">
+                                    <div class="role-action-add-top">
+                                        <div>
+                                            <strong class="role-action-add-title">Add Data Privileges</strong>
+                                            <div class="role-action-add-subtitle"><span id="role_add_caps_count_text">0 of 10</span> creation permissions active</div>
+                                        </div>
+                                        <span id="role_add_caps_count_badge" class="badge role-add-caps-badge">0 Active</span>
+                                    </div>
+                                    <p class="role-action-add-desc">Specific Add Data access is configured per module in the tabs above so specific roles cannot add unpermitted records.</p>
+                                    <div class="role-action-add-buttons">
+                                        <button type="button" class="btn btn-outline btn-sm btn-role-add-toggle" id="btnGrantAllAddPerms">Grant All Add</button>
+                                        <button type="button" class="btn btn-outline btn-sm btn-role-add-toggle" id="btnClearAllAddPerms">Clear All Add</button>
+                                    </div>
+                                </div>
+                                <label class="role-perm-item-label role-action-cap-item" for="perm_can_delete">
                                     <input type="checkbox" id="perm_can_delete" class="role-action-perm-check" value="can_delete">
                                     <span><strong>Deletion / Archiving</strong><br><small class="text-muted role-perm-desc">Soft-archive or purge records (Higher-ups have supervisory authority)</small></span>
                                 </label>
-                                <label class="role-perm-item-label role-action-cap-item">
+                                <label class="role-perm-item-label role-action-cap-item" for="perm_can_print">
                                     <input type="checkbox" id="perm_can_print" class="role-action-perm-check" value="can_print" checked>
                                     <span><strong>Printing Access</strong><br><small class="text-muted role-perm-desc">Print SOAs, partial bills, receipts, gate passes &amp; reports</small></span>
                                 </label>
@@ -400,8 +534,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=16.0"></script>
-    <script src="../js/common.js?v=16.0"></script>
-    <script src="../js/staff.js?v=16.0"></script>
+    <script src="../js/sidebar.js?v=16.1"></script>
+    <script src="../js/common.js?v=16.1"></script>
+    <script src="../js/staff.js?v=16.1"></script>
 </body>
 </html>

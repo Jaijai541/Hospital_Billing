@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS Enum_Discount (
 CREATE TABLE IF NOT EXISTS Enum_User_Role (
     Role_ID INT AUTO_INCREMENT PRIMARY KEY,
     Role_Name VARCHAR(50) NOT NULL,
+    Access_Domain VARCHAR(50) DEFAULT 'Clinical',
+    Permissions TEXT NULL,
     Is_Higher_Up BOOLEAN DEFAULT FALSE,
     Is_Active BOOLEAN DEFAULT TRUE
 );

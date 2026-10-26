@@ -685,49 +685,49 @@ const rolePresets = {
         higher_up: 0,
         domain: "Clinical",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "admissions.html"],
-        actions: ["can_add", "can_print"]
+        actions: ["can_add_patient", "can_add_admission", "can_print"]
     },
     head_nurse: {
         higher_up: 1,
         domain: "Clinical",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "admissions.html"],
-        actions: ["can_add", "can_delete", "can_print"]
+        actions: ["can_add_patient", "can_add_admission", "can_delete", "can_print"]
     },
     finance: {
         higher_up: 0,
         domain: "Finance",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "discounts.html", "invoices.html", "promissory_notes.html", "reports.html"],
-        actions: ["can_add", "can_print"]
+        actions: ["can_add_discount", "can_add_payment", "can_add_promissory", "can_print"]
     },
     head_finance: {
         higher_up: 1,
         domain: "Finance",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "discounts.html", "invoices.html", "promissory_notes.html", "reports.html"],
-        actions: ["can_add", "can_delete", "can_print"]
+        actions: ["can_add_discount", "can_add_payment", "can_add_promissory", "can_delete", "can_print"]
     },
     ward_clerk: {
         higher_up: 0,
         domain: "Hybrid",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "discounts.html", "admissions.html", "invoices.html", "promissory_notes.html", "reports.html"],
-        actions: ["can_add", "can_print"]
+        actions: ["can_add_patient", "can_add_admission", "can_add_payment", "can_add_promissory", "can_print"]
     },
     head_ward_clerk: {
         higher_up: 1,
         domain: "Hybrid",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "discounts.html", "admissions.html", "invoices.html", "promissory_notes.html", "reports.html"],
-        actions: ["can_add", "can_delete", "can_print"]
+        actions: ["can_add_patient", "can_add_admission", "can_add_payment", "can_add_promissory", "can_delete", "can_print"]
     },
     hybrid: {
         higher_up: 0,
         domain: "Hybrid",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "discounts.html", "admissions.html", "invoices.html", "promissory_notes.html", "reports.html"],
-        actions: ["can_add", "can_print"]
+        actions: ["can_add_patient", "can_add_admission", "can_add_payment", "can_add_promissory", "can_print"]
     },
     head_hybrid: {
         higher_up: 1,
         domain: "Hybrid",
         pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "discounts.html", "admissions.html", "invoices.html", "promissory_notes.html", "reports.html"],
-        actions: ["can_add", "can_delete", "can_print"]
+        actions: ["can_add_patient", "can_add_admission", "can_add_payment", "can_add_promissory", "can_delete", "can_print"]
     },
     admin: {
         higher_up: 1,
@@ -739,7 +739,11 @@ const rolePresets = {
             "reports.html",
             "staff.html", "audit_log.html", "archive.html"
         ],
-        actions: ["can_add", "can_delete", "can_print"]
+        actions: [
+            "can_add", "can_add_patient", "can_add_doctor", "can_add_department", "can_add_room",
+            "can_add_catalog", "can_add_discount", "can_add_admission", "can_add_payment",
+            "can_add_promissory", "can_add_staff", "can_delete", "can_print"
+        ]
     },
     clear: {
         higher_up: null,
@@ -747,6 +751,82 @@ const rolePresets = {
         pages: [],
         actions: []
     }
+};
+
+const syncModuleAddPermState = () => {
+    document.querySelectorAll(".role-module-card").forEach(card => {
+        const modCb = card.querySelector(".role-perm-check");
+        const addCb = card.querySelector(".role-add-perm-check");
+        const addLabel = card.querySelector(".role-module-action-label");
+        if (!modCb || !addCb) return;
+
+        const isCoreAdmin = document.getElementById("edit_role_id")?.value === "1";
+        if (isCoreAdmin) {
+            addCb.disabled = true;
+            if (addLabel) {
+                addLabel.classList.remove("disabled-add-perm");
+                addLabel.classList.add("active-add-perm");
+            }
+            return;
+        }
+
+        if (!modCb.checked) {
+            addCb.checked = false;
+            addCb.disabled = true;
+            if (addLabel) {
+                addLabel.classList.remove("active-add-perm");
+                addLabel.classList.add("disabled-add-perm");
+            }
+        } else {
+            addCb.disabled = false;
+            if (addLabel) {
+                addLabel.classList.remove("disabled-add-perm");
+                addLabel.classList.toggle("active-add-perm", addCb.checked);
+            }
+        }
+    });
+};
+
+const handleAddCheckboxChange = (addCb) => {
+    const parentModule = addCb.dataset.parentModule;
+    if (addCb.checked && parentModule) {
+        const modCb = document.querySelector(`.role-perm-check[value="${parentModule}"]`);
+        if (modCb && !modCb.checked) {
+            modCb.checked = true;
+        }
+    }
+    syncModuleAddPermState();
+    updateRolePermissionsSummary();
+};
+
+const grantAllAddPerms = () => {
+    const isCoreAdmin = document.getElementById("edit_role_id")?.value === "1";
+    if (isCoreAdmin) return;
+
+    document.querySelectorAll(".role-module-card").forEach(card => {
+        const modCb = card.querySelector(".role-perm-check");
+        const addCb = card.querySelector(".role-add-perm-check");
+        if (modCb && addCb) {
+            modCb.checked = true;
+            addCb.disabled = false;
+            addCb.checked = true;
+        }
+    });
+    syncModuleAddPermState();
+    updateRolePermissionsSummary();
+};
+
+const clearAllAddPerms = () => {
+    const isCoreAdmin = document.getElementById("edit_role_id")?.value === "1";
+    if (isCoreAdmin) return;
+
+    document.querySelectorAll(".role-add-perm-check").forEach(addCb => {
+        if (!addCb.disabled) {
+            addCb.checked = false;
+        }
+    });
+    syncModuleAddPermState();
+    updateRolePermissionsSummary();
 };
 
 const switchRolePermTab = (tabName) => {
@@ -772,11 +852,23 @@ const updateRolePermissionsSummary = () => {
         badge.textContent = `${checkedBoxes.length} of ${total} modules selected`;
     }
 
-    const checkedActionBoxes = Array.from(document.querySelectorAll(".role-action-perm-check:checked"));
-    const totalActions = document.querySelectorAll(".role-action-perm-check").length;
+    const checkedAddBoxes = Array.from(document.querySelectorAll(".role-add-perm-check:checked"));
+    const totalAddBoxes = document.querySelectorAll(".role-add-perm-check").length;
+    const addBadge = document.getElementById("role_add_caps_count_badge");
+    const addText = document.getElementById("role_add_caps_count_text");
+    if (addBadge) {
+        addBadge.textContent = `${checkedAddBoxes.length} Active`;
+    }
+    if (addText) {
+        addText.textContent = `${checkedAddBoxes.length} of ${totalAddBoxes}`;
+    }
+
+    const canDelete = document.getElementById("perm_can_delete")?.checked ? 1 : 0;
+    const canPrint = document.getElementById("perm_can_print")?.checked ? 1 : 0;
+    const totalGeneral = canDelete + canPrint;
     const actionBadge = document.getElementById("role_action_caps_count_badge");
     if (actionBadge) {
-        actionBadge.textContent = `${checkedActionBoxes.length} of ${totalActions} capabilities enabled`;
+        actionBadge.textContent = `${checkedAddBoxes.length} Add • ${totalGeneral} Operations Active`;
     }
 
     const panes = ["master_files", "clinical_care", "billing_settlement", "reports_management", "system_tools"];
@@ -855,6 +947,7 @@ const applyRolePreset = (presetKey) => {
         }
     }
 
+    syncModuleAddPermState();
     updateRolePermissionsSummary();
 };
 
@@ -933,6 +1026,12 @@ const startEditRole = (r) => {
         btn.disabled = isCoreAdmin;
     });
 
+    const btnGrant = document.getElementById("btnGrantAllAddPerms");
+    const btnClear = document.getElementById("btnClearAllAddPerms");
+    if (btnGrant) btnGrant.disabled = isCoreAdmin;
+    if (btnClear) btnClear.disabled = isCoreAdmin;
+
+    syncModuleAddPermState();
     updateRolePermissionsSummary();
     switchRolePermTab("master_files");
 
@@ -971,14 +1070,23 @@ const cancelEditRole = () => {
     });
 
     document.querySelectorAll(".role-action-perm-check").forEach(cb => {
-        cb.checked = cb.value !== "can_delete";
+        cb.checked = false;
         cb.disabled = false;
     });
+
+    const printCb = document.getElementById("perm_can_print");
+    if (printCb) printCb.checked = true;
 
     document.querySelectorAll(".btn-role-preset").forEach(btn => {
         btn.disabled = false;
     });
 
+    const btnGrant = document.getElementById("btnGrantAllAddPerms");
+    const btnClear = document.getElementById("btnClearAllAddPerms");
+    if (btnGrant) btnGrant.disabled = false;
+    if (btnClear) btnClear.disabled = false;
+
+    syncModuleAddPermState();
     switchRolePermTab("master_files");
     updateRolePermissionsSummary();
 };
@@ -1045,12 +1153,39 @@ const renderRolesManageList = () => {
         const moduleCount = permArray.filter(p => typeof p === "string" && p.endsWith(".html")).length;
         const modulesBadge = `<span class="badge" style="background-color: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-size: 11px; padding: 2px 7px;">${moduleCount} Modules</span>`;
 
-        const canAdd = permArray.includes("can_add") || isCoreAdmin;
+        const addPermKeys = [
+            { key: "can_add_patient", label: "Patients" },
+            { key: "can_add_doctor", label: "Doctors" },
+            { key: "can_add_department", label: "Departments" },
+            { key: "can_add_room", label: "Rooms" },
+            { key: "can_add_catalog", label: "Catalogs" },
+            { key: "can_add_discount", label: "Discounts" },
+            { key: "can_add_admission", label: "Admissions" },
+            { key: "can_add_payment", label: "Settlement" },
+            { key: "can_add_promissory", label: "Promissory" },
+            { key: "can_add_staff", label: "Staff" }
+        ];
+
+        const hasLegacyAddAll = permArray.includes("can_add") || isCoreAdmin;
+        const activeAddItems = hasLegacyAddAll
+            ? addPermKeys.map(k => k.label)
+            : addPermKeys.filter(k => permArray.includes(k.key)).map(k => k.label);
+
+        const addBadgeText = activeAddItems.length === 10
+            ? "+ Add (All)"
+            : activeAddItems.length > 0
+                ? `+ Add (${activeAddItems.length}/10)`
+                : "No Add";
+        const addBadgeTitle = activeAddItems.length > 0
+            ? `Can Add: ${activeAddItems.join(", ")}`
+            : "No Add Data permissions";
+        const hasAdd = activeAddItems.length > 0;
+
         const canDel = permArray.includes("can_delete") || isHigherUp || isCoreAdmin;
         const canPrt = permArray.includes("can_print") || isCoreAdmin;
 
         const actionBadges = `
-            <span class="badge" style="background-color: ${canAdd ? '#ecfdf5' : '#f8fafc'}; color: ${canAdd ? '#065f46' : '#94a3b8'}; border: 1px solid ${canAdd ? '#a7f3d0' : '#e2e8f0'}; font-size: 10.5px; padding: 1px 6px;" title="${canAdd ? 'Can Add/Admit Records' : 'Cannot Add/Admit Records'}">${canAdd ? '+ Add Data' : 'No Add'}</span>
+            <span class="badge" style="background-color: ${hasAdd ? '#ecfdf5' : '#f8fafc'}; color: ${hasAdd ? '#065f46' : '#94a3b8'}; border: 1px solid ${hasAdd ? '#a7f3d0' : '#e2e8f0'}; font-size: 10.5px; padding: 1px 6px;" title="${addBadgeTitle}">${addBadgeText}</span>
             <span class="badge" style="background-color: ${canDel ? '#fef2f2' : '#f8fafc'}; color: ${canDel ? '#991b1b' : '#94a3b8'}; border: 1px solid ${canDel ? '#fecaca' : '#e2e8f0'}; font-size: 10.5px; padding: 1px 6px;" title="${canDel ? 'Can Archive/Delete' : 'Cannot Archive/Delete'}">${canDel ? 'Archive/Delete' : 'No Delete'}</span>
             <span class="badge" style="background-color: ${canPrt ? '#eff6ff' : '#f8fafc'}; color: ${canPrt ? '#1e3a8a' : '#94a3b8'}; border: 1px solid ${canPrt ? '#bfdbfe' : '#e2e8f0'}; font-size: 10.5px; padding: 1px 6px;" title="${canPrt ? 'Can Print Documents' : 'Cannot Print Documents'}">${canPrt ? 'Print Access' : 'No Print'}</span>
         `;
@@ -1246,12 +1381,29 @@ const initStaffEvents = () => {
 
     const permChecks = document.querySelectorAll(".role-perm-check");
     permChecks.forEach(cb => {
-        cb.addEventListener("change", updateRolePermissionsSummary);
+        cb.addEventListener("change", () => {
+            syncModuleAddPermState();
+            updateRolePermissionsSummary();
+        });
+    });
+
+    document.querySelectorAll(".role-add-perm-check").forEach(cb => {
+        cb.addEventListener("change", () => handleAddCheckboxChange(cb));
     });
 
     document.querySelectorAll(".role-action-perm-check").forEach(cb => {
         cb.addEventListener("change", updateRolePermissionsSummary);
     });
+
+    const btnGrantAllAdd = document.getElementById("btnGrantAllAddPerms");
+    if (btnGrantAllAdd) {
+        btnGrantAllAdd.addEventListener("click", grantAllAddPerms);
+    }
+
+    const btnClearAllAdd = document.getElementById("btnClearAllAddPerms");
+    if (btnClearAllAdd) {
+        btnClearAllAdd.addEventListener("click", clearAllAddPerms);
+    }
 
     const higherUpCb = document.getElementById("new_role_is_higher_up");
     if (higherUpCb) {

@@ -3367,6 +3367,31 @@ textarea.form-control {
     border: 1px solid #bae6fd;
 }
 
+.clinical-toast-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clinical-toast-disable-btn {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.4;
+    transition: all 0.15s ease;
+}
+
+.clinical-toast-disable-btn:hover {
+    background: #f1f5f9;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
 .clinical-toast-close {
     background: none;
     border: none;
@@ -3408,6 +3433,15 @@ textarea.form-control {
     width: 100%;
     padding-top: 8px;
     border-top: 1px solid #f1f5f9;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.clinical-toast-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .clinical-toast-time {

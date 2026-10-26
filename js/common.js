@@ -2368,6 +2368,7 @@ const ensureClinicalNotificationsModal = () => {
                 </div>
             </div>
             <div class="modal-footer">
+                <button type="button" id="btnToggleToastPopups" class="btn btn-secondary">Disable Toast Popups</button>
                 <button type="button" id="btnMarkAllNotifsRead" class="btn btn-secondary">Mark All as Read</button>
                 <button type="button" id="btnCloseNotifFooter" class="btn btn-primary">Close</button>
             </div>
@@ -2413,6 +2414,26 @@ const ensureClinicalNotificationsModal = () => {
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     setupQueueStationSelect(user);
 
+    const toggleToastBtn = document.getElementById("btnToggleToastPopups");
+    if (toggleToastBtn && !toggleToastBtn.dataset.wired) {
+        toggleToastBtn.dataset.wired = "true";
+        toggleToastBtn.addEventListener("click", () => {
+            const isDisabled = localStorage.getItem("clinical_toasts_disabled") === "true";
+            if (isDisabled) {
+                localStorage.removeItem("clinical_toasts_disabled");
+                updateToastToggleButton();
+                alert("Notification toast popups (.clinical-toast-card) have been re-enabled.");
+            } else {
+                localStorage.setItem("clinical_toasts_disabled", "true");
+                const allToasts = document.querySelectorAll(".clinical-toast-card");
+                allToasts.forEach(t => t.remove());
+                updateToastToggleButton();
+                alert("Notification toast popups (.clinical-toast-card) have been disabled.");
+            }
+        });
+    }
+    updateToastToggleButton();
+
     const markAllBtn = document.getElementById("btnMarkAllNotifsRead");
     if (markAllBtn) {
         markAllBtn.addEventListener("click", () => {
@@ -2431,6 +2452,19 @@ const ensureClinicalNotificationsModal = () => {
 
 let lastKnownNotifCount = -1;
 const shownToastIds = new Set();
+
+const updateToastToggleButton = () => {
+    const btn = document.getElementById("btnToggleToastPopups");
+    if (!btn) return;
+    const isDisabled = localStorage.getItem("clinical_toasts_disabled") === "true";
+    if (isDisabled) {
+        btn.textContent = "Enable Toast Popups";
+        btn.className = "btn btn-outline";
+    } else {
+        btn.textContent = "Disable Toast Popups";
+        btn.className = "btn btn-secondary";
+    }
+};
 
 const playClinicalChime = () => {
     try {
@@ -2452,6 +2486,7 @@ const playClinicalChime = () => {
 };
 
 const showClinicalToastAlert = (n) => {
+    if (localStorage.getItem("clinical_toasts_disabled") === "true") return;
     if (!n || shownToastIds.has(n.Notification_ID)) return;
     shownToastIds.add(n.Notification_ID);
 
@@ -2469,13 +2504,19 @@ const showClinicalToastAlert = (n) => {
         <div class="clinical-toast-inner">
             <div class="clinical-toast-header">
                 <span class="clinical-toast-badge">Clinical Alert</span>
-                <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
+                <div class="clinical-toast-header-actions">
+                    <button type="button" class="clinical-toast-disable-btn btn-toast-disable" title="Disable floating alert toasts">Disable Toasts</button>
+                    <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
+                </div>
             </div>
             <div class="clinical-toast-title">${n.Title || "Clinical Order Alert"}</div>
             <div class="clinical-toast-body">${n.Message || ""}</div>
             <div class="clinical-toast-footer">
                 <span class="clinical-toast-time">${n.Formatted_Time || "Just now"}</span>
-                <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-open">Open Department Queue</button>
+                <div class="clinical-toast-footer-actions">
+                    <button type="button" class="btn btn-secondary clinical-toast-btn btn-toast-disable">Disable Toasts</button>
+                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-open">Open Department Queue</button>
+                </div>
             </div>
         </div>
     `;
@@ -2486,6 +2527,24 @@ const showClinicalToastAlert = (n) => {
         openModal("clinicalNotifModal");
         const tabQueue = document.getElementById("btnTabNotifQueue");
         if (tabQueue) tabQueue.click();
+    });
+
+    const onDisableToasts = () => {
+        showPopupConfirm("Disable notification toast popups for this device?\n\nReal-time alerts will continue to be recorded in your notifications center and Department Orders Queue.", () => {
+            localStorage.setItem("clinical_toasts_disabled", "true");
+            const allToasts = document.querySelectorAll(".clinical-toast-card");
+            allToasts.forEach(t => t.remove());
+            updateToastToggleButton();
+        }, null, {
+            title: "Disable Notification Toasts",
+            confirmText: "Disable Toasts",
+            cancelText: "Keep Enabled",
+            type: "warning"
+        });
+    };
+
+    toast.querySelectorAll(".btn-toast-disable").forEach(btn => {
+        btn.addEventListener("click", onDisableToasts);
     });
 
     container.appendChild(toast);
@@ -2776,6 +2835,7 @@ window.prepareDepartmentOrderDirect = prepareDepartmentOrderDirect;
 window.fetchRealtimeNotifications = fetchRealtimeNotifications;
 window.fetchDepartmentOrdersQueue = fetchDepartmentOrdersQueue;
 window.setupQueueStationSelect = setupQueueStationSelect;
+window.updateToastToggleButton = updateToastToggleButton;
 
 const initClinicalNotificationsSystem = () => {
     ensureClinicalNotificationsModal();
@@ -2784,6 +2844,7 @@ const initClinicalNotificationsSystem = () => {
         btnSidebarNotif.dataset.wired = "true";
         btnSidebarNotif.addEventListener("click", () => {
             openModal("clinicalNotifModal");
+            updateToastToggleButton();
             fetchRealtimeNotifications();
         });
     }

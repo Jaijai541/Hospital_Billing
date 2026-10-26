@@ -44,14 +44,16 @@ class AdmissionManager
                 return json_encode(['error' => 'The selected bed is no longer available.']);
             }
 
+            $accessPasscode = sprintf("ADM-%04d", rand(1000, 9999));
             $admStmt = $conn->prepare("
-                INSERT INTO Admission (Patient_ID, Admission_Date, Chief_Complaint, Diagnosis, Status)
-                VALUES (:pid, NOW(), :complaint, :diagnosis, 'Admitted')
+                INSERT INTO Admission (Patient_ID, Admission_Date, Chief_Complaint, Diagnosis, Status, Access_Passcode)
+                VALUES (:pid, NOW(), :complaint, :diagnosis, 'Admitted', :passcode)
             ");
             $admStmt->execute([
                 ':pid' => $patientId,
                 ':complaint' => $chiefComplaint,
-                ':diagnosis' => !empty($diagnosis) ? $diagnosis : null
+                ':diagnosis' => !empty($diagnosis) ? $diagnosis : null,
+                ':passcode' => $accessPasscode
             ]);
             $admissionId = $conn->lastInsertId();
 
@@ -81,7 +83,8 @@ class AdmissionManager
             return json_encode([
                 'success' => true,
                 'message' => 'Patient successfully admitted and assigned to bed.',
-                'admission_id' => $admissionId
+                'admission_id' => $admissionId,
+                'access_passcode' => $accessPasscode
             ]);
 
         } catch (Exception $e) {

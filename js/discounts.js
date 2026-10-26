@@ -30,7 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("search_input").addEventListener("input", filterAndSortDiscounts);
     document.getElementById("filter_status").addEventListener("change", filterAndSortDiscounts);
-    const sortByElem = document.getElementById("sort_by"); if (sortByElem) sortByElem.addEventListener("change", filterAndSortDiscounts);
+    const filterScope = document.getElementById("filter_scope");
+    if (filterScope) {
+        filterScope.addEventListener("change", filterAndSortDiscounts);
+    }
+    const sortByElem = document.getElementById("sort_by");
+    if (sortByElem) {
+        sortByElem.addEventListener("change", filterAndSortDiscounts);
+    }
 
     initRefreshBtn("btnRefreshDiscounts", displayDiscounts);
 });
@@ -39,33 +46,32 @@ const displayDiscounts = async () => {
     const tableDiv = document.getElementById("table-div");
 
     try {
-        console.log("[API] Requesting: getAllDiscounts");
         const response = await axios.get(`${getApiUrl}/discounts.php`, {
             params: { operation: "getAllDiscounts" }
         });
 
         if (response.status === 200) {
             allDiscounts = response.data || [];
-            console.log(`[API] Success: Loaded ${allDiscounts.length} discounts.`);
             filterAndSortDiscounts();
         } else {
-            console.error("[API] Error loading discounts:", response);
             alert("Error loading discounts!");
         }
     } catch (error) {
-        console.error("[API] Network error:", error);
-        tableDiv.innerHTML = `<p style="color: red;">Failed to connect to API.</p>`;
+        tableDiv.innerHTML = `<p class="text-danger">Failed to connect to API.</p>`;
     }
 };
 
 const filterAndSortDiscounts = () => {
     const searchTerm = document.getElementById("search_input").value.trim().toLowerCase();
     const filterStatus = document.getElementById("filter_status").value;
+    const filterScopeEl = document.getElementById("filter_scope");
+    const filterScope = filterScopeEl ? filterScopeEl.value : "all";
     const sortBy = document.getElementById("sort_by")?.value || "name_asc";
 
     let filtered = allDiscounts.filter(disc => {
         const itemCode = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`.toLowerCase();
         const discountName = (disc.Discount_Name || "").toLowerCase();
+        const targetScope = (disc.Target_Scope || "Total");
 
         const matchesSearch = discountName.includes(searchTerm) || itemCode.includes(searchTerm);
 
@@ -76,7 +82,12 @@ const filterAndSortDiscounts = () => {
             matchesStatus = (disc.Is_Active == 0);
         }
 
-        return matchesSearch && matchesStatus;
+        let matchesScope = true;
+        if (filterScope !== "all") {
+            matchesScope = (targetScope === filterScope);
+        }
+
+        return matchesSearch && matchesStatus && matchesScope;
     });
 
     filtered.sort((a, b) => {
@@ -106,7 +117,6 @@ const filterAndSortDiscounts = () => {
         }
     });
 
-    console.log(`[UI] Filtered & Sorted: Displaying ${filtered.length} of ${allDiscounts.length} discounts`);
     if (typeof updateFilterCount === "function") {
         updateFilterCount(filtered.length, allDiscounts.length, "discounts");
     }
@@ -131,6 +141,7 @@ const displayDiscountsTable = (discounts) => {
     thead.innerHTML = `
         <tr>
             ${renderSortableTh("Discount Scheme & Code", "Discount_Name")}
+            ${renderSortableTh("Target Scope", "Target_Scope")}
             ${renderSortableTh("Discount Rate", "Discount_Percentage")}
             ${renderSortableTh("VAT Status", "Is_Vat_Exempt")}
             ${renderSortableTh("Status", "Status")}
@@ -142,6 +153,25 @@ const displayDiscountsTable = (discounts) => {
     discounts.forEach(disc => {
         const code = `${disc.Code_Prefix || 'DISC'}-${disc.Discount_ID}`;
         const deductionVal = `<span class="table-amount-prominent text-primary font-bold">${parseFloat(disc.Discount_Percentage || 0).toFixed(2)}%</span>`;
+
+        const scope = disc.Target_Scope || "Total";
+        let scopeClass = "scope-pill-total";
+        let scopeLabel = "Total Gross Bill";
+        if (scope === "Doctor") {
+            scopeClass = "scope-pill-doctor";
+            scopeLabel = "Doctor Fees Only";
+        } else if (scope === "Room") {
+            scopeClass = "scope-pill-room";
+            scopeLabel = "Room & Board Only";
+        } else if (scope === "Medicine") {
+            scopeClass = "scope-pill-medicine";
+            scopeLabel = "Pharmacy Only";
+        } else if (scope === "Laboratory") {
+            scopeClass = "scope-pill-laboratory";
+            scopeLabel = "Diagnostics Only";
+        }
+
+        const scopeBadge = `<span class="scope-pill ${scopeClass}">${scopeLabel}</span>`;
 
         const vatBadge = (disc.Is_Vat_Exempt == 1)
             ? '<span class="badge badge-success">VAT-Exempt</span>'
@@ -155,9 +185,10 @@ const displayDiscountsTable = (discounts) => {
                 <div class="table-primary-text font-bold">${disc.Discount_Name}</div>
                 <div class="table-sub-text"><code>${code}</code></div>
             </td>
+            <td>${scopeBadge}</td>
             <td>
                 <div>${deductionVal}</div>
-                <div class="table-sub-text">statutory deduction</div>
+                <div class="table-sub-text">policy reduction</div>
             </td>
             <td>${vatBadge}</td>
             <td>${getStatusBadge(disc.Is_Active)}</td>
@@ -174,6 +205,10 @@ const populateDiscountForm = (disc) => {
     document.getElementById("discount_id").value = disc.Discount_ID || "";
     document.getElementById("discount_name").value = disc.Discount_Name || "";
     document.getElementById("discount_percentage").value = disc.Discount_Percentage || "";
+    const scopeEl = document.getElementById("target_scope");
+    if (scopeEl) {
+        scopeEl.value = disc.Target_Scope || "Total";
+    }
 
     const vatCb = document.getElementById("is_vat_exempt");
     if (vatCb) {
@@ -183,7 +218,6 @@ const populateDiscountForm = (disc) => {
 
 const loadDiscountForEdit = async (discountId) => {
     try {
-        console.log(`[API] Requesting discount details for ID: ${discountId}`);
         const response = await axios.get(`${getApiUrl}/discounts.php`, {
             params: {
                 operation: "getDiscountById",
@@ -201,6 +235,7 @@ const loadDiscountForEdit = async (discountId) => {
 
             const btnArchive = document.getElementById("btnArchive");
             if (btnArchive) {
+                btnArchive.classList.remove("hidden-element");
                 btnArchive.style.display = "inline-flex";
                 const isActive = (disc.Is_Active == 1);
                 btnArchive.className = isActive ? "btn btn-warning btn-archive" : "btn btn-success btn-restore";
@@ -214,10 +249,8 @@ const loadDiscountForEdit = async (discountId) => {
             }
 
             openModal();
-            console.log("[UI] Form populated for edit:", disc);
         }
     } catch (error) {
-        console.error("[API] Error loading discount details:", error);
         alert("Failed to load discount details.");
     }
 };
@@ -226,6 +259,7 @@ const saveDiscount = async () => {
     const discountId = document.getElementById("discount_id").value;
     const discountName = document.getElementById("discount_name").value.trim();
     const discountPercentage = document.getElementById("discount_percentage").value;
+    const targetScope = document.getElementById("target_scope")?.value || "Total";
     const vatCb = document.getElementById("is_vat_exempt");
     const isVatExempt = vatCb && vatCb.checked ? 1 : 0;
 
@@ -249,7 +283,8 @@ const saveDiscount = async () => {
         discount_type: "Percentage",
         discount_percentage: pct,
         fixed_amount: 0.00,
-        is_vat_exempt: isVatExempt
+        is_vat_exempt: isVatExempt,
+        target_scope: targetScope
     };
 
     const isEdit = (discountId !== "");
@@ -258,8 +293,6 @@ const saveDiscount = async () => {
     if (isEdit) {
         jsonData.discount_id = discountId;
     }
-
-    console.log(`[Action] Submitting ${operation} via POST:`, jsonData);
 
     const formData = new FormData();
     formData.append("operation", operation);
@@ -273,17 +306,14 @@ const saveDiscount = async () => {
         });
 
         if (response.data == 1) {
-            console.log(`[Success] ${operation} completed successfully.`);
             alert(isEdit ? "Discount updated successfully!" : "Discount added successfully!");
             closeModal();
             resetForm();
             displayDiscounts();
         } else {
-            console.warn(`[Failed] ${operation} returned non-success:`, response.data);
             alert("Error saving discount.");
         }
     } catch (error) {
-        console.error("[Error] Save request failed:", error);
         alert("Server error occurred.");
     }
 };
@@ -294,13 +324,19 @@ const resetForm = () => {
     document.getElementById("discount_id").value = "";
     document.getElementById("discount_name").value = "";
     document.getElementById("discount_percentage").value = "";
+    const scopeEl = document.getElementById("target_scope");
+    if (scopeEl) {
+        scopeEl.value = "Total";
+    }
     const vatCb = document.getElementById("is_vat_exempt");
     if (vatCb) vatCb.checked = false;
 
     const btnArchive = document.getElementById("btnArchive");
-    if (btnArchive) btnArchive.style.display = "none";
+    if (btnArchive) {
+        btnArchive.classList.add("hidden-element");
+        btnArchive.style.display = "none";
+    }
 
     document.getElementById("form-title").textContent = "Add New Discount Scheme";
     document.getElementById("btnSubmit").textContent = "Submit Discount";
-    console.log("[UI] Form reset to Add mode.");
 };

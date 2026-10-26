@@ -11,10 +11,12 @@ class AdmissionManager
         $json = is_array($json) ? $json : json_decode($json, true);
         $statusFilter = $json['status'] ?? 'all';
         $search = trim($json['search'] ?? '');
+        $sort = $json['sort'] ?? 'id_desc';
 
         $sql = "SELECT 
                     a.Admission_ID,
                     a.Patient_ID,
+                    COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) AS Access_Passcode,
                     CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
                     CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
                     p.Contact_Number,
@@ -60,8 +62,14 @@ class AdmissionManager
         $params = [];
 
         if ($statusFilter !== 'all' && !empty($statusFilter)) {
-            $sql .= " AND a.Status = :status";
-            $params[':status'] = $statusFilter;
+            if ($statusFilter === 'Settled') {
+                $sql .= " AND a.Status = 'Billed' AND GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) <= 0";
+            } else if ($statusFilter === 'WithBalance') {
+                $sql .= " AND a.Status = 'Billed' AND GREATEST(0, ROUND(COALESCE(fi.Net_Amount_Due, 0) - COALESCE(fi.Amount_Paid, 0), 2)) > 0";
+            } else {
+                $sql .= " AND a.Status = :status";
+                $params[':status'] = $statusFilter;
+            }
         }
 
         if (!empty($search)) {
@@ -83,7 +91,32 @@ class AdmissionManager
             $params[':search_id'] = $searchId;
         }
 
-        $sql .= " ORDER BY a.Admission_ID DESC";
+        switch ($sort) {
+            case 'id_asc':
+                $sql .= " ORDER BY a.Admission_ID ASC";
+                break;
+            case 'name_asc':
+                $sql .= " ORDER BY p.Last_Name ASC, p.First_Name ASC";
+                break;
+            case 'name_desc':
+                $sql .= " ORDER BY p.Last_Name DESC, p.First_Name DESC";
+                break;
+            case 'date_desc':
+                $sql .= " ORDER BY a.Admission_Date DESC";
+                break;
+            case 'date_asc':
+                $sql .= " ORDER BY a.Admission_Date ASC";
+                break;
+            case 'balance_desc':
+                $sql .= " ORDER BY Remaining_Balance DESC, a.Admission_ID DESC";
+                break;
+            case 'balance_asc':
+                $sql .= " ORDER BY Remaining_Balance ASC, a.Admission_ID DESC";
+                break;
+            default:
+                $sql .= " ORDER BY a.Admission_ID DESC";
+                break;
+        }
 
         $stmt = $conn->prepare($sql);
         $stmt->execute($params);
@@ -105,6 +138,7 @@ class AdmissionManager
 
         $sql = "SELECT 
                     a.Admission_ID,
+                    COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) AS Access_Passcode,
                     a.Chief_Complaint,
                     a.Diagnosis,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
@@ -382,6 +416,7 @@ class AdmissionManager
 
         $sql = "SELECT 
                     a.Admission_ID,
+                    COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) AS Access_Passcode,
                     CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
                     DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Discharge_Date,

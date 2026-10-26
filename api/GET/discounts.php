@@ -8,7 +8,7 @@ class Discount
     {
         include "connection.php";
 
-        $sql = "SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt, d.Is_Active, COALESCE(edt.Code_Prefix, 'DISC') AS Code_Prefix 
+        $sql = "SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt, d.Is_Active, COALESCE(edt.Code_Prefix, 'DISC') AS Code_Prefix, COALESCE(d.Target_Scope, 'Total') AS Target_Scope 
                 FROM Enum_Discount d
                 LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
                 WHERE (d.Discount_Type_ID = 1 OR edt.Type_Name = 'Percentage')
@@ -25,7 +25,7 @@ class Discount
         include "connection.php";
 
         $json = json_decode($json, true);
-        $sql = "SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt, d.Is_Active, COALESCE(edt.Code_Prefix, 'DISC') AS Code_Prefix 
+        $sql = "SELECT d.Discount_ID, d.Discount_Name, d.Discount_Type_ID, COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type, d.Discount_Percentage, d.Fixed_Amount, d.Is_Vat_Exempt, d.Is_Active, COALESCE(edt.Code_Prefix, 'DISC') AS Code_Prefix, COALESCE(d.Target_Scope, 'Total') AS Target_Scope 
                 FROM Enum_Discount d
                 LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
                 WHERE d.Discount_ID = :id";

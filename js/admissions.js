@@ -528,8 +528,9 @@ const renderAdmissionsTable = (admissions) => {
             ? `<span class="table-primary-text">${a.Diagnosis}</span>` 
             : '<span class="badge badge-warning table-meta-pill">Pending Diagnosis</span>';
 
+        const passText = a.Access_Passcode ? `<span class="badge badge-info" style="font-size: 10.5px; padding: 2px 6px;" title="Patient Self-Service Portal Passcode">Passcode: ${a.Access_Passcode}</span>` : '';
         html += `<tr class="clickable-row" onclick="openChart(${a.Admission_ID})" title="Click row to open clinical chart & ledger">`;
-        html += `<td><span class="table-primary-text text-primary">ADM-${String(a.Admission_ID).padStart(3, '0')}</span><span class="table-sub-text">Admitted: ${a.Admission_Date}</span></td>`;
+        html += `<td><div style="display: flex; align-items: center; gap: 6px;"><span class="table-primary-text text-primary">ADM-${String(a.Admission_ID).padStart(3, '0')}</span> ${passText}</div><span class="table-sub-text">Admitted: ${a.Admission_Date}</span></td>`;
         html += `<td><span class="table-primary-text">${a.Patient_Name}</span><span class="table-sub-text">${a.Patient_Code} • ${a.Contact_Number || 'No contact'}</span></td>`;
         html += `<td>${bedInfo}<span class="table-sub-text">Dr: ${doctors}</span></td>`;
         html += `<td>${diagnosisBadge}<span class="table-sub-text">Complaint: ${a.Chief_Complaint || 'None Recorded'}</span></td>`;

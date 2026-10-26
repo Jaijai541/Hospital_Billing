@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient &amp; Family Billing Portal — Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/patient_portal.css?v=18.3">
+</head>
+<body class="portal-body">
+
+    <header class="portal-topbar">
+        <div class="portal-brand">
+            <div>
+                <h1 class="portal-brand-title">IN-PATIENT MEDICAL CENTER</h1>
+                <p class="portal-brand-subtitle">Patient &amp; Family Self-Service Billing Portal</p>
+            </div>
+        </div>
+        <div class="portal-topbar-actions">
+            <button type="button" id="btnExitPortal" class="btn-portal-outline hidden-element">Exit Portal</button>
+            <a href="index.html" class="btn-portal-outline">Staff Login</a>
+        </div>
+    </header>
+
+    <main class="portal-main">
+
+        <section id="auth-section" class="auth-wrapper">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>View Your Hospital Bill</h2>
+                    <p>Enter your patient reference number and unique passcode</p>
+                </div>
+
+                <div id="auth-error-alert" class="portal-alert-error"></div>
+
+                <form id="portalAuthForm" onsubmit="return false;">
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="portal_identifier">Admission Code / Patient ID</label>
+                        <input type="text" id="portal_identifier" class="auth-input" placeholder="e.g. ADM-006 or PAT-005" required autocomplete="off">
+                    </div>
+
+                    <div class="auth-form-group">
+                        <label class="auth-label" for="portal_passcode">Portal Access Passcode</label>
+                        <input type="text" id="portal_passcode" class="auth-input" placeholder="e.g. ADM-0652" required autocomplete="off">
+                    </div>
+
+                    <button type="button" id="btnVerifyCode" class="auth-btn">Access My Statement</button>
+                </form>
+
+                <div class="auth-info-box">
+                    <strong>Need your access passcode?</strong>
+                    Your 6-character portal passcode is printed on your official Admission Slip. You may also request it directly at the Nurse Station or Cashier Counter.
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboard-section" class="hidden-element">
+
+            <div class="portal-patient-card">
+                <div class="patient-header-flex">
+                    <div>
+                        <h2 class="patient-name-title" id="pt-name">Loading Patient...</h2>
+                        <div class="patient-codes-row">
+                            <span id="pt-code">PAT-000</span> &bull; 
+                            <span id="pt-admission-code">ADM-000</span> &bull;
+                            <span id="pt-demographics">Male, 0 yrs old</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span id="pt-status-pill" class="portal-status-pill status-admitted">Admitted</span>
+                    </div>
+                </div>
+
+                <div class="patient-info-grid">
+                    <div>
+                        <div class="info-item-label">Confinement Date</div>
+                        <div class="info-item-value" id="pt-admission-date">-</div>
+                    </div>
+                    <div>
+                        <div class="info-item-label">Room &amp; Bed</div>
+                        <div class="info-item-value" id="pt-room-bed">-</div>
+                    </div>
+                    <div>
+                        <div class="info-item-label">Length of Stay</div>
+                        <div class="info-item-value" id="pt-stay-days">1 day</div>
+                    </div>
+                    <div>
+                        <div class="info-item-label">Attending Physician</div>
+                        <div class="info-item-value" id="pt-attending-md">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="portal-nav-tabs no-print">
+                <button type="button" class="portal-tab-btn active" data-tab="tab-partial">Running Interim Bill</button>
+                <button type="button" class="portal-tab-btn" data-tab="tab-final" id="btnTabFinal">Final Statement &amp; Receipts</button>
+            </nav>
+
+            <div id="tab-partial" class="portal-tab-pane active">
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">Live Accumulated Hospital Charges</h3>
+                        <button type="button" class="btn-portal-primary no-print" onclick="window.print()">Print Statement</button>
+                    </div>
+
+                    <div class="notice-banner-portal">
+                        <strong>Clinical Interim Notice:</strong> Attending Physician Professional Fees (PF) are excluded from this interim bill. Physician fees are finalized upon discharge. Statutory discounts (PhilHealth, Senior, PWD) and final settlement are assessed upon patient release.
+                    </div>
+
+                    <table class="portal-table">
+                        <thead>
+                            <tr>
+                                <th>Itemized Particulars / Department</th>
+                                <th>Category</th>
+                                <th class="text-right">Accumulated (₱)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portal-partial-items-tbody">
+                            <tr><td colspan="3" class="text-center text-muted">Loading running charges...</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2">Hospital Charges Subtotal:</td>
+                                <td class="text-right" id="portal-partial-subtotal">₱0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="portal-summary-box">
+                        <div class="summary-row-portal">
+                            <span>Hospital Services &amp; Board Lodging:</span>
+                            <span id="pb-sum-hosp-display">₱0.00</span>
+                        </div>
+                        <div class="summary-row-portal">
+                            <span>Physician Professional Fees:</span>
+                            <span class="text-muted">Finalized on Discharge</span>
+                        </div>
+                        <div class="summary-row-portal" id="row-portal-returns">
+                            <span>Less: Credited Medicine Returns:</span>
+                            <span class="text-success" id="pb-sum-returns-display">-₱0.00</span>
+                        </div>
+                        <div class="summary-row-portal" id="row-portal-advance">
+                            <span>Less: Advance Payments &amp; Deposits Credited:</span>
+                            <span class="text-success" id="pb-sum-advance-display">-₱0.00</span>
+                        </div>
+                        <div class="summary-row-portal summary-row-bold">
+                            <span>Net Running Charges to Date:</span>
+                            <span id="pb-sum-net-display">₱0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="balance-card-callout">
+                        <div class="balance-label-portal">Estimated Net Running Balance:</div>
+                        <div class="balance-val-portal" id="pb-sum-balance-display">₱0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-final" class="portal-tab-pane">
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">Official Statement of Account (SOA)</h3>
+                        <button type="button" class="btn-portal-primary no-print" onclick="window.print()">Print Official SOA</button>
+                    </div>
+
+                    <div id="final-invoice-content">
+                        <div class="settled-banner-portal" id="soa-settled-notice">
+                            <strong>Discharge Notice:</strong> This account has been officially finalized and audited by the hospital billing department.
+                        </div>
+
+                        <div class="portal-summary-box">
+                            <div class="summary-row-portal">
+                                <span>Gross Billable Hospital &amp; Professional Charges:</span>
+                                <span id="soa-gross-display">₱0.00</span>
+                            </div>
+                            <div class="summary-row-portal" id="soa-discount-row">
+                                <span id="soa-discount-label">Less: Applied Discounts &amp; Assistance:</span>
+                                <span class="text-success" id="soa-discount-display">-₱0.00</span>
+                            </div>
+                            <div class="summary-row-portal" id="soa-advance-row">
+                                <span>Less: Advance Payments Credited:</span>
+                                <span class="text-success" id="soa-advance-display">-₱0.00</span>
+                            </div>
+                            <div class="summary-row-portal summary-row-bold">
+                                <span>Final Net Amount Due:</span>
+                                <span id="soa-net-display">₱0.00</span>
+                            </div>
+                            <div class="summary-row-portal">
+                                <span>Total Amount Paid:</span>
+                                <span class="text-success" id="soa-paid-display">₱0.00</span>
+                            </div>
+                            <div class="summary-row-portal">
+                                <span>Customer Change:</span>
+                                <span id="soa-change-display">₱0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="balance-card-callout">
+                            <div class="balance-label-portal">Discharge Account Balance:</div>
+                            <div class="balance-val-portal" id="soa-balance-display">₱0.00</div>
+                        </div>
+
+                        <div class="portal-card-header">
+                            <h3 class="portal-card-title">Official Payment Receipts Issued</h3>
+                        </div>
+
+                        <table class="portal-table">
+                            <thead>
+                                <tr>
+                                    <th>Receipt #</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Method</th>
+                                    <th class="text-right">Amount Paid</th>
+                                </tr>
+                            </thead>
+                            <tbody id="soa-receipts-tbody">
+                                <tr><td colspan="4" class="text-center text-muted">No payment records found.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="final-invoice-pending" class="hidden-element">
+                        <div class="notice-banner-portal">
+                            <strong>Pending Discharge:</strong> The official Statement of Account (SOA) will be generated upon patient release when the attending physician signs clearance and the billing department finalizes statutory deductions.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="portal-footer">
+        Official In-Patient Self-Service Portal &bull; Medical Records &amp; Hospital Billing System &bull; Confidential Patient Information
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/patient_portal.js?v=18.3"></script>
+</body>
+</html>

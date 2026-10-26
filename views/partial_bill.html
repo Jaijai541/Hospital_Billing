@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interim Statement of Account &amp; Partial Bill — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.2">
-    <link rel="stylesheet" href="../css/invoice_print.css?v=15.0">
-    <link rel="stylesheet" href="../css/partial_bill.css?v=15.0">
+    <link rel="stylesheet" href="../css/common.css?v=18.3">
+    <link rel="stylesheet" href="../css/invoice_print.css?v=18.3">
+    <link rel="stylesheet" href="../css/partial_bill.css?v=18.3">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="print-toolbar-group">
             <button type="button" class="btn btn-primary" onclick="window.print()">Print Interim / Partial Bill</button>
         </div>
         <div class="print-toolbar-actions">
@@ -26,6 +26,10 @@
             <div class="interim-badge-wrap">
                 <span class="interim-status-pill">INTERIM RUNNING BILL — PATIENT CURRENTLY ADMITTED</span>
             </div>
+        </div>
+
+        <div class="pf-notice-banner">
+            <strong>Interim Policy Notice:</strong> Attending Physician Professional Fees (PF) are excluded from this interim running bill. All professional fees will be reviewed and finalized only upon official discharge.
         </div>
 
         <div class="billing-section-header">PATIENT &amp; ADMISSION RECORD</div>
@@ -58,7 +62,7 @@
             </tbody>
         </table>
 
-        <div style="display: none;">
+        <div class="hidden-element">
             <span id="pb-patient-contact"></span>
             <span id="pb-patient-address"></span>
             <span id="pb-patient-emergency"></span>
@@ -69,12 +73,12 @@
         <table class="soa-table charges-breakdown-table">
             <thead>
                 <tr class="header-row">
-                    <th width="72%" style="text-align: left;">PARTICULARS / SERVICES &amp; CHARGES</th>
-                    <th width="28%" style="text-align: right;">ACCUMULATED CHARGES</th>
+                    <th width="72%" class="text-left">PARTICULARS / SERVICES &amp; CHARGES</th>
+                    <th width="28%" class="text-right">ACCUMULATED CHARGES</th>
                 </tr>
             </thead>
             <tbody id="pb-hospital-charges-tbody">
-                <tr><td colspan="2" style="text-align: center; color: var(--text-muted);">Loading hospital charges...</td></tr>
+                <tr><td colspan="2" class="text-center-muted">Loading hospital charges...</td></tr>
             </tbody>
             <tfoot>
                 <tr class="subtotal-row">
@@ -84,26 +88,26 @@
             </tfoot>
         </table>
 
-        <div class="billing-section-header" style="margin-top: 10px;">PROFESSIONAL FEES (ATTENDING PHYSICIANS)</div>
+        <div class="billing-section-header section-gap-top">PROFESSIONAL FEES (ATTENDING PHYSICIANS) — FINALIZED ON DISCHARGE</div>
         <table class="soa-table charges-breakdown-table">
             <thead>
                 <tr class="header-row">
-                    <th width="72%" style="text-align: left;">PARTICULARS / ATTENDING PHYSICIAN(S)</th>
-                    <th width="28%" style="text-align: right;">PROFESSIONAL FEES</th>
+                    <th width="72%" class="text-left">PARTICULARS / ATTENDING PHYSICIAN(S)</th>
+                    <th width="28%" class="text-right">INTERIM STATUS</th>
                 </tr>
             </thead>
             <tbody id="pb-doctor-fees-tbody">
-                <tr><td colspan="2" style="text-align: center; color: var(--text-muted);">Loading professional fees...</td></tr>
+                <tr><td colspan="2" class="text-center-muted">Loading professional fees...</td></tr>
             </tbody>
             <tfoot>
                 <tr class="subtotal-row">
                     <td><strong>SUBTOTAL PROFESSIONAL FEES:</strong></td>
-                    <td align="right" id="pb-doc-subtotal">₱0.00</td>
+                    <td align="right" id="pb-doc-subtotal">₱0.00 (Finalized on Discharge)</td>
                 </tr>
             </tfoot>
         </table>
 
-        <div id="pb-advance-section" style="display: none; margin-top: 10px;">
+        <div id="pb-advance-section" class="hidden-element section-gap-top">
             <div class="billing-section-header">ADVANCE PAYMENTS &amp; PATIENT DEPOSITS RECEIVED</div>
             <table class="soa-table charges-breakdown-table">
                 <thead>
@@ -111,24 +115,24 @@
                         <th width="25%">Official Receipt #</th>
                         <th width="25%">Date &amp; Time</th>
                         <th width="25%">Method</th>
-                        <th width="25%" style="text-align: right;">Amount Paid</th>
+                        <th width="25%" class="text-right">Amount Paid</th>
                     </tr>
                 </thead>
                 <tbody id="pb-advance-tbody"></tbody>
                 <tfoot>
                     <tr class="subtotal-row">
                         <td colspan="3"><strong>TOTAL ADVANCE DEPOSITS CREDITED:</strong></td>
-                        <td align="right" id="pb-subtotal-advance" style="font-weight: 700;">₱0.00</td>
+                        <td align="right" id="pb-subtotal-advance" class="subtotal-advance-val">₱0.00</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <div class="settlement-summary-box" style="margin-top: 10px;">
+        <div class="settlement-summary-box section-gap-top">
             <table class="soa-table summary-detail-table">
                 <thead>
                     <tr class="header-row">
-                        <th colspan="2" style="text-align: left;">RUNNING SETTLEMENT SUMMARY</th>
+                        <th colspan="2" class="text-left">RUNNING SETTLEMENT SUMMARY</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,14 +141,14 @@
                         <td width="28%" align="right" id="pb-sum-hosp">₱0.00</td>
                     </tr>
                     <tr>
-                        <td>Professional Fees Subtotal:</td>
-                        <td align="right" id="pb-sum-doc">₱0.00</td>
+                        <td>Physician Professional Fees:</td>
+                        <td align="right" id="pb-sum-doc">₱0.00 (Finalized on Discharge)</td>
                     </tr>
                     <tr class="summary-gross-line">
-                        <td><strong>Gross Accumulated Charges:</strong></td>
+                        <td><strong>Gross Accumulated Interim Charges:</strong></td>
                         <td align="right"><strong id="pb-sum-gross">₱0.00</strong></td>
                     </tr>
-                    <tr id="pb-row-returns" style="display: none;">
+                    <tr id="pb-row-returns" class="hidden-element">
                         <td>Less: Credited Medicine Returns:</td>
                         <td align="right" id="pb-sum-returns">-₱0.00</td>
                     </tr>
@@ -160,11 +164,11 @@
                         <td><strong>Total Running Charges (VAT-Inclusive):</strong></td>
                         <td align="right"><strong id="pb-sum-total-with-vat">₱0.00</strong></td>
                     </tr>
-                    <tr id="pb-row-advance-discounts" style="display: none;">
-                        <td style="color: #15803d;">Less: Discounts Credited in Advance:</td>
-                        <td align="right" id="pb-sum-advance-discounts" style="color: #15803d; font-weight: 600;">-₱0.00</td>
+                    <tr id="pb-row-advance-discounts" class="hidden-element">
+                        <td class="advance-discount-label">Less: Discounts Credited in Advance:</td>
+                        <td align="right" id="pb-sum-advance-discounts" class="advance-discount-val">-₱0.00</td>
                     </tr>
-                    <tr id="pb-row-advance-payments" style="display: none;">
+                    <tr id="pb-row-advance-payments" class="hidden-element">
                         <td>Less: Advance Payments &amp; Deposits Received:</td>
                         <td align="right" id="pb-sum-advance-payments">-₱0.00</td>
                     </tr>
@@ -174,8 +178,8 @@
                     </tr>
                 </tbody>
             </table>
-            <div style="font-size: 10px; color: #64748b; margin-top: 3px; font-style: italic;">
-                *Statutory discounts (PhilHealth, Senior, PWD) and VAT exemptions are assessed upon final patient discharge.
+            <div class="statutory-note">
+                *Statutory discounts (PhilHealth, Senior, PWD) and Professional Fees are assessed upon final patient discharge.
             </div>
         </div>
 
@@ -212,7 +216,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=18.2"></script>
-    <script src="../js/partial_bill.js?v=15.0"></script>
+    <script src="../js/common.js?v=18.3"></script>
+    <script src="../js/partial_bill.js?v=18.3"></script>
 </body>
 </html>

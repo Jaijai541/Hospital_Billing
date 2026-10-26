@@ -1301,6 +1301,25 @@ const loadAdmissionDetails = () => {
 
             document.getElementById('banner-patient-name').textContent = admissionData.Full_Name;
             document.getElementById('banner-patient-code').textContent = admissionData.Patient_Code;
+            const bannerPass = document.getElementById('banner-portal-passcode');
+            if (bannerPass) {
+                const pass = admissionData.Access_Passcode || 'N/A';
+                bannerPass.textContent = `Passcode: ${pass}`;
+                bannerPass.style.cursor = 'pointer';
+                bannerPass.title = `Patient Portal Passcode: ${pass} (Click to copy)`;
+                bannerPass.onclick = () => {
+                    navigator.clipboard.writeText(pass).then(() => {
+                        showPopupAlert(`Portal Passcode "${pass}" copied to clipboard! Share this passcode with the patient to view their interim and final bills.`, 'info', 'Passcode Copied');
+                    });
+                };
+            }
+            const btnPortal = document.getElementById('btnOpenPatientPortal');
+            if (btnPortal) {
+                btnPortal.onclick = () => {
+                    const pass = admissionData.Access_Passcode || '';
+                    window.open(`patient_portal.html?code=${admissionData.Admission_Code || ('ADM-' + admissionId)}&passcode=${pass}`, '_blank');
+                };
+            }
             document.getElementById('banner-patient-age').textContent = `${admissionData.Date_Of_Birth} (${admissionData.Age} yrs old)`;
             document.getElementById('banner-patient-gender-blood').textContent = `${admissionData.Gender_Name || 'N/A'} / Blood: ${admissionData.Blood_Type_Name || 'N/A'}`;
             
@@ -3728,15 +3747,27 @@ const renderSettlementSection = () => {
     discountList.forEach(d => {
         const valText = `${parseFloat(d.Discount_Percentage || 0).toFixed(2)}%`;
         const vatBadge = (d.Is_Vat_Exempt == 1) ? `<span class="badge badge-success" style="font-size: 11px; padding: 2px 7px;">12% VAT EXEMPT</span>` : '';
+        const dScope = d.Target_Scope || 'Total';
+        let scopeBadge = '';
+        if (dScope === 'Doctor') {
+            scopeBadge = `<span class="badge" style="background: #fdf2f8; color: #9d174d; font-size: 11px; padding: 2px 6px;">Doctor Fees Only</span>`;
+        } else if (dScope === 'Room') {
+            scopeBadge = `<span class="badge" style="background: #eff6ff; color: #1e40af; font-size: 11px; padding: 2px 6px;">Room Only</span>`;
+        } else if (dScope === 'Medicine') {
+            scopeBadge = `<span class="badge" style="background: #f0fdf4; color: #166534; font-size: 11px; padding: 2px 6px;">Pharmacy Only</span>`;
+        } else if (dScope === 'Laboratory') {
+            scopeBadge = `<span class="badge" style="background: #faf5ff; color: #6b21a8; font-size: 11px; padding: 2px 6px;">Diagnostics Only</span>`;
+        }
 
         discountCheckboxesHtml += `
             <label style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; user-select: none;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="Percentage" data-pct="${d.Discount_Percentage}" data-fixed="0.00" data-vat-exempt="${d.Is_Vat_Exempt}" style="width: 17px; height: 17px; cursor: pointer;">
+                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="Percentage" data-pct="${d.Discount_Percentage}" data-fixed="0.00" data-vat-exempt="${d.Is_Vat_Exempt}" data-scope="${dScope}" style="width: 17px; height: 17px; cursor: pointer;">
                     <span style="font-weight: 600; font-size: 13.5px; color: #1e293b;">${d.Discount_Name}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
                     <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11.5px; padding: 3px 8px;">${valText}</span>
+                    ${scopeBadge}
                     ${vatBadge}
                 </div>
             </label>
@@ -4040,6 +4071,7 @@ const renderSettlementSection = () => {
             const dpct = parseFloat(cb.dataset.pct || 0);
             const dfixed = parseFloat(cb.dataset.fixed || 0);
             const dname = cb.dataset.name || '';
+            const dscope = cb.dataset.scope || 'Total';
             const dvatExempt = parseInt(cb.dataset.vatExempt || '0', 10) === 1 || dname.toLowerCase().includes('senior') || dname.toLowerCase().includes('pwd');
 
             if (dvatExempt) isVatExempt = true;
@@ -4050,7 +4082,8 @@ const renderSettlementSection = () => {
                 type: dtype,
                 pct: dpct,
                 fixed: dfixed,
-                isVatExempt: dvatExempt
+                isVatExempt: dvatExempt,
+                scope: dscope
             });
         });
 
@@ -4077,11 +4110,24 @@ const renderSettlementSection = () => {
         const subtotalAfterFixed = running;
 
         let totalPctRate = 0;
+        let pctDeduction = 0;
         selectedDiscounts.filter(d => d.type === 'Percentage').forEach(pd => {
             totalPctRate += pd.pct;
+            let base = subtotalAfterFixed;
+            if (pd.scope === 'Doctor') {
+                base = docTotal;
+            } else if (pd.scope === 'Room') {
+                base = roomTotal;
+            } else if (pd.scope === 'Medicine') {
+                base = medTotal;
+            } else if (pd.scope === 'Laboratory') {
+                base = scanTotal + srvTotal;
+            }
+            const ded = Math.round((base * (pd.pct / 100)) * 100) / 100;
+            pctDeduction = Math.round((pctDeduction + Math.min(running, ded)) * 100) / 100;
         });
 
-        const pctDeduction = Math.round((subtotalAfterFixed * (totalPctRate / 100)) * 100) / 100;
+        pctDeduction = Math.min(subtotalAfterFixed, pctDeduction);
         const netBeforeTax = Math.max(0, Math.round((subtotalAfterFixed - pctDeduction) * 100) / 100);
         const totalDiscountDeduction = Math.round((totalFixedDeduction + pctDeduction) * 100) / 100;
 

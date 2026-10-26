@@ -436,23 +436,27 @@ class LedgerManager
         }
         $totalAdvanceCredit = round($totalAdvance + $totalAdvanceDiscounts, 2);
 
+        $docTotal = floatval($ledgerSummary['doctor_total']);
         $gross = floatval($ledgerSummary['gross_total']);
         $returns = floatval($ledgerSummary['return_total']);
         $alreadyInLedgerRoom = floatval($ledgerSummary['room_total']);
         $currentRoomToAdd = max(0, $totalRoomStayCharges - $alreadyInLedgerRoom);
         $totalGross = $gross + $currentRoomToAdd;
-        $totalNet = $totalGross - $returns;
+        $hospitalGross = max(0.00, round($totalGross - $docTotal, 2));
+        $totalNet = max(0.00, round($hospitalGross - $returns, 2));
         $remainingBal = max(0.00, round($totalNet - $totalAdvanceCredit, 2));
 
         $bill['Summary'] = [
             'room_total' => round($totalRoomStayCharges, 2),
-            'doctor_total' => floatval($ledgerSummary['doctor_total']),
+            'doctor_total' => $docTotal,
+            'is_doctor_fee_included' => false,
+            'hospital_charges_total' => $hospitalGross,
             'medicine_total' => floatval($ledgerSummary['medicine_total']),
             'scan_total' => floatval($ledgerSummary['scan_total']),
             'service_total' => floatval($ledgerSummary['service_total']),
-            'gross_total' => round($totalGross, 2),
+            'gross_total' => $hospitalGross,
             'return_total' => round($returns, 2),
-            'net_accumulated_total' => round($totalNet, 2),
+            'net_accumulated_total' => $totalNet,
             'advance_payments_total' => round($totalAdvance, 2),
             'advance_discounts_total' => round($totalAdvanceDiscounts, 2),
             'advance_total_credit' => round($totalAdvanceCredit, 2),

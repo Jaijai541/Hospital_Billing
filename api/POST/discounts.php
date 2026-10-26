@@ -13,15 +13,18 @@ class Discount
         $pct = floatval($json['discount_percentage'] ?? 0);
         $fixed = 0.00;
         $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
+        $scope = trim($json['target_scope'] ?? 'Total');
+        if (empty($scope)) $scope = 'Total';
 
-        $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Type_ID, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active) 
-                VALUES (:name, :type_id, :percentage, :fixed, :exempt, 1)";
+        $sql = "INSERT INTO Enum_Discount (Discount_Name, Discount_Type_ID, Discount_Percentage, Fixed_Amount, Is_Vat_Exempt, Is_Active, Target_Scope) 
+                VALUES (:name, :type_id, :percentage, :fixed, :exempt, 1, :scope)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['discount_name']);
         $stmt->bindParam(":type_id", $typeId);
         $stmt->bindParam(":percentage", $pct);
         $stmt->bindParam(":fixed", $fixed);
         $stmt->bindParam(":exempt", $isVatExempt);
+        $stmt->bindParam(":scope", $scope);
         $stmt->execute();
 
         return json_encode($stmt->rowCount() > 0 ? 1 : 0);
@@ -36,13 +39,16 @@ class Discount
         $pct = floatval($json['discount_percentage'] ?? 0);
         $fixed = 0.00;
         $isVatExempt = !empty($json['is_vat_exempt']) ? 1 : 0;
+        $scope = trim($json['target_scope'] ?? 'Total');
+        if (empty($scope)) $scope = 'Total';
 
         $sql = "UPDATE Enum_Discount 
                 SET Discount_Name = :name, 
                     Discount_Type_ID = :type_id,
                     Discount_Percentage = :percentage,
                     Fixed_Amount = :fixed,
-                    Is_Vat_Exempt = :exempt
+                    Is_Vat_Exempt = :exempt,
+                    Target_Scope = :scope
                 WHERE Discount_ID = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['discount_name']);
@@ -50,6 +56,7 @@ class Discount
         $stmt->bindParam(":percentage", $pct);
         $stmt->bindParam(":fixed", $fixed);
         $stmt->bindParam(":exempt", $isVatExempt);
+        $stmt->bindParam(":scope", $scope);
         $stmt->bindParam(":id", $json['discount_id']);
         $stmt->execute();
 

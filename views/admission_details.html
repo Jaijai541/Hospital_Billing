@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.2">
-    <link rel="stylesheet" href="../css/admission_details.css?v=33.0">
+    <link rel="stylesheet" href="../css/common.css?v=18.3">
+    <link rel="stylesheet" href="../css/admission_details.css?v=18.3">
 </head>
 <body>
 
@@ -49,6 +49,7 @@
                             <div class="hero-name-row">
                                 <h1 class="hero-patient-name" id="banner-patient-name">Loading Patient...</h1>
                                 <span class="badge badge-primary hero-code-badge" id="banner-patient-code">PAT-000</span>
+                                <span class="badge badge-info hero-code-badge" id="banner-portal-passcode" title="Patient Portal Access Passcode (Click to copy)">Portal Code: --</span>
                                 <span class="badge badge-success hero-bed-badge" id="banner-bed">Bed --</span>
                             </div>
                             <div class="hero-meta-row">
@@ -65,6 +66,10 @@
                             <span class="badge badge-primary">Admitted</span>
                         </div>
                         <div class="hero-actions-wrap">
+                            <button type="button" class="btn btn-outline btn-sm" id="btnOpenPatientPortal" title="Open Patient Self-Service Portal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                <span>Patient Portal</span>
+                            </button>
                             <button type="button" class="btn btn-outline btn-sm" id="btnOpenAdmissionHistory" title="View Admission History">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                 <span>Admission History</span>
@@ -799,9 +804,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=18.2"></script>
-    <script src="../js/common.js?v=18.2"></script>
-    <script src="../js/admission_details.js?v=18.2"></script>
+    <script src="../js/sidebar.js?v=18.3"></script>
+    <script src="../js/common.js?v=18.3"></script>
+    <script src="../js/admission_details.js?v=18.3"></script>
 </body>
 </html>
 

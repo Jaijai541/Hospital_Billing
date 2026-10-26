@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Billing Discounts — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.2">
-    <link rel="stylesheet" href="../css/discounts.css?v=15.0">
+    <link rel="stylesheet" href="../css/common.css?v=18.3">
+    <link rel="stylesheet" href="../css/discounts.css?v=18.3">
 </head>
 <body>
 
@@ -18,7 +18,7 @@
             <div class="topbar">
                 <div class="topbar-title">
                     <h1>Billing Discounts Configuration</h1>
-                    <span class="subtitle">Statutory and Hospital Policy Invoicing Reductions</span>
+                    <span class="subtitle">Statutory, Targeted Departmental, and Hospital Policy Invoicing Reductions</span>
                 </div>
                 <button type="button" id="btnOpenAddModal" class="btn btn-primary">+ Add New Discount</button>
             </div>
@@ -34,7 +34,19 @@
                         <div class="form-grid">
                             <div class="form-group span-2">
                                 <label class="form-label" for="discount_name">Discount Policy Name</label>
-                                <input type="text" id="discount_name" class="form-control" placeholder="e.g. Senior Citizen, PWD, Government Employee" required>
+                                <input type="text" id="discount_name" class="form-control" placeholder="e.g. Senior Citizen, PWD, Physician Courtesy, Room Subsidy" required>
+                            </div>
+
+                            <div class="form-group span-2">
+                                <label class="form-label" for="target_scope">Applicable Scope / Target Category</label>
+                                <select id="target_scope" class="form-select">
+                                    <option value="Total">Total Gross Bill (All Hospital &amp; Professional Charges)</option>
+                                    <option value="Doctor">Doctor Fees Only (Physician Bedside Rounds &amp; PF)</option>
+                                    <option value="Room">Room &amp; Board Only (Daily Bed Lodging Rate)</option>
+                                    <option value="Medicine">Central Pharmacy Only (Drugs &amp; Medications)</option>
+                                    <option value="Laboratory">Diagnostics &amp; Services Only (Scans &amp; Lab Tests)</option>
+                                </select>
+                                <small class="text-muted vat-help-text">Targeted discounts restrict deductions exclusively to charges in the selected category.</small>
                             </div>
 
                             <div class="form-group span-2" id="group_percentage">
@@ -43,16 +55,16 @@
                             </div>
 
                             <div class="form-group span-2">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                                    <input type="checkbox" id="is_vat_exempt" style="width: 17px; height: 17px; cursor: pointer;">
-                                    <span style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">Exempt Patient from 12% VAT</span>
+                                <label class="vat-checkbox-label">
+                                    <input type="checkbox" id="is_vat_exempt" class="vat-checkbox-input">
+                                    <span class="vat-checkbox-text">Exempt Patient from 12% VAT</span>
                                 </label>
-                                <small class="text-muted" style="display: block; margin-top: 4px;">Exempts the patient account from 12% Value-Added Tax (mandatory for Senior Citizen and PWD accounts).</small>
+                                <small class="text-muted vat-help-text">Exempts the patient account from 12% Value-Added Tax (mandatory for Senior Citizen and PWD accounts).</small>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" id="btnArchive" class="btn btn-warning btn-archive" style="display: none;">Send to Archive</button>
+                        <button type="button" id="btnArchive" class="btn btn-warning btn-archive hidden-element">Send to Archive</button>
                         <button type="button" id="btnReset" class="btn btn-secondary">Reset</button>
                         <button type="button" id="btnCancel" class="btn btn-secondary">Cancel</button>
                         <button type="button" id="btnSubmit" class="btn btn-primary">Submit Discount</button>
@@ -62,9 +74,9 @@
 
             <div class="content-body">
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <h2 style="margin: 0;">Discounts Directory</h2>
+                    <div class="card-header card-header-flex">
+                        <div class="card-title-group">
+                            <h2 class="card-title-m0">Discounts Directory</h2>
                             <button type="button" id="btnRefreshDiscounts" class="btn-refresh" title="Refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                             </button>
@@ -75,6 +87,18 @@
                             <div class="form-group filter-capsule-search">
                                 <label class="form-label" for="search_input">Search Discount</label>
                                 <input type="text" id="search_input" class="form-control" placeholder="Search name or code...">
+                            </div>
+
+                            <div class="form-group filter-capsule-select">
+                                <label class="form-label" for="filter_scope">Scope Category</label>
+                                <select id="filter_scope" class="form-select">
+                                    <option value="all">All Scopes</option>
+                                    <option value="Total">Total Gross Bill</option>
+                                    <option value="Doctor">Doctor Fees Only</option>
+                                    <option value="Room">Room &amp; Board Only</option>
+                                    <option value="Medicine">Pharmacy Only</option>
+                                    <option value="Laboratory">Diagnostics Only</option>
+                                </select>
                             </div>
 
                             <div class="form-group filter-capsule-select">
@@ -96,8 +120,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=18.2"></script>
-    <script src="../js/common.js?v=18.2"></script>
-    <script src="../js/discounts.js?v=15.0"></script>
+    <script src="../js/sidebar.js?v=18.3"></script>
+    <script src="../js/common.js?v=18.3"></script>
+    <script src="../js/discounts.js?v=18.3"></script>
 </body>
 </html>

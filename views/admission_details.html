@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Patient Chart & Billing Hub — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.5">
+    <title>Patient Chart & Billing Hub â€” Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=18.6">
     <link rel="stylesheet" href="../css/admission_details.css?v=18.3">
 </head>
 <body>
@@ -250,7 +250,7 @@
                                     </div>
                                     <div class="summary-card-action-bar">
                                         <button type="button" class="btn btn-outline btn-sm" id="btnOpenAssessmentModal">
-                                            <span>✎ Edit Clinical Assessment</span>
+                                            <span>âœŽ Edit Clinical Assessment</span>
                                         </button>
                                     </div>
                                 </div>
@@ -444,7 +444,7 @@
                 <div class="administer-order-summary-box">
                     <div class="administer-summary-header">
                         <span id="adm_modal_order_ref" class="administer-ref-badge">ORD-000</span>
-                        <span id="adm_modal_amount" class="administer-amount-prominent">₱0.00</span>
+                        <span id="adm_modal_amount" class="administer-amount-prominent">â‚±0.00</span>
                     </div>
                     <div class="administer-summary-grid">
                         <div class="administer-summary-cell">
@@ -509,7 +509,7 @@
                     </div>
 
                     <div class="form-group span-2">
-                        <label class="form-label" for="round_fee">Professional Fee (₱) *</label>
+                        <label class="form-label" for="round_fee">Professional Fee (â‚±) *</label>
                         <input type="number" id="round_fee" class="form-control" step="0.01" placeholder="0.00">
                     </div>
                 </div>
@@ -565,7 +565,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="return_unit_price">Unit Price</label>
-                        <input type="text" id="return_unit_price" class="form-control" readonly placeholder="₱0.00" style="background-color: #f8fafc;">
+                        <input type="text" id="return_unit_price" class="form-control" readonly placeholder="â‚±0.00" style="background-color: #f8fafc;">
                     </div>
 
                     <div class="form-group">
@@ -655,15 +655,15 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13.5px;">
                         <div><strong style="color: #64748b;">Patient:</strong> <span id="adv_patient_name" style="font-weight: 700;"></span></div>
                         <div><strong style="color: #64748b;">Admission:</strong> <span id="adv_admission_code" style="font-weight: 700;"></span></div>
-                        <div><strong style="color: #64748b;">Running Charges:</strong> <span id="adv_running_charges" style="font-weight: 600;">₱0.00</span></div>
-                        <div><strong style="color: #64748b;">Prior Advance Paid:</strong> <span id="adv_prior_paid" style="font-weight: 600; color: #16a34a;">₱0.00</span></div>
+                        <div><strong style="color: #64748b;">Running Charges:</strong> <span id="adv_running_charges" style="font-weight: 600;">â‚±0.00</span></div>
+                        <div><strong style="color: #64748b;">Prior Advance Paid:</strong> <span id="adv_prior_paid" style="font-weight: 600; color: #16a34a;">â‚±0.00</span></div>
                     </div>
                     <div id="adv_prior_discount_row" style="display: none; margin-top: 6px; font-size: 13.5px;">
-                        <div><strong style="color: #64748b;">Prior Advance Discounts:</strong> <span id="adv_prior_discount" style="font-weight: 600; color: #15803d;">₱0.00</span></div>
+                        <div><strong style="color: #64748b;">Prior Advance Discounts:</strong> <span id="adv_prior_discount" style="font-weight: 600; color: #15803d;">â‚±0.00</span></div>
                     </div>
                     <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #86efac; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 700; color: #1e3a8a; font-size: 14px;">ESTIMATED UNPAID BALANCE:</span>
-                        <strong style="font-size: 17px; color: #1e3a8a;" id="adv_unpaid_balance">₱0.00</strong>
+                        <strong style="font-size: 17px; color: #1e3a8a;" id="adv_unpaid_balance">â‚±0.00</strong>
                     </div>
                 </div>
 
@@ -671,13 +671,13 @@
                     <label class="form-label">Medical Assistance &amp; Vouchers (Optional) <span class="info-tip" tabindex="0" data-tooltip="Add one or more assistance vouchers (e.g. DSWD, PCSO, LGU, Malasakit, Doctor Waiver) to credit against this advance deposit." aria-label="Assistance vouchers info">i</span></label>
                     <div class="adv-voucher-input-group">
                         <input type="text" id="adv_discount_name_input" class="form-control" placeholder="Particulars (e.g. DSWD Aid, PCSO, LGU Grant, Doctor Waiver)">
-                        <input type="number" id="adv_discount_amount_input" class="form-control" step="0.01" min="0.00" placeholder="Amount (₱)">
+                        <input type="number" id="adv_discount_amount_input" class="form-control" step="0.01" min="0.00" placeholder="Amount (â‚±)">
                         <button type="button" class="btn btn-outline btn-sm" id="btnAddAdvVoucher">+ Add Grant</button>
                     </div>
                     <div id="adv-vouchers-tags" class="adv-vouchers-tags-container"></div>
                     <div id="adv-vouchers-total-row" class="adv-vouchers-total-row adv-vouchers-total-hidden">
                         <span>Total Assistance Credited:</span>
-                        <strong id="adv-vouchers-total-amount">₱0.00</strong>
+                        <strong id="adv-vouchers-total-amount">â‚±0.00</strong>
                     </div>
                     <small class="text-muted adv-vouchers-hint">You can add multiple government grants or assistance vouchers. All will be itemized on the receipt.</small>
                 </div>
@@ -692,7 +692,7 @@
                 </div>
 
                 <div class="form-group mb-3">
-                    <label class="form-label" for="adv_amount_input">Deposit / Payment Tendered (₱) * <span class="info-tip" tabindex="0" data-tooltip="Enter 0.00 if only recording a discount or assistance grant." aria-label="Deposit amount note">i</span></label>
+                    <label class="form-label" for="adv_amount_input">Deposit / Payment Tendered (â‚±) * <span class="info-tip" tabindex="0" data-tooltip="Enter 0.00 if only recording a discount or assistance grant." aria-label="Deposit amount note">i</span></label>
                     <div style="display: flex; gap: 8px;">
                         <input type="number" id="adv_amount_input" class="form-control" step="0.01" min="0.00" placeholder="0.00" style="font-weight: 700; font-size: 16px;">
                         <button type="button" class="btn btn-secondary" id="btnPayAdvExactBalance" style="white-space: nowrap;">Pay Remaining Balance</button>
@@ -763,7 +763,7 @@
         <div class="modal-container" style="max-width: 520px;">
             <div class="modal-header" style="background: #fef2f2; border-bottom: 1px solid #fecaca;">
                 <h3 style="margin: 0; color: #991b1b; display: flex; align-items: center; gap: 8px;">
-                    <span>🔐</span> Supervisor Authorization: Void Accidental Admission
+                    <span>ðŸ”</span> Supervisor Authorization: Void Accidental Admission
                 </h3>
                 <button type="button" class="modal-close" id="btnCloseVoidModal">&times;</button>
             </div>
@@ -805,7 +805,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=18.3"></script>
-    <script src="../js/common.js?v=18.5"></script>
+    <script src="../js/common.js?v=18.6"></script>
     <script src="../js/admission_details.js?v=18.3"></script>
 </body>
 </html>

@@ -3301,8 +3301,8 @@ textarea.form-control {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-width: 420px;
-    width: calc(100% - 48px);
+    width: 380px;
+    max-width: calc(100vw - 32px);
     pointer-events: none;
 }
 
@@ -3317,6 +3317,8 @@ textarea.form-control {
     border-right: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     padding: 14px 16px;
+    box-sizing: border-box;
+    width: 100%;
     animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
@@ -3337,56 +3339,86 @@ textarea.form-control {
     }
 }
 
-.toast-header-row {
+.clinical-toast-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.clinical-toast-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    width: 100%;
 }
 
-.toast-badge {
-    font-size: 11px;
+.clinical-toast-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10.5px;
     font-weight: 700;
     text-transform: uppercase;
     color: #0284c7;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
+    background-color: #f0f9ff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #bae6fd;
 }
 
-.toast-close {
+.clinical-toast-close {
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1;
     color: #94a3b8;
     cursor: pointer;
-    padding: 0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background-color 0.15s;
 }
 
-.toast-close:hover {
-    color: #334155;
+.clinical-toast-close:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
 }
 
-.toast-title {
+.clinical-toast-title {
     font-size: 13.5px;
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    word-break: break-word;
 }
 
-.toast-body {
+.clinical-toast-body {
     font-size: 12.5px;
     color: #475569;
-    line-height: 1.45;
-    margin-bottom: 10px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    word-break: break-word;
 }
 
-.toast-footer-row {
+.clinical-toast-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
 }
 
-.toast-time {
+.clinical-toast-time {
     font-size: 11px;
     color: #94a3b8;
+    font-weight: 500;
+}
+
+.clinical-toast-btn {
+    white-space: nowrap;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
 }

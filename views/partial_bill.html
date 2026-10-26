@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interim Statement of Account &amp; Partial Bill — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.5">
+    <title>Interim Statement of Account &amp; Partial Bill â€” Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=18.6">
     <link rel="stylesheet" href="../css/invoice_print.css?v=18.3">
     <link rel="stylesheet" href="../css/partial_bill.css?v=18.3">
 </head>
@@ -24,7 +24,7 @@
             <p>123 Healthcare Avenue, Medical District, CDO City &bull; Tel: (02) 8888-4567 &bull; VAT Reg. TIN: 009-876-543-000</p>
             <div class="doc-title">INTERIM STATEMENT OF ACCOUNT &amp; RUNNING BILL</div>
             <div class="interim-badge-wrap">
-                <span class="interim-status-pill">INTERIM RUNNING BILL — PATIENT CURRENTLY ADMITTED</span>
+                <span class="interim-status-pill">INTERIM RUNNING BILL â€” PATIENT CURRENTLY ADMITTED</span>
             </div>
         </div>
 
@@ -83,12 +83,12 @@
             <tfoot>
                 <tr class="subtotal-row">
                     <td><strong>SUBTOTAL HOSPITAL CHARGES:</strong></td>
-                    <td align="right" id="pb-hosp-subtotal">₱0.00</td>
+                    <td align="right" id="pb-hosp-subtotal">â‚±0.00</td>
                 </tr>
             </tfoot>
         </table>
 
-        <div class="billing-section-header section-gap-top">PROFESSIONAL FEES (ATTENDING PHYSICIANS) — FINALIZED ON DISCHARGE</div>
+        <div class="billing-section-header section-gap-top">PROFESSIONAL FEES (ATTENDING PHYSICIANS) â€” FINALIZED ON DISCHARGE</div>
         <table class="soa-table charges-breakdown-table">
             <thead>
                 <tr class="header-row">
@@ -102,7 +102,7 @@
             <tfoot>
                 <tr class="subtotal-row">
                     <td><strong>SUBTOTAL PROFESSIONAL FEES:</strong></td>
-                    <td align="right" id="pb-doc-subtotal">₱0.00 (Finalized on Discharge)</td>
+                    <td align="right" id="pb-doc-subtotal">â‚±0.00 (Finalized on Discharge)</td>
                 </tr>
             </tfoot>
         </table>
@@ -122,7 +122,7 @@
                 <tfoot>
                     <tr class="subtotal-row">
                         <td colspan="3"><strong>TOTAL ADVANCE DEPOSITS CREDITED:</strong></td>
-                        <td align="right" id="pb-subtotal-advance" class="subtotal-advance-val">₱0.00</td>
+                        <td align="right" id="pb-subtotal-advance" class="subtotal-advance-val">â‚±0.00</td>
                     </tr>
                 </tfoot>
             </table>
@@ -138,43 +138,43 @@
                 <tbody>
                     <tr>
                         <td width="72%">Hospital Charges Subtotal:</td>
-                        <td width="28%" align="right" id="pb-sum-hosp">₱0.00</td>
+                        <td width="28%" align="right" id="pb-sum-hosp">â‚±0.00</td>
                     </tr>
                     <tr>
                         <td>Physician Professional Fees:</td>
-                        <td align="right" id="pb-sum-doc">₱0.00 (Finalized on Discharge)</td>
+                        <td align="right" id="pb-sum-doc">â‚±0.00 (Finalized on Discharge)</td>
                     </tr>
                     <tr class="summary-gross-line">
                         <td><strong>Gross Accumulated Interim Charges:</strong></td>
-                        <td align="right"><strong id="pb-sum-gross">₱0.00</strong></td>
+                        <td align="right"><strong id="pb-sum-gross">â‚±0.00</strong></td>
                     </tr>
                     <tr id="pb-row-returns" class="hidden-element">
                         <td>Less: Credited Medicine Returns:</td>
-                        <td align="right" id="pb-sum-returns">-₱0.00</td>
+                        <td align="right" id="pb-sum-returns">-â‚±0.00</td>
                     </tr>
                     <tr class="summary-subtotal-line">
                         <td><strong>Net Running Charges (VATable Base):</strong></td>
-                        <td align="right"><strong id="pb-sum-net">₱0.00</strong></td>
+                        <td align="right"><strong id="pb-sum-net">â‚±0.00</strong></td>
                     </tr>
                     <tr id="pb-row-vat">
                         <td>Estimated 12% Value-Added Tax (VAT included):</td>
-                        <td align="right"><strong id="pb-sum-vat">₱0.00</strong></td>
+                        <td align="right"><strong id="pb-sum-vat">â‚±0.00</strong></td>
                     </tr>
                     <tr class="summary-net-line">
                         <td><strong>Total Running Charges (VAT-Inclusive):</strong></td>
-                        <td align="right"><strong id="pb-sum-total-with-vat">₱0.00</strong></td>
+                        <td align="right"><strong id="pb-sum-total-with-vat">â‚±0.00</strong></td>
                     </tr>
                     <tr id="pb-row-advance-discounts" class="hidden-element">
                         <td class="advance-discount-label">Less: Discounts Credited in Advance:</td>
-                        <td align="right" id="pb-sum-advance-discounts" class="advance-discount-val">-₱0.00</td>
+                        <td align="right" id="pb-sum-advance-discounts" class="advance-discount-val">-â‚±0.00</td>
                     </tr>
                     <tr id="pb-row-advance-payments" class="hidden-element">
                         <td>Less: Advance Payments &amp; Deposits Received:</td>
-                        <td align="right" id="pb-sum-advance-payments">-₱0.00</td>
+                        <td align="right" id="pb-sum-advance-payments">-â‚±0.00</td>
                     </tr>
                     <tr class="summary-balance-line">
                         <td><strong>Estimated Net Running Balance Due:</strong></td>
-                        <td align="right"><strong id="pb-sum-remaining-balance">₱0.00</strong></td>
+                        <td align="right"><strong id="pb-sum-remaining-balance">â‚±0.00</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -186,7 +186,7 @@
         <div class="grand-balance-container">
             <div class="grand-balance-banner">
                 <div class="grand-balance-label">ESTIMATED NET RUNNING BALANCE:</div>
-                <div class="grand-balance-amount" id="pb-banner-total">₱0.00</div>
+                <div class="grand-balance-amount" id="pb-banner-total">â‚±0.00</div>
             </div>
         </div>
 
@@ -216,7 +216,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=18.5"></script>
+    <script src="../js/common.js?v=18.6"></script>
     <script src="../js/partial_bill.js?v=18.3"></script>
 </body>
 </html>

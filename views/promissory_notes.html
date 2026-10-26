@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Accounts Receivable & Promissory Notes Monitor — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.5">
+    <title>Accounts Receivable & Promissory Notes Monitor â€” Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=18.6">
     <link rel="stylesheet" href="../css/invoices.css?v=18.3">
     <link rel="stylesheet" href="../css/archive.css">
 </head>
@@ -33,7 +33,7 @@
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         <span id="record-count-badge" class="badge badge-secondary" style="font-size: 13px;">0 Notes Total</span>
-                        <span id="record-balance-badge" class="badge" style="font-size: 13px; font-weight: 700; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;">Outstanding AR: ₱0.00</span>
+                        <span id="record-balance-badge" class="badge" style="font-size: 13px; font-weight: 700; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;">Outstanding AR: â‚±0.00</span>
                     </div>
                 </div>
                 <div class="card-body">
@@ -100,14 +100,14 @@
                         <div><strong style="color: #64748b;">Invoice Reference:</strong> <span id="pay_invoice_code" style="font-weight: 700;"></span></div>
                         <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient Name:</strong> <span id="pay_patient_name" style="font-weight: 700;"></span></div>
                         <div style="grid-column: span 2;"><strong style="color: #64748b;">Guarantor / Contact:</strong> <span id="pay_guarantor_name" style="font-weight: 600;"></span></div>
-                        <div><strong style="color: #64748b;">Net Total Incurred:</strong> ₱<span id="pay_net_due"></span></div>
-                        <div><strong style="color: #64748b;">Total Paid to Date:</strong> ₱<span id="pay_amount_paid"></span></div>
-                        <div><strong style="color: #64748b;">Monthly Target:</strong> ₱<span id="pay_monthly_amount"></span></div>
+                        <div><strong style="color: #64748b;">Net Total Incurred:</strong> â‚±<span id="pay_net_due"></span></div>
+                        <div><strong style="color: #64748b;">Total Paid to Date:</strong> â‚±<span id="pay_amount_paid"></span></div>
+                        <div><strong style="color: #64748b;">Monthly Target:</strong> â‚±<span id="pay_monthly_amount"></span></div>
                         <div><strong style="color: #64748b;">Next Due Date:</strong> <span id="pay_next_due"></span></div>
                     </div>
                     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 700; color: #dc2626; font-size: 15px;">REMAINING AR BALANCE OWED:</span>
-                        <strong style="font-size: 19px; color: #dc2626;">₱<span id="pay_remaining_balance"></span></strong>
+                        <strong style="font-size: 19px; color: #dc2626;">â‚±<span id="pay_remaining_balance"></span></strong>
                     </div>
                 </div>
 
@@ -121,7 +121,7 @@
                 </div>
 
                 <div class="form-group mb-3">
-                    <label class="form-label" for="pay_amount_input">Payment Tendered / Received (₱) *</label>
+                    <label class="form-label" for="pay_amount_input">Payment Tendered / Received (â‚±) *</label>
                     <div style="display: flex; gap: 8px;">
                         <input type="number" id="pay_amount_input" class="form-control" step="0.01" min="0.01" placeholder="0.00" style="font-weight: 700; font-size: 16px;" required>
                         <button type="button" class="btn btn-outline btn-sm" id="btnPayMonthlyTarget" style="white-space: nowrap;">Pay 1 Month</button>
@@ -137,11 +137,11 @@
                 <div style="background-color: #f1f5f9; padding: 12px 16px; border-radius: 6px; font-size: 14px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <span>New Remaining Balance:</span>
-                        <strong id="pay_new_balance_display" style="color: #16a34a;">₱0.00</strong>
+                        <strong id="pay_new_balance_display" style="color: #16a34a;">â‚±0.00</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span>Customer Change Given:</span>
-                        <strong id="pay_change_display" style="color: #16a34a;">₱0.00</strong>
+                        <strong id="pay_change_display" style="color: #16a34a;">â‚±0.00</strong>
                     </div>
                 </div>
             </div>
@@ -164,9 +164,9 @@
                         <div><strong style="color: #64748b;">Note Code:</strong><br><span id="hist_note_code" style="font-weight: 700; color: var(--primary);"></span></div>
                         <div><strong style="color: #64748b;">Invoice Code:</strong><br><span id="hist_invoice_code" style="font-weight: 700;"></span></div>
                         <div style="grid-column: span 2;"><strong style="color: #64748b;">Patient:</strong><br><span id="hist_patient_name" style="font-weight: 700;"></span></div>
-                        <div><strong style="color: #64748b;">Net Due at Discharge:</strong><br><strong style="color: var(--primary);">₱<span id="hist_net_due">0.00</span></strong></div>
-                        <div><strong style="color: #64748b;">Total Paid to Date:</strong><br><strong style="color: #16a34a;">₱<span id="hist_amount_paid">0.00</span></strong></div>
-                        <div><strong style="color: #64748b;">Remaining Balance:</strong><br><strong id="hist_remaining_balance_wrap" style="color: #dc2626; font-size: 15px;">₱<span id="hist_remaining_balance">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">Net Due at Discharge:</strong><br><strong style="color: var(--primary);">â‚±<span id="hist_net_due">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">Total Paid to Date:</strong><br><strong style="color: #16a34a;">â‚±<span id="hist_amount_paid">0.00</span></strong></div>
+                        <div><strong style="color: #64748b;">Remaining Balance:</strong><br><strong id="hist_remaining_balance_wrap" style="color: #dc2626; font-size: 15px;">â‚±<span id="hist_remaining_balance">0.00</span></strong></div>
                         <div><strong style="color: #64748b;">Schedule Terms:</strong><br><span id="hist_plan_terms"></span></div>
                     </div>
                 </div>
@@ -184,7 +184,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=18.3"></script>
-    <script src="../js/common.js?v=18.5"></script>
+    <script src="../js/common.js?v=18.6"></script>
     <script src="../js/promissory_notes.js?v=18.3"></script>
 </body>
 </html>

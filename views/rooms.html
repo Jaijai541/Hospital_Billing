@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Rooms & Beds Directory — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.5">
+    <title>Rooms & Beds Directory â€” Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=18.6">
     <link rel="stylesheet" href="../css/rooms.css?v=18.3">
 </head>
 <body>
@@ -38,10 +38,10 @@
                                         <span id="view_room_type_badge" class="badge badge-info">Classification</span>
                                     </div>
                                     <div class="view-room-banner-meta">
-                                        <span id="view_room_rate">Rate: ₱ 0.00 / day</span>
-                                        <span>•</span>
+                                        <span id="view_room_rate">Rate: â‚± 0.00 / day</span>
+                                        <span>â€¢</span>
                                         <span id="view_room_capacity">Capacity: 0 Beds</span>
-                                        <span>•</span>
+                                        <span>â€¢</span>
                                         <span id="view_room_occupancy_summary">0 Vacant, 0 Occupied</span>
                                     </div>
                                 </div>
@@ -149,7 +149,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="daily_rate">Daily Board & Lodging Rate (₱) *</label>
+                                <label class="form-label" for="daily_rate">Daily Board & Lodging Rate (â‚±) *</label>
                                 <input type="number" step="0.01" min="0" id="daily_rate" class="form-control" placeholder="0.00" required>
                                 <small style="color: var(--text-muted); font-size: 11px;">Default from classification; can be customized for this room</small>
                             </div>
@@ -204,7 +204,7 @@
                                     <div>
                                         <label class="form-label" for="new_room_type_rate" style="font-size: 12px; margin-bottom: 4px; font-weight: 600;">Default Daily Rate *</label>
                                         <div style="position: relative; display: flex; align-items: center;">
-                                            <span style="position: absolute; left: 10px; color: var(--text-muted); font-weight: 600; font-size: 13px; pointer-events: none;">₱</span>
+                                            <span style="position: absolute; left: 10px; color: var(--text-muted); font-weight: 600; font-size: 13px; pointer-events: none;">â‚±</span>
                                             <input type="number" step="0.01" min="0" id="new_room_type_rate" class="form-control" placeholder="0.00" style="padding-left: 26px;" required>
                                         </div>
                                     </div>
@@ -241,7 +241,7 @@
                             <div class="bed-info-banner-row">
                                 <div>
                                     <h4 id="bed_banner_code" class="bed-banner-code">WRD-A-001</h4>
-                                    <span id="bed_banner_room" class="bed-banner-room">Ward A (Ward) — ₱ 500.00 / day</span>
+                                    <span id="bed_banner_room" class="bed-banner-room">Ward A (Ward) â€” â‚± 500.00 / day</span>
                                 </div>
                                 <span id="bed_banner_badge" class="badge badge-success">Vacant</span>
                             </div>
@@ -419,7 +419,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=18.3"></script>
-    <script src="../js/common.js?v=18.5"></script>
+    <script src="../js/common.js?v=18.6"></script>
     <script src="../js/rooms.js?v=18.3"></script>
 </body>
 </html>

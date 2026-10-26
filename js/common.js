@@ -2470,22 +2470,21 @@ const showClinicalToastAlert = (n) => {
     const toast = document.createElement("div");
     toast.className = "clinical-toast-card";
     toast.innerHTML = `
-        <div class="toast-indicator"></div>
-        <div class="toast-content">
-            <div class="toast-header-row">
-                <span class="toast-badge">🔔 NEW CLINICAL ALERT</span>
-                <button type="button" class="toast-close" aria-label="Close notification">&times;</button>
+        <div class="clinical-toast-inner">
+            <div class="clinical-toast-header">
+                <span class="clinical-toast-badge">Clinical Alert</span>
+                <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
             </div>
-            <div class="toast-title">${n.Title || "Clinical Order Alert"}</div>
-            <div class="toast-body">${n.Message || ""}</div>
-            <div class="toast-footer-row">
-                <span class="toast-time">${n.Formatted_Time || "Just now"}</span>
-                <button type="button" class="btn btn-xs btn-primary btn-toast-open">Open Department Queue</button>
+            <div class="clinical-toast-title">${n.Title || "Clinical Order Alert"}</div>
+            <div class="clinical-toast-body">${n.Message || ""}</div>
+            <div class="clinical-toast-footer">
+                <span class="clinical-toast-time">${n.Formatted_Time || "Just now"}</span>
+                <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-open">Open Department Queue</button>
             </div>
         </div>
     `;
 
-    toast.querySelector(".toast-close").addEventListener("click", () => toast.remove());
+    toast.querySelector(".clinical-toast-close").addEventListener("click", () => toast.remove());
     toast.querySelector(".btn-toast-open").addEventListener("click", () => {
         toast.remove();
         openModal("clinicalNotifModal");

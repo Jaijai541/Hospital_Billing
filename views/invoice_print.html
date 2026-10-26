@@ -1,20 +1,20 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Official Statement of Account — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.5">
+    <title>Official Statement of Account â€” Hospital Billing System</title>
+    <link rel="stylesheet" href="../css/common.css?v=18.6">
     <link rel="stylesheet" href="../css/invoice_print.css?v=18.3">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Official Invoice / SOA</button>
-            <button type="button" class="btn btn-outline" id="btnOpenReceiptsModal" style="background: #ffffff; color: #0284c7; border: 1px solid #0284c7; font-weight: 600; padding: 7px 15px; border-radius: 6px; cursor: pointer;">🧾 View Official Receipts</button>
+            <button type="button" class="btn btn-primary" onclick="window.print()">ðŸ–¨ Print Official Invoice / SOA</button>
+            <button type="button" class="btn btn-outline" id="btnOpenReceiptsModal" style="background: #ffffff; color: #0284c7; border: 1px solid #0284c7; font-weight: 600; padding: 7px 15px; border-radius: 6px; cursor: pointer;">ðŸ§¾ View Official Receipts</button>
         </div>
         <div class="print-toolbar-actions">
-            <button type="button" class="btn btn-secondary btn-sm" id="btnBackToOrigin">← Back</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnBackToOrigin">â† Back</button>
         </div>
     </div>
     <div class="invoice-sheet">
@@ -107,10 +107,10 @@
             <tfoot>
                 <tr class="subtotal-row">
                     <td><strong>SUBTOTAL HOSPITAL CHARGES:</strong></td>
-                    <td align="right" id="hosp-sub-total">₱0.00</td>
-                    <td align="right" id="hosp-sub-discount">₱0.00</td>
-                    <td align="right" id="hosp-sub-cash">₱0.00</td>
-                    <td align="right" id="hosp-sub-balance">₱0.00</td>
+                    <td align="right" id="hosp-sub-total">â‚±0.00</td>
+                    <td align="right" id="hosp-sub-discount">â‚±0.00</td>
+                    <td align="right" id="hosp-sub-cash">â‚±0.00</td>
+                    <td align="right" id="hosp-sub-balance">â‚±0.00</td>
                 </tr>
             </tfoot>
         </table>
@@ -131,9 +131,9 @@
             <tfoot>
                 <tr class="subtotal-row">
                     <td><strong>SUBTOTAL PROFESSIONAL FEES:</strong></td>
-                    <td align="right" id="doc-sub-total">₱0.00</td>
-                    <td align="right" id="doc-sub-discount">₱0.00</td>
-                    <td align="right" id="doc-sub-balance">₱0.00</td>
+                    <td align="right" id="doc-sub-total">â‚±0.00</td>
+                    <td align="right" id="doc-sub-discount">â‚±0.00</td>
+                    <td align="right" id="doc-sub-balance">â‚±0.00</td>
                 </tr>
             </tfoot>
         </table>
@@ -148,53 +148,53 @@
                 <tbody>
                     <tr>
                         <td width="70%">Hospital Charges Subtotal:</td>
-                        <td width="30%" align="right" id="summary-hosp-total">₱0.00</td>
+                        <td width="30%" align="right" id="summary-hosp-total">â‚±0.00</td>
                     </tr>
                     <tr>
                         <td>Attending Physician Fees Subtotal:</td>
-                        <td align="right" id="summary-doc-total">₱0.00</td>
+                        <td align="right" id="summary-doc-total">â‚±0.00</td>
                     </tr>
                     <tr class="summary-gross-line">
                         <td><strong>Gross Accumulated Charges:</strong></td>
-                        <td align="right"><strong id="summary-gross-total">₱0.00</strong></td>
+                        <td align="right"><strong id="summary-gross-total">â‚±0.00</strong></td>
                     </tr>
                     <tr class="summary-discount-line" id="row-summary-discounts">
                         <td>Less: Statutory / Institutional Discounts (<span id="summary-discount-label">None</span>):</td>
-                        <td align="right"><strong id="summary-discount-total">-₱0.00</strong></td>
+                        <td align="right"><strong id="summary-discount-total">-â‚±0.00</strong></td>
                     </tr>
                     <tbody id="applied-discounts-itemized-tbody"></tbody>
                     <tr class="summary-subtotal-line" style="background-color: #f8fafc;">
                         <td><strong>Total Net Bill:</strong></td>
-                        <td align="right"><strong id="summary-net-before-tax">₱0.00</strong></td>
+                        <td align="right"><strong id="summary-net-before-tax">â‚±0.00</strong></td>
                     </tr>
                     <tr id="row-vatable-sales">
-                        <td style="padding-left: 20px; font-size: 13px; color: #475569;">• VATable Amount (Net of VAT):</td>
-                        <td align="right" id="summary-vatable-amount" style="font-size: 13px;">₱0.00</td>
+                        <td style="padding-left: 20px; font-size: 13px; color: #475569;">â€¢ VATable Amount (Net of VAT):</td>
+                        <td align="right" id="summary-vatable-amount" style="font-size: 13px;">â‚±0.00</td>
                     </tr>
                     <tr id="row-vat-exempt-sales" style="display: none;">
-                        <td style="padding-left: 20px; font-size: 13px; color: #475569;">• VAT-Exempt Sales:</td>
-                        <td align="right" id="summary-vat-exempt-amount" style="font-size: 13px;">₱0.00</td>
+                        <td style="padding-left: 20px; font-size: 13px; color: #475569;">â€¢ VAT-Exempt Sales:</td>
+                        <td align="right" id="summary-vat-exempt-amount" style="font-size: 13px;">â‚±0.00</td>
                     </tr>
                     <tr id="row-vat-line">
-                        <td style="padding-left: 20px; font-size: 13px; color: #475569;">• 12% Value-Added Tax (VAT included):</td>
-                        <td align="right" style="font-size: 13px;"><strong id="summary-vat-amount" style="color: #0369a1;">₱0.00</strong></td>
+                        <td style="padding-left: 20px; font-size: 13px; color: #475569;">â€¢ 12% Value-Added Tax (VAT included):</td>
+                        <td align="right" style="font-size: 13px;"><strong id="summary-vat-amount" style="color: #0369a1;">â‚±0.00</strong></td>
                     </tr>
                     <tr class="summary-net-line">
                         <td><strong>Net Amount Due (Total Amount Payable):</strong></td>
-                        <td align="right"><strong id="summary-net-total">₱0.00</strong></td>
+                        <td align="right"><strong id="summary-net-total">â‚±0.00</strong></td>
                     </tr>
                     <tr class="summary-payment-line">
                         <td>Less: Total Payments Received:</td>
-                        <td align="right"><strong id="summary-payment-total" style="color: #166534;">-₱0.00</strong></td>
+                        <td align="right"><strong id="summary-payment-total" style="color: #166534;">-â‚±0.00</strong></td>
                     </tr>
                     <tbody id="applied-payments-itemized-tbody"></tbody>
                     <tr id="row-change-line" style="display: none;">
                         <td>Customer Change Given:</td>
-                        <td align="right" id="summary-change-total">₱0.00</td>
+                        <td align="right" id="summary-change-total">â‚±0.00</td>
                     </tr>
                     <tr class="summary-balance-line">
                         <td><strong style="font-size: 14px;">Remaining Net Balance Due:</strong></td>
-                        <td align="right"><strong style="font-size: 15px;" id="summary-balance-total">₱0.00</strong></td>
+                        <td align="right"><strong style="font-size: 15px;" id="summary-balance-total">â‚±0.00</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -211,18 +211,18 @@
                         <td class="label-cell" width="22%">Settlement Plan:</td>
                         <td class="value-cell" width="28%" id="pn-print-plan">Monthly Installment Plan</td>
                         <td class="label-cell" width="22%">Next Payment Due Date:</td>
-                        <td class="value-cell" width="28%"><strong id="pn-print-due-date" style="color: #b91c1c;">—</strong></td>
+                        <td class="value-cell" width="28%"><strong id="pn-print-due-date" style="color: #b91c1c;">â€”</strong></td>
                     </tr>
                     <tr>
                         <td class="label-cell">Installment Schedule:</td>
-                        <td class="value-cell" id="pn-print-installment"><strong id="pn-print-monthly-amount">₱0.00</strong> (<span id="pn-print-months">1</span> Month/s)</td>
+                        <td class="value-cell" id="pn-print-installment"><strong id="pn-print-monthly-amount">â‚±0.00</strong> (<span id="pn-print-months">1</span> Month/s)</td>
                         <td class="label-cell">Responsible Guarantor:</td>
-                        <td class="value-cell" id="pn-print-guarantor">—</td>
+                        <td class="value-cell" id="pn-print-guarantor">â€”</td>
                     </tr>
                 </tbody>
             </table>
             <div style="font-size: 11px; line-height: 1.5; color: #334155; text-align: justify; margin-top: 6px;">
-                <strong>ACKNOWLEDGEMENT &amp; UNDERTAKING:</strong> I/We, the undersigned patient / authorized guarantor, hereby acknowledge the outstanding balance of <strong id="pn-print-balance-text">₱0.00</strong> owed to IN-PATIENT HOSPITAL &amp; MEDICAL CENTER for hospitalization services rendered. I/We unconditionally promise and agree to pay the scheduled installment amount on or before the due date indicated above until the account is fully satisfied. Both the Hospital Credit/Billing Officer and the Patient/Guarantor have mutually reviewed, approved, and agreed to this settlement commitment.
+                <strong>ACKNOWLEDGEMENT &amp; UNDERTAKING:</strong> I/We, the undersigned patient / authorized guarantor, hereby acknowledge the outstanding balance of <strong id="pn-print-balance-text">â‚±0.00</strong> owed to IN-PATIENT HOSPITAL &amp; MEDICAL CENTER for hospitalization services rendered. I/We unconditionally promise and agree to pay the scheduled installment amount on or before the due date indicated above until the account is fully satisfied. Both the Hospital Credit/Billing Officer and the Patient/Guarantor have mutually reviewed, approved, and agreed to this settlement commitment.
             </div>
         </div>
 
@@ -276,7 +276,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=18.5"></script>
+    <script src="../js/common.js?v=18.6"></script>
     <script src="../js/invoice_print.js?v=18.3"></script>
 </body>
 </html>

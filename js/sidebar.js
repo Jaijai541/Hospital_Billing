@@ -297,7 +297,7 @@ const renderSidebar = () => {
     const hasGranularPerms = Array.isArray(userPerms);
 
     const canAccess = (page) => {
-        if (page === "index.html" || page === "patient_portal.html") return true;
+        if (page === "index.html") return true;
         if (hasGranularPerms) {
             return userPerms.includes(page);
         }
@@ -331,12 +331,11 @@ const renderSidebar = () => {
     const masterHtml = allowedMasterItems.map(item => `<li><a href="${item.page}"${isActive(item.page)}>${item.label}</a></li>`).join("");
 
     const allClinicalItems = [
-        { page: "admissions.html", label: "Admissions & Beds" },
-        { page: "patient_portal.html", label: "Patient Billing Portal" }
+        { page: "admissions.html", label: "Admissions & Beds" }
     ];
     const allowedClinicalItems = allClinicalItems.filter(item => canAccess(item.page));
     const clinicalPages = allowedClinicalItems.map(item => item.page);
-    const clinicalHtml = allowedClinicalItems.map(item => `<li><a href="${item.page}"${isActive(item.page)}${item.page === "patient_portal.html" ? ' target="_blank"' : ''}>${item.label}</a></li>`).join("");
+    const clinicalHtml = allowedClinicalItems.map(item => `<li><a href="${item.page}"${isActive(item.page)}>${item.label}</a></li>`).join("");
 
     const allBillingItems = [
         { page: "invoices.html", label: "Invoices & Settlement" },

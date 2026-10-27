@@ -738,7 +738,7 @@ class InvoiceManager
 
 
 
-            $updAdm = $conn->prepare("UPDATE Admission SET Status = 'Billed' WHERE Admission_ID = :aid");
+            $updAdm = $conn->prepare("UPDATE Admission SET Status = 'Billed', Access_Passcode = NULL WHERE Admission_ID = :aid");
 
             $updAdm->execute([':aid' => $admissionId]);
 

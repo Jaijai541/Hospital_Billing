@@ -286,7 +286,7 @@ class AdmissionManager
                 $freeBed->execute([':bid' => $currentStay['Bed_ID']]);
             }
 
-            $admStmt = $conn->prepare("UPDATE Admission SET Status = 'Discharged' WHERE Admission_ID = :aid");
+            $admStmt = $conn->prepare("UPDATE Admission SET Status = 'Discharged', Access_Passcode = NULL WHERE Admission_ID = :aid");
             $admStmt->execute([':aid' => $admissionId]);
 
             $conn->commit();

@@ -15,7 +15,7 @@ class PatientPortalManager
         if (empty($identifier) || empty($passcode)) {
             return json_encode([
                 'success' => false,
-                'error' => 'Please provide both your Reference Code (Admission or Patient ID) and Access Passcode.'
+                'error' => 'Please provide both your Admission Code and Inpatient Access Passcode.'
             ]);
         }
 
@@ -57,9 +57,9 @@ class PatientPortalManager
                 WHERE (
                     a.Admission_ID = :id_num
                     OR CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) = :code
-                    OR CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) = :code
-                    OR p.Patient_ID = :id_num_pat
                 )
+                AND a.Access_Passcode IS NOT NULL
+                AND a.Access_Passcode != ''
                 AND UPPER(TRIM(a.Access_Passcode)) = :passcode
                 ORDER BY a.Admission_ID DESC
                 LIMIT 1";
@@ -67,16 +67,36 @@ class PatientPortalManager
         $stmt = $conn->prepare($sql);
         $stmt->execute([
             ':id_num' => $idNum > 0 ? $idNum : -1,
-            ':id_num_pat' => $idNum > 0 ? $idNum : -1,
             ':code' => strtoupper($identifier),
             ':passcode' => $passcode
         ]);
         $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$record) {
+            $checkStmt = $conn->prepare("SELECT Status, Access_Passcode FROM Admission WHERE Admission_ID = :id_num OR CONCAT('ADM-', LPAD(Admission_ID, 3, '0')) = :code");
+            $checkStmt->execute([
+                ':id_num' => $idNum > 0 ? $idNum : -1,
+                ':code' => strtoupper($identifier)
+            ]);
+            $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing && ($existing['Status'] === 'Discharged' || $existing['Status'] === 'Billed')) {
+                return json_encode([
+                    'success' => false,
+                    'error' => 'This admission has been discharged. Inpatient portal access is closed once discharged.'
+                ]);
+            }
+
             return json_encode([
                 'success' => false,
-                'error' => 'Invalid reference code or passcode. Please check your credentials or request an updated passcode at the Nurse Station.'
+                'error' => 'Invalid Admission Code or Passcode. Please verify your credentials on your admission slip or contact the Nurse Station.'
+            ]);
+        }
+
+        if ($record['Admission_Status'] === 'Discharged' || $record['Admission_Status'] === 'Billed') {
+            return json_encode([
+                'success' => false,
+                'error' => 'This admission has been discharged. Inpatient portal access is closed once discharged.'
             ]);
         }
 
@@ -103,10 +123,14 @@ class PatientPortalManager
             return json_encode(['error' => 'Admission ID and Access Passcode are required.']);
         }
 
-        $authStmt = $conn->prepare("SELECT Admission_ID FROM Admission WHERE Admission_ID = :aid AND UPPER(TRIM(Access_Passcode)) = :pass");
+        $authStmt = $conn->prepare("SELECT Admission_ID, Status FROM Admission WHERE Admission_ID = :aid AND Access_Passcode IS NOT NULL AND Access_Passcode != '' AND UPPER(TRIM(Access_Passcode)) = :pass");
         $authStmt->execute([':aid' => $admissionId, ':pass' => $passcode]);
-        if (!$authStmt->fetch()) {
-            return json_encode(['error' => 'Unauthorized portal session. Please re-authenticate.']);
+        $admRow = $authStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$admRow) {
+            return json_encode(['error' => 'Unauthorized or expired portal session. Please verify your credentials or contact the Nurse Station.']);
+        }
+        if ($admRow['Status'] === 'Discharged' || $admRow['Status'] === 'Billed') {
+            return json_encode(['error' => 'This admission has been discharged. Inpatient portal access is closed once discharged.']);
         }
 
         $ledgerMgr = new LedgerManager();

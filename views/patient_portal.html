@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient &amp; Family Billing Portal — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/patient_portal.css?v=19.0">
+    <link rel="stylesheet" href="../css/patient_portal.css?v=19.2">
 </head>
 <body class="portal-body">
 
@@ -34,12 +34,12 @@
 
                 <form id="portalAuthForm" onsubmit="return false;">
                     <div class="auth-form-group">
-                        <label class="auth-label" for="portal_identifier">Admission Code / Patient ID</label>
-                        <input type="text" id="portal_identifier" class="auth-input" placeholder="e.g. ADM-006 or PAT-005" required autocomplete="off">
+                        <label class="auth-label" for="portal_identifier">Admission Code</label>
+                        <input type="text" id="portal_identifier" class="auth-input" placeholder="e.g. ADM-006" required autocomplete="off">
                     </div>
 
                     <div class="auth-form-group">
-                        <label class="auth-label" for="portal_passcode">Portal Access Passcode</label>
+                        <label class="auth-label" for="portal_passcode">Inpatient Access Passcode</label>
                         <input type="text" id="portal_passcode" class="auth-input" placeholder="e.g. ADM-0652" required autocomplete="off">
                     </div>
 
@@ -235,6 +235,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/patient_portal.js?v=19.0"></script>
+    <script src="../js/patient_portal.js?v=19.2"></script>
 </body>
 </html>

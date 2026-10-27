@@ -167,6 +167,10 @@ body.portal-body {
     display: none;
 }
 
+.portal-alert-error.visible {
+    display: block;
+}
+
 .portal-patient-card {
     background-color: var(--portal-surface);
     border: 1px solid var(--portal-border);

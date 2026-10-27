@@ -1458,21 +1458,32 @@ const loadAdmissionDetails = () => {
             document.getElementById('banner-patient-name').textContent = admissionData.Full_Name;
             document.getElementById('banner-patient-code').textContent = admissionData.Patient_Code;
             const bannerPass = document.getElementById('banner-portal-passcode');
+            const isDischarged = (admissionData.Status === 'Discharged' || admissionData.Status === 'Billed');
             if (bannerPass) {
-                const pass = admissionData.Access_Passcode || 'N/A';
-                bannerPass.textContent = `Portal: ${pass}`;
-                bannerPass.title = `Patient Portal Passcode: ${pass} (Click to copy)`;
-                bannerPass.onclick = () => {
-                    navigator.clipboard.writeText(pass).then(() => {
-                        showPopupAlert(`Portal Passcode "${pass}" copied to clipboard! Share this passcode with the patient to view their interim and final bills.`, 'info', 'Passcode Copied');
-                    });
-                };
+                const pass = (!isDischarged && admissionData.Access_Passcode) ? admissionData.Access_Passcode : null;
+                if (pass) {
+                    bannerPass.textContent = `Portal: ${pass}`;
+                    bannerPass.title = `Patient Portal Passcode: ${pass} (Click to copy)`;
+                    bannerPass.onclick = () => {
+                        navigator.clipboard.writeText(pass).then(() => {
+                            showPopupAlert(`Portal Passcode "${pass}" copied to clipboard! Share this passcode with the patient to view their interim and final bills.`, 'info', 'Passcode Copied');
+                        });
+                    };
+                } else {
+                    bannerPass.textContent = 'Portal: Closed';
+                    bannerPass.title = 'Inpatient portal access is deactivated upon discharge.';
+                    bannerPass.onclick = null;
+                }
             }
             const btnPortal = document.getElementById('btnOpenPatientPortal');
             if (btnPortal) {
                 btnPortal.onclick = () => {
-                    const pass = admissionData.Access_Passcode || '';
-                    window.open(`patient_portal.html?code=${admissionData.Admission_Code || ('ADM-' + admissionId)}&passcode=${pass}`, '_blank');
+                    const pass = (!isDischarged && admissionData.Access_Passcode) ? admissionData.Access_Passcode : '';
+                    if (isDischarged || !pass) {
+                        showPopupAlert('Inpatient portal access has been closed because this admission is discharged.', 'info', 'Portal Deactivated');
+                    } else {
+                        window.open(`patient_portal.html?code=${admissionData.Admission_Code || ('ADM-' + admissionId)}&passcode=${pass}`, '_blank');
+                    }
                 };
             }
             document.getElementById('banner-patient-age').textContent = `${admissionData.Age || 0} yrs old`;

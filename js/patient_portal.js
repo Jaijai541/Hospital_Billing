@@ -95,12 +95,12 @@ const handlePortalLogin = async () => {
     const passcode = passInput ? passInput.value.trim().toUpperCase() : "";
 
     if (!identifier || !passcode) {
-        showError("Please enter both your Reference Code and Access Passcode.");
+        showError("Please enter both your Admission Code and Inpatient Access Passcode.");
         return;
     }
 
     if (errAlert) {
-        errAlert.style.display = "none";
+        errAlert.classList.remove("visible");
         errAlert.textContent = "";
     }
 
@@ -129,7 +129,7 @@ const handlePortalLogin = async () => {
 
             loadPortalData(activeAdmissionId, activePasscode);
         } else {
-            showError(res.error || "Invalid reference code or access passcode.");
+            showError(res.error || "Invalid Admission Code or Inpatient Access Passcode.");
         }
     } catch (err) {
         showError("Network connection error. Please try again.");
@@ -154,7 +154,7 @@ const handlePortalLogout = () => {
     document.getElementById("portal_passcode").value = "";
     const errAlert = document.getElementById("auth-error-alert");
     if (errAlert) {
-        errAlert.style.display = "none";
+        errAlert.classList.remove("visible");
         errAlert.textContent = "";
     }
 };
@@ -163,7 +163,7 @@ const showError = (msg) => {
     const errAlert = document.getElementById("auth-error-alert");
     if (errAlert) {
         errAlert.textContent = msg;
-        errAlert.style.display = "block";
+        errAlert.classList.add("visible");
     } else {
         alert(msg);
     }
@@ -339,7 +339,7 @@ const renderFinalTab = (fi, payments, appliedDiscounts) => {
     if (balEl) {
         balEl.textContent = remaining > 0 ? `₱${formatMoney(remaining)}` : "₱0.00 (PAID IN FULL)";
         if (remaining === 0) {
-            balEl.style.color = "#15803d";
+            balEl.classList.add("text-success");
         }
     }
 

@@ -16,7 +16,7 @@ class AdmissionManager
         $sql = "SELECT 
                     a.Admission_ID,
                     a.Patient_ID,
-                    COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) AS Access_Passcode,
+                    CASE WHEN a.Status IN ('Discharged', 'Billed') THEN NULL ELSE COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) END AS Access_Passcode,
                     CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
                     CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
                     p.Contact_Number,
@@ -138,7 +138,7 @@ class AdmissionManager
 
         $sql = "SELECT 
                     a.Admission_ID,
-                    COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) AS Access_Passcode,
+                    CASE WHEN a.Status IN ('Discharged', 'Billed') THEN NULL ELSE COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) END AS Access_Passcode,
                     a.Chief_Complaint,
                     a.Diagnosis,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
@@ -416,7 +416,7 @@ class AdmissionManager
 
         $sql = "SELECT 
                     a.Admission_ID,
-                    COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) AS Access_Passcode,
+                    CASE WHEN a.Status IN ('Discharged', 'Billed') THEN NULL ELSE COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) END AS Access_Passcode,
                     CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
                     DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
                     DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Discharge_Date,

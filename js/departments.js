@@ -415,28 +415,37 @@ const renderDeptOrders = () => {
         if (ordersEmpty) ordersEmpty.style.display = "none";
         currentDeptOrders.forEach(o => {
             const tr = document.createElement("tr");
-            let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
+            const isScan = (o.Category_Type === "Equipment Scan" || o.Category_Type === "Service");
+            let statusBadge = `<span class="badge-process badge-process-requested">${o.Status}</span>`;
             let actionBtn = `<span class="text-muted font-sm">Complete</span>`;
 
             if (o.Status === "Requested" || o.Status === "Pending") {
-                statusBadge = '<span class="badge badge-warning">Requested</span>';
-                actionBtn = `<button type="button" class="btn btn-sm btn-primary" onclick="prepareDeptOrderInModal(${o.Request_ID})">Mark Prepared</button>`;
+                statusBadge = `<span class="badge-process badge-process-requested">${isScan ? "Scan Requested" : "Requested"}</span>`;
+                actionBtn = `<button type="button" class="btn btn-sm btn-primary" onclick="startPreparingDeptOrder(${o.Request_ID})">Start Preparing</button>`;
+            } else if (o.Status === "Preparing") {
+                statusBadge = `<span class="badge-process badge-process-preparing">${isScan ? "Prepping Room" : "Preparing"}</span>`;
+                const prepText = isScan ? "Room Ready &amp; Alert Nurse" : "Mark Prepared &amp; Alert Nurse";
+                actionBtn = `<button type="button" class="btn btn-sm btn-info" onclick="openSelectNurseModalGlobal(${o.Request_ID})">${prepText}</button>`;
             } else if (o.Status === "Prepared") {
-                statusBadge = '<span class="badge badge-primary">Prepared (Ready)</span>';
-                actionBtn = '<span class="badge badge-outline">Nurse Delivery Pending</span>';
+                statusBadge = `<span class="badge-process badge-process-prepared">${isScan ? "Room Ready" : "Prepared (Ready)"}</span>`;
+                actionBtn = `<span class="table-sub-text font-bold">${o.Assigned_Nurse_Name ? `Nurse: ${o.Assigned_Nurse_Name}` : "Nurse Alerted"}</span>`;
+            } else if (o.Status === "Delivering" || o.Status === "In Transit") {
+                statusBadge = `<span class="badge-process badge-process-delivering">${isScan ? "Transporting Patient" : "Out for Delivery"}</span>`;
+                actionBtn = `<span class="table-sub-text font-bold">${o.Assigned_Nurse_Name ? `Nurse ${o.Assigned_Nurse_Name}` : "In Transit"}</span>`;
             } else if (o.Status === "Administered") {
-                statusBadge = '<span class="badge badge-success">Administered</span>';
+                statusBadge = `<span class="badge-process badge-process-administered">Administered</span>`;
+                actionBtn = '<span class="badge badge-success">Completed</span>';
             }
 
             const dosage = o.Dosage_Instructions ? `<div class="table-sub-text">Note: <em>${o.Dosage_Instructions}</em></div>` : '';
 
             tr.innerHTML = `
                 <td>
-                    <div class="table-primary-text font-bold">ORD-${String(o.Request_ID).padStart(3, '0')}</div>
-                    <div class="table-sub-text">${o.Patient_Name} (${o.Room_Name} - ${o.Bed_Code})</div>
+                    <div class="table-primary-text font-bold text-primary">ORD-${String(o.Request_ID).padStart(3, '0')}</div>
+                    <div class="table-sub-text"><strong>${o.Patient_Name}</strong> (${o.Room_Name || "Ward"} - ${o.Bed_Code || "Bed"})</div>
                 </td>
                 <td>
-                    <div class="table-primary-text">${o.Item_Name} (${parseFloat(o.Quantity)} unit)</div>
+                    <div class="table-primary-text"><strong>${o.Item_Code || ""}</strong>: ${o.Item_Name} (${parseFloat(o.Quantity)} unit)</div>
                     ${dosage}
                     <div class="table-sub-text">${o.Doctor_Name} &bull; ${o.Request_Timestamp}</div>
                 </td>
@@ -448,11 +457,11 @@ const renderDeptOrders = () => {
     }
 };
 
-const prepareDeptOrderInModal = (requestId) => {
+const startPreparingDeptOrder = (requestId) => {
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-    showPopupConfirm("Mark this order as Prepared and dispatch an alert to Nurse Station?", () => {
+    showPopupConfirm("Start preparing this requested item / procedure in department?\n\nThe ordering doctor will receive an alert that preparation is underway.", () => {
         const fd = new FormData();
-        fd.append("operation", "prepareOrder");
+        fd.append("operation", "startPreparingOrder");
         fd.append("json", JSON.stringify({
             request_id: requestId,
             user_id: user.user_id || user.User_ID
@@ -466,15 +475,23 @@ const prepareDeptOrderInModal = (requestId) => {
                 displayDepartments();
                 if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
             } else {
-                alert(res.data.error || "Failed to prepare order.");
+                alert(res.data.error || "Failed to start preparing order.");
             }
         });
     }, null, {
-        title: "Confirm Department Preparation",
-        confirmText: "Mark Prepared & Notify Nurse",
+        title: "Start Preparation",
+        confirmText: "Start Preparing",
         type: "info"
     });
 };
+
+const prepareDeptOrderInModal = (requestId) => {
+    if (typeof openSelectNurseModalGlobal === "function") {
+        openSelectNurseModalGlobal(requestId);
+    }
+};
+
+window.startPreparingDeptOrder = startPreparingDeptOrder;
 window.prepareDeptOrderInModal = prepareDeptOrderInModal;
 
 const populateDepartmentForm = (dept) => {

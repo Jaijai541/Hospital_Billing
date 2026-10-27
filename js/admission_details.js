@@ -1926,92 +1926,340 @@ const loadOrders = () => {
 }
 
 let currentOrdersList = [];
+let orderSearchQuery = '';
+let orderProcessFilter = 'all';
+let orderSortBy = 'stage';
+
+const getOrderProcessStage = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'requested' || s === 'pending') return 'requested';
+    if (s === 'preparing') return 'preparing';
+    if (s === 'prepared') return 'prepared';
+    if (s === 'delivering' || s === 'in transit') return 'delivering';
+    if (s === 'administered') return 'administered';
+    if (s === 'cancelled') return 'cancelled';
+    return 'requested';
+};
+
+const handleOrderSearch = (val) => {
+    orderSearchQuery = (val || '').toLowerCase().trim();
+    renderFilteredOrders();
+};
+
+const handleOrderProcessFilter = (stage) => {
+    orderProcessFilter = stage;
+    const filterBtns = document.querySelectorAll('.process-filter-btn');
+    filterBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.process === stage);
+    });
+    renderFilteredOrders();
+};
+
+const handleOrderSort = (val) => {
+    orderSortBy = val;
+    renderFilteredOrders();
+};
+
+const renderTrackingStepper = (o) => {
+    const isScan = (o.Category_Type === 'Equipment Scan' || o.Category_Type === 'Service');
+    const stage = getOrderProcessStage(o.Status);
+
+    const step1Title = 'Requested';
+    const step2Title = isScan ? 'Prepping Room' : 'Preparing';
+    const step3Title = isScan ? 'Room Ready' : 'Prepared';
+    const step4Title = isScan ? 'Transporting' : 'Delivering';
+    const step5Title = isScan ? 'Scan Done' : 'Administered';
+
+    let s1State = 'is-complete';
+    let s2State = '';
+    let s3State = '';
+    let s4State = '';
+    let s5State = '';
+
+    if (stage === 'requested') {
+        s1State = 'is-active step-requested';
+    } else if (stage === 'preparing') {
+        s1State = 'is-complete';
+        s2State = 'is-active step-preparing';
+    } else if (stage === 'prepared') {
+        s1State = 'is-complete';
+        s2State = 'is-complete';
+        s3State = 'is-active step-prepared';
+    } else if (stage === 'delivering') {
+        s1State = 'is-complete';
+        s2State = 'is-complete';
+        s3State = 'is-complete';
+        s4State = 'is-active step-delivering';
+    } else if (stage === 'administered') {
+        s1State = 'is-complete';
+        s2State = 'is-complete';
+        s3State = 'is-complete';
+        s4State = 'is-complete';
+        s5State = 'is-complete step-administered is-active';
+    } else if (stage === 'cancelled') {
+        return `<span class="badge badge-process badge-process-cancelled">Order Cancelled</span>`;
+    }
+
+    let badgeClass = 'badge-process-requested';
+    let badgeText = isScan ? 'Scan Requested' : 'Requested';
+    if (stage === 'preparing') {
+        badgeClass = 'badge-process-preparing';
+        badgeText = isScan ? 'Prepping Scan Room' : 'Department Preparing';
+    } else if (stage === 'prepared') {
+        badgeClass = 'badge-process-prepared';
+        badgeText = isScan ? 'Room Ready — Transport' : 'Prepared (Ready for Pickup)';
+    } else if (stage === 'delivering') {
+        badgeClass = 'badge-process-delivering';
+        badgeText = isScan ? 'Transporting Patient' : 'Out for Delivery';
+    } else if (stage === 'administered') {
+        badgeClass = 'badge-process-administered';
+        badgeText = isScan ? 'Scan Completed & Charged' : 'Administered & Charged';
+    }
+
+    let trackerMeta = '';
+    if (stage === 'requested') {
+        trackerMeta = `Awaiting ${o.Target_Station_Name || 'Department'} to begin prep`;
+    } else if (stage === 'preparing') {
+        trackerMeta = `${o.Prepared_By_Name ? o.Prepared_By_Name : 'Staff'} prepping in ${o.Target_Station_Name || 'Dept'}`;
+    } else if (stage === 'prepared') {
+        trackerMeta = o.Assigned_Nurse_Name ? `Assigned to Nurse: <strong>${o.Assigned_Nurse_Name}</strong>` : 'Ready for nurse pickup';
+    } else if (stage === 'delivering') {
+        trackerMeta = isScan ? `Nurse ${o.Assigned_Nurse_Name || ''} escorting patient to ${o.Target_Station_Name || 'Station'}` : `Nurse ${o.Assigned_Nurse_Name || ''} in transit to patient`;
+    } else if (stage === 'administered') {
+        trackerMeta = `Administered by: <strong>${o.Administered_By_Name || 'Nurse'}</strong>`;
+    }
+
+    return `
+        <div class="order-tracking-cell">
+            <div><span class="badge-process ${badgeClass}">${badgeText}</span></div>
+            <div class="tracking-stepper">
+                <div class="tracking-step ${s1State}">
+                    <div class="tracking-node" title="Doctor Order Placed">1</div>
+                    <div class="tracking-label">${step1Title}</div>
+                </div>
+                <div class="tracking-step ${s2State}">
+                    <div class="tracking-node" title="Department Prepares Item / Scan Room">2</div>
+                    <div class="tracking-label">${step2Title}</div>
+                </div>
+                <div class="tracking-step ${s3State}">
+                    <div class="tracking-node" title="Ready / Active Nurse Assigned">3</div>
+                    <div class="tracking-label">${step3Title}</div>
+                </div>
+                <div class="tracking-step ${s4State}">
+                    <div class="tracking-node" title="Nurse Picked Up / Patient In Transit">4</div>
+                    <div class="tracking-label">${step4Title}</div>
+                </div>
+                <div class="tracking-step ${s5State}">
+                    <div class="tracking-node" title="Delivered & Administered">5</div>
+                    <div class="tracking-label">${step5Title}</div>
+                </div>
+            </div>
+            <div class="tracking-meta-desc">${trackerMeta}</div>
+        </div>
+    `;
+};
 
 const renderOrdersTable = (orders) => {
     currentOrdersList = orders || [];
+    renderFilteredOrders();
+};
+
+const renderFilteredOrders = () => {
     const container = document.getElementById('orders-table-div');
+    if (!container) return;
 
     const badgeOrders = document.getElementById('badge_sub_orders');
     if (badgeOrders) {
-        badgeOrders.textContent = orders ? orders.length : 0;
+        badgeOrders.textContent = currentOrdersList.length;
     }
 
-    if (!orders || orders.length === 0) {
-        container.innerHTML = '<p><em>No doctor orders requested yet for this admission.</em></p>';
+    const totalCount = currentOrdersList.length;
+    const reqCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'requested').length;
+    const prepCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'preparing').length;
+    const readyCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'prepared').length;
+    const delivCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'delivering').length;
+    const admCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'administered').length;
+
+    let filtered = [...currentOrdersList];
+
+    if (orderProcessFilter !== 'all') {
+        filtered = filtered.filter(o => getOrderProcessStage(o.Status) === orderProcessFilter);
+    }
+
+    if (orderSearchQuery) {
+        filtered = filtered.filter(o => {
+            const code = (o.Item_Code || '').toLowerCase();
+            const name = (o.Item_Name || '').toLowerCase();
+            const doc = (o.Doctor_Name || '').toLowerCase();
+            const nurse = (o.Assigned_Nurse_Name || '').toLowerCase();
+            const prep = (o.Prepared_By_Name || '').toLowerCase();
+            const adm = (o.Administered_By_Name || '').toLowerCase();
+            const dosage = (o.Dosage_Instructions || '').toLowerCase();
+            const dept = (o.Target_Station_Name || '').toLowerCase();
+            const idStr = `ord-${o.Request_ID}`.toLowerCase();
+            return code.includes(orderSearchQuery) ||
+                   name.includes(orderSearchQuery) ||
+                   doc.includes(orderSearchQuery) ||
+                   nurse.includes(orderSearchQuery) ||
+                   prep.includes(orderSearchQuery) ||
+                   adm.includes(orderSearchQuery) ||
+                   dosage.includes(orderSearchQuery) ||
+                   dept.includes(orderSearchQuery) ||
+                   idStr.includes(orderSearchQuery);
+        });
+    }
+
+    const stageWeights = {
+        'requested': 1,
+        'preparing': 2,
+        'prepared': 3,
+        'delivering': 4,
+        'administered': 5,
+        'cancelled': 6
+    };
+
+    filtered.sort((a, b) => {
+        if (orderSortBy === 'stage') {
+            const wa = stageWeights[getOrderProcessStage(a.Status)] || 9;
+            const wb = stageWeights[getOrderProcessStage(b.Status)] || 9;
+            if (wa !== wb) return wa - wb;
+            return b.Request_ID - a.Request_ID;
+        } else if (orderSortBy === 'newest') {
+            return b.Request_ID - a.Request_ID;
+        } else if (orderSortBy === 'oldest') {
+            return a.Request_ID - b.Request_ID;
+        } else if (orderSortBy === 'item_asc') {
+            return (a.Item_Name || '').localeCompare(b.Item_Name || '');
+        } else if (orderSortBy === 'amount_desc') {
+            return parseFloat(b.Total_Price || 0) - parseFloat(a.Total_Price || 0);
+        }
+        return b.Request_ID - a.Request_ID;
+    });
+
+    let controlsHtml = `
+        <div class="orders-filter-container">
+            <div class="orders-filter-left">
+                <div class="orders-search-box">
+                    <span class="orders-search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
+                    <input type="text" class="orders-search-input" placeholder="Search orders, medicines, scans, doctor, nurse..." value="${orderSearchQuery}" oninput="handleOrderSearch(this.value)" autocomplete="off">
+                </div>
+                <div class="orders-filter-pills">
+                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'all' ? 'active' : ''}" data-process="all" onclick="handleOrderProcessFilter('all')">
+                        <span class="process-filter-dot dot-all"></span>All <span class="process-filter-count">${totalCount}</span>
+                    </button>
+                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'requested' ? 'active' : ''}" data-process="requested" onclick="handleOrderProcessFilter('requested')">
+                        <span class="process-filter-dot dot-requested"></span>Requesting <span class="process-filter-count">${reqCount}</span>
+                    </button>
+                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'preparing' ? 'active' : ''}" data-process="preparing" onclick="handleOrderProcessFilter('preparing')">
+                        <span class="process-filter-dot dot-preparing"></span>Preparing <span class="process-filter-count">${prepCount}</span>
+                    </button>
+                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'prepared' ? 'active' : ''}" data-process="prepared" onclick="handleOrderProcessFilter('prepared')">
+                        <span class="process-filter-dot dot-prepared"></span>Prepared <span class="process-filter-count">${readyCount}</span>
+                    </button>
+                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'delivering' ? 'active' : ''}" data-process="delivering" onclick="handleOrderProcessFilter('delivering')">
+                        <span class="process-filter-dot dot-delivering"></span>Delivering <span class="process-filter-count">${delivCount}</span>
+                    </button>
+                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'administered' ? 'active' : ''}" data-process="administered" onclick="handleOrderProcessFilter('administered')">
+                        <span class="process-filter-dot dot-administered"></span>Administered <span class="process-filter-count">${admCount}</span>
+                    </button>
+                </div>
+            </div>
+            <div class="orders-filter-right">
+                <label for="orders_sort_select" class="form-label font-bold" style="font-size: 11.5px; margin: 0; display: inline-block;">Sort Process:</label>
+                <select id="orders_sort_select" class="orders-sort-select" onchange="handleOrderSort(this.value)">
+                    <option value="stage" ${orderSortBy === 'stage' ? 'selected' : ''}>Active Stages First</option>
+                    <option value="newest" ${orderSortBy === 'newest' ? 'selected' : ''}>Newest Order First</option>
+                    <option value="oldest" ${orderSortBy === 'oldest' ? 'selected' : ''}>Oldest Order First</option>
+                    <option value="item_asc" ${orderSortBy === 'item_asc' ? 'selected' : ''}>Item Name (A-Z)</option>
+                    <option value="amount_desc" ${orderSortBy === 'amount_desc' ? 'selected' : ''}>Highest Total Fee</option>
+                </select>
+            </div>
+        </div>
+    `;
+
+    if (filtered.length === 0) {
+        container.innerHTML = controlsHtml + '<p class="text-center text-muted" style="padding: 24px;"><em>No orders match the selected search or filter criteria.</em></p>';
         return;
     }
 
-    let html = '<table class="data-table">';
+    let html = controlsHtml + '<table class="data-table">';
     html += '<thead><tr>';
-    html += '<th>Order Ref & Timestamp</th>';
-    html += '<th>Prescribed Item & Doctor</th>';
-    html += '<th>Fulfilling Department & Handling</th>';
-    html += '<th>Quantity & Amount</th>';
-    html += '<th>Fulfillment Status</th>';
-    html += '<th class="text-center">Actions</th>';
+    html += '<th>Order Ref &amp; Timestamps</th>';
+    html += '<th>Prescribed Item &amp; Doctor</th>';
+    html += '<th>Fulfilling Department &amp; Staff</th>';
+    html += '<th>Quantity &amp; Amount</th>';
+    html += '<th>Process &amp; Delivery Tracking</th>';
+    html += '<th class="text-center">Lifecycle Action</th>';
     html += '</tr></thead><tbody>';
 
-    orders.forEach(o => {
+    filtered.forEach(o => {
         const unitPrice = parseFloat(o.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const total = parseFloat(o.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const isScan = (o.Category_Type === 'Equipment Scan' || o.Category_Type === 'Service');
+        const stage = getOrderProcessStage(o.Status);
 
-        const deptName = o.Target_Station_Name || (o.Category_Type === 'Medicine' ? 'Central Pharmacy' : (o.Category_Type === 'Equipment Scan' ? 'Radiology & Imaging' : 'Laboratory & Services'));
+        const deptName = o.Target_Station_Name || (o.Category_Type === 'Medicine' ? 'Central Pharmacy' : (isScan ? 'Radiology & Imaging' : 'Laboratory & Services'));
 
         let deptHandlingHtml = `<div class="order-dept-cell"><span class="badge badge-primary order-dept-badge">${deptName}</span>`;
-        if (o.Status === 'Administered') {
-            if (o.Prepared_By_Name) {
-                deptHandlingHtml += `<div class="order-prep-info">Prep: <strong>${o.Prepared_By_Name}</strong></div>`;
-            }
-            if (o.Administered_By_Name) {
-                deptHandlingHtml += `<div class="order-adm-info">Delivered: <strong>${o.Administered_By_Name}</strong></div>`;
-            }
-        } else if (o.Status === 'Prepared') {
-            if (o.Prepared_By_Name) {
-                deptHandlingHtml += `<div class="order-prep-info">Prep: <strong>${o.Prepared_By_Name}</strong></div>`;
-            }
-            deptHandlingHtml += `<div class="order-queue-info">Ready for Administration</div>`;
-        } else {
-            deptHandlingHtml += `<div class="order-queue-info">Station Queue (${deptName})</div>`;
+        if (o.Prepared_By_Name) {
+            deptHandlingHtml += `<div class="order-prep-info">Prep: <strong>${o.Prepared_By_Name}</strong></div>`;
+        }
+        if (o.Assigned_Nurse_Name) {
+            deptHandlingHtml += `<div class="order-prep-info">Nurse: <strong>${o.Assigned_Nurse_Name}</strong></div>`;
+        }
+        if (o.Administered_By_Name) {
+            deptHandlingHtml += `<div class="order-adm-info">Delivered: <strong>${o.Administered_By_Name}</strong></div>`;
         }
         deptHandlingHtml += `</div>`;
 
-        let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
-        let actionHtml = '<span class="text-muted">—</span>';
-
-        if (o.Status === 'Administered') {
-            const deliveredByText = o.Administered_By_Name 
-                ? `<span class="table-sub-text-dark">Delivered by: <strong>${o.Administered_By_Name}</strong>${o.Administered_By_Role ? ` (${o.Administered_By_Role})` : ''}</span>` 
-                : '';
-            statusBadge = `<span class="badge badge-success">Administered</span>${deliveredByText}<span class="table-sub-text">(Charge Posted)</span>`;
-            actionHtml = '<span class="badge badge-success">Completed</span>';
-        } else if (o.Status === 'Prepared') {
-            const prepBy = o.Prepared_By_Name ? `<span class="table-sub-text-dark">Prepared by: <strong>${o.Prepared_By_Name}</strong></span>` : '';
-            statusBadge = `<span class="badge badge-primary">Prepared (Ready for Nurse)</span>${prepBy}<span class="table-sub-text">${o.Target_Station_Name || 'Department'}</span>`;
+        let actionHtml = '';
+        if (stage === 'requested') {
             actionHtml = `
-                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">Deliver &amp; Administer</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="startPreparingOrder(${o.Request_ID})">Start Preparing</button>
                 <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
             `;
-        } else if (o.Status === 'Requested' || o.Status === 'Pending') {
-            statusBadge = `<span class="badge badge-warning">Requested (Awaiting Dept)</span><span class="table-sub-text">Target: <strong>${o.Target_Station_Name || o.Category_Type}</strong></span>`;
+        } else if (stage === 'preparing') {
+            const btnPrepText = isScan ? 'Scan Room Ready — Assign Nurse' : 'Mark Prepared &amp; Assign Nurse';
             actionHtml = `
-                <button type="button" class="btn btn-sm btn-primary" onclick="prepareOrder(${o.Request_ID})">Mark Prepared</button>
-                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">Administer</button>
+                <button type="button" class="btn btn-sm btn-info" onclick="openSelectNurseModal(${o.Request_ID})">${btnPrepText}</button>
                 <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
             `;
-        } else if (o.Status === 'Cancelled') {
-            statusBadge = `<span class="badge badge-danger">Cancelled</span>`;
+        } else if (stage === 'prepared') {
+            const btnDeliverText = isScan ? 'Transport Patient to Scan' : 'Pick Up &amp; Deliver';
+            actionHtml = `
+                <button type="button" class="btn btn-sm btn-primary" onclick="receiveOrderForDelivery(${o.Request_ID})">${btnDeliverText}</button>
+                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+            `;
+        } else if (stage === 'delivering') {
+            const btnAdminText = isScan ? 'Complete &amp; Administer Scan' : 'Deliver &amp; Administer';
+            actionHtml = `
+                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">${btnAdminText}</button>
+            `;
+        } else if (stage === 'administered') {
+            actionHtml = `<span class="badge badge-success">Completed</span>`;
+        } else if (stage === 'cancelled') {
+            actionHtml = `<span class="badge badge-secondary">Cancelled</span>`;
         }
 
-        if (o.Dosage_Instructions) {
-            statusBadge += `<span class="table-sub-text-dark">Instructions: <em>${o.Dosage_Instructions}</em></span>`;
+        let timeDetails = `Req: ${o.Formatted_Request_Time || o.Request_Timestamp || '-'}`;
+        if (o.Formatted_Administered_Time || o.Administered_Timestamp) {
+            timeDetails += `<br>Adm: ${o.Formatted_Administered_Time || o.Administered_Timestamp}`;
+        } else if (o.Formatted_Delivering_Time || o.Delivering_Timestamp) {
+            timeDetails += `<br>Transit: ${o.Formatted_Delivering_Time || o.Delivering_Timestamp}`;
+        } else if (o.Formatted_Prepared_Time || o.Prepared_Timestamp) {
+            timeDetails += `<br>Prepped: ${o.Formatted_Prepared_Time || o.Prepared_Timestamp}`;
         }
+
+        const dosageInfo = o.Dosage_Instructions ? `<div class="table-sub-text-dark">Instructions: <em>${o.Dosage_Instructions}</em></div>` : '';
 
         html += '<tr>';
-        html += `<td><span class="table-primary-text text-primary">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">Req: ${o.Request_Timestamp}${o.Administered_Timestamp ? `<br>Adm: ${o.Administered_Timestamp}` : ''}</span></td>`;
-        html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • ${getCategoryPill(o.Category_Type)}</span></td>`;
+        html += `<td><span class="table-primary-text text-primary font-bold">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">${timeDetails}</span></td>`;
+        html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • ${getCategoryPill(o.Category_Type)}</span>${dosageInfo}</td>`;
         html += `<td>${deptHandlingHtml}</td>`;
         html += `<td class="text-right"><span class="table-amount-prominent">₱${total}</span><span class="table-sub-text">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</span></td>`;
-        html += `<td>${statusBadge}</td>`;
+        html += `<td>${renderTrackingStepper(o)}</td>`;
         html += `<td class="text-center"><div class="order-actions-wrap">${actionHtml}</div></td>`;
         html += '</tr>';
     });
@@ -2273,6 +2521,173 @@ window.administerOrder = (requestId) => {
             type: "info"
         });
     }
+};
+
+
+window.startPreparingOrder = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const order = (currentOrdersList || []).find(x => String(x.Request_ID) === String(requestId));
+    const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
+    const promptText = isScan 
+        ? "Start preparing scan room and equipment for this procedure?\n\nThe requesting physician will receive a real-time notification that preparation is underway."
+        : "Start preparing this medication / clinical order in department?\n\nThe prescribing physician will receive a real-time notification that item preparation is underway.";
+
+    showPopupConfirm(promptText, () => {
+        const formData = new FormData();
+        formData.append("operation", "startPreparingOrder");
+        formData.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID
+        }));
+
+        axios.post(`${postApiUrl}/clinical_orders.php`, formData)
+            .then(res => {
+                if (res.data.success) {
+                    showPopupAlert(res.data.message, "success", "Preparation Started");
+                    loadOrders();
+                    if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+                } else {
+                    alert(res.data.error || "Failed to start preparing order.");
+                }
+            })
+            .catch(err => {
+                alert("Network error updating preparation status.");
+            });
+    }, null, {
+        title: isScan ? "Prepare Scan Room" : "Prepare Order",
+        confirmText: "Start Preparing",
+        type: "info"
+    });
+};
+
+window.openSelectNurseModal = (requestId) => {
+    const order = (currentOrdersList || []).find(x => String(x.Request_ID) === String(requestId));
+    const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
+
+    const hiddenInput = document.getElementById('select_nurse_request_id');
+    const titleEl = document.getElementById('select_nurse_modal_title');
+    const subtitleEl = document.getElementById('select_nurse_modal_subtitle');
+    const labelEl = document.getElementById('select_nurse_label');
+    const helpEl = document.getElementById('select_nurse_help_text');
+    const confirmBtn = document.getElementById('btnConfirmSelectNurse');
+    const itemNameEl = document.getElementById('nurse_modal_item_name');
+    const patInfoEl = document.getElementById('nurse_modal_patient_info');
+    const dropdown = document.getElementById('select_nurse_dropdown');
+
+    if (hiddenInput) hiddenInput.value = requestId;
+    if (itemNameEl) itemNameEl.textContent = order ? `[${order.Item_Code}] ${order.Item_Name} (${parseFloat(order.Quantity)} unit)` : '-';
+    if (patInfoEl) patInfoEl.textContent = order ? `Prescribed by: ${order.Doctor_Name} • Target Dept: ${order.Target_Station_Name}` : '-';
+
+    if (isScan) {
+        if (titleEl) titleEl.textContent = "Scan Room Ready — Assign Nurse for Transport";
+        if (subtitleEl) subtitleEl.textContent = "Select an active nurse to alert for escorting the patient to the scan room";
+        if (labelEl) labelEl.textContent = "Choose Active Escort Nurse *";
+        if (helpEl) helpEl.textContent = "The selected nurse will receive an instant real-time alert to escort the patient to the scan room.";
+        if (confirmBtn) confirmBtn.textContent = "Alert Nurse & Mark Room Ready";
+    } else {
+        if (titleEl) titleEl.textContent = "Assign Active Nurse & Dispatch Alert";
+        if (subtitleEl) subtitleEl.textContent = "Select an active nurse to alert for medication collection and bedside delivery";
+        if (labelEl) labelEl.textContent = "Choose Active Nurse *";
+        if (helpEl) helpEl.textContent = "The chosen nurse will receive an instant real-time alert to pick up this item at the department.";
+        if (confirmBtn) confirmBtn.textContent = "Alert Selected Nurse & Mark Prepared";
+    }
+
+    if (dropdown) {
+        dropdown.innerHTML = '<option value="">Loading active nurses...</option>';
+        axios.get(`${getApiUrl}/clinical_orders.php?operation=getActiveNurses`)
+            .then(res => {
+                const nurses = res.data || [];
+                if (nurses.length === 0) {
+                    dropdown.innerHTML = '<option value="">No active nurses found</option>';
+                    return;
+                }
+                let optHtml = '<option value="">-- Select Active Nurse --</option>';
+                nurses.forEach(n => {
+                    optHtml += `<option value="${n.id}">Nurse ${n.name} (${n.role_title} • ${n.station_name})</option>`;
+                });
+                dropdown.innerHTML = optHtml;
+            })
+            .catch(() => {
+                dropdown.innerHTML = '<option value="">Failed to load nurses</option>';
+            });
+    }
+
+    const cancelBtn = document.getElementById('btnCancelSelectNurse');
+    const closeBtn = document.getElementById('btnCloseSelectNurseModal');
+    if (cancelBtn) cancelBtn.onclick = () => closeModal('selectNurseModal');
+    if (closeBtn) closeBtn.onclick = () => closeModal('selectNurseModal');
+
+    if (confirmBtn) {
+        confirmBtn.onclick = () => {
+            const nurseId = dropdown ? dropdown.value : '';
+            if (!nurseId) {
+                alert("Please select an active nurse from the dropdown.");
+                return;
+            }
+            const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const fd = new FormData();
+            fd.append("operation", "markOrderPrepared");
+            fd.append("json", JSON.stringify({
+                request_id: requestId,
+                user_id: user.user_id || user.User_ID,
+                nurse_user_id: parseInt(nurseId, 10)
+            }));
+
+            axios.post(`${postApiUrl}/clinical_orders.php`, fd)
+                .then(r => {
+                    if (r.data.success) {
+                        closeModal('selectNurseModal');
+                        showPopupAlert(r.data.message, "success", "Nurse Alerted");
+                        loadOrders();
+                        if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+                    } else {
+                        alert(r.data.error || "Failed to mark order prepared.");
+                    }
+                })
+                .catch(() => {
+                    alert("Network error alerting nurse.");
+                });
+        };
+    }
+
+    openModal('selectNurseModal');
+};
+
+window.receiveOrderForDelivery = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const order = (currentOrdersList || []).find(x => String(x.Request_ID) === String(requestId));
+    const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
+
+    const promptText = isScan
+        ? "Confirm patient escort/transport to scan room?\n\nThe ordering doctor will receive an alert that the patient is in transit to the scan room."
+        : "Confirm receiving prepared medication from department?\n\nThe ordering doctor will receive an alert that the item was received and is now being delivered to the patient.";
+
+    showPopupConfirm(promptText, () => {
+        const formData = new FormData();
+        formData.append("operation", "receiveOrderForDelivery");
+        formData.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID
+        }));
+
+        axios.post(`${postApiUrl}/clinical_orders.php`, formData)
+            .then(res => {
+                if (res.data.success) {
+                    showPopupAlert(res.data.message, "success", isScan ? "Patient In Transit" : "Out for Delivery");
+                    loadOrders();
+                    if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+                } else {
+                    alert(res.data.error || "Failed to update delivery status.");
+                }
+            })
+            .catch(err => {
+                alert("Network error updating delivery status.");
+            });
+    }, null, {
+        title: isScan ? "Confirm Patient Transport" : "Confirm Item Pickup",
+        confirmText: isScan ? "Start Transport" : "Pick Up & Deliver",
+        type: "info"
+    });
 };
 
 window.prepareOrder = (requestId) => {

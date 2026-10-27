@@ -30,7 +30,8 @@ class ClinicalOrderManager
 
             $targetStationId = !empty($catItem['Station_ID']) ? intval($catItem['Station_ID']) : 5;
 
-            $admStmt = $conn->prepare("SELECT ad.Admission_ID, CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+            $admStmt = $conn->prepare("SELECT ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                              CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
                                               CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
                                               CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
                                               COALESCE(r.Room_Name, 'Ward') AS Room_Name,
@@ -62,8 +63,15 @@ class ClinicalOrderManager
                 $docName = $admData['Doctor_Name'];
                 $patName = $admData['Patient_Name'];
                 $location = "{$admData['Room_Name']} - {$admData['Bed_Code']}";
-                $notifTitle = "New Order: {$catItem['Item_Name']}";
-                $notifMsg = "$docName requested $quantity x {$catItem['Item_Name']} for $patName ($location)." . (!empty($dosage) ? " Note: $dosage" : "");
+                $isScan = ($catItem['Category_Type'] === 'Equipment Scan' || $catItem['Category_Type'] === 'Service');
+
+                if ($isScan) {
+                    $notifTitle = "New Scan Request: {$catItem['Item_Name']}";
+                    $notifMsg = "$docName requested {$catItem['Item_Name']} scan for $patName ($location). Please prepare scan room and equipment.";
+                } else {
+                    $notifTitle = "New Order: {$catItem['Item_Name']}";
+                    $notifMsg = "$docName requested $quantity x {$catItem['Item_Name']} for $patName ($location)." . (!empty($dosage) ? " Note: $dosage" : "");
+                }
 
                 $notifSql = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_Station_ID, Title, Message, Notification_Type, Is_Read, Created_At)
                              VALUES (:aid, :rid, :suid, :tsid, :title, :msg, 'Order_Requested', 0, NOW())";
@@ -88,7 +96,7 @@ class ClinicalOrderManager
         }
     }
 
-    function prepareOrder($json = '{}')
+    function startPreparingOrder($json = '{}')
     {
         include "connection.php";
 
@@ -102,13 +110,108 @@ class ClinicalOrderManager
 
         try {
             $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status,
-                                ad.Admission_ID, c.Item_Name, c.Category_Type,
-                                COALESCE(s.Station_Name, 'Fulfilling Department') AS Station_Name,
+                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                                c.Item_Name, c.Category_Type,
+                                COALESCE(s.Station_Name, 'Department') AS Station_Name,
                                 CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
                                 COALESCE(r.Room_Name, 'Ward') AS Room_Name,
                                 COALESCE(rb.Bed_Code, 'Bed') AS Bed_Code
                          FROM Doctor_Order_Request dor
                          INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+                         INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                         INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID
+                         INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                         INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                         LEFT JOIN Enum_Department_Station s ON dor.Target_Station_ID = s.Station_ID
+                         LEFT JOIN Room_Transfer_Log rtl ON a.Admission_ID = rtl.Admission_ID AND rtl.Date_Out IS NULL
+                         LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                         LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                         WHERE dor.Request_ID = :rid";
+            $orderStmt = $conn->prepare($orderSql);
+            $orderStmt->execute([':rid' => $requestId]);
+            $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$order) {
+                return json_encode(['error' => 'Order not found.']);
+            }
+
+            if ($order['Status'] === 'Administered') {
+                return json_encode(['error' => 'Order has already been administered.']);
+            }
+
+            $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
+                                          SET Status = 'Preparing', 
+                                              Preparing_Timestamp = NOW(), 
+                                              Prepared_By_User_ID = :puid 
+                                          WHERE Request_ID = :rid");
+            $updateStmt->execute([
+                ':puid' => $userId > 0 ? $userId : null,
+                ':rid' => $requestId
+            ]);
+
+            $isScan = ($order['Category_Type'] === 'Equipment Scan' || $order['Category_Type'] === 'Service');
+            $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
+
+            if ($isScan) {
+                $notifTitle = "Scan Room Preparing: {$order['Item_Name']}";
+                $notifMsg = "{$order['Station_Name']} is currently preparing the scan room and equipment for {$order['Patient_Name']}'s {$order['Item_Name']} ($location) requested by you.";
+            } else {
+                $notifTitle = "Order Preparing: {$order['Item_Name']}";
+                $notifMsg = "Your requested {$order['Item_Name']} for patient {$order['Patient_Name']} ($location) is currently being prepared in {$order['Station_Name']}.";
+            }
+
+            $targetDoctorUserId = !empty($order['Doctor_User_ID']) ? intval($order['Doctor_User_ID']) : null;
+            if ($targetDoctorUserId) {
+                $notifSql = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                             VALUES (:aid, :rid, :suid, :tuid, :title, :msg, 'Order_Preparing', 0, NOW())";
+                $notifStmt = $conn->prepare($notifSql);
+                $notifStmt->execute([
+                    ':aid' => $order['Admission_ID'],
+                    ':rid' => $requestId,
+                    ':suid' => $userId > 0 ? $userId : null,
+                    ':tuid' => $targetDoctorUserId,
+                    ':title' => $notifTitle,
+                    ':msg' => $notifMsg
+                ]);
+            }
+
+            return json_encode([
+                'success' => true,
+                'message' => "Order status updated to Preparing. Prescribing physician has been alerted."
+            ]);
+        } catch (Exception $e) {
+            return json_encode(['error' => 'Failed to start preparing order: ' . $e->getMessage()]);
+        }
+    }
+
+    function markOrderPrepared($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $requestId = intval($json['request_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $nurseUserId = intval($json['nurse_user_id'] ?? ($json['assigned_nurse_user_id'] ?? 0));
+
+        if (empty($requestId)) {
+            return json_encode(['error' => 'Request ID is required.']);
+        }
+        if (empty($nurseUserId)) {
+            return json_encode(['error' => 'Please select an active nurse to dispatch and alert.']);
+        }
+
+        try {
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status,
+                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                c.Item_Name, c.Category_Type,
+                                COALESCE(s.Station_Name, 'Department') AS Station_Name,
+                                CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
+                                COALESCE(r.Room_Name, 'Ward') AS Room_Name,
+                                COALESCE(rb.Bed_Code, 'Bed') AS Bed_Code
+                         FROM Doctor_Order_Request dor
+                         INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+                         INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
                          INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID
                          INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                          INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
@@ -132,34 +235,148 @@ class ClinicalOrderManager
             $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
                                           SET Status = 'Prepared', 
                                               Prepared_Timestamp = NOW(), 
-                                              Prepared_By_User_ID = :puid 
+                                              Prepared_By_User_ID = :puid,
+                                              Assigned_Nurse_User_ID = :nuid
                                           WHERE Request_ID = :rid");
             $updateStmt->execute([
                 ':puid' => $userId > 0 ? $userId : null,
+                ':nuid' => $nurseUserId,
                 ':rid' => $requestId
             ]);
 
-            $notifTitle = "Order Prepared: {$order['Item_Name']}";
+            $isScan = ($order['Category_Type'] === 'Equipment Scan' || $order['Category_Type'] === 'Service');
             $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
-            $notifMsg = "{$order['Station_Name']} has prepared {$order['Quantity']}x {$order['Item_Name']} for patient {$order['Patient_Name']} ($location). Ready for nurse collection and administration.";
 
-            $notifSql = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_Station_ID, Title, Message, Notification_Type, Is_Read, Created_At)
-                         VALUES (:aid, :rid, :suid, 5, :title, :msg, 'Order_Prepared', 0, NOW())";
+            if ($isScan) {
+                $notifTitle = "Scan Room Ready — Transport Patient: {$order['Item_Name']}";
+                $notifMsg = "The scan room at {$order['Station_Name']} is prepared and ready for {$order['Patient_Name']} ($location). Please escort and deliver patient to {$order['Station_Name']} for their {$order['Item_Name']}.";
+            } else {
+                $notifTitle = "Order Ready for Pickup: {$order['Item_Name']}";
+                $notifMsg = "{$order['Item_Name']} has been prepared by {$order['Station_Name']} for patient {$order['Patient_Name']} ($location). Please pick up the item at {$order['Station_Name']} for delivery.";
+            }
+
+            $notifSql = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                         VALUES (:aid, :rid, :suid, :tuid, :title, :msg, 'Order_Prepared', 0, NOW())";
             $notifStmt = $conn->prepare($notifSql);
             $notifStmt->execute([
                 ':aid' => $order['Admission_ID'],
                 ':rid' => $requestId,
                 ':suid' => $userId > 0 ? $userId : null,
+                ':tuid' => $nurseUserId,
                 ':title' => $notifTitle,
                 ':msg' => $notifMsg
             ]);
 
+            $nurseNameStmt = $conn->prepare("SELECT CONCAT(First_Name, ' ', Last_Name) FROM System_User WHERE User_ID = :uid");
+            $nurseNameStmt->execute([':uid' => $nurseUserId]);
+            $nurseName = $nurseNameStmt->fetchColumn() ?: "Nurse";
+
             return json_encode([
                 'success' => true,
-                'message' => "Order marked as Prepared. Nurse Station has been notified for collection and delivery."
+                'message' => "Order marked as Prepared. {$nurseName} has been alerted for pickup/transport."
             ]);
         } catch (Exception $e) {
-            return json_encode(['error' => 'Failed to prepare order: ' . $e->getMessage()]);
+            return json_encode(['error' => 'Failed to mark order prepared: ' . $e->getMessage()]);
+        }
+    }
+
+    function prepareOrder($json = '{}')
+    {
+        return $this->markOrderPrepared($json);
+    }
+
+    function receiveOrderForDelivery($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $requestId = intval($json['request_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+
+        if (empty($requestId)) {
+            return json_encode(['error' => 'Request ID is required.']);
+        }
+        if (empty($userId)) {
+            return json_encode(['error' => 'Receiving nurse user ID is required.']);
+        }
+
+        try {
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status,
+                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                c.Item_Name, c.Category_Type,
+                                COALESCE(s.Station_Name, 'Department') AS Station_Name,
+                                CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
+                                COALESCE(r.Room_Name, 'Ward') AS Room_Name,
+                                COALESCE(rb.Bed_Code, 'Bed') AS Bed_Code
+                         FROM Doctor_Order_Request dor
+                         INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+                         INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                         INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID
+                         INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                         INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                         LEFT JOIN Enum_Department_Station s ON dor.Target_Station_ID = s.Station_ID
+                         LEFT JOIN Room_Transfer_Log rtl ON a.Admission_ID = rtl.Admission_ID AND rtl.Date_Out IS NULL
+                         LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                         LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                         WHERE dor.Request_ID = :rid";
+            $orderStmt = $conn->prepare($orderSql);
+            $orderStmt->execute([':rid' => $requestId]);
+            $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$order) {
+                return json_encode(['error' => 'Order not found.']);
+            }
+
+            if ($order['Status'] === 'Administered') {
+                return json_encode(['error' => 'Order has already been administered.']);
+            }
+
+            $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
+                                          SET Status = 'Delivering', 
+                                              Delivering_Timestamp = NOW(), 
+                                              Assigned_Nurse_User_ID = COALESCE(Assigned_Nurse_User_ID, :nuid)
+                                          WHERE Request_ID = :rid");
+            $updateStmt->execute([
+                ':nuid' => $userId,
+                ':rid' => $requestId
+            ]);
+
+            $nurseNameStmt = $conn->prepare("SELECT CONCAT(First_Name, ' ', Last_Name) FROM System_User WHERE User_ID = :uid");
+            $nurseNameStmt->execute([':uid' => $userId]);
+            $nurseName = $nurseNameStmt->fetchColumn() ?: "Nurse";
+
+            $isScan = ($order['Category_Type'] === 'Equipment Scan' || $order['Category_Type'] === 'Service');
+            $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
+
+            if ($isScan) {
+                $notifTitle = "Patient In Transit to Scan Room: {$order['Item_Name']}";
+                $notifMsg = "Patient {$order['Patient_Name']} ($location) was received by Nurse {$nurseName} and is now being transported to {$order['Station_Name']} for their {$order['Item_Name']}.";
+            } else {
+                $notifTitle = "Order In Transit: {$order['Item_Name']}";
+                $notifMsg = "Your requested {$order['Item_Name']} for {$order['Patient_Name']} ($location) was received by Nurse {$nurseName} and is now being delivered to the patient.";
+            }
+
+            $targetDoctorUserId = !empty($order['Doctor_User_ID']) ? intval($order['Doctor_User_ID']) : null;
+            if ($targetDoctorUserId) {
+                $notifSql = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                             VALUES (:aid, :rid, :suid, :tuid, :title, :msg, 'Order_Delivering', 0, NOW())";
+                $notifStmt = $conn->prepare($notifSql);
+                $notifStmt->execute([
+                    ':aid' => $order['Admission_ID'],
+                    ':rid' => $requestId,
+                    ':suid' => $userId,
+                    ':tuid' => $targetDoctorUserId,
+                    ':title' => $notifTitle,
+                    ':msg' => $notifMsg
+                ]);
+            }
+
+            return json_encode([
+                'success' => true,
+                'message' => $isScan ? "Patient marked as in transit to scan room. Doctor notified." : "Order marked as received and out for delivery. Doctor notified."
+            ]);
+        } catch (Exception $e) {
+            return json_encode(['error' => 'Failed to update delivery status: ' . $e->getMessage()]);
         }
     }
 
@@ -275,8 +492,14 @@ class ClinicalOrderManager
                 if ($dRow) $adminName = $dRow['Full_Name'];
             }
 
-            $notifTitle = "Order Administered: {$order['Item_Name']}";
-            $notifMsg = "{$order['Quantity']}x {$order['Item_Name']} has been administered to {$order['Patient_Name']} by $adminName. Charge of ₱" . number_format($totalCharge, 2) . " posted to billing ledger.";
+            $isScan = ($order['Category_Type'] === 'Equipment Scan' || $order['Category_Type'] === 'Service');
+            if ($isScan) {
+                $notifTitle = "Scan Completed & Administered: {$order['Item_Name']}";
+                $notifMsg = "{$order['Item_Name']} scan for {$order['Patient_Name']} has been conducted and completed by $adminName. Charge of ₱" . number_format($totalCharge, 2) . " posted to Billing Ledger.";
+            } else {
+                $notifTitle = "Order Administered: {$order['Item_Name']}";
+                $notifMsg = "{$order['Quantity']}x {$order['Item_Name']} has been administered to {$order['Patient_Name']} by $adminName. Charge of ₱" . number_format($totalCharge, 2) . " posted to Billing Ledger.";
+            }
 
             if (!empty($order['Doctor_User_ID'])) {
                 $notifSqlDoc = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
@@ -458,8 +681,17 @@ switch ($operation) {
     case 'createDoctorOrder':
         echo $clinical->createDoctorOrder($json);
         break;
+    case 'startPreparingOrder':
+        echo $clinical->startPreparingOrder($json);
+        break;
+    case 'markOrderPrepared':
+        echo $clinical->markOrderPrepared($json);
+        break;
     case 'prepareOrder':
         echo $clinical->prepareOrder($json);
+        break;
+    case 'receiveOrderForDelivery':
+        echo $clinical->receiveOrderForDelivery($json);
         break;
     case 'administerOrder':
         echo $clinical->administerOrder($json);

@@ -365,9 +365,7 @@
     transition: all 0.15s ease;
     text-align: center;
     white-space: nowrap;
-    width: 160px;
     min-width: 160px;
-    max-width: 160px;
     height: 38px;
     box-sizing: border-box;
     line-height: 1.25;
@@ -2426,29 +2424,29 @@ button:disabled, .btn:disabled {
     flex: 1;
     min-width: 0;
     max-width: 100%;
-    padding: 14px 24px 14px;
+    padding: 22px 32px 28px;
     box-sizing: border-box;
 }
 
 .app-wrapper.sidebar-collapsed .main-content {
     max-width: 100%;
-    padding-left: 64px;
+    padding-left: 72px;
 }
 
 .topbar {
-    margin-bottom: 8px;
+    margin-bottom: 16px;
 }
 
 .chart-patient-hero {
-    margin-bottom: 8px;
+    margin-bottom: 14px;
 }
 
 .clinical-tabs-nav {
-    margin-bottom: 8px;
+    margin-bottom: 14px;
 }
 
 .clinical-slide-switcher {
-    margin-bottom: 8px;
+    margin-bottom: 14px;
 }
 
 .tab-content-panel .card.mb-4,
@@ -2459,24 +2457,25 @@ button:disabled, .btn:disabled {
 #sub-orders .card-header,
 #sub-rounds .card-header,
 #sub-stays .card-header {
-    padding: 8px 14px;
+    padding: 14px 20px;
 }
 
 #sub-orders .card-header h2,
 #sub-rounds .card-header h2,
 #sub-stays .card-header h2 {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
 #sub-orders .card-body,
 #sub-rounds .card-body,
 #sub-stays .card-body {
-    padding: 8px 14px 10px;
+    padding: 18px 20px 20px;
 }
 
 .orders-section-heading {
-    font-size: 0.90rem;
-    margin-bottom: 6px;
+    font-size: 1rem;
+    margin-bottom: 10px;
     font-weight: 600;
     color: #1e293b;
 }
@@ -2485,12 +2484,14 @@ button:disabled, .btn:disabled {
 #rounds-table-div,
 #transfers-table-div,
 #ledger-table-div {
-    max-height: calc(100vh - 340px);
-    min-height: 180px;
+    min-height: 320px;
+    max-height: calc(100vh - 330px);
     overflow-y: auto;
     overflow-x: auto;
-    border-radius: 8px;
-    margin-top: 4px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    margin-top: 6px;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
@@ -2499,51 +2500,83 @@ button:disabled, .btn:disabled {
 #rounds-table-div .data-table,
 #transfers-table-div .data-table,
 #ledger-table-div .data-table {
-    min-width: 860px;
+    min-width: 900px;
     width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 #orders-table-div .data-table th,
 #rounds-table-div .data-table th,
 #transfers-table-div .data-table th,
 #ledger-table-div .data-table th {
-    padding: 7px 10px;
-    font-size: 11px;
+    padding: 11px 14px;
+    font-size: 11.5px;
+    font-weight: 700;
     white-space: nowrap;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 #orders-table-div .data-table td,
 #rounds-table-div .data-table td,
 #transfers-table-div .data-table td,
 #ledger-table-div .data-table td {
-    padding: 6px 10px;
-    font-size: 12.5px;
+    padding: 10px 14px;
+    font-size: 13.5px;
     vertical-align: middle;
+    line-height: 1.4;
 }
 
 .order-dept-cell {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+}
+
+.order-dept-badge {
+    align-self: flex-start;
+    font-size: 0.74rem;
+    padding: 2px 8px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.order-prep-info,
+.order-adm-info {
+    font-size: 0.76rem;
+    color: #334155;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.order-queue-info {
+    font-size: 0.74rem;
+    color: #b45309;
+    font-style: italic;
+    line-height: 1.3;
+    white-space: nowrap;
 }
 
 .order-actions-wrap {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    flex-wrap: wrap;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .order-actions-wrap .btn {
-    padding: 3px 8px;
-    font-size: 0.72rem;
+    padding: 5px 12px;
+    font-size: 0.78rem;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.35;
+    border-radius: 5px;
     white-space: nowrap;
 }
 
 .order-actions-wrap .badge {
-    font-size: 0.72rem;
-    padding: 3px 8px;
+    font-size: 0.76rem;
+    padding: 4px 10px;
+    border-radius: 5px;
 }

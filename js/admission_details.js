@@ -1256,14 +1256,25 @@ const wireLookupPickers = () => {
                 return p.category === val;
             },
             sortOptions: [
-                { label: 'Default (Dept Matches First)', value: 'default' },
+                { label: 'Default (Assigned & Dept Match First)', value: 'default' },
                 { label: 'Name (A to Z)', value: 'name_asc' },
                 { label: 'Name (Z to A)', value: 'name_desc' },
                 { label: 'Department (A to Z)', value: 'dept_asc' }
             ],
             sortFn: (list, val) => {
                 const arr = [...list];
-                if (val === 'name_asc') {
+                const assignedNurseId = currentAdministeringOrder ? (currentAdministeringOrder.Assigned_Nurse_User_ID || currentAdministeringOrder.assigned_nurse_user_id) : null;
+                if (val === 'default') {
+                    arr.sort((a, b) => {
+                        const aIsAssigned = (assignedNurseId && String(a.rawId) === String(assignedNurseId) && a.type === 'user');
+                        const bIsAssigned = (assignedNurseId && String(b.rawId) === String(assignedNurseId) && b.type === 'user');
+                        if (aIsAssigned && !bIsAssigned) return -1;
+                        if (!aIsAssigned && bIsAssigned) return 1;
+                        if (a.isDeptMatch && !b.isDeptMatch) return -1;
+                        if (!a.isDeptMatch && b.isDeptMatch) return 1;
+                        return 0;
+                    });
+                } else if (val === 'name_asc') {
                     arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 } else if (val === 'name_desc') {
                     arr.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
@@ -1274,10 +1285,13 @@ const wireLookupPickers = () => {
             },
             filterFn: (p, q) => `${p.name || ''} ${p.role || ''} ${p.category || ''} ${p.department || ''} ${p.specialties || ''}`.toLowerCase().includes(q),
             renderRowFn: (p) => {
+                const assignedNurseId = currentAdministeringOrder ? (currentAdministeringOrder.Assigned_Nurse_User_ID || currentAdministeringOrder.assigned_nurse_user_id) : null;
+                const isAssigned = (assignedNurseId && String(p.rawId) === String(assignedNurseId) && p.type === 'user');
+                const assignedTag = isAssigned ? `<span class="badge badge-primary">Assigned Deliverer</span> ` : '';
                 const matchTag = p.isDeptMatch ? `<span class="badge badge-success badge-dept-match">Dept Match</span>` : '';
                 return `
                     <td>
-                        <strong>${p.name}</strong>${matchTag}
+                        <strong>${p.name}</strong> ${assignedTag}${matchTag}
                         <div class="table-sub-text">${p.category}</div>
                     </td>
                     <td><span class="badge ${p.type === 'doctor' ? 'badge-primary' : 'badge-info'}">${p.role}</span></td>
@@ -2363,6 +2377,17 @@ const openAdministerModal = (requestId, order, user) => {
     const hiddenInput = document.getElementById('administer_request_id');
     if (hiddenInput) hiddenInput.value = requestId;
 
+    const modalTitleEl = document.getElementById('administerOrderModalTitle');
+    const submitBtnEl = document.getElementById('btnSubmitAdministerModal');
+    const personnelLabelEl = document.getElementById('administer_personnel_label');
+    const previewLabelEl = document.getElementById('previewDelivererLabel');
+
+    const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
+    if (modalTitleEl) modalTitleEl.textContent = isScan ? 'Complete & Record Diagnostic Scan' : 'Administer Clinical Order';
+    if (submitBtnEl) submitBtnEl.textContent = isScan ? 'Confirm Scan Completion' : 'Confirm Administration';
+    if (personnelLabelEl) personnelLabelEl.textContent = isScan ? 'Conducting / Escorting Personnel *' : 'Delivered / Administered By (Licensed Personnel) *';
+    if (previewLabelEl) previewLabelEl.textContent = isScan ? 'Attributed Personnel:' : 'Attributed Deliverer:';
+
     const refEl = document.getElementById('adm_modal_order_ref');
     const amtEl = document.getElementById('adm_modal_amount');
     const itemEl = document.getElementById('adm_modal_item_name');
@@ -2371,6 +2396,7 @@ const openAdministerModal = (requestId, order, user) => {
     const catEl = document.getElementById('adm_modal_category');
     const stationEl = document.getElementById('adm_modal_station_name');
     const prepEl = document.getElementById('adm_modal_prep_by');
+    const assignedNurseEl = document.getElementById('adm_modal_assigned_nurse');
 
     if (refEl) refEl.textContent = `ORD-${String(requestId).padStart(3, '0')}`;
     if (amtEl) amtEl.textContent = order ? `₱${parseFloat(order.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '₱0.00';
@@ -2386,6 +2412,12 @@ const openAdministerModal = (requestId, order, user) => {
         ? `${order.Prepared_By_Name} (${order.Prepared_By_Station || order.Prepared_By_Role || 'Department Staff'})`
         : 'Awaiting Dept Verification / Direct Delivery';
     if (prepEl) prepEl.textContent = prepText;
+
+    if (assignedNurseEl) {
+        assignedNurseEl.textContent = (order && order.Assigned_Nurse_Name)
+            ? `${order.Assigned_Nurse_Name} (${order.Assigned_Nurse_Role || 'Staff Nurse'})`
+            : 'None Assigned';
+    }
 
     const idInput = document.getElementById('administer_personnel_id');
     const textInput = document.getElementById('administer_personnel_text');
@@ -2441,19 +2473,49 @@ const openAdministerModal = (requestId, order, user) => {
                 })
             ];
 
+            let defaultSelection = null;
+            const assignedNurseId = order ? (order.Assigned_Nurse_User_ID || order.assigned_nurse_user_id) : null;
+
+            if (assignedNurseId) {
+                defaultSelection = availableHealthcarePersonnel.find(p => p.type === 'user' && String(p.rawId) === String(assignedNurseId));
+                if (!defaultSelection && order.Assigned_Nurse_Name) {
+                    defaultSelection = {
+                        id: `user:${assignedNurseId}`,
+                        rawId: assignedNurseId,
+                        type: 'user',
+                        name: order.Assigned_Nurse_Name,
+                        role: order.Assigned_Nurse_Role || 'Staff Nurse',
+                        category: 'Licensed Nurse',
+                        station_ids: [],
+                        isDeptMatch: true,
+                        department: order.Target_Station_Name || 'Nurse Station',
+                        specialties: 'In-Patient Nursing Care'
+                    };
+                    availableHealthcarePersonnel.unshift(defaultSelection);
+                }
+            }
+
             availableHealthcarePersonnel.sort((a, b) => {
+                const aIsAssigned = (assignedNurseId && String(a.rawId) === String(assignedNurseId) && a.type === 'user');
+                const bIsAssigned = (assignedNurseId && String(b.rawId) === String(assignedNurseId) && b.type === 'user');
+                if (aIsAssigned && !bIsAssigned) return -1;
+                if (!aIsAssigned && bIsAssigned) return 1;
                 if (a.isDeptMatch && !b.isDeptMatch) return -1;
                 if (!a.isDeptMatch && b.isDeptMatch) return 1;
                 return 0;
             });
 
-            let defaultSelection = null;
-            const currentUserId = user ? (user.user_id || user.User_ID) : null;
-            if (currentUserId) {
-                defaultSelection = availableHealthcarePersonnel.find(p => p.type === 'user' && String(p.rawId) === String(currentUserId));
+            if (!defaultSelection) {
+                const currentUserId = user ? (user.user_id || user.User_ID) : null;
+                if (currentUserId) {
+                    defaultSelection = availableHealthcarePersonnel.find(p => p.type === 'user' && String(p.rawId) === String(currentUserId) && p.category === 'Licensed Nurse');
+                }
             }
             if (!defaultSelection) {
-                defaultSelection = availableHealthcarePersonnel.find(p => p.isDeptMatch);
+                defaultSelection = availableHealthcarePersonnel.find(p => p.category === 'Licensed Nurse' && p.isDeptMatch);
+            }
+            if (!defaultSelection) {
+                defaultSelection = availableHealthcarePersonnel.find(p => p.category === 'Licensed Nurse');
             }
             if (!defaultSelection && availableHealthcarePersonnel.length > 0) {
                 defaultSelection = availableHealthcarePersonnel[0];
@@ -2532,10 +2594,8 @@ const executeAdministerOrder = (requestId, { user_id, doctor_id }) => {
 };
 
 window.administerOrder = (requestId) => {
-    console.log("admission_details.js: Administering order ID:", requestId);
-
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1;
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain === "Admin");
     const isClinical = (user.access_domain === "Clinical") || (user.role_name && user.role_name.toLowerCase().includes("nurse")) || (user.role_name && user.role_name.toLowerCase().includes("doctor"));
 
     if (!isHigherUp && !isClinical) {
@@ -2544,20 +2604,7 @@ window.administerOrder = (requestId) => {
     }
 
     const order = (currentOrdersList || []).find(x => String(x.Request_ID) === String(requestId));
-
-    if (isHigherUp) {
-        openAdministerModal(requestId, order, user);
-    } else {
-        const staffName = user.full_name || user.username || "Current User";
-        const roleName = user.role_name || "Nurse";
-        showPopupConfirm(`Confirm bedside administration / delivery of this order?\n\nDelivering Staff: ${staffName} (${roleName})\n\nThis will record the order as 'Administered' under your clinical account and post the official charge to the Live Billing Ledger.`, () => {
-            executeAdministerOrder(requestId, { user_id: user.user_id || user.User_ID, doctor_id: null });
-        }, null, {
-            title: "Confirm Administration",
-            confirmText: "Administer",
-            type: "info"
-        });
-    }
+    openAdministerModal(requestId, order, user);
 };
 
 

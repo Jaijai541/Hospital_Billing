@@ -458,7 +458,7 @@
         <div class="modal-overlay" id="administerOrderModal">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Administer Clinical Order</h3>
+                <h3 id="administerOrderModalTitle">Administer Clinical Order</h3>
                 <button type="button" class="modal-close" id="btnCloseAdministerModal">&times;</button>
             </div>
             <div class="modal-body">
@@ -495,11 +495,15 @@
                             <span class="administer-cell-label">Department Prepared By</span>
                             <span id="adm_modal_prep_by" class="administer-cell-value">-</span>
                         </div>
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Assigned Deliverer</span>
+                            <span id="adm_modal_assigned_nurse" class="administer-cell-value">-</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group mb-2">
-                    <label class="form-label" for="administer_personnel_text">Delivered / Administered By (Licensed Personnel) *</label>
+                    <label class="form-label" id="administer_personnel_label" for="administer_personnel_text">Delivered / Administered By (Licensed Personnel) *</label>
                     <div class="input-lookup-group">
                         <input type="hidden" id="administer_personnel_id" value="">
                         <input type="text" id="administer_personnel_text" class="form-control" placeholder="Click Select to choose delivering nurse or assigned doctor..." readonly>
@@ -507,7 +511,7 @@
                     </div>
 
                     <div class="administer-selected-preview" id="administerSelectedPreview">
-                        <span class="preview-label">Attributed Deliverer:</span>
+                        <span class="preview-label" id="previewDelivererLabel">Attributed Deliverer:</span>
                         <span class="preview-badge" id="previewDelivererBadge">None Selected</span>
                     </div>
 
@@ -866,9 +870,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=20.0"></script>
-    <script src="../js/common.js?v=20.0"></script>
-    <script src="../js/admission_details.js?v=19.5"></script>
+    <script src="../js/sidebar.js?v=20.4"></script>
+    <script src="../js/common.js?v=20.4"></script>
+    <script src="../js/admission_details.js?v=20.4"></script>
 </body>
 </html>
 

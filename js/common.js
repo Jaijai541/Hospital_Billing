@@ -22,7 +22,7 @@ const handleUserLogout = async () => {
     window.location.href = "login.html";
 };
 
-const getCategoryPill = (catType) => {
+window.getCategoryPill = (catType) => {
     const cat = String(catType || '').trim();
     if (cat === 'Medicine') return `<span class="cat-pill cat-med">${cat}</span>`;
     if (cat === 'Equipment Scan' || cat === 'Scan') return `<span class="cat-pill cat-scan">${cat}</span>`;

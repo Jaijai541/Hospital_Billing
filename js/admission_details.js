@@ -19,7 +19,7 @@ const formatCleanStaffText = (staffList, docList) => {
     if (unique.length <= 2) return unique.join(', ');
     return `${unique.slice(0, 2).join(', ')} +${unique.length - 2} more`;
 };
-const getCategoryPill = (catType) => {
+window.getCategoryPill = (catType) => {
     const cat = String(catType || '').trim();
     if (cat === 'Medicine') return `<span class="cat-pill cat-med">${cat}</span>`;
     if (cat === 'Equipment Scan' || cat === 'Scan') return `<span class="cat-pill cat-scan">${cat}</span>`;

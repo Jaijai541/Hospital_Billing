@@ -6,12 +6,7 @@ let selectedStationId = 0;
 let activeNursesList = [];
 let selectedNurseUserId = 0;
 
-const getCategoryPill = (catType) => {
-    const cat = String(catType || '').trim();
-    if (cat === 'Medicine') return `<span class="cat-pill cat-med">${cat}</span>`;
-    if (cat === 'Equipment Scan' || cat === 'Scan') return `<span class="cat-pill cat-scan">${cat}</span>`;
-    return `<span class="cat-pill cat-srv">${cat || 'Service'}</span>`;
-};
+
 
 
 const getOrderProcessStage = (status) => {
@@ -248,7 +243,7 @@ const renderDepartmentOrdersTable = () => {
             actionCellHtml = `<span class="badge badge-secondary">Cancelled</span>`;
         }
 
-        const catPill = getCategoryPill(o.Category_Type);
+        const catPill = (window.getCategoryPill ? window.getCategoryPill(o.Category_Type) : `<span class="cat-pill">${o.Category_Type || 'Item'}</span>`);
         const dosageBlock = o.Dosage_Instructions ? `<div class="dept-item-dosage">${o.Dosage_Instructions}</div>` : '';
 
         html += `

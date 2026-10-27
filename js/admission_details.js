@@ -942,7 +942,7 @@ const wireLookupPickers = () => {
                     <td>
                         <div class="picker-combined-item">
                             <strong class="picker-code-bold">${it.Item_Code}</strong>
-                            <span class="picker-item-name-text">${it.Item_Name}</span>
+                            <div class="picker-item-name-below">${it.Item_Name}</div>
                         </div>
                     </td>
                     <td><span class="badge badge-secondary picker-cat-badge">${it.Category_Type}</span></td>

@@ -140,9 +140,9 @@ const displayCatalogsTable = (items) => {
 
     const tbody = document.createElement("tbody");
     items.forEach(item => {
-        let catBadge = '<span class="badge badge-info">' + item.Category_Type + '</span>';
-        if (item.Category_Type === 'Medicine') catBadge = '<span class="badge badge-primary">Medicine</span>';
-        else if (item.Category_Type === 'Equipment Scan') catBadge = '<span class="badge badge-warning">Scan</span>';
+        let catBadge = '<span class="cat-pill cat-srv">' + (item.Category_Type || 'Service') + '</span>';
+        if (item.Category_Type === 'Medicine') catBadge = '<span class="cat-pill cat-med">Medicine</span>';
+        else if (item.Category_Type === 'Equipment Scan') catBadge = '<span class="cat-pill cat-scan">Equipment Scan</span>';
 
         const row = document.createElement("tr");
         row.className = "clickable-row";

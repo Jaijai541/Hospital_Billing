@@ -19,6 +19,13 @@ const formatCleanStaffText = (staffList, docList) => {
     if (unique.length <= 2) return unique.join(', ');
     return `${unique.slice(0, 2).join(', ')} +${unique.length - 2} more`;
 };
+const getCategoryPill = (catType) => {
+    const cat = String(catType || '').trim();
+    if (cat === 'Medicine') return `<span class="cat-pill cat-med">${cat}</span>`;
+    if (cat === 'Equipment Scan' || cat === 'Scan') return `<span class="cat-pill cat-scan">${cat}</span>`;
+    return `<span class="cat-pill cat-srv">${cat || 'Service'}</span>`;
+};
+
 
 const updateOrderPricing = () => {
     const qtyInput = document.getElementById('order_qty');
@@ -52,7 +59,10 @@ const updateOrderDeptCard = (item) => {
     if (!item) {
         card.classList.remove('active');
         if (stationBadge) stationBadge.textContent = 'Station';
-        if (catBadge) catBadge.textContent = 'Category';
+        if (catBadge) {
+            catBadge.textContent = 'Category';
+            catBadge.className = 'cat-pill cat-srv';
+        }
         if (staffList) {
             staffList.textContent = 'Department Personnel';
             staffList.title = '';
@@ -68,7 +78,13 @@ const updateOrderDeptCard = (item) => {
     const shortStaff = formatCleanStaffText(item.Assigned_Staff_List, item.Assigned_Doctors_List);
 
     if (stationBadge) stationBadge.textContent = stationName;
-    if (catBadge) catBadge.textContent = category;
+    if (catBadge) {
+        catBadge.textContent = category;
+        catBadge.className = 'cat-pill';
+        if (category === 'Medicine') catBadge.classList.add('cat-med');
+        else if (category === 'Equipment Scan' || category === 'Scan') catBadge.classList.add('cat-scan');
+        else catBadge.classList.add('cat-srv');
+    }
     if (staffList) {
         staffList.textContent = shortStaff;
         staffList.title = fullStaff;
@@ -945,7 +961,7 @@ const wireLookupPickers = () => {
                             <div class="picker-item-name-below">${it.Item_Name}</div>
                         </div>
                     </td>
-                    <td><span class="badge badge-secondary picker-cat-badge">${it.Category_Type}</span></td>
+                    <td>${getCategoryPill(it.Category_Type)}</td>
                     <td>
                         <div class="dept-info-cell">
                             <span class="badge badge-primary dept-station-pill">${it.Station_Name || 'General Station'}</span>
@@ -1981,7 +1997,7 @@ const renderOrdersTable = (orders) => {
 
         html += '<tr>';
         html += `<td><span class="table-primary-text text-primary">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">Req: ${o.Request_Timestamp}${o.Administered_Timestamp ? `<br>Adm: ${o.Administered_Timestamp}` : ''}</span></td>`;
-        html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • <span class="badge badge-info">${o.Category_Type}</span></span></td>`;
+        html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • ${getCategoryPill(o.Category_Type)}</span></td>`;
         html += `<td>${deptHandlingHtml}</td>`;
         html += `<td class="text-right"><span class="table-amount-prominent">₱${total}</span><span class="table-sub-text">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</span></td>`;
         html += `<td>${statusBadge}</td>`;
@@ -2065,7 +2081,7 @@ const openAdministerModal = (requestId, order, user) => {
     if (itemEl) itemEl.textContent = order ? `[${order.Item_Code}] ${order.Item_Name}` : '-';
     if (docEl) docEl.textContent = order ? order.Doctor_Name : '-';
     if (qtyEl) qtyEl.textContent = order ? `${parseFloat(order.Quantity)} ${parseFloat(order.Quantity) > 1 ? 'units' : 'unit'} (₱${parseFloat(order.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})} each)` : '-';
-    if (catEl) catEl.textContent = order ? order.Category_Type : '-';
+    if (catEl) catEl.innerHTML = order ? getCategoryPill(order.Category_Type) : '-';
 
     const fulfillingDept = order ? (order.Target_Station_Name || (order.Category_Type === 'Medicine' ? 'Central Pharmacy' : 'Clinical Station')) : '-';
     if (stationEl) stationEl.textContent = fulfillingDept;

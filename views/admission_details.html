@@ -386,13 +386,13 @@
         </main>
     </div>
     <div class="modal-overlay" id="orderModal">
-        <div class="modal-container">
+        <div class="modal-container order-modal-container">
             <div class="modal-header">
                 <h3>Place New Clinical Order <span class="info-tip" tabindex="0" data-tooltip="Select the prescribing doctor and catalog item. When administered or dispensed, the charge will post to the patient ledger." aria-label="Order instructions">i</span></h3>
                 <button type="button" class="modal-close" id="btnCloseOrderModal">&times;</button>
             </div>
             <div class="modal-body" id="order-form-container">
-                <div class="form-grid">
+                <div class="order-form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="order_doctor_name">Ordering Physician *</label>
                         <div class="input-lookup-group">
@@ -411,24 +411,21 @@
                         </div>
                     </div>
 
-                    <div class="form-group span-2" id="order_dept_card_container">
-                        <div class="order-dept-card" id="order_dept_card">
-                            <div class="dept-card-header">
-                                <div class="dept-card-header-left">
-                                    <span class="dept-card-label">Fulfilling Department Station:</span>
-                                    <span class="badge badge-primary dept-station-badge" id="order_card_station_name">Select an item above</span>
+                    <div class="form-group span-2 order-route-group">
+                        <div class="order-route-strip" id="order_dept_card">
+                            <div class="route-strip-top">
+                                <div class="route-dept-wrap">
+                                    <span class="route-dept-tag">Fulfilling Station:</span>
+                                    <span class="badge badge-primary dept-station-badge" id="order_card_station_name">Station</span>
+                                    <span class="badge badge-secondary dept-category-badge" id="order_card_category">Category</span>
                                 </div>
-                                <span class="badge badge-secondary dept-category-badge" id="order_card_category">Category</span>
+                                <div class="route-staff-wrap">
+                                    <span class="route-staff-tag">Assigned:</span>
+                                    <span class="route-staff-val" id="order_card_staff_list" title="Assigned handling personnel">Staff</span>
+                                </div>
                             </div>
-                            <div class="dept-card-body">
-                                <div class="dept-card-row">
-                                    <span class="dept-row-label">Assigned Department Personnel:</span>
-                                    <span class="dept-row-value" id="order_card_staff_list">Item selection will show department staff</span>
-                                </div>
-                                <div class="dept-card-row">
-                                    <span class="dept-row-label">Clinical Workflow Route:</span>
-                                    <span class="dept-row-value dept-route-desc" id="order_card_routing_desc">Select a medication, scan, or service to view dispatch routing.</span>
-                                </div>
+                            <div class="route-strip-bottom" id="order_card_routing_desc">
+                                Order will be routed to the assigned department station queue.
                             </div>
                         </div>
                     </div>
@@ -436,6 +433,12 @@
                     <div class="form-group">
                         <label class="form-label" for="order_qty">Quantity *</label>
                         <input type="number" id="order_qty" class="form-control" min="1" value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="order_est_total">Estimated Charge</label>
+                        <input type="text" id="order_est_total" class="form-control form-control-readonly" readonly placeholder="₱0.00">
+                        <small id="order_calc_breakdown" class="form-text text-muted order-calc-subtext">₱0.00 each</small>
                     </div>
 
                     <div class="form-group span-2">
@@ -615,33 +618,33 @@
         </div>
     </div>
 
-    <div class="modal-overlay picker-modal-overlay" id="lookupPickerModal" style="display: none; z-index: 1200;">
-        <div class="modal-container" style="max-width: 720px;">
+    <div class="modal-overlay picker-modal-overlay" id="lookupPickerModal">
+        <div class="modal-container lookup-picker-dialog">
             <div class="modal-header">
                 <h3 id="lookup_picker_title">Select Item</h3>
                 <button type="button" class="modal-close" id="btnCloseLookupPicker">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 16px 20px;">
-                <div class="lookup-picker-controls" style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; margin-bottom: 12px; width: 100%;">
-                    <input type="text" id="lookup_picker_search" class="form-control lookup-picker-search-input" placeholder="Search..." autocomplete="off" style="flex: 1 1 0%; min-width: 120px; font-size: 0.88rem; padding: 8px 12px;">
-                    <select id="lookup_picker_filter" class="form-select lookup-picker-select" style="width: auto; flex: 0 0 auto; min-width: 130px; max-width: 175px; font-size: 0.85rem; padding: 8px 10px;">
+            <div class="modal-body lookup-picker-body">
+                <div class="lookup-picker-controls">
+                    <input type="text" id="lookup_picker_search" class="form-control lookup-picker-search-input" placeholder="Search item, department, or staff..." autocomplete="off">
+                    <select id="lookup_picker_filter" class="form-select lookup-picker-select">
                         <option value="all">All Items</option>
                     </select>
-                    <select id="lookup_picker_sort" class="form-select lookup-picker-select" style="width: auto; flex: 0 0 auto; min-width: 130px; max-width: 175px; font-size: 0.85rem; padding: 8px 10px;">
+                    <select id="lookup_picker_sort" class="form-select lookup-picker-select">
                         <option value="default">Default Sort</option>
                     </select>
                 </div>
-                <div class="table-responsive" style="max-height: 350px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-                    <table class="data-table" id="lookup_picker_table" style="margin: 0; width: 100%;">
+                <div class="table-responsive lookup-picker-table-wrap">
+                    <table class="data-table lookup-picker-table" id="lookup_picker_table">
                         <thead id="lookup_picker_thead"></thead>
                         <tbody id="lookup_picker_tbody"></tbody>
                     </table>
                 </div>
-                <div id="lookup_picker_empty" class="text-muted text-center" style="display: none; padding: 25px 0;">No matching records found.</div>
+                <div id="lookup_picker_empty" class="text-muted text-center lookup-picker-empty-state">No matching records found.</div>
             </div>
-            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <span id="lookup_picker_status" style="font-size: 0.85rem; color: #64748b;">No row selected</span>
-                <div style="display: flex; gap: 8px;">
+            <div class="modal-footer lookup-picker-footer">
+                <span id="lookup_picker_status" class="lookup-picker-status-text">No row selected</span>
+                <div class="lookup-picker-footer-actions">
                     <button type="button" class="btn btn-secondary" id="btnCancelLookupPicker">Cancel</button>
                     <button type="button" class="btn btn-primary" id="btnDoneLookupPicker" disabled>Done</button>
                 </div>

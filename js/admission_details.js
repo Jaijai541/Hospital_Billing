@@ -7,41 +7,80 @@ let catalogItems = [];
 let assignedDoctors = [];
 let availableHealthcarePersonnel = [];
 let currentAdministeringOrder = null;
+let currentSelectedOrderCatalog = null;
+
+const formatCleanStaffText = (staffList, docList) => {
+    const raw = staffList || docList || '';
+    if (!raw) return 'Hospital Clinical Team';
+    const cleaned = raw.replace(/\s*\((Doctor|Nurse|Pharmacist|Staff)\)/gi, '').trim();
+    const parts = cleaned.split(',').map(s => s.trim()).filter(Boolean);
+    const unique = [...new Set(parts)];
+    if (unique.length === 0) return 'Hospital Clinical Team';
+    if (unique.length <= 2) return unique.join(', ');
+    return `${unique.slice(0, 2).join(', ')} +${unique.length - 2} more`;
+};
+
+const updateOrderPricing = () => {
+    const qtyInput = document.getElementById('order_qty');
+    const totalEl = document.getElementById('order_est_total');
+    const breakdownEl = document.getElementById('order_calc_breakdown');
+
+    const qty = parseFloat(qtyInput ? qtyInput.value : 1) || 0;
+    const unitPrice = currentSelectedOrderCatalog ? parseFloat(currentSelectedOrderCatalog.Unit_Price || 0) : 0;
+    const total = qty * unitPrice;
+
+    if (totalEl) {
+        totalEl.value = `₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+    if (breakdownEl) {
+        breakdownEl.textContent = `₱${unitPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})} × ${qty} ${qty === 1 ? 'unit' : 'units'}`;
+    }
+};
 
 const updateOrderDeptCard = (item) => {
+    currentSelectedOrderCatalog = item;
     const card = document.getElementById('order_dept_card');
     const stationBadge = document.getElementById('order_card_station_name');
     const catBadge = document.getElementById('order_card_category');
     const staffList = document.getElementById('order_card_staff_list');
     const routeDesc = document.getElementById('order_card_routing_desc');
 
+    updateOrderPricing();
+
     if (!card) return;
 
     if (!item) {
         card.classList.remove('active');
-        if (stationBadge) stationBadge.textContent = 'Select an item above';
+        if (stationBadge) stationBadge.textContent = 'Station';
         if (catBadge) catBadge.textContent = 'Category';
-        if (staffList) staffList.textContent = 'Item selection will show department staff';
-        if (routeDesc) routeDesc.textContent = 'Select a medication, scan, or service to view dispatch routing.';
+        if (staffList) {
+            staffList.textContent = 'Department Personnel';
+            staffList.title = '';
+        }
+        if (routeDesc) routeDesc.textContent = 'Order will be routed to the assigned department station queue.';
         return;
     }
 
     card.classList.add('active');
     const stationName = item.Station_Name || 'General Station';
     const category = item.Category_Type || 'Clinical Item';
-    const assigned = item.Assigned_Staff_List || item.Assigned_Doctors_List || 'Hospital Clinical Team';
+    const fullStaff = item.Assigned_Staff_List || item.Assigned_Doctors_List || 'Hospital Clinical Team';
+    const shortStaff = formatCleanStaffText(item.Assigned_Staff_List, item.Assigned_Doctors_List);
 
     if (stationBadge) stationBadge.textContent = stationName;
     if (catBadge) catBadge.textContent = category;
-    if (staffList) staffList.textContent = assigned;
+    if (staffList) {
+        staffList.textContent = shortStaff;
+        staffList.title = fullStaff;
+    }
 
     let routeText = `Dispatched to ${stationName} queue for fulfillment.`;
     if (category === 'Medicine') {
-        routeText = `Directly routed to ${stationName} for verification, packaging, and nurse administration.`;
+        routeText = `Directly routed to ${stationName} for verification and nurse delivery.`;
     } else if (category === 'Equipment Scan') {
-        routeText = `Dispatched to ${stationName} schedule for imaging capture and specialist interpretation.`;
+        routeText = `Dispatched to ${stationName} schedule for imaging capture.`;
     } else if (category === 'Medical Service') {
-        routeText = `Assigned to ${stationName} for bedside/laboratory procedural execution and charge reconciliation.`;
+        routeText = `Assigned to ${stationName} for clinical procedural execution.`;
     }
 
     if (routeDesc) routeDesc.textContent = routeText;
@@ -448,6 +487,11 @@ const initClinicalModals = () => {
             openModal('orderModal');
         });
     }
+    const orderQtyInput = document.getElementById('order_qty');
+    if (orderQtyInput) {
+        orderQtyInput.addEventListener('input', updateOrderPricing);
+        orderQtyInput.addEventListener('change', updateOrderPricing);
+    }
     if (btnCloseOrder) btnCloseOrder.addEventListener('click', () => closeModal('orderModal'));
     if (btnCancelOrder) btnCancelOrder.addEventListener('click', () => closeModal('orderModal'));
 
@@ -846,7 +890,7 @@ const wireLookupPickers = () => {
         openLookupPicker({
             title: 'Select Catalog Item / Medication / Procedure',
             placeholder: 'Search item code, medicine, department, handling staff...',
-            columns: ['Item Code', 'Item Name / Description', 'Fulfilling Department & Handled By', 'Category', 'Unit Price'],
+            columns: ['Code', 'Item & Category', 'Fulfilling Department & Handled By', 'Unit Price'],
             items: catList,
             filterOptions: [
                 { label: 'All Items & Departments', value: 'all' },
@@ -886,18 +930,23 @@ const wireLookupPickers = () => {
                 return str.includes(q);
             },
             renderRowFn: (it) => {
-                const staffText = it.Assigned_Staff_List || it.Assigned_Doctors_List || 'Hospital Clinical Team';
+                const fullStaff = it.Assigned_Staff_List || it.Assigned_Doctors_List || 'Hospital Clinical Team';
+                const staffText = formatCleanStaffText(it.Assigned_Staff_List, it.Assigned_Doctors_List);
                 return `
-                    <td><strong>${it.Item_Code}</strong></td>
-                    <td>${it.Item_Name}</td>
+                    <td><span class="picker-code-chip">${it.Item_Code}</span></td>
                     <td>
-                        <div class="dept-picker-col">
-                            <span class="badge badge-primary dept-badge-tag">${it.Station_Name || 'General Station'}</span>
-                            <div class="dept-staff-subtext">${staffText}</div>
+                        <div class="picker-item-cell">
+                            <span class="picker-item-name">${it.Item_Name}</span>
+                            <span class="badge badge-secondary picker-item-cat">${it.Category_Type}</span>
                         </div>
                     </td>
-                    <td><span class="badge badge-secondary">${it.Category_Type}</span></td>
-                    <td><strong>₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+                    <td>
+                        <div class="dept-info-cell">
+                            <span class="badge badge-primary dept-station-pill">${it.Station_Name || 'General Station'}</span>
+                            <div class="dept-staff-inline" title="${fullStaff}">${staffText}</div>
+                        </div>
+                    </td>
+                    <td><span class="picker-price-text">₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span></td>
                 `;
             },
             getItemName: (it) => `[${it.Item_Code}] ${it.Item_Name}`,

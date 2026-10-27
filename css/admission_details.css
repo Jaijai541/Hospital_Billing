@@ -1849,39 +1849,53 @@ button:disabled, .btn:disabled {
     white-space: nowrap;
 }
 
-.order-dept-card {
+.order-modal-container {
+    max-width: 600px;
+    width: 95%;
+}
+
+.order-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 14px;
+}
+
+.order-route-group {
+    margin-bottom: 0;
+}
+
+.order-route-strip {
     display: none;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
+    border-left: 3px solid #0284c7;
     border-radius: 6px;
-    overflow: hidden;
-    margin-top: 4px;
+    padding: 7px 12px;
 }
 
-.order-dept-card.active {
+.order-route-strip.active {
     display: block;
 }
 
-.dept-card-header {
+.route-strip-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 7px 12px;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-bottom: 1px solid #bae6fd;
-}
-
-.dept-card-header-left {
-    display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 }
 
-.dept-card-label {
-    font-size: 0.74rem;
+.route-dept-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.route-dept-tag {
+    font-size: 0.72rem;
     font-weight: 700;
-    color: #0369a1;
+    color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1900,54 +1914,201 @@ button:disabled, .btn:disabled {
     padding: 2px 7px;
 }
 
-.dept-card-body {
-    padding: 8px 12px;
+.route-staff-wrap {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.dept-card-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    font-size: 0.8rem;
-}
-
-.dept-row-label {
-    font-weight: 600;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
     color: #475569;
-    min-width: 170px;
-    flex-shrink: 0;
-    font-size: 0.74rem;
 }
 
-.dept-row-value {
+.route-staff-tag {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.route-staff-val {
     color: #0f172a;
-    flex: 1;
+    font-weight: 500;
+    max-width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.dept-route-desc {
-    font-style: italic;
+.route-strip-bottom {
+    font-size: 0.74rem;
     color: #0369a1;
+    font-style: italic;
+    margin-top: 3px;
+    line-height: 1.25;
 }
 
-.dept-picker-col {
+.form-control-readonly {
+    background-color: #f8fafc;
+    font-weight: 700;
+    color: #0369a1;
+    cursor: default;
+}
+
+.order-calc-subtext {
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-top: 3px;
+    display: block;
+}
+
+.lookup-picker-dialog {
+    max-width: 880px;
+    width: 95%;
+}
+
+.lookup-picker-body {
+    padding: 16px 20px;
+}
+
+.lookup-picker-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.lookup-picker-search-input {
+    flex: 1 1 0%;
+    min-width: 140px;
+    font-size: 0.88rem;
+    padding: 8px 12px;
+}
+
+.lookup-picker-select {
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 140px;
+    max-width: 200px;
+    font-size: 0.84rem;
+    padding: 8px 10px;
+}
+
+.lookup-picker-table-wrap {
+    max-height: 380px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.lookup-picker-table {
+    margin: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.lookup-picker-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 2;
+    padding: 9px 12px;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #475569;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.lookup-picker-table tbody td {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    vertical-align: middle;
+}
+
+.lookup-picker-empty-state {
+    display: none;
+    padding: 25px 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.lookup-picker-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+}
+
+.lookup-picker-status-text {
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.lookup-picker-footer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.picker-code-chip {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    display: inline-block;
+}
+
+.picker-item-cell {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
 }
 
-.dept-badge-tag {
+.picker-item-name {
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+.picker-item-cat {
+    align-self: flex-start;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+}
+
+.dept-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dept-station-pill {
     align-self: flex-start;
     font-size: 0.72rem;
-    padding: 2px 6px;
+    padding: 1px 7px;
+    font-weight: 600;
 }
 
-.dept-staff-subtext {
+.dept-staff-inline {
     font-size: 0.72rem;
     color: #64748b;
-    line-height: 1.25;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 290px;
+}
+
+.picker-price-text {
+    font-weight: 700;
+    color: #0284c7;
+    font-size: 0.88rem;
+    display: block;
+    text-align: right;
 }
 
 .order-dept-badge {

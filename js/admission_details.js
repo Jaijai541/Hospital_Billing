@@ -1946,21 +1946,21 @@ const renderOrdersTable = (orders) => {
 
         const deptName = o.Target_Station_Name || (o.Category_Type === 'Medicine' ? 'Central Pharmacy' : (o.Category_Type === 'Equipment Scan' ? 'Radiology & Imaging' : 'Laboratory & Services'));
 
-        let deptHandlingHtml = `<div><span class="badge badge-primary order-dept-badge">${deptName}</span>`;
+        let deptHandlingHtml = `<div class="order-dept-cell"><span class="badge badge-primary order-dept-badge">${deptName}</span>`;
         if (o.Status === 'Administered') {
             if (o.Prepared_By_Name) {
-                deptHandlingHtml += `<div class="order-prep-info">Prepared: <strong>${o.Prepared_By_Name}</strong> <span class="badge-role">(${o.Prepared_By_Station || o.Prepared_By_Role || 'Dept'})</span></div>`;
+                deptHandlingHtml += `<div class="order-prep-info">Prep: <strong>${o.Prepared_By_Name}</strong></div>`;
             }
             if (o.Administered_By_Name) {
-                deptHandlingHtml += `<div class="order-adm-info">Delivered: <strong>${o.Administered_By_Name}</strong> <span class="badge-role">(${o.Administered_By_Station || o.Administered_By_Type || 'Nurse'})</span></div>`;
+                deptHandlingHtml += `<div class="order-adm-info">Delivered: <strong>${o.Administered_By_Name}</strong></div>`;
             }
         } else if (o.Status === 'Prepared') {
             if (o.Prepared_By_Name) {
-                deptHandlingHtml += `<div class="order-prep-info">Prepared: <strong>${o.Prepared_By_Name}</strong> <span class="badge-role">(${o.Prepared_By_Station || o.Prepared_By_Role || 'Dept'})</span></div>`;
+                deptHandlingHtml += `<div class="order-prep-info">Prep: <strong>${o.Prepared_By_Name}</strong></div>`;
             }
-            deptHandlingHtml += `<div class="order-queue-info">Ready for Nurse Administration</div>`;
+            deptHandlingHtml += `<div class="order-queue-info">Ready for Administration</div>`;
         } else {
-            deptHandlingHtml += `<div class="order-queue-info">In Station Queue for ${deptName} staff</div>`;
+            deptHandlingHtml += `<div class="order-queue-info">Station Queue (${deptName})</div>`;
         }
         deptHandlingHtml += `</div>`;
 
@@ -2001,7 +2001,7 @@ const renderOrdersTable = (orders) => {
         html += `<td>${deptHandlingHtml}</td>`;
         html += `<td class="text-right"><span class="table-amount-prominent">₱${total}</span><span class="table-sub-text">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</span></td>`;
         html += `<td>${statusBadge}</td>`;
-        html += `<td class="text-center">${actionHtml}</td>`;
+        html += `<td class="text-center"><div class="order-actions-wrap">${actionHtml}</div></td>`;
         html += '</tr>';
     });
 

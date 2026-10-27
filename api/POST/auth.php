@@ -43,6 +43,11 @@ class Auth
                     $perms = $decoded;
                 }
             }
+            if (intval($user['Role_ID']) === 1 || strtolower($user['Access_Domain'] ?? '') === 'admin') {
+                if (!in_array("department_orders.html", $perms)) {
+                    $perms[] = "department_orders.html";
+                }
+            }
             $effStationId = !empty($user['Effective_Station_ID']) ? intval($user['Effective_Station_ID']) : null;
             $uSid = !empty($user['Station_ID']) ? intval($user['Station_ID']) : 0;
             $dSid = !empty($user['Doctor_Station_ID']) ? intval($user['Doctor_Station_ID']) : 0;

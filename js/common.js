@@ -30,6 +30,19 @@ const enforcePageRbacGuard = (user) => {
         return true;
     }
 
+    const domain = (user.access_domain || "").toLowerCase();
+    const roleId = parseInt(user.role_id, 10) || 0;
+    const roleName = (user.role_name || "").toLowerCase();
+
+    const isAdmin = domain === "admin" || roleId === 1 || roleName === "admin";
+    const isFinance = domain === "finance" || roleId === 2 || roleId === 5 || roleName === "finance staff" || roleName === "head finance";
+    const isNurse = domain === "clinical" || roleId === 3 || roleId === 4 || roleName === "nurse" || roleName === "head nurse";
+    const isHybrid = domain === "hybrid" || roleId === 6 || roleId === 7 || roleName === "hybrid" || roleName === "head hybrid" || roleName === "ward clerk" || roleName === "head ward clerk";
+
+    const hasClinicalAccess = isAdmin || isNurse || isHybrid;
+    const hasFinanceAccess = isAdmin || isFinance || isHybrid;
+    const hasAdminAccess = isAdmin;
+
     let perms = user.permissions;
     if (typeof perms === "string") {
         try {
@@ -39,11 +52,36 @@ const enforcePageRbacGuard = (user) => {
         }
     }
 
+    if (isAdmin) {
+        if (Array.isArray(perms) && !perms.includes(currentPage)) {
+            perms.push(currentPage);
+            user.permissions = perms;
+            try {
+                sessionStorage.setItem("hospital_user", JSON.stringify(user));
+            } catch (e) {}
+        }
+        return true;
+    }
+
     let mappedPage = currentPage;
     if (currentPage === "admission_details.html") {
         mappedPage = "admissions.html";
     } else if (["partial_bill.html", "payment_receipt.html", "invoice_print.html"].includes(currentPage)) {
         mappedPage = "invoices.html";
+    }
+
+    if (mappedPage === "department_orders.html") {
+        const hasStation = Boolean(user.station_id) || (Array.isArray(user.assigned_stations) && user.assigned_stations.length > 0);
+        if (hasStation || hasClinicalAccess || (Array.isArray(perms) && perms.includes("department_orders.html"))) {
+            if (Array.isArray(perms) && !perms.includes("department_orders.html")) {
+                perms.push("department_orders.html");
+                user.permissions = perms;
+                try {
+                    sessionStorage.setItem("hospital_user", JSON.stringify(user));
+                } catch (e) {}
+            }
+            return true;
+        }
     }
 
     if (Array.isArray(perms)) {
@@ -67,19 +105,6 @@ const enforcePageRbacGuard = (user) => {
         return false;
     }
 
-    const domain = (user.access_domain || "").toLowerCase();
-    const roleId = parseInt(user.role_id, 10) || 0;
-    const roleName = (user.role_name || "").toLowerCase();
-
-    const isAdmin = domain === "admin" || roleId === 1 || roleName === "admin";
-    const isFinance = domain === "finance" || roleId === 2 || roleId === 5 || roleName === "finance staff" || roleName === "head finance";
-    const isNurse = domain === "clinical" || roleId === 3 || roleId === 4 || roleName === "nurse" || roleName === "head nurse";
-    const isHybrid = domain === "hybrid" || roleId === 6 || roleId === 7 || roleName === "hybrid" || roleName === "head hybrid" || roleName === "ward clerk" || roleName === "head ward clerk";
-
-    const hasClinicalAccess = isAdmin || isNurse || isHybrid;
-    const hasFinanceAccess = isAdmin || isFinance || isHybrid;
-    const hasAdminAccess = isAdmin;
-
     const adminOnlyPages = [
         "staff.html",
         "departments.html",
@@ -89,7 +114,8 @@ const enforcePageRbacGuard = (user) => {
 
     const clinicalOnlyPages = [
         "admissions.html",
-        "admission_details.html"
+        "admission_details.html",
+        "department_orders.html"
     ];
 
     const financeOnlyPages = [

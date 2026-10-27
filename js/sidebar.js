@@ -298,13 +298,14 @@ const renderSidebar = () => {
 
     const canAccess = (page) => {
         if (page === "index.html") return true;
+        if (isAdmin) return true;
         if (hasGranularPerms) {
             if (userPerms.includes(page)) return true;
-            if (page === "department_orders.html" && (hasAdminAccess || Boolean(user.station_id))) return true;
+            if (page === "department_orders.html" && (hasAdminAccess || Boolean(user.station_id) || (Array.isArray(user.assigned_stations) && user.assigned_stations.length > 0) || hasClinicalAccess)) return true;
             return false;
         }
         if (page === "department_orders.html") {
-            return hasAdminAccess || hasClinicalAccess || Boolean(user.station_id);
+            return hasAdminAccess || hasClinicalAccess || Boolean(user.station_id) || (Array.isArray(user.assigned_stations) && user.assigned_stations.length > 0);
         }
         if (["departments.html", "staff.html", "audit_log.html", "archive.html"].includes(page)) {
             return hasAdminAccess;

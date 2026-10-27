@@ -460,7 +460,7 @@ const setupStationNavigation = (user) => {
     const select = document.getElementById("select_department_station");
     if (!selectContainer || !select) return;
 
-    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1;
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
 
     const urlParams = new URLSearchParams(window.location.search);
     const paramStationId = parseInt(urlParams.get("station_id") || "0", 10);

@@ -890,7 +890,7 @@ const wireLookupPickers = () => {
         openLookupPicker({
             title: 'Select Catalog Item / Medication / Procedure',
             placeholder: 'Search item code, medicine, department, handling staff...',
-            columns: ['Code', 'Item & Category', 'Fulfilling Department & Handled By', 'Unit Price'],
+            columns: ['Catalog Item / Description', 'Category', 'Fulfilling Department & Handled By', 'Unit Price'],
             items: catList,
             filterOptions: [
                 { label: 'All Items & Departments', value: 'all' },
@@ -904,18 +904,24 @@ const wireLookupPickers = () => {
             },
             sortOptions: [
                 { label: 'Default Order', value: 'default' },
+                { label: 'Item Code (A to Z)', value: 'code_asc' },
                 { label: 'Name (A to Z)', value: 'name_asc' },
                 { label: 'Name (Z to A)', value: 'name_desc' },
+                { label: 'Category (A to Z)', value: 'cat_asc' },
                 { label: 'Department (A to Z)', value: 'dept_asc' },
                 { label: 'Price (Low to High)', value: 'price_asc' },
                 { label: 'Price (High to Low)', value: 'price_desc' }
             ],
             sortFn: (list, val) => {
                 const arr = [...list];
-                if (val === 'name_asc') {
+                if (val === 'code_asc') {
+                    arr.sort((a, b) => (a.Item_Code || '').localeCompare(b.Item_Code || ''));
+                } else if (val === 'name_asc') {
                     arr.sort((a, b) => (a.Item_Name || '').localeCompare(b.Item_Name || ''));
                 } else if (val === 'name_desc') {
                     arr.sort((a, b) => (b.Item_Name || '').localeCompare(a.Item_Name || ''));
+                } else if (val === 'cat_asc') {
+                    arr.sort((a, b) => (a.Category_Type || '').localeCompare(b.Category_Type || ''));
                 } else if (val === 'dept_asc') {
                     arr.sort((a, b) => (a.Station_Name || '').localeCompare(b.Station_Name || ''));
                 } else if (val === 'price_asc') {
@@ -933,13 +939,13 @@ const wireLookupPickers = () => {
                 const fullStaff = it.Assigned_Staff_List || it.Assigned_Doctors_List || 'Hospital Clinical Team';
                 const staffText = formatCleanStaffText(it.Assigned_Staff_List, it.Assigned_Doctors_List);
                 return `
-                    <td><span class="picker-code-chip">${it.Item_Code}</span></td>
                     <td>
-                        <div class="picker-item-cell">
-                            <span class="picker-item-name">${it.Item_Name}</span>
-                            <span class="badge badge-secondary picker-item-cat">${it.Category_Type}</span>
+                        <div class="picker-combined-item">
+                            <strong class="picker-code-bold">${it.Item_Code}</strong>
+                            <span class="picker-item-name-text">${it.Item_Name}</span>
                         </div>
                     </td>
+                    <td><span class="badge badge-secondary picker-cat-badge">${it.Category_Type}</span></td>
                     <td>
                         <div class="dept-info-cell">
                             <span class="badge badge-primary dept-station-pill">${it.Station_Name || 'General Station'}</span>

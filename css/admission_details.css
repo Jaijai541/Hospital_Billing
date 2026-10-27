@@ -2484,7 +2484,6 @@ button:disabled, .btn:disabled {
 #rounds-table-div,
 #transfers-table-div,
 #ledger-table-div {
-    min-height: 320px;
     max-height: calc(100vh - 330px);
     overflow-y: auto;
     overflow-x: auto;
@@ -2496,11 +2495,26 @@ button:disabled, .btn:disabled {
     scrollbar-color: #cbd5e1 transparent;
 }
 
-#orders-table-div .data-table,
+#orders-table-div > p,
+#rounds-table-div > p,
+#transfers-table-div > p,
+#ledger-table-div > p {
+    padding: 16px 18px;
+    margin: 0;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+#orders-table-div .data-table {
+    min-width: 820px;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
 #rounds-table-div .data-table,
 #transfers-table-div .data-table,
 #ledger-table-div .data-table {
-    min-width: 900px;
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;

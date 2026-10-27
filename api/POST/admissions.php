@@ -99,6 +99,23 @@ class AdmissionManager
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+        if ($doctorId > 0) {
+            $chkAssigned = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
+            $chkAssigned->execute([':aid' => $admissionId, ':did' => $doctorId]);
+            if (intval($chkAssigned->fetchColumn()) === 0) {
+                return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
+            }
+        }
         $newBedId = intval($json['new_bed_id'] ?? 0);
 
         if (empty($admissionId) || empty($newBedId)) {
@@ -206,6 +223,23 @@ class AdmissionManager
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+        if ($doctorId > 0) {
+            $chkAssigned = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
+            $chkAssigned->execute([':aid' => $admissionId, ':did' => $doctorId]);
+            if (intval($chkAssigned->fetchColumn()) === 0) {
+                return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
+            }
+        }
 
         if (empty($admissionId)) {
             return json_encode(['error' => 'Admission ID is required.']);
@@ -307,6 +341,23 @@ class AdmissionManager
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+        if ($doctorId > 0) {
+            $chkAssigned = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
+            $chkAssigned->execute([':aid' => $admissionId, ':did' => $doctorId]);
+            if (intval($chkAssigned->fetchColumn()) === 0) {
+                return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
+            }
+        }
         $diagnosis = trim($json['diagnosis'] ?? '');
         $chiefComplaint = trim($json['chief_complaint'] ?? '');
 

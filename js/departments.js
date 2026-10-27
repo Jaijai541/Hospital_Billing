@@ -423,14 +423,14 @@ const renderDeptOrders = () => {
                 statusBadge = `<span class="badge-process badge-process-requested">${isScan ? "Scan Requested" : "Requested"}</span>`;
                 actionBtn = `<button type="button" class="btn btn-sm btn-primary" onclick="startPreparingDeptOrder(${o.Request_ID})">Start Preparing</button>`;
             } else if (o.Status === "Preparing") {
-                statusBadge = `<span class="badge-process badge-process-preparing">${isScan ? "Prepping Room" : "Preparing"}</span>`;
-                const prepText = isScan ? "Room Ready &amp; Alert Nurse" : "Mark Prepared &amp; Alert Nurse";
+                statusBadge = `<span class="badge-process badge-process-preparing">${isScan ? "Preparing Equipment" : "Preparing"}</span>`;
+                const prepText = isScan ? "Equipment Ready &amp; Alert Nurse" : "Mark Prepared &amp; Alert Nurse";
                 actionBtn = `<button type="button" class="btn btn-sm btn-info" onclick="openSelectNurseModalGlobal(${o.Request_ID})">${prepText}</button>`;
             } else if (o.Status === "Prepared") {
-                statusBadge = `<span class="badge-process badge-process-prepared">${isScan ? "Room Ready" : "Prepared (Ready)"}</span>`;
+                statusBadge = `<span class="badge-process badge-process-prepared">${isScan ? "Equipment Ready" : "Prepared (Ready)"}</span>`;
                 actionBtn = `<span class="table-sub-text font-bold">${o.Assigned_Nurse_Name ? `Nurse: ${o.Assigned_Nurse_Name}` : "Nurse Alerted"}</span>`;
             } else if (o.Status === "Delivering" || o.Status === "In Transit") {
-                statusBadge = `<span class="badge-process badge-process-delivering">${isScan ? "Transporting Patient" : "Out for Delivery"}</span>`;
+                statusBadge = `<span class="badge-process badge-process-delivering">${isScan ? "Escorting Patient" : "Out for Delivery"}</span>`;
                 actionBtn = `<span class="table-sub-text font-bold">${o.Assigned_Nurse_Name ? `Nurse ${o.Assigned_Nurse_Name}` : "In Transit"}</span>`;
             } else if (o.Status === "Administered") {
                 statusBadge = `<span class="badge-process badge-process-administered">Administered</span>`;

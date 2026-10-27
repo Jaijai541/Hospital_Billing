@@ -1445,6 +1445,39 @@ const loadAdmissionDetails = () => {
             admissionData = response.data;
             assignedDoctors = admissionData.Assigned_Doctors || [];
 
+            const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const isDoctorRole = (curUser.role_name && curUser.role_name.toLowerCase() === 'doctor') || Boolean(curUser.doctor_id);
+            const isAssignedDoctor = !isDoctorRole || assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(curUser.doctor_id, 10));
+
+            const noticeBanner = document.getElementById("doctor-access-notice-banner");
+            if (isDoctorRole && !isAssignedDoctor) {
+                if (noticeBanner) {
+                    noticeBanner.classList.remove("dept-tab-pane-hidden");
+                    const names = assignedDoctors.map(d => d.Doctor_Name || ('Dr. ' + d.First_Name + ' ' + d.Last_Name)).join(", ") || "Other Attending Physician";
+                    noticeBanner.innerHTML = `
+                        <div class="banner-notice-inner">
+                            <div>
+                                <strong>Doctor Access Notice:</strong> You are not an assigned attending physician for this patient. Only the assigned physician (${names}) has clinical authorization to order medications/scans, log bedside rounds, transfer beds, or discharge this patient.
+                            </div>
+                        </div>
+                    `;
+                }
+                const btnOrder = document.getElementById("btnOpenOrderModal");
+                const btnRound = document.getElementById("btnOpenRoundModal");
+                const btnTransfer = document.getElementById("btnOpenTransferModal");
+                const btnDischarge = document.getElementById("btnChartDischarge");
+                const btnVoid = document.getElementById("btnOpenVoidModal");
+                const btnAssess = document.getElementById("btnOpenAssessmentModal");
+                if (btnOrder) btnOrder.style.display = "none";
+                if (btnRound) btnRound.style.display = "none";
+                if (btnTransfer) btnTransfer.style.display = "none";
+                if (btnDischarge) btnDischarge.style.display = "none";
+                if (btnVoid) btnVoid.style.display = "none";
+                if (btnAssess) btnAssess.style.display = "none";
+            } else if (noticeBanner) {
+                noticeBanner.classList.add("dept-tab-pane-hidden");
+            }
+
             const rawNames = (admissionData.Full_Name || '').trim().split(' ');
             let initials = '--';
             if (rawNames.length > 1) {
@@ -1965,10 +1998,10 @@ const renderTrackingStepper = (o) => {
     const stage = getOrderProcessStage(o.Status);
 
     const step1Title = 'Requested';
-    const step2Title = isScan ? 'Prepping Room' : 'Preparing';
-    const step3Title = isScan ? 'Room Ready' : 'Prepared';
-    const step4Title = isScan ? 'Transporting' : 'Delivering';
-    const step5Title = isScan ? 'Scan Done' : 'Administered';
+    const step2Title = isScan ? 'Preparing Equipment' : 'Preparing';
+    const step3Title = isScan ? 'Equipment Ready' : 'Prepared';
+    const step4Title = isScan ? 'Escorting Patient' : 'Delivering';
+    const step5Title = isScan ? 'Scan Completed' : 'Administered';
 
     let s1State = 'is-complete';
     let s2State = '';
@@ -2004,16 +2037,16 @@ const renderTrackingStepper = (o) => {
     let badgeText = isScan ? 'Scan Requested' : 'Requested';
     if (stage === 'preparing') {
         badgeClass = 'badge-process-preparing';
-        badgeText = isScan ? 'Prepping Scan Room' : 'Department Preparing';
+        badgeText = isScan ? 'Preparing Equipment' : 'Department Preparing';
     } else if (stage === 'prepared') {
         badgeClass = 'badge-process-prepared';
-        badgeText = isScan ? 'Room Ready — Transport' : 'Prepared (Ready for Pickup)';
+        badgeText = isScan ? 'Equipment Ready (Nurse Dispatched)' : 'Prepared (Ready for Pickup)';
     } else if (stage === 'delivering') {
         badgeClass = 'badge-process-delivering';
-        badgeText = isScan ? 'Transporting Patient' : 'Out for Delivery';
+        badgeText = isScan ? 'Escorting Patient to Scan' : 'Out for Delivery';
     } else if (stage === 'administered') {
         badgeClass = 'badge-process-administered';
-        badgeText = isScan ? 'Scan Completed & Charged' : 'Administered & Charged';
+        badgeText = isScan ? 'Scan Completed & Recorded' : 'Delivered & Administered';
     }
 
     let trackerMeta = '';
@@ -2214,31 +2247,35 @@ const renderFilteredOrders = () => {
         }
         deptHandlingHtml += `</div>`;
 
+        const curUserOrders = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+        const isDocOrderUser = (curUserOrders.role_name && curUserOrders.role_name.toLowerCase() === 'doctor') || Boolean(curUserOrders.doctor_id);
+        const isAssignedDocOrder = !isDocOrderUser || assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(curUserOrders.doctor_id, 10));
+        const canCancelOrder = isAssignedDocOrder || parseInt(curUserOrders.role_id, 10) === 1;
+
         let actionHtml = '';
         if (stage === 'requested') {
             actionHtml = `
-                <button type="button" class="btn btn-sm btn-primary" onclick="startPreparingOrder(${o.Request_ID})">Start Preparing</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+                <span class="badge badge-process badge-process-requested">Awaiting ${deptName}</span>
+                ${canCancelOrder ? `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>` : ''}
             `;
         } else if (stage === 'preparing') {
-            const btnPrepText = isScan ? 'Scan Room Ready — Assign Nurse' : 'Mark Prepared &amp; Assign Nurse';
             actionHtml = `
-                <button type="button" class="btn btn-sm btn-info" onclick="openSelectNurseModal(${o.Request_ID})">${btnPrepText}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+                <span class="badge badge-process badge-process-preparing">In Prep (${deptName})</span>
+                ${canCancelOrder ? `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>` : ''}
             `;
         } else if (stage === 'prepared') {
             const btnDeliverText = isScan ? 'Transport Patient to Scan' : 'Pick Up &amp; Deliver';
             actionHtml = `
                 <button type="button" class="btn btn-sm btn-primary" onclick="receiveOrderForDelivery(${o.Request_ID})">${btnDeliverText}</button>
-                <button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>
+                ${canCancelOrder ? `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>` : ''}
             `;
         } else if (stage === 'delivering') {
-            const btnAdminText = isScan ? 'Complete &amp; Administer Scan' : 'Deliver &amp; Administer';
+            const btnAdminText = isScan ? 'Scan Completed &amp; Recorded' : 'Deliver &amp; Administer';
             actionHtml = `
                 <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">${btnAdminText}</button>
             `;
         } else if (stage === 'administered') {
-            actionHtml = `<span class="badge badge-success">Completed</span>`;
+            actionHtml = `<span class="badge badge-success">Completed &amp; Administered</span>`;
         } else if (stage === 'cancelled') {
             actionHtml = `<span class="badge badge-secondary">Cancelled</span>`;
         }

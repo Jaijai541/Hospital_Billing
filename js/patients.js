@@ -622,7 +622,13 @@ const displayPatients = async () => {
     try {
         console.log("[API] Requesting: getAllPatients");
         const response = await axios.get(`${getApiUrl}/patients.php`, {
-            params: { operation: "getAllPatients" }
+            params: { 
+                operation: "getAllPatients",
+                json: JSON.stringify({
+                    user_id: JSON.parse(sessionStorage.getItem("hospital_user") || "{}").user_id,
+                    doctor_id: JSON.parse(sessionStorage.getItem("hospital_user") || "{}").doctor_id
+                })
+            }
         });
 
         if (response.status === 200) {

@@ -1,0 +1,290 @@
+.dept-queue-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dept-station-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+.dept-station-select-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dept-station-select {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+.dept-stage-pills-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.dept-stage-pill-btn {
+    border: 1px solid transparent;
+    background: transparent;
+    color: #64748b;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.16s ease;
+}
+
+.dept-stage-pill-btn:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.dept-stage-pill-btn.active {
+    background: #ffffff;
+    color: #0284c7;
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.dept-stage-pill-count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 12px;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.dept-stage-pill-btn.active .dept-stage-pill-count {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.dept-orders-table-wrap {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.dept-order-row-highlight {
+    animation: deptRowPulse 2s ease-in-out;
+}
+
+@keyframes deptRowPulse {
+    0% { background-color: #fef08a; }
+    100% { background-color: transparent; }
+}
+
+.dept-order-id-cell {
+    white-space: nowrap;
+}
+
+.dept-order-code {
+    font-weight: 700;
+    color: #0284c7;
+    font-size: 13.5px;
+}
+
+.dept-order-time {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+.dept-doc-cell {
+    line-height: 1.35;
+}
+
+.dept-doc-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 13px;
+}
+
+.dept-doc-station {
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.dept-patient-cell {
+    line-height: 1.35;
+}
+
+.dept-pat-name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 13.5px;
+}
+
+.dept-pat-location {
+    font-size: 11.5px;
+    color: #475569;
+    margin-top: 2px;
+}
+
+.dept-item-cell {
+    max-width: 260px;
+}
+
+.dept-item-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 13px;
+}
+
+.dept-item-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+.dept-item-dosage {
+    font-size: 12px;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 3px 7px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.dept-actions-cell {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.dept-action-btn-group {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.dept-btn-prep {
+    background-color: #0284c7;
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.dept-btn-prep:hover {
+    background-color: #0369a1;
+}
+
+.dept-btn-ready {
+    background-color: #7c3aed;
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.dept-btn-ready:hover {
+    background-color: #6d28d9;
+}
+
+.dept-meta-assigned {
+    font-size: 12px;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.nurse-picker-list {
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.nurse-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.nurse-picker-item:last-child {
+    border-bottom: none;
+}
+
+.nurse-picker-item:hover {
+    background: #f8fafc;
+}
+
+.nurse-picker-item.selected {
+    background: #eff6ff;
+    border-left: 3px solid #0284c7;
+}
+
+.nurse-name-text {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 13px;
+}
+
+.nurse-role-text {
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.dept-empty-card {
+    text-align: center;
+    padding: 48px 20px;
+    color: #64748b;
+}
+
+.dept-empty-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.dept-empty-text {
+    font-size: 13px;
+    color: #64748b;
+}

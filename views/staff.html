@@ -262,6 +262,8 @@
                                 <span class="role-presets-subtitle">Auto-select standard permissions</span>
                             </div>
                             <div class="role-presets-buttons-wrap" id="role-presets-container">
+                                <button type="button" class="btn btn-outline btn-sm btn-role-preset" data-preset="doctor">Doctor</button>
+                                <button type="button" class="btn btn-outline btn-sm btn-role-preset" data-preset="dept_staff">Dept Staff</button>
                                 <button type="button" class="btn btn-outline btn-sm btn-role-preset" data-preset="nurse">Nurse</button>
                                 <button type="button" class="btn btn-outline btn-sm btn-role-preset" data-preset="head_nurse">Head Nurse</button>
                                 <button type="button" class="btn btn-outline btn-sm btn-role-preset" data-preset="finance">Finance</button>
@@ -375,7 +377,7 @@
                                     </div>
                                 </div>
 
-                                <div class="role-perm-pane role-perm-pane-col role-perm-pane-hidden" id="pane-clinical_care">
+                                <div class="role-perm-pane role-perm-pane-grid role-perm-pane-hidden" id="pane-clinical_care">
                                     <div class="role-module-card" data-module="admissions.html">
                                         <div class="role-module-view-row">
                                             <label class="role-perm-item-label">
@@ -388,6 +390,17 @@
                                                 <input type="checkbox" class="role-action-perm-check role-add-perm-check" value="can_add_admission" data-parent-module="admissions.html">
                                                 <span>Admit &amp; Clinical Orders Access</span>
                                             </label>
+                                        </div>
+                                    </div>
+                                    <div class="role-module-card" data-module="department_orders.html">
+                                        <div class="role-module-view-row">
+                                            <label class="role-perm-item-label">
+                                                <input type="checkbox" class="role-perm-check" value="department_orders.html">
+                                                <span><strong>Department Fulfillment Queue</strong><br><small class="text-muted role-perm-desc">Live prescriptions, imaging, lab orders processing &amp; nurse dispatch</small></span>
+                                            </label>
+                                        </div>
+                                        <div class="role-module-action-row role-module-action-info">
+                                            <span class="role-module-action-notice">Preparation &amp; Fulfillment Dispatch Access</span>
                                         </div>
                                     </div>
                                 </div>

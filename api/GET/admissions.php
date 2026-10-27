@@ -12,6 +12,17 @@ class AdmissionManager
         $statusFilter = $json['status'] ?? 'all';
         $search = trim($json['search'] ?? '');
         $sort = $json['sort'] ?? 'id_desc';
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
 
         $sql = "SELECT 
                     a.Admission_ID,
@@ -60,6 +71,11 @@ class AdmissionManager
                 WHERE 1=1";
 
         $params = [];
+
+        if ($doctorId > 0) {
+            $sql .= " AND EXISTS (SELECT 1 FROM Admission_Doctor doc_filter WHERE doc_filter.Admission_ID = a.Admission_ID AND doc_filter.Doctor_ID = :doc_filter_id)";
+            $params[':doc_filter_id'] = $doctorId;
+        }
 
         if ($statusFilter !== 'all' && !empty($statusFilter)) {
             if ($statusFilter === 'Settled') {
@@ -238,6 +254,29 @@ class AdmissionManager
         $pnStmt = $conn->prepare($pnSql);
         $pnStmt->execute([':id' => $id]);
         $admission['Promissory_Note'] = $pnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+        $isAssignedDoctor = true;
+        if ($doctorId > 0) {
+            $isAssignedDoctor = false;
+            foreach ($admission['Assigned_Doctors'] as $adDoc) {
+                if (intval($adDoc['Doctor_ID']) === $doctorId) {
+                    $isAssignedDoctor = true;
+                    break;
+                }
+            }
+        }
+        $admission['is_assigned_doctor'] = $isAssignedDoctor;
+        $admission['requesting_doctor_id'] = $doctorId;
 
         return json_encode($admission);
     }

@@ -47,6 +47,15 @@ class ClinicalOrderManager
             $admStmt->execute([':adid' => $admissionDoctorId]);
             $admData = $admStmt->fetch(PDO::FETCH_ASSOC);
 
+            if ($senderUserId > 0 && $admData) {
+                $checkDoc = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1");
+                $checkDoc->execute([':uid' => $senderUserId]);
+                $callerDocId = $checkDoc->fetchColumn();
+                if ($callerDocId && intval($callerDocId) !== intval($admData['Doctor_ID'])) {
+                    return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient. Only assigned doctors can order items.']);
+                }
+            }
+
             $sql = "INSERT INTO Doctor_Order_Request (Admission_Doctor_ID, Catalog_ID, Target_Station_ID, Quantity, Dosage_Instructions, Status, Request_Timestamp)
                     VALUES (:adid, :cid, :tsid, :qty, :dosage, 'Requested', NOW())";
             $stmt = $conn->prepare($sql);
@@ -109,7 +118,7 @@ class ClinicalOrderManager
         }
 
         try {
-            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status,
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
                                 ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
                                 c.Item_Name, c.Category_Type,
@@ -140,6 +149,29 @@ class ClinicalOrderManager
                 return json_encode(['error' => 'Order has already been administered.']);
             }
 
+            $userStationIds = [];
+            $isHigherUp = false;
+            if ($userId > 0) {
+                $uRoleStmt = $conn->prepare("SELECT u.Role_ID, u.Station_ID, r.Is_Higher_Up FROM System_User u INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID WHERE u.User_ID = :uid");
+                $uRoleStmt->execute([':uid' => $userId]);
+                $uRole = $uRoleStmt->fetch(PDO::FETCH_ASSOC);
+                if ($uRole) {
+                    $isHigherUp = (intval($uRole['Is_Higher_Up']) === 1 || intval($uRole['Role_ID']) === 1);
+                    if (!empty($uRole['Station_ID'])) $userStationIds[] = intval($uRole['Station_ID']);
+                }
+                $udsStmt = $conn->prepare("SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid");
+                $udsStmt->execute([':uid' => $userId]);
+                while ($sid = $udsStmt->fetchColumn()) {
+                    $userStationIds[] = intval($sid);
+                }
+                $userStationIds = array_values(array_unique(array_filter($userStationIds)));
+            }
+
+            $orderTargetStation = intval($order['Target_Station_ID'] ?? 0);
+            if (!$isHigherUp && !empty($userStationIds) && $orderTargetStation > 0 && !in_array($orderTargetStation, $userStationIds)) {
+                return json_encode(['error' => 'Unauthorized: This order is routed to ' . $order['Station_Name'] . '. Your department does not have permission to fulfill it.']);
+            }
+
             $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
                                           SET Status = 'Preparing', 
                                               Preparing_Timestamp = NOW(), 
@@ -154,8 +186,8 @@ class ClinicalOrderManager
             $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
 
             if ($isScan) {
-                $notifTitle = "Scan Room Preparing: {$order['Item_Name']}";
-                $notifMsg = "{$order['Station_Name']} is currently preparing the scan room and equipment for {$order['Patient_Name']}'s {$order['Item_Name']} ($location) requested by you.";
+                $notifTitle = "Scan Equipment Preparing: {$order['Item_Name']}";
+                $notifMsg = "{$order['Station_Name']} is currently preparing the imaging equipment for {$order['Patient_Name']}'s {$order['Item_Name']} ($location) requested by you.";
             } else {
                 $notifTitle = "Order Preparing: {$order['Item_Name']}";
                 $notifMsg = "Your requested {$order['Item_Name']} for patient {$order['Patient_Name']} ($location) is currently being prepared in {$order['Station_Name']}.";
@@ -202,7 +234,7 @@ class ClinicalOrderManager
         }
 
         try {
-            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status,
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
                                 ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
@@ -232,6 +264,29 @@ class ClinicalOrderManager
                 return json_encode(['error' => 'Order has already been administered.']);
             }
 
+            $userStationIds = [];
+            $isHigherUp = false;
+            if ($userId > 0) {
+                $uRoleStmt = $conn->prepare("SELECT u.Role_ID, u.Station_ID, r.Is_Higher_Up FROM System_User u INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID WHERE u.User_ID = :uid");
+                $uRoleStmt->execute([':uid' => $userId]);
+                $uRole = $uRoleStmt->fetch(PDO::FETCH_ASSOC);
+                if ($uRole) {
+                    $isHigherUp = (intval($uRole['Is_Higher_Up']) === 1 || intval($uRole['Role_ID']) === 1);
+                    if (!empty($uRole['Station_ID'])) $userStationIds[] = intval($uRole['Station_ID']);
+                }
+                $udsStmt = $conn->prepare("SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid");
+                $udsStmt->execute([':uid' => $userId]);
+                while ($sid = $udsStmt->fetchColumn()) {
+                    $userStationIds[] = intval($sid);
+                }
+                $userStationIds = array_values(array_unique(array_filter($userStationIds)));
+            }
+
+            $orderTargetStation = intval($order['Target_Station_ID'] ?? 0);
+            if (!$isHigherUp && !empty($userStationIds) && $orderTargetStation > 0 && !in_array($orderTargetStation, $userStationIds)) {
+                return json_encode(['error' => 'Unauthorized: This order is routed to ' . $order['Station_Name'] . '. Your department does not have permission to fulfill it.']);
+            }
+
             $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
                                           SET Status = 'Prepared', 
                                               Prepared_Timestamp = NOW(), 
@@ -248,8 +303,8 @@ class ClinicalOrderManager
             $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
 
             if ($isScan) {
-                $notifTitle = "Scan Room Ready — Transport Patient: {$order['Item_Name']}";
-                $notifMsg = "The scan room at {$order['Station_Name']} is prepared and ready for {$order['Patient_Name']} ($location). Please escort and deliver patient to {$order['Station_Name']} for their {$order['Item_Name']}.";
+                $notifTitle = "Equipment Ready — Escort Patient: {$order['Item_Name']}";
+                $notifMsg = "The equipment at {$order['Station_Name']} is prepared and ready for {$order['Patient_Name']} ($location). Please escort patient to {$order['Station_Name']} for their {$order['Item_Name']}.";
             } else {
                 $notifTitle = "Order Ready for Pickup: {$order['Item_Name']}";
                 $notifMsg = "{$order['Item_Name']} has been prepared by {$order['Station_Name']} for patient {$order['Patient_Name']} ($location). Please pick up the item at {$order['Station_Name']} for delivery.";
@@ -301,7 +356,7 @@ class ClinicalOrderManager
         }
 
         try {
-            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status,
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
                                 ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
@@ -331,6 +386,29 @@ class ClinicalOrderManager
                 return json_encode(['error' => 'Order has already been administered.']);
             }
 
+            $userStationIds = [];
+            $isHigherUp = false;
+            if ($userId > 0) {
+                $uRoleStmt = $conn->prepare("SELECT u.Role_ID, u.Station_ID, r.Is_Higher_Up FROM System_User u INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID WHERE u.User_ID = :uid");
+                $uRoleStmt->execute([':uid' => $userId]);
+                $uRole = $uRoleStmt->fetch(PDO::FETCH_ASSOC);
+                if ($uRole) {
+                    $isHigherUp = (intval($uRole['Is_Higher_Up']) === 1 || intval($uRole['Role_ID']) === 1);
+                    if (!empty($uRole['Station_ID'])) $userStationIds[] = intval($uRole['Station_ID']);
+                }
+                $udsStmt = $conn->prepare("SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid");
+                $udsStmt->execute([':uid' => $userId]);
+                while ($sid = $udsStmt->fetchColumn()) {
+                    $userStationIds[] = intval($sid);
+                }
+                $userStationIds = array_values(array_unique(array_filter($userStationIds)));
+            }
+
+            $orderTargetStation = intval($order['Target_Station_ID'] ?? 0);
+            if (!$isHigherUp && !empty($userStationIds) && $orderTargetStation > 0 && !in_array($orderTargetStation, $userStationIds)) {
+                return json_encode(['error' => 'Unauthorized: This order is routed to ' . $order['Station_Name'] . '. Your department does not have permission to fulfill it.']);
+            }
+
             $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
                                           SET Status = 'Delivering', 
                                               Delivering_Timestamp = NOW(), 
@@ -349,8 +427,8 @@ class ClinicalOrderManager
             $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
 
             if ($isScan) {
-                $notifTitle = "Patient In Transit to Scan Room: {$order['Item_Name']}";
-                $notifMsg = "Patient {$order['Patient_Name']} ($location) was received by Nurse {$nurseName} and is now being transported to {$order['Station_Name']} for their {$order['Item_Name']}.";
+                $notifTitle = "Patient In Transit to Scan Suite: {$order['Item_Name']}";
+                $notifMsg = "Patient {$order['Patient_Name']} ($location) was received by Nurse {$nurseName} and is now being escorted to {$order['Station_Name']} for their {$order['Item_Name']}.";
             } else {
                 $notifTitle = "Order In Transit: {$order['Item_Name']}";
                 $notifMsg = "Your requested {$order['Item_Name']} for {$order['Patient_Name']} ($location) was received by Nurse {$nurseName} and is now being delivered to the patient.";
@@ -494,7 +572,7 @@ class ClinicalOrderManager
 
             $isScan = ($order['Category_Type'] === 'Equipment Scan' || $order['Category_Type'] === 'Service');
             if ($isScan) {
-                $notifTitle = "Scan Completed & Administered: {$order['Item_Name']}";
+                $notifTitle = "Scan Completed & Recorded: {$order['Item_Name']}";
                 $notifMsg = "{$order['Item_Name']} scan for {$order['Patient_Name']} has been conducted and completed by $adminName. Charge of ₱" . number_format($totalCharge, 2) . " posted to Billing Ledger.";
             } else {
                 $notifTitle = "Order Administered: {$order['Item_Name']}";

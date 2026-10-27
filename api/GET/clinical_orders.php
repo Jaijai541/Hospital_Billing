@@ -482,6 +482,71 @@ class ClinicalOrderManager
         $stmt->execute($params);
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
+
+    function getDoctorDashboardMetrics($json = '{}')
+    {
+        include "connection.php";
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+
+        if (empty($doctorId)) {
+            return json_encode([
+                'pending_orders' => 0,
+                'orders_in_prep' => 0,
+                'orders_in_transit' => 0,
+                'today_rounds' => 0,
+                'assigned_patients' => 0
+            ]);
+        }
+
+        $ordStmt = $conn->prepare("
+            SELECT 
+                COUNT(*) AS total_pending,
+                SUM(CASE WHEN dor.Status = 'Preparing' THEN 1 ELSE 0 END) AS in_prep,
+                SUM(CASE WHEN dor.Status IN ('Prepared', 'Delivering') THEN 1 ELSE 0 END) AS in_transit
+            FROM Doctor_Order_Request dor
+            INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+            WHERE ad.Doctor_ID = :did AND dor.Status IN ('Requested', 'Preparing', 'Prepared', 'Delivering')
+        ");
+        $ordStmt->execute([':did' => $doctorId]);
+        $ordRow = $ordStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $rndStmt = $conn->prepare("
+            SELECT COUNT(*) 
+            FROM Doctor_Round_Log drl
+            INNER JOIN Admission_Doctor ad ON drl.Admission_Doctor_ID = ad.Admission_Doctor_ID
+            WHERE ad.Doctor_ID = :did AND DATE(drl.Round_Timestamp) = CURDATE()
+        ");
+        $rndStmt->execute([':did' => $doctorId]);
+        $todayRounds = intval($rndStmt->fetchColumn() ?: 0);
+
+        $patStmt = $conn->prepare("
+            SELECT COUNT(DISTINCT a.Admission_ID)
+            FROM Admission a
+            INNER JOIN Admission_Doctor ad ON a.Admission_ID = ad.Admission_ID
+            WHERE ad.Doctor_ID = :did AND a.Status = 'Admitted'
+        ");
+        $patStmt->execute([':did' => $doctorId]);
+        $activePatients = intval($patStmt->fetchColumn() ?: 0);
+
+        return json_encode([
+            'pending_orders' => intval($ordRow['total_pending'] ?? 0),
+            'orders_in_prep' => intval($ordRow['in_prep'] ?? 0),
+            'orders_in_transit' => intval($ordRow['in_transit'] ?? 0),
+            'today_rounds' => $todayRounds,
+            'assigned_patients' => $activePatients
+        ]);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -514,6 +579,9 @@ switch ($operation) {
         break;
     case 'getDepartmentOrders':
         echo $clinical->getDepartmentOrders($json);
+        break;
+    case 'getDoctorDashboardMetrics':
+        echo $clinical->getDoctorDashboardMetrics($json);
         break;
 }
 ?>

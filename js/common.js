@@ -2532,7 +2532,7 @@ const showClinicalToastAlert = (n) => {
                 <span class="clinical-toast-time">${n.Formatted_Time || "Just now"}</span>
                 <div class="clinical-toast-footer-actions">
                     <button type="button" class="btn btn-secondary clinical-toast-btn btn-toast-disable">Disable Toasts</button>
-                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-open">Open Department Queue</button>
+                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-open">View / Process</button>
                 </div>
             </div>
         </div>
@@ -2541,9 +2541,13 @@ const showClinicalToastAlert = (n) => {
     toast.querySelector(".clinical-toast-close").addEventListener("click", () => toast.remove());
     toast.querySelector(".btn-toast-open").addEventListener("click", () => {
         toast.remove();
-        openModal("clinicalNotifModal");
-        const tabQueue = document.getElementById("btnTabNotifQueue");
-        if (tabQueue) tabQueue.click();
+        const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+        const isDoc = (curUser.role_name && curUser.role_name.toLowerCase() === 'doctor') || Boolean(curUser.doctor_id);
+        if (!isDoc && (n.Notification_Type === "Order_Requested" || curUser.station_id)) {
+            window.location.href = `department_orders.html?station_id=${n.Target_Station_ID || curUser.station_id || ''}&request_id=${n.Request_ID || ''}`;
+        } else {
+            window.location.href = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders`;
+        }
     });
 
     const onDisableToasts = () => {
@@ -2652,6 +2656,15 @@ const fetchRealtimeNotifications = () => {
                 else if (n.Notification_Type === "Order_Delivering") typeBadge = '<span class="badge-process badge-process-delivering">Out for Delivery</span>';
                 else if (n.Notification_Type === "Order_Administered") typeBadge = '<span class="badge-process badge-process-administered">Administered</span>';
 
+                const notifUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+                const notifIsDoc = (notifUser.role_name && notifUser.role_name.toLowerCase() === 'doctor') || Boolean(notifUser.doctor_id);
+                let notifLink = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders`;
+                let notifBtnLabel = "View in Chart";
+                if (!notifIsDoc && (n.Notification_Type === "Order_Requested" || notifUser.station_id)) {
+                    notifLink = `department_orders.html?station_id=${n.Target_Station_ID || notifUser.station_id || ''}&request_id=${n.Request_ID || ''}`;
+                    notifBtnLabel = "Open Dept Queue";
+                }
+
                 html += `
                     <div class="notif-item-card ${unreadClass}" data-notif-id="${n.Notification_ID}">
                         <div class="notif-item-header">
@@ -2661,7 +2674,7 @@ const fetchRealtimeNotifications = () => {
                         <div class="notif-item-msg">${n.Message}</div>
                         <div class="notif-item-footer">
                             <div>${typeBadge} • <span class="table-sub-text">Patient: <strong>${n.Patient_Name} (${n.Patient_Code})</strong></span></div>
-                            <a href="admission_details.html?id=${n.Admission_ID}&sub=sub-orders" class="btn btn-sm btn-outline">View Order</a>
+                            <a href="${notifLink}" class="btn btn-sm btn-outline">${notifBtnLabel}</a>
                         </div>
                     </div>
                 `;
@@ -2788,10 +2801,10 @@ const renderDeptTrackingStepper = (o) => {
     const stage = getDeptOrderProcessStage(o.Status);
 
     const step1Title = 'Requested';
-    const step2Title = isScan ? 'Prepping Room' : 'Preparing';
-    const step3Title = isScan ? 'Room Ready' : 'Prepared';
-    const step4Title = isScan ? 'Transporting' : 'Delivering';
-    const step5Title = isScan ? 'Scan Done' : 'Administered';
+    const step2Title = isScan ? 'Preparing Equipment' : 'Preparing';
+    const step3Title = isScan ? 'Equipment Ready' : 'Prepared';
+    const step4Title = isScan ? 'Escorting Patient' : 'Delivering';
+    const step5Title = isScan ? 'Scan Completed' : 'Administered';
 
     let s1State = 'is-complete';
     let s2State = '';
@@ -2827,16 +2840,16 @@ const renderDeptTrackingStepper = (o) => {
     let badgeText = isScan ? 'Scan Requested' : 'Requested';
     if (stage === 'preparing') {
         badgeClass = 'badge-process-preparing';
-        badgeText = isScan ? 'Prepping Scan Room' : 'Department Preparing';
+        badgeText = isScan ? 'Preparing Equipment' : 'Department Preparing';
     } else if (stage === 'prepared') {
         badgeClass = 'badge-process-prepared';
-        badgeText = isScan ? 'Room Ready — Transport' : 'Prepared (Ready for Pickup)';
+        badgeText = isScan ? 'Equipment Ready (Nurse Dispatched)' : 'Prepared (Ready for Pickup)';
     } else if (stage === 'delivering') {
         badgeClass = 'badge-process-delivering';
-        badgeText = isScan ? 'Transporting Patient' : 'Out for Delivery';
+        badgeText = isScan ? 'Escorting Patient to Scan' : 'Out for Delivery';
     } else if (stage === 'administered') {
         badgeClass = 'badge-process-administered';
-        badgeText = isScan ? 'Scan Completed & Charged' : 'Administered & Charged';
+        badgeText = isScan ? 'Scan Completed & Recorded' : 'Delivered & Administered';
     }
 
     let trackerMeta = '';

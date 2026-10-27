@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Department Fulfillment Queue — Hospital Care System</title>
+    <link rel="stylesheet" href="../css/common.css?v=19.0">
+    <link rel="stylesheet" href="../css/department_orders.css?v=19.0">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <aside id="sidebar-container" class="sidebar"></aside>
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1 id="dept-queue-page-title">Department Fulfillment Queue</h1>
+                    <span class="subtitle" id="dept-queue-subtitle">Live Prescriptions, Diagnostic Imaging &amp; Department Orders Processing</span>
+                </div>
+                <div class="dept-queue-topbar-right">
+                    <div id="dept-station-pill-container" class="dept-station-pill">
+                        <span id="dept-active-station-name">Department Queue</span>
+                    </div>
+                    <div id="dept-station-select-container" class="dept-station-select-wrap">
+                        <select id="select_department_station" class="dept-station-select"></select>
+                    </div>
+                    <button type="button" id="btnRefreshDeptOrders" class="btn-refresh" title="Refresh Department Queue">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <div class="card">
+                    <div class="card-header dept-card-header">
+                        <div class="dept-card-title-group">
+                            <h2 class="dept-card-title">Clinical Orders Routing &amp; Fulfillment</h2>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="dept-stage-pills-bar" id="dept-stage-filters-container">
+                            <button type="button" class="dept-stage-pill-btn active" data-stage="all">
+                                <span>All Orders</span>
+                                <span class="dept-stage-pill-count" id="count-stage-all">0</span>
+                            </button>
+                            <button type="button" class="dept-stage-pill-btn" data-stage="requested">
+                                <span>Requested</span>
+                                <span class="dept-stage-pill-count" id="count-stage-requested">0</span>
+                            </button>
+                            <button type="button" class="dept-stage-pill-btn" data-stage="preparing">
+                                <span>Preparing</span>
+                                <span class="dept-stage-pill-count" id="count-stage-preparing">0</span>
+                            </button>
+                            <button type="button" class="dept-stage-pill-btn" data-stage="prepared">
+                                <span>Prepared &amp; Ready</span>
+                                <span class="dept-stage-pill-count" id="count-stage-prepared">0</span>
+                            </button>
+                            <button type="button" class="dept-stage-pill-btn" data-stage="delivering">
+                                <span>Out for Delivery</span>
+                                <span class="dept-stage-pill-count" id="count-stage-delivering">0</span>
+                            </button>
+                            <button type="button" class="dept-stage-pill-btn" data-stage="administered">
+                                <span>Administered</span>
+                                <span class="dept-stage-pill-count" id="count-stage-administered">0</span>
+                            </button>
+                        </div>
+
+                        <div class="filter-bar">
+                            <div class="form-group filter-capsule-search">
+                                <label class="form-label" for="search_dept_input">Search Orders</label>
+                                <input type="text" id="search_dept_input" class="form-control" placeholder="Search by patient name, code, doctor, item, or bed...">
+                            </div>
+
+                            <div class="form-group filter-capsule-select">
+                                <label class="form-label" for="sort_dept_by">Sort By</label>
+                                <select id="sort_dept_by" class="form-select">
+                                    <option value="stage" selected>Process Stage (Pending First)</option>
+                                    <option value="time_desc">Request Time (Newest First)</option>
+                                    <option value="time_asc">Request Time (Oldest First)</option>
+                                    <option value="patient_asc">Patient Name (A-Z)</option>
+                                    <option value="doctor_asc">Requesting Doctor (A-Z)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="dept-orders-table-wrap">
+                            <table class="data-table" id="dept-orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order &amp; Time</th>
+                                        <th>Prescribing Doctor</th>
+                                        <th>Patient &amp; Location</th>
+                                        <th>Prescribed Item &amp; Dosage</th>
+                                        <th>Fulfillment Tracking</th>
+                                        <th class="text-right">Department Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dept-orders-tbody">
+                                </tbody>
+                            </table>
+                            <div id="dept-orders-empty" class="dept-empty-card dept-tab-pane-hidden">
+                                <div class="dept-empty-title">No orders found in queue</div>
+                                <div class="dept-empty-text">No active requests matching the selected station and filter criteria.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="assignNurseModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="assignNurseModalTitle">Select Nurse for Item Delivery</h3>
+                <button type="button" class="modal-close" id="btnCloseAssignNurseModal" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="assign_nurse_request_id" value="">
+                <p id="assignNursePromptText">Select an on-duty nurse to pick up and deliver this prepared item to the patient:</p>
+                <div class="form-group">
+                    <label class="form-label" for="nurse_search_input">Filter Active Nurses</label>
+                    <input type="text" id="nurse_search_input" class="form-control" placeholder="Search nurse name or station...">
+                </div>
+                <div class="nurse-picker-list" id="nurse-picker-list-container">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnCancelAssignNurse" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="btnConfirmAssignNurse" class="btn btn-primary">Dispatch Nurse &amp; Mark Prepared</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../js/sidebar.js?v=19.0"></script>
+    <script src="../js/common.js?v=19.0"></script>
+    <script src="../js/department_orders.js?v=19.0"></script>
+</body>
+</html>

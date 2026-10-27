@@ -299,7 +299,12 @@ const renderSidebar = () => {
     const canAccess = (page) => {
         if (page === "index.html") return true;
         if (hasGranularPerms) {
-            return userPerms.includes(page);
+            if (userPerms.includes(page)) return true;
+            if (page === "department_orders.html" && (hasAdminAccess || Boolean(user.station_id))) return true;
+            return false;
+        }
+        if (page === "department_orders.html") {
+            return hasAdminAccess || hasClinicalAccess || Boolean(user.station_id);
         }
         if (["departments.html", "staff.html", "audit_log.html", "archive.html"].includes(page)) {
             return hasAdminAccess;
@@ -331,7 +336,8 @@ const renderSidebar = () => {
     const masterHtml = allowedMasterItems.map(item => `<li><a href="${item.page}"${isActive(item.page)}>${item.label}</a></li>`).join("");
 
     const allClinicalItems = [
-        { page: "admissions.html", label: "Admissions & Beds" }
+        { page: "admissions.html", label: "Admissions & Beds" },
+        { page: "department_orders.html", label: "Department Queue" }
     ];
     const allowedClinicalItems = allClinicalItems.filter(item => canAccess(item.page));
     const clinicalPages = allowedClinicalItems.map(item => item.page);

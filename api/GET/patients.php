@@ -4,9 +4,29 @@ header("Access-Control-Allow-Origin: *");
 
 class PatientMaster
 {
-    function getAllPatients()
+    function getAllPatients($json = "{}")
     {
         include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+
+        $params = [];
+        $whereClause = "";
+        if ($doctorId > 0) {
+            $whereClause = " WHERE p.Patient_ID IN (SELECT DISTINCT a.Patient_ID FROM Admission a INNER JOIN Admission_Doctor ad ON a.Admission_ID = ad.Admission_ID WHERE ad.Doctor_ID = :scoped_doc_id)";
+            $params[':scoped_doc_id'] = $doctorId;
+        }
 
         $sql = "SELECT p.*, 
                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
@@ -52,9 +72,10 @@ class PatientMaster
                 FROM Patient p 
                 INNER JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID 
                 INNER JOIN Enum_Blood_Type b ON p.Blood_Type_ID = b.Blood_Type_ID 
+                {$whereClause}
                 ORDER BY p.Is_Active DESC, p.Last_Name ASC, p.First_Name ASC";
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($params);
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return json_encode($rs);
@@ -80,18 +101,41 @@ class PatientMaster
         $json = json_decode($json, true);
         $sql = "SELECT p.*, 
                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                       g.Gender_Name, 
+                       b.Blood_Type_Name,
+                       TIMESTAMPDIFF(YEAR, p.Date_Of_Birth, CURDATE()) AS Age,
                        a.Admission_ID AS Active_Admission_ID,
+                       CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Active_Admission_Code,
+                       DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date_Formatted,
+                       a.Chief_Complaint,
+                       a.Diagnosis,
                        a.Status AS Admission_Status,
                        rb.Bed_Code AS Current_Bed_Code,
                        r.Room_Name AS Current_Room_Name,
                        rt.Type_Name AS Current_Room_Type,
-                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Current_Daily_Rate
+                       COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Current_Daily_Rate,
+                       ef.Floor_Name,
+                       ef.Building_Wing,
+                       (
+                           SELECT GROUP_CONCAT(CONCAT('Dr. ', doc.First_Name, ' ', doc.Last_Name) SEPARATOR ', ')
+                           FROM Admission_Doctor ad
+                           INNER JOIN Doctor doc ON ad.Doctor_ID = doc.Doctor_ID
+                           WHERE ad.Admission_ID = a.Admission_ID
+                       ) AS Attending_Doctors,
+                       (
+                           SELECT COUNT(*) 
+                           FROM Admission 
+                           WHERE Patient_ID = p.Patient_ID
+                       ) AS Total_Admissions
                 FROM Patient p 
+                LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID 
+                LEFT JOIN Enum_Blood_Type b ON p.Blood_Type_ID = b.Blood_Type_ID 
                 LEFT JOIN Admission a ON a.Patient_ID = p.Patient_ID AND a.Status = 'Admitted'
                 LEFT JOIN Room_Transfer_Log rtl ON rtl.Admission_ID = a.Admission_ID AND rtl.Date_Out IS NULL
                 LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
                 LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                LEFT JOIN Enum_Floor ef ON r.Floor_ID = ef.Floor_ID
                 WHERE p.Patient_ID = :id
                 ORDER BY a.Admission_ID DESC
                 LIMIT 1";
@@ -115,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 $patient = new PatientMaster();
 switch ($operation) {
     case "getAllPatients":
-        echo $patient->getAllPatients();
+        echo $patient->getAllPatients($json);
         break;
     case "getPatientEnums":
         echo $patient->getPatientEnums();

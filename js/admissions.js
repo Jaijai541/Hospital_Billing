@@ -25,9 +25,14 @@ const dischargePatient = (admissionId, patientName) => {
         : `Are you sure you want to discharge patient "${patientName}" (Admission #${admissionId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`;
 
     showPopupConfirm(confirmMsg, () => {
+        const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
         const formData = new FormData();
         formData.append('operation', 'dischargePatient');
-        formData.append('json', JSON.stringify({ admission_id: admissionId }));
+        formData.append('json', JSON.stringify({ 
+            admission_id: admissionId,
+            user_id: curUser.user_id,
+            doctor_id: curUser.doctor_id
+        }));
 
         axios.post(`${postApiUrl}/admissions.php`, formData)
             .then(response => {
@@ -636,9 +641,16 @@ const loadAdmissions = () => {
     const search = document.getElementById('search_input').value;
     const sort = document.getElementById('sort_by') ? document.getElementById('sort_by').value : 'id_desc';
 
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const formData = new FormData();
     formData.append('operation', 'getAllAdmissions');
-    formData.append('json', JSON.stringify({ status: status, search: search, sort: sort }));
+    formData.append('json', JSON.stringify({ 
+        status: status, 
+        search: search, 
+        sort: sort,
+        user_id: curUser.user_id,
+        doctor_id: curUser.doctor_id
+    }));
 
     axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {

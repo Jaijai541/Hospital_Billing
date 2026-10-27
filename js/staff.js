@@ -685,10 +685,22 @@ const saveResetPassword = (e) => {
 };
 
 const rolePresets = {
+    doctor: {
+        higher_up: 0,
+        domain: "Clinical",
+        pages: ["admissions.html", "patients.html", "doctors.html", "reports.html"],
+        actions: ["can_add_admission", "can_print"]
+    },
+    dept_staff: {
+        higher_up: 0,
+        domain: "Clinical",
+        pages: ["department_orders.html"],
+        actions: ["can_print"]
+    },
     nurse: {
         higher_up: 0,
         domain: "Clinical",
-        pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "admissions.html"],
+        pages: ["patients.html", "doctors.html", "rooms.html", "catalogs.html", "admissions.html", "department_orders.html"],
         actions: ["can_add_patient", "can_add_admission", "can_print"]
     },
     head_nurse: {
@@ -738,7 +750,7 @@ const rolePresets = {
         domain: "Admin",
         pages: [
             "patients.html", "doctors.html", "departments.html", "rooms.html", "catalogs.html", "discounts.html",
-            "admissions.html",
+            "admissions.html", "department_orders.html",
             "invoices.html", "promissory_notes.html",
             "reports.html",
             "staff.html", "audit_log.html", "archive.html"
@@ -887,7 +899,7 @@ const updateRolePermissionsSummary = () => {
 
     const checkedPages = checkedBoxes.map(cb => cb.value);
     const hasAdmin = checkedPages.some(p => ["staff.html", "audit_log.html", "archive.html", "departments.html"].includes(p));
-    const hasClinical = checkedPages.includes("admissions.html");
+    const hasClinical = checkedPages.some(p => ["admissions.html", "department_orders.html"].includes(p));
     const hasFinance = checkedPages.some(p => ["invoices.html", "promissory_notes.html", "discounts.html", "reports.html"].includes(p));
 
     let domain = "Clinical";

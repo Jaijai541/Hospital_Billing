@@ -17,6 +17,8 @@ const handleUserLogout = async () => {
         }
     } catch (e) {}
     sessionStorage.removeItem("hospital_user");
+    sessionStorage.removeItem("hospital_last_notif_count");
+    sessionStorage.removeItem("hospital_shown_toast_ids");
     window.location.href = "login.html";
 };
 
@@ -2450,8 +2452,25 @@ const ensureClinicalNotificationsModal = () => {
     return modal;
 };
 
-let lastKnownNotifCount = -1;
-const shownToastIds = new Set();
+let lastKnownNotifCount = parseInt(sessionStorage.getItem("hospital_last_notif_count") ?? "-1", 10);
+
+const getShownToastIds = () => {
+    try {
+        return new Set(JSON.parse(sessionStorage.getItem("hospital_shown_toast_ids") || "[]"));
+    } catch (e) {
+        return new Set();
+    }
+};
+
+const addShownToastId = (id) => {
+    try {
+        const notifId = parseInt(id, 10);
+        if (!notifId) return;
+        const set = getShownToastIds();
+        set.add(notifId);
+        sessionStorage.setItem("hospital_shown_toast_ids", JSON.stringify([...set]));
+    } catch (e) {}
+};
 
 const updateToastToggleButton = () => {
     const btn = document.getElementById("btnToggleToastPopups");
@@ -2487,8 +2506,9 @@ const playClinicalChime = () => {
 
 const showClinicalToastAlert = (n) => {
     if (localStorage.getItem("clinical_toasts_disabled") === "true") return;
-    if (!n || shownToastIds.has(n.Notification_ID)) return;
-    shownToastIds.add(n.Notification_ID);
+    const notifId = parseInt(n?.Notification_ID, 10);
+    if (!n || !notifId || getShownToastIds().has(notifId)) return;
+    addShownToastId(notifId);
 
     let container = document.getElementById("clinical-toast-container");
     if (!container) {
@@ -2504,10 +2524,7 @@ const showClinicalToastAlert = (n) => {
         <div class="clinical-toast-inner">
             <div class="clinical-toast-header">
                 <span class="clinical-toast-badge">Clinical Alert</span>
-                <div class="clinical-toast-header-actions">
-                    <button type="button" class="clinical-toast-disable-btn btn-toast-disable" title="Disable floating alert toasts">Disable Toasts</button>
-                    <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
-                </div>
+                <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
             </div>
             <div class="clinical-toast-title">${n.Title || "Clinical Order Alert"}</div>
             <div class="clinical-toast-body">${n.Message || ""}</div>
@@ -2543,9 +2560,10 @@ const showClinicalToastAlert = (n) => {
         });
     };
 
-    toast.querySelectorAll(".btn-toast-disable").forEach(btn => {
-        btn.addEventListener("click", onDisableToasts);
-    });
+    const disableBtn = toast.querySelector(".btn-toast-disable");
+    if (disableBtn) {
+        disableBtn.addEventListener("click", onDisableToasts);
+    }
 
     container.appendChild(toast);
     playClinicalChime();
@@ -2555,7 +2573,7 @@ const showClinicalToastAlert = (n) => {
             toast.classList.add("toast-fade-out");
             setTimeout(() => toast.remove(), 400);
         }
-    }, 12000);
+    }, 10000);
 };
 
 const fetchRealtimeNotifications = () => {
@@ -2594,16 +2612,29 @@ const fetchRealtimeNotifications = () => {
         }
 
         if (data.notifications && data.notifications.length > 0) {
-            const firstUnread = data.notifications.find(n => parseInt(n.Is_Read, 10) === 0);
-            if (firstUnread) {
-                if (lastKnownNotifCount !== -1 && unreadCount > lastKnownNotifCount) {
-                    showClinicalToastAlert(firstUnread);
-                } else if (lastKnownNotifCount === -1 && unreadCount > 0) {
-                    showClinicalToastAlert(firstUnread);
+            if (lastKnownNotifCount === -1) {
+                lastKnownNotifCount = unreadCount;
+                sessionStorage.setItem("hospital_last_notif_count", unreadCount.toString());
+                data.notifications.forEach(n => {
+                    if (parseInt(n.Is_Read, 10) === 0) {
+                        addShownToastId(parseInt(n.Notification_ID, 10));
+                    }
+                });
+            } else if (unreadCount > lastKnownNotifCount) {
+                const newUnread = data.notifications.filter(n => parseInt(n.Is_Read, 10) === 0 && !getShownToastIds().has(parseInt(n.Notification_ID, 10)));
+                if (newUnread.length > 0) {
+                    showClinicalToastAlert(newUnread[0]);
                 }
+                lastKnownNotifCount = unreadCount;
+                sessionStorage.setItem("hospital_last_notif_count", unreadCount.toString());
+            } else {
+                lastKnownNotifCount = unreadCount;
+                sessionStorage.setItem("hospital_last_notif_count", unreadCount.toString());
             }
+        } else {
+            lastKnownNotifCount = unreadCount;
+            sessionStorage.setItem("hospital_last_notif_count", unreadCount.toString());
         }
-        lastKnownNotifCount = unreadCount;
 
         const listContainer = document.getElementById("notif-alerts-list");
         if (listContainer && data.notifications) {

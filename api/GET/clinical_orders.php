@@ -344,7 +344,25 @@ class ClinicalOrderManager
     {
         include "connection.php";
         $json = is_array($json) ? $json : json_decode($json, true);
-        $stationId = intval($json['station_id'] ?? 0);
+        $stationIds = [];
+        if (isset($json['station_ids'])) {
+            if (is_array($json['station_ids'])) {
+                $stationIds = array_map('intval', $json['station_ids']);
+            } else {
+                $stationIds = array_map('intval', explode(',', strval($json['station_ids'])));
+            }
+        } elseif (isset($json['station_id'])) {
+            if (is_array($json['station_id'])) {
+                $stationIds = array_map('intval', $json['station_id']);
+            } elseif (strpos(strval($json['station_id']), ',') !== false) {
+                $stationIds = array_map('intval', explode(',', strval($json['station_id'])));
+            } else {
+                $sVal = intval($json['station_id']);
+                if ($sVal > 0) $stationIds = [$sVal];
+            }
+        }
+        $stationIds = array_values(array_unique(array_filter($stationIds, fn($id) => $id > 0)));
+
         $userId = intval($json['user_id'] ?? 0);
         $roleId = intval($json['role_id'] ?? 0);
         $status = trim($json['status'] ?? '');
@@ -394,33 +412,32 @@ class ClinicalOrderManager
                 return json_encode([]);
             }
 
-            if ($stationId > 0) {
-                if (!in_array($stationId, $assignedStationIds)) {
+            if (!empty($stationIds)) {
+                $effectiveStationIds = array_values(array_intersect($stationIds, $assignedStationIds));
+                if (empty($effectiveStationIds)) {
                     return json_encode([]);
                 }
-                if (in_array($stationId, $nsIds)) {
-                    $where .= " AND ((dor.Target_Station_ID = :sid OR c.Station_ID = :sid) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
-                } else {
-                    $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
-                }
-                $params[':sid'] = $stationId;
             } else {
-                $hasNurseStationAccess = !empty(array_intersect($assignedStationIds, $nsIds));
-                $stationIdList = implode(",", $assignedStationIds);
+                $effectiveStationIds = $assignedStationIds;
+            }
+
+            $hasNurseStationAccess = !empty(array_intersect($effectiveStationIds, $nsIds));
+            $stationIdList = implode(",", $effectiveStationIds);
+
+            if ($hasNurseStationAccess) {
+                $where .= " AND ((dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList)) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
+            } else {
+                $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
+            }
+        } else {
+            if (!empty($stationIds)) {
+                $hasNurseStationAccess = !empty(array_intersect($stationIds, $nsIds));
+                $stationIdList = implode(",", $stationIds);
                 if ($hasNurseStationAccess) {
                     $where .= " AND ((dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList)) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
                 } else {
                     $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
                 }
-            }
-        } else {
-            if ($stationId > 0) {
-                if (in_array($stationId, $nsIds)) {
-                    $where .= " AND ((dor.Target_Station_ID = :sid OR c.Station_ID = :sid) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
-                } else {
-                    $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
-                }
-                $params[':sid'] = $stationId;
             }
         }
 

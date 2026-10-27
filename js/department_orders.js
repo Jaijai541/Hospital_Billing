@@ -2,7 +2,8 @@ let cachedDeptOrders = [];
 let activeStageFilter = 'all';
 let currentSearchQuery = '';
 let currentSortOption = 'stage';
-let selectedStationId = 0;
+let selectedStationIds = [];
+let cachedAllStations = [];
 let activeNursesList = [];
 let selectedNurseUserId = 0;
 
@@ -208,7 +209,7 @@ const renderDepartmentOrdersTable = () => {
     const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const isHigherUpUser = parseInt(curUser.is_higher_up, 10) === 1 || parseInt(curUser.role_id, 10) === 1 || (curUser.access_domain || "").toLowerCase() === "admin" || (curUser.role_name || "").toLowerCase().includes("admin");
     const isNurseOrClinical = (curUser.access_domain || "").toLowerCase() === "clinical" || (curUser.role_name || "").toLowerCase().includes("nurse") || (curUser.station_id && parseInt(curUser.station_id, 10) === 5);
-    const isCurrentStationNurse = (selectedStationId === 5);
+    const isCurrentStationNurse = selectedStationIds.includes(5) || selectedStationIds.length === 0;
     const canDeliver = isHigherUpUser || isNurseOrClinical || isCurrentStationNurse;
 
     let html = '';
@@ -321,7 +322,7 @@ const loadDepartmentOrders = async () => {
             params: {
                 operation: "getDepartmentOrders",
                 json: JSON.stringify({
-                    station_id: selectedStationId,
+                    station_ids: selectedStationIds,
                     user_id: userId,
                     role_id: roleId
                 })
@@ -486,45 +487,122 @@ const confirmAssignNurseAction = () => {
     });
 };
 
-const setupStationNavigation = (user) => {
+const openDepartmentStationPicker = async () => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
+
+    let availableStations = [];
+    if (isHigherUp) {
+        if (!cachedAllStations || cachedAllStations.length === 0) {
+            try {
+                const res = await axios.get("../api/GET/departments.php", {
+                    params: { operation: "getActiveDepartments" }
+                });
+                cachedAllStations = res.data || [];
+            } catch (e) {
+                cachedAllStations = [];
+            }
+        }
+        availableStations = cachedAllStations;
+    } else {
+        const assigned = Array.isArray(user.assigned_stations) ? user.assigned_stations : [];
+        if (assigned.length === 0 && user.station_id) {
+            assigned.push({
+                Station_ID: parseInt(user.station_id, 10),
+                Station_Name: user.station_name || "Department Station",
+                Code_Prefix: ""
+            });
+        }
+        availableStations = assigned;
+    }
+
+    if (availableStations.length === 0) return;
+
+    const items = availableStations.map(st => ({
+        id: String(st.Station_ID),
+        text: st.Station_Name,
+        subtext: st.Code_Prefix ? "Prefix: " + st.Code_Prefix : ""
+    }));
+
+    const currentSelectedStrings = selectedStationIds.map(id => String(id));
+
+    openMultiLookupPicker({
+        title: "Select Department Station(s) to Display",
+        items: items,
+        selectedIds: currentSelectedStrings,
+        onConfirm: (confirmedIds, confirmedItems) => {
+            selectedStationIds = confirmedIds.map(id => parseInt(id, 10)).filter(id => id > 0);
+            updateStationPickerUI(isHigherUp, items, confirmedItems);
+            loadDepartmentOrders();
+        }
+    });
+};
+
+const updateStationPickerUI = (isHigherUp, allItems, confirmedItems) => {
+    const hiddenInput = document.getElementById("select_department_station");
+    const textInput = document.getElementById("select_department_station_text");
+    if (hiddenInput) {
+        hiddenInput.value = selectedStationIds.join(",");
+    }
+    if (textInput) {
+        if (selectedStationIds.length === 0 || (isHigherUp && selectedStationIds.length === allItems.length)) {
+            textInput.value = "All Hospital Stations";
+        } else if (confirmedItems.length === 1) {
+            textInput.value = confirmedItems[0].text;
+        } else {
+            textInput.value = confirmedItems.length + " Stations: " + confirmedItems.map(item => item.text).join(", ");
+        }
+        textInput.title = textInput.value;
+    }
+};
+
+const setupStationNavigation = async (user) => {
     const pillContainer = document.getElementById("dept-station-pill-container");
     const activeStationName = document.getElementById("dept-active-station-name");
     const selectContainer = document.getElementById("dept-station-select-container");
-    const select = document.getElementById("select_department_station");
-    if (!selectContainer || !select) return;
+    const textInput = document.getElementById("select_department_station_text");
+    const btnBrowse = document.getElementById("btnBrowseDepartmentStation");
+    if (!selectContainer) return;
 
     const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
 
     const urlParams = new URLSearchParams(window.location.search);
     const paramStationId = parseInt(urlParams.get("station_id") || "0", 10);
 
+    if (textInput) {
+        textInput.addEventListener("click", openDepartmentStationPicker);
+    }
+    if (btnBrowse) {
+        btnBrowse.addEventListener("click", openDepartmentStationPicker);
+    }
+
     if (isHigherUp) {
-        if (pillContainer) pillContainer.style.display = 'none';
-        selectContainer.style.display = 'inline-flex';
+        if (pillContainer) pillContainer.style.display = "none";
+        selectContainer.style.display = "inline-flex";
 
-        axios.get("../api/GET/departments.php", {
-            params: { operation: "getActiveDepartments" }
-        }).then(res => {
-            const depts = res.data || [];
-            let html = '<option value="0">All Hospital Stations</option>';
-            depts.forEach(d => {
-                const prefix = d.Code_Prefix ? ` (${d.Code_Prefix})` : '';
-                html += `<option value="${d.Station_ID}">${d.Station_Name}${prefix}</option>`;
+        try {
+            const res = await axios.get("../api/GET/departments.php", {
+                params: { operation: "getActiveDepartments" }
             });
-            select.innerHTML = html;
-            if (paramStationId > 0) {
-                selectedStationId = paramStationId;
-                select.value = String(paramStationId);
-            }
-            loadDepartmentOrders();
-        }).catch(() => {
-            loadDepartmentOrders();
-        });
+            cachedAllStations = res.data || [];
+        } catch (e) {
+            cachedAllStations = [];
+        }
 
-        select.addEventListener("change", () => {
-            selectedStationId = parseInt(select.value, 10) || 0;
-            loadDepartmentOrders();
-        });
+        const items = cachedAllStations.map(st => ({
+            id: String(st.Station_ID),
+            text: st.Station_Name
+        }));
+
+        if (paramStationId > 0) {
+            selectedStationIds = [paramStationId];
+            const found = cachedAllStations.find(s => parseInt(s.Station_ID, 10) === paramStationId);
+            updateStationPickerUI(true, items, found ? [{ text: found.Station_Name }] : []);
+        } else {
+            selectedStationIds = [];
+            updateStationPickerUI(true, items, []);
+        }
+        loadDepartmentOrders();
         return;
     }
 
@@ -538,39 +616,33 @@ const setupStationNavigation = (user) => {
     }
 
     if (assigned.length <= 1) {
-        selectContainer.style.display = 'none';
+        selectContainer.style.display = "none";
         if (pillContainer) {
-            pillContainer.style.display = 'inline-flex';
+            pillContainer.style.display = "inline-flex";
             const stName = assigned.length > 0 ? assigned[0].Station_Name : (user.station_name || "Department");
             if (activeStationName) activeStationName.textContent = stName;
         }
-        selectedStationId = assigned.length > 0 ? assigned[0].Station_ID : (user.station_id ? parseInt(user.station_id, 10) : 0);
+        selectedStationIds = assigned.length > 0 ? [assigned[0].Station_ID] : (user.station_id ? [parseInt(user.station_id, 10)] : []);
         loadDepartmentOrders();
         return;
     }
 
-    if (pillContainer) pillContainer.style.display = 'none';
-    selectContainer.style.display = 'inline-flex';
+    if (pillContainer) pillContainer.style.display = "none";
+    selectContainer.style.display = "inline-flex";
 
-    let html = '';
-    assigned.forEach((st, idx) => {
-        const prefix = st.Code_Prefix ? ` (${st.Code_Prefix})` : '';
-        html += `<option value="${st.Station_ID}">${st.Station_Name}${prefix}</option>`;
-    });
-    select.innerHTML = html;
+    const items = assigned.map(st => ({
+        id: String(st.Station_ID),
+        text: st.Station_Name
+    }));
 
     if (paramStationId > 0 && assigned.some(s => s.Station_ID === paramStationId)) {
-        selectedStationId = paramStationId;
-        select.value = String(paramStationId);
+        selectedStationIds = [paramStationId];
+        const found = assigned.find(s => s.Station_ID === paramStationId);
+        updateStationPickerUI(false, items, found ? [{ text: found.Station_Name }] : []);
     } else {
-        selectedStationId = assigned[0].Station_ID;
-        select.value = String(assigned[0].Station_ID);
+        selectedStationIds = assigned.map(s => s.Station_ID);
+        updateStationPickerUI(false, items, items);
     }
-
-    select.addEventListener("change", () => {
-        selectedStationId = parseInt(select.value, 10) || 0;
-        loadDepartmentOrders();
-    });
 
     loadDepartmentOrders();
 };
@@ -733,3 +805,5 @@ window.openAssignNurseModal = openAssignNurseModal;
 window.selectNurseItem = selectNurseItem;
 window.handleReceiveOrderForDelivery = handleReceiveOrderForDelivery;
 window.handleAdministerOrderFromQueue = handleAdministerOrderFromQueue;
+
+window.openDepartmentStationPicker = openDepartmentStationPicker;

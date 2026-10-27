@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Department Fulfillment Queue — Hospital Care System</title>
     <link rel="stylesheet" href="../css/common.css?v=20.3">
-    <link rel="stylesheet" href="../css/department_orders.css?v=20.5">
+    <link rel="stylesheet" href="../css/department_orders.css?v=20.6">
 </head>
 <body>
 
@@ -24,8 +24,13 @@
                     <div id="dept-station-pill-container" class="dept-station-pill">
                         <span id="dept-active-station-name">Department Queue</span>
                     </div>
-                    <div id="dept-station-select-container" class="dept-station-select-wrap">
-                        <select id="select_department_station" class="dept-station-select"></select>
+                    <div id="dept-station-select-container" class="dept-station-lookup-group">
+                        <input type="hidden" id="select_department_station" value="">
+                        <input type="text" id="select_department_station_text" class="dept-station-lookup-input" placeholder="Click to select station(s)..." readonly>
+                        <button type="button" id="btnBrowseDepartmentStation" class="btn btn-outline dept-btn-lookup-station" title="Select Stations">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                            <span>Filter Stations</span>
+                        </button>
                     </div>
                     <button type="button" id="btnRefreshDeptOrders" class="btn-refresh" title="Refresh Department Queue">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -146,6 +151,6 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=20.3"></script>
     <script src="../js/common.js?v=20.4"></script>
-    <script src="../js/department_orders.js?v=20.5"></script>
+    <script src="../js/department_orders.js?v=20.6"></script>
 </body>
 </html>

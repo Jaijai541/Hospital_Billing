@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient &amp; Family Billing Portal — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/patient_portal.css?v=19.3">
+    <link rel="stylesheet" href="../css/invoice_print.css?v=19.4">
+    <link rel="stylesheet" href="../css/partial_bill.css?v=19.4">
+    <link rel="stylesheet" href="../css/patient_portal.css?v=19.4">
 </head>
 <body class="portal-body">
 
@@ -99,7 +101,7 @@
                 <div class="portal-card">
                     <div class="portal-card-header">
                         <h3 class="portal-card-title">Live Accumulated Hospital Charges</h3>
-                        <button type="button" class="btn-portal-primary no-print" onclick="window.print()">Print Statement</button>
+                        <button type="button" class="btn-portal-primary no-print" onclick="triggerPortalPrint('tab-partial')">Print Statement</button>
                     </div>
 
                     <div class="notice-banner-portal">
@@ -184,7 +186,7 @@
                 <div class="portal-card">
                     <div class="portal-card-header">
                         <h3 class="portal-card-title">Official Statement of Account (SOA)</h3>
-                        <button type="button" class="btn-portal-primary no-print" onclick="window.print()">Print Official SOA</button>
+                        <button type="button" class="btn-portal-primary no-print" onclick="triggerPortalPrint('tab-final')">Print Official SOA</button>
                     </div>
 
                     <div id="final-invoice-content">
@@ -258,6 +260,211 @@
     <footer class="portal-footer">
         Official In-Patient Self-Service Portal &bull; Medical Records &amp; Hospital Billing System &bull; Confidential Patient Information
     </footer>
+
+    <div id="portal-print-sheet" class="invoice-sheet print-only-sheet">
+        <div class="hospital-header">
+            <h2>IN-PATIENT HOSPITAL &amp; MEDICAL CENTER</h2>
+            <p>123 Healthcare Avenue, Medical District, CDO City &bull; Tel: (02) 8888-4567 &bull; VAT Reg. TIN: 009-876-543-000</p>
+            <div class="doc-title" id="print-doc-title">INTERIM STATEMENT OF ACCOUNT &amp; RUNNING BILL</div>
+            <div class="interim-badge-wrap" id="print-interim-badge-wrap">
+                <span class="interim-status-pill" id="print-interim-pill">INTERIM RUNNING BILL — PATIENT CURRENTLY ADMITTED</span>
+            </div>
+        </div>
+
+        <div class="pf-notice-banner" id="print-pf-notice">
+            <strong>Interim Policy Notice:</strong> Attending Physician Professional Fees (PF) are excluded from this interim running bill. All professional fees will be reviewed and finalized only upon official discharge.
+        </div>
+
+        <div class="billing-section-header" id="print-header-patient-rec">PATIENT &amp; ADMISSION RECORD</div>
+        <table class="soa-table compact-profile-table">
+            <tbody>
+                <tr>
+                    <td class="label-cell">Patient Name:</td>
+                    <td class="value-cell"><strong id="print-pt-name">-</strong> (<span id="print-pt-code">-</span>)</td>
+                    <td class="label-cell">Admission Code:</td>
+                    <td class="value-cell"><strong id="print-adm-code">-</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Demographics:</td>
+                    <td class="value-cell"><span id="print-pt-demographics">-</span></td>
+                    <td class="label-cell">Admission Date:</td>
+                    <td class="value-cell"><span id="print-adm-date">-</span> (<strong id="print-stay-days">1</strong> days)</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Room &amp; Bed:</td>
+                    <td class="value-cell"><strong id="print-bed-room">-</strong></td>
+                    <td class="label-cell">Statement Date:</td>
+                    <td class="value-cell"><strong id="print-statement-date">-</strong> &bull; <span id="print-adm-status">Admitted</span></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Diagnosis:</td>
+                    <td class="value-cell"><strong id="print-diagnosis">-</strong></td>
+                    <td class="label-cell">Attending MD:</td>
+                    <td class="value-cell" id="print-doctors">-</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div id="print-daily-history-section">
+            <div class="billing-section-header">DAILY INTERIM CHARGES PROGRESSION &amp; HISTORY</div>
+            <table class="soa-table charges-breakdown-table daily-history-table">
+                <thead>
+                    <tr class="header-row">
+                        <th width="18%" class="text-left">CONFINEMENT DAY</th>
+                        <th width="30%" class="text-left">DAY INCURRED SERVICES</th>
+                        <th width="16%" class="text-right">DAY NET CHARGE</th>
+                        <th width="16%" class="text-right">CUMULATIVE TOTAL</th>
+                        <th width="20%" class="text-left">STATED COMBINATION</th>
+                    </tr>
+                </thead>
+                <tbody id="print-daily-history-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="billing-section-header" id="print-header-particulars">HOSPITAL CHARGES BY CATEGORY (RUNNING TO DATE)</div>
+        <table class="soa-table charges-breakdown-table" id="print-hospital-charges-table">
+            <thead>
+                <tr class="header-row">
+                    <th width="72%" class="text-left">PARTICULARS / SERVICES &amp; CHARGES</th>
+                    <th width="28%" class="text-right">ACCUMULATED CHARGES</th>
+                </tr>
+            </thead>
+            <tbody id="print-hospital-charges-tbody"></tbody>
+            <tfoot>
+                <tr class="subtotal-row">
+                    <td><strong>SUBTOTAL HOSPITAL CHARGES:</strong></td>
+                    <td align="right" id="print-hosp-subtotal">₱0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div id="print-advance-section" class="hidden-element section-gap-top">
+            <div class="billing-section-header">ADVANCE PAYMENTS &amp; PATIENT DEPOSITS RECEIVED</div>
+            <table class="soa-table charges-breakdown-table">
+                <thead>
+                    <tr class="header-row">
+                        <th width="25%">Official Receipt #</th>
+                        <th width="25%">Date &amp; Time</th>
+                        <th width="25%">Method</th>
+                        <th width="25%" class="text-right">Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody id="print-advance-tbody"></tbody>
+                <tfoot>
+                    <tr class="subtotal-row">
+                        <td colspan="3"><strong>TOTAL ADVANCE DEPOSITS CREDITED:</strong></td>
+                        <td align="right" id="print-subtotal-advance" class="subtotal-advance-val">₱0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div id="print-final-payments-section" class="hidden-element section-gap-top">
+            <div class="billing-section-header">OFFICIAL PAYMENT RECEIPTS ISSUED</div>
+            <table class="soa-table charges-breakdown-table">
+                <thead>
+                    <tr class="header-row">
+                        <th width="25%">Official Receipt #</th>
+                        <th width="25%">Date &amp; Time</th>
+                        <th width="25%">Method</th>
+                        <th width="25%" class="text-right">Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody id="print-final-payments-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="settlement-summary-box section-gap-top">
+            <table class="soa-table summary-detail-table">
+                <thead>
+                    <tr class="header-row">
+                        <th colspan="2" class="text-left" id="print-summary-title">RUNNING SETTLEMENT SUMMARY</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="print-row-sum-hosp">
+                        <td width="72%">Hospital Charges Subtotal:</td>
+                        <td width="28%" align="right" id="print-sum-hosp">₱0.00</td>
+                    </tr>
+                    <tr class="summary-gross-line" id="print-row-sum-gross">
+                        <td><strong>Gross Accumulated Interim Charges:</strong></td>
+                        <td align="right"><strong id="print-sum-gross">₱0.00</strong></td>
+                    </tr>
+                    <tr id="print-row-returns" class="hidden-element">
+                        <td>Less: Credited Medicine Returns:</td>
+                        <td align="right" id="print-sum-returns">-₱0.00</td>
+                    </tr>
+                    <tr class="summary-subtotal-line" id="print-row-sum-net">
+                        <td><strong>Net Running Charges (VATable Base):</strong></td>
+                        <td align="right"><strong id="print-sum-net">₱0.00</strong></td>
+                    </tr>
+                    <tr id="print-row-vat">
+                        <td>Estimated 12% Value-Added Tax (VAT included):</td>
+                        <td align="right"><strong id="print-sum-vat">₱0.00</strong></td>
+                    </tr>
+                    <tr class="summary-net-line" id="print-row-sum-total-vat">
+                        <td><strong>Total Running Charges (VAT-Inclusive):</strong></td>
+                        <td align="right"><strong id="print-sum-total-with-vat">₱0.00</strong></td>
+                    </tr>
+                    <tr id="print-row-advance-discounts" class="hidden-element">
+                        <td class="advance-discount-label" id="print-label-discounts">Less: Applied Discounts &amp; Assistance:</td>
+                        <td align="right" id="print-sum-advance-discounts" class="advance-discount-val">-₱0.00</td>
+                    </tr>
+                    <tr id="print-row-advance-payments" class="hidden-element">
+                        <td id="print-label-advance-payments">Less: Advance Payments &amp; Deposits Received:</td>
+                        <td align="right" id="print-sum-advance-payments">-₱0.00</td>
+                    </tr>
+                    <tr id="print-row-final-paid" class="hidden-element">
+                        <td>Total Amount Paid / Settled:</td>
+                        <td align="right" id="print-sum-final-paid">₱0.00</td>
+                    </tr>
+                    <tr id="print-row-final-change" class="hidden-element">
+                        <td>Customer Change:</td>
+                        <td align="right" id="print-sum-final-change">₱0.00</td>
+                    </tr>
+                    <tr class="summary-balance-line">
+                        <td><strong id="print-label-balance">Estimated Net Running Balance Due:</strong></td>
+                        <td align="right"><strong id="print-sum-remaining-balance">₱0.00</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="statutory-note" id="print-statutory-note">
+                *Statutory discounts (PhilHealth, Senior, PWD) and Professional Fees are assessed upon final patient discharge.
+            </div>
+        </div>
+
+        <div class="grand-balance-container">
+            <div class="grand-balance-banner">
+                <div class="grand-balance-label" id="print-banner-label">ESTIMATED NET RUNNING BALANCE:</div>
+                <div class="grand-balance-amount" id="print-banner-total">₱0.00</div>
+            </div>
+        </div>
+
+        <table class="signatures-table">
+            <tr>
+                <td width="33%">
+                    <div class="sig-line"></div>
+                    <div class="sig-name">In-Patient Billing Office</div>
+                    <div class="sig-title">Prepared By / Billing Officer</div>
+                </td>
+                <td width="33%">
+                    <div class="sig-line"></div>
+                    <div class="sig-name" id="print-sig-doctor">Attending Physician</div>
+                    <div class="sig-title">Attending / Resident Physician</div>
+                </td>
+                <td width="33%">
+                    <div class="sig-line"></div>
+                    <div class="sig-name" id="print-sig-patient">Patient / Authorized Representative</div>
+                    <div class="sig-title">Conforme / Received Copy</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="soa-footer-note" id="print-footer-note">
+            Official Interim Running Bill &bull; In-Patient Hospital Billing System &bull; Charges remain subject to updates until final discharge
+        </div>
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/patient_portal.js?v=19.3"></script>

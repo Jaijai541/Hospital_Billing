@@ -263,8 +263,7 @@ const selectDayFilter = (targetDay) => {
     const maxDay = targetDay === "all" ? null : parseInt(targetDay, 10);
     const categories = categorizeLedgerItems(currentBillData.Ledger_Items || [], currentBillData.Room_Stays || [], maxDay);
     const hospTotal = renderHospitalCharges(categories);
-    const doctors = currentBillData.Attending_Doctors || [];
-    const docTotal = renderDoctorFees(doctors, currentBillData.Ledger_Items || []);
+    const docTotal = 0;
 
     let summaryToRender = Object.assign({}, currentBillData.Summary || {});
     if (maxDay !== null) {
@@ -279,66 +278,7 @@ const selectDayFilter = (targetDay) => {
     renderSummaryBox(summaryToRender, hospTotal, docTotal);
 };
 
-const renderDoctorFees = (doctors, ledgerItems) => {
-    const tbody = document.getElementById("pb-doctor-fees-tbody");
-    if (!tbody) return 0;
 
-    if (!doctors || doctors.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="text-center-muted">No attending physicians assigned yet.</td></tr>';
-        const subEl = document.getElementById("pb-doc-subtotal");
-        if (subEl) subEl.textContent = "₱0.00 (Finalized on Discharge)";
-        return 0;
-    }
-
-    let html = "";
-    let grandDocTotal = 0;
-
-    doctors.forEach(doc => {
-        const total = parseFloat(doc.Charges || 0);
-        grandDocTotal += total;
-        const rounds = parseInt(doc.Round_Count || 0, 10);
-        const subtitle = doc.Specialties 
-            ? `<span class="particular-subtitle">${doc.Doctor_Type || "Physician"} — ${doc.Specialties}</span>`
-            : (doc.Doctor_Type ? `<span class="particular-subtitle">${doc.Doctor_Type}</span>` : "");
-
-        let roundsHtml = "";
-        if (rounds > 0) {
-            roundsHtml += '<div class="particular-item-list">';
-            roundsHtml += `<div class="particular-sub-item">
-                <span>• Bedside Clinical Rounds (${rounds} ${rounds > 1 ? "visits" : "visit"})</span>
-                <span>Est. ₱${formatMoney(total)}</span>
-            </div>`;
-            roundsHtml += "</div>";
-        } else if (total > 0) {
-            roundsHtml += '<div class="particular-item-list">';
-            roundsHtml += `<div class="particular-sub-item">
-                <span>• Professional Care & Consultation</span>
-                <span>Est. ₱${formatMoney(total)}</span>
-            </div>`;
-            roundsHtml += "</div>";
-        } else {
-            roundsHtml += '<span class="particular-subtitle">No bedside visit charges logged to date</span>';
-        }
-
-        html += `
-            <tr>
-                <td>
-                    <span class="particular-category-title">${doc.Doctor_Name}</span>
-                    ${subtitle}
-                    ${roundsHtml}
-                </td>
-                <td align="right" class="text-right">
-                    <span class="pf-excluded-badge">Finalized on Discharge</span>
-                </td>
-            </tr>
-        `;
-    });
-
-    tbody.innerHTML = html;
-    const subEl = document.getElementById("pb-doc-subtotal");
-    if (subEl) subEl.textContent = "₱0.00 (Finalized on Discharge)";
-    return grandDocTotal;
-};
 
 const renderAdvancePayments = (advPayments, totalAdvance) => {
     const sec = document.getElementById("pb-advance-section");
@@ -386,7 +326,7 @@ const renderSummaryBox = (summary, hospTotal, docTotal) => {
     const netRemaining = Math.max(0, totalAmount - totalAdvCredit);
 
     const elHosp = document.getElementById("pb-sum-hosp");
-    const elDoc = document.getElementById("pb-sum-doc");
+
     const elGross = document.getElementById("pb-sum-gross");
     const elReturns = document.getElementById("pb-sum-returns");
     const rowReturns = document.getElementById("pb-row-returns");
@@ -401,7 +341,7 @@ const renderSummaryBox = (summary, hospTotal, docTotal) => {
     const bannerTotal = document.getElementById("pb-banner-total");
 
     if (elHosp) elHosp.textContent = `₱${formatMoney(hospTotal)}`;
-    if (elDoc) elDoc.textContent = "₱0.00 (Finalized on Discharge)";
+
     if (elGross) elGross.textContent = `₱${formatMoney(gross)}`;
 
     if (rowReturns) {
@@ -494,7 +434,7 @@ const renderPartialBill = (bill) => {
 
     const categories = categorizeLedgerItems(bill.Ledger_Items || [], bill.Room_Stays || []);
     const hospTotal = renderHospitalCharges(categories);
-    const docTotal = renderDoctorFees(doctors, bill.Ledger_Items || []);
+    const docTotal = 0;
     const advCreditTotal = bill.Summary ? (bill.Summary.advance_total_credit !== undefined ? bill.Summary.advance_total_credit : bill.Summary.advance_payments_total) : 0;
     renderAdvancePayments(bill.Advance_Payments || [], advCreditTotal);
     renderSummaryBox(bill.Summary || {}, hospTotal, docTotal);

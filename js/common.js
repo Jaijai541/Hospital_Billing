@@ -2359,6 +2359,345 @@ document.addEventListener("keydown", (e) => {
 
 const ensureClinicalNotificationsModal = () => {
     let modal = document.getElementById("clinicalNotifModal");
+    if (!document.getElementById("notif-queue-inline-styles")) {
+        const style = document.createElement("style");
+        style.id = "notif-queue-inline-styles";
+        style.textContent = `
+            .notif-modal-container {
+                max-width: 820px;
+                width: 95%;
+                transition: max-width 0.22s ease-in-out;
+            }
+            .notif-modal-wide {
+                max-width: 1160px !important;
+                width: 96% !important;
+            }
+            .queue-station-filter-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 10px 14px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                flex-wrap: wrap;
+            }
+            .queue-station-filter-left {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .queue-station-dropdown {
+                min-width: 220px;
+                max-width: 340px;
+                font-size: 13px;
+                font-weight: 600;
+                padding: 6px 12px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                background: #ffffff;
+            }
+            .queue-open-full-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12.5px;
+                font-weight: 700;
+                color: #0284c7;
+                text-decoration: none;
+                padding: 6px 14px;
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                border-radius: 6px;
+                transition: all 0.15s ease;
+            }
+            .queue-open-full-btn:hover {
+                background: #0284c7;
+                color: #ffffff;
+                border-color: #0284c7;
+            }
+            .orders-filter-container {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 12px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 10px 14px;
+            }
+            .orders-filter-left {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+                flex: 1 1 340px;
+            }
+            .orders-search-box {
+                position: relative;
+                flex: 1 1 200px;
+                min-width: 170px;
+            }
+            .orders-search-input {
+                width: 100%;
+                padding: 6px 12px 6px 32px;
+                font-size: 12.5px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                background: #ffffff;
+                color: #0f172a;
+                outline: none;
+            }
+            .orders-search-input:focus {
+                border-color: #0284c7;
+                box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+            }
+            .orders-search-icon {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #94a3b8;
+                pointer-events: none;
+                display: flex;
+            }
+            .orders-filter-pills {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 6px;
+            }
+            .process-filter-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 11px;
+                border-radius: 18px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                border: 1px solid #e2e8f0;
+                background: #ffffff;
+                color: #475569;
+                transition: all 0.15s ease;
+                user-select: none;
+            }
+            .process-filter-btn:hover {
+                border-color: #cbd5e1;
+                background: #f1f5f9;
+            }
+            .process-filter-btn.active {
+                background: #0f172a;
+                color: #ffffff;
+                border-color: #0f172a;
+            }
+            .process-filter-btn.active .process-filter-count {
+                background: rgba(255, 255, 255, 0.25);
+                color: #ffffff;
+            }
+            .process-filter-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                display: inline-block;
+                flex-shrink: 0;
+            }
+            .process-filter-count {
+                font-size: 11px;
+                font-weight: 700;
+                padding: 1px 6px;
+                border-radius: 10px;
+                background: #f1f5f9;
+                color: #475569;
+            }
+            .orders-filter-right {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            .orders-sort-select {
+                padding: 6px 10px;
+                font-size: 12.5px;
+                font-weight: 600;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                background: #ffffff;
+                color: #334155;
+                cursor: pointer;
+            }
+            .notif-queue-table-wrap {
+                overflow-x: auto;
+                overflow-y: visible;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+            }
+            .notif-queue-table-wrap table.data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 0;
+            }
+            .notif-queue-table-wrap table.data-table th,
+            .notif-queue-table-wrap table.data-table td {
+                padding: 12px 14px;
+                vertical-align: middle;
+            }
+            .order-tracking-cell {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                min-width: 280px;
+            }
+            .tracking-stepper {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                margin-top: 4px;
+            }
+            .tracking-step {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                position: relative;
+                flex: 1;
+            }
+            .tracking-step:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                width: 100%;
+                height: 2px;
+                background-color: #e2e8f0;
+                z-index: 1;
+            }
+            .tracking-step.is-complete:not(:last-child)::after {
+                background-color: #059669;
+            }
+            .tracking-step.is-active:not(:last-child)::after {
+                background-color: #cbd5e1;
+            }
+            .tracking-node {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background-color: #ffffff;
+                border: 2px solid #cbd5e1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 9px;
+                font-weight: 700;
+                color: #64748b;
+                z-index: 2;
+                transition: all 0.2s ease;
+            }
+            .tracking-step.is-complete .tracking-node {
+                background-color: #059669;
+                border-color: #059669;
+                color: #ffffff;
+            }
+            .tracking-step.step-requested.is-active .tracking-node {
+                border-color: #d97706;
+                background-color: #d97706;
+                color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+            }
+            .tracking-step.step-preparing.is-active .tracking-node {
+                border-color: #0284c7;
+                background-color: #0284c7;
+                color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+            }
+            .tracking-step.step-prepared.is-active .tracking-node {
+                border-color: #4f46e5;
+                background-color: #4f46e5;
+                color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            }
+            .tracking-step.step-delivering.is-active .tracking-node {
+                border-color: #7c3aed;
+                background-color: #7c3aed;
+                color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            }
+            .tracking-step.step-administered.is-active .tracking-node {
+                border-color: #059669;
+                background-color: #059669;
+                color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+            }
+            .tracking-label {
+                font-size: 10px;
+                font-weight: 600;
+                color: #64748b;
+                margin-top: 3px;
+                text-align: center;
+                white-space: nowrap;
+            }
+            .tracking-step.is-active .tracking-label {
+                color: #0f172a;
+                font-weight: 700;
+            }
+            .tracking-step.is-complete .tracking-label {
+                color: #059669;
+            }
+            .tracking-meta-desc {
+                font-size: 11px;
+                color: #475569;
+                line-height: 1.35;
+                margin-top: 2px;
+            }
+            .badge-process {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 4px 9px;
+                border-radius: 6px;
+                font-size: 11.5px;
+                font-weight: 700;
+                line-height: 1.3;
+                white-space: nowrap;
+            }
+            .badge-process-requested {
+                background-color: #fef3c7;
+                color: #92400e;
+                border: 1px solid #fde68a;
+            }
+            .badge-process-preparing {
+                background-color: #e0f2fe;
+                color: #0369a1;
+                border: 1px solid #bae6fd;
+            }
+            .badge-process-prepared {
+                background-color: #e0e7ff;
+                color: #3730a3;
+                border: 1px solid #c7d2fe;
+            }
+            .badge-process-delivering {
+                background-color: #ede9fe;
+                color: #5b21b6;
+                border: 1px solid #ddd6fe;
+            }
+            .badge-process-administered {
+                background-color: #d1fae5;
+                color: #065f46;
+                border: 1px solid #a7f3d0;
+            }
+            .badge-process-cancelled {
+                background-color: #f1f5f9;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+            }
+        `;
+        document.head.appendChild(style);
+    }
     if (modal) return modal;
 
     modal = document.createElement("div");
@@ -2385,12 +2724,18 @@ const ensureClinicalNotificationsModal = () => {
                 </div>
                 <div id="notif-tab-content-queue" class="is-hidden">
                     <div class="queue-station-filter-bar">
-                        <label for="notif-queue-station-select" class="form-label font-bold" id="notif-queue-station-label">Department Queue:</label>
-                        <select id="notif-queue-station-select" class="form-control queue-station-dropdown">
-                            <option value="0">Loading Stations...</option>
-                        </select>
+                        <div class="queue-station-filter-left">
+                            <label for="notif-queue-station-select" class="form-label font-bold" id="notif-queue-station-label">Department Station:</label>
+                            <select id="notif-queue-station-select" class="form-control queue-station-dropdown">
+                                <option value="0">Loading Stations...</option>
+                            </select>
+                        </div>
+                        <a href="department_orders.html" class="queue-open-full-btn" id="btnNotifQueueOpenFullPage" title="Open full dedicated Department Orders page">
+                            Open Full Workspace Page &raquo;
+                        </a>
                     </div>
-                    <div class="table-responsive" id="notif-queue-table-div">
+                    <div id="notif-queue-controls-container"></div>
+                    <div class="notif-queue-table-wrap" id="notif-queue-table-div">
                         <p class="text-muted">Loading department orders...</p>
                     </div>
                 </div>
@@ -2420,12 +2765,16 @@ const ensureClinicalNotificationsModal = () => {
             tabQueue.classList.remove("active");
             if (contentAlerts) contentAlerts.classList.remove("is-hidden");
             if (contentQueue) contentQueue.classList.add("is-hidden");
+            const container = modal.querySelector(".modal-container");
+            if (container) container.classList.remove("notif-modal-wide");
         });
         tabQueue.addEventListener("click", () => {
             tabQueue.classList.add("active");
             tabAlerts.classList.remove("active");
             if (contentAlerts) contentAlerts.classList.add("is-hidden");
             if (contentQueue) contentQueue.classList.remove("is-hidden");
+            const container = modal.querySelector(".modal-container");
+            if (container) container.classList.add("notif-modal-wide");
             fetchDepartmentOrdersQueue();
         });
     }
@@ -3032,12 +3381,17 @@ const renderFilteredDeptOrders = () => {
         </div>
     `;
 
+    const controlsContainer = document.getElementById("notif-queue-controls-container");
+    if (controlsContainer) {
+        controlsContainer.innerHTML = controlsHtml;
+    }
+
     if (filtered.length === 0) {
-        container.innerHTML = controlsHtml + '<p class="text-center text-muted" style="padding: 24px;"><em>No department orders match the selected search or filter criteria.</em></p>';
+        container.innerHTML = '<p class="text-center text-muted" style="padding: 28px;"><em>No department orders match the selected search or filter criteria.</em></p>';
         return;
     }
 
-    let html = controlsHtml + '<table class="data-table"><thead><tr>';
+    let html = '<table class="data-table"><thead><tr>';
     html += '<th>Order &amp; Patient</th>';
     html += '<th>Prescribed Item &amp; Doctor</th>';
     html += '<th>Fulfillment &amp; Delivery Tracking</th>';

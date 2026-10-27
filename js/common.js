@@ -2718,37 +2718,14 @@ const ensureClinicalNotificationsModal = () => {
         <div class="modal-container notif-modal-container">
             <div class="modal-header">
                 <div>
-                    <h3>Clinical Orders &amp; Department Alerts</h3>
-                    <div class="table-sub-text">Real-time clinical order tracking and department fulfillment</div>
+                    <h3>Real-Time Clinical Alerts</h3>
+                    <div class="table-sub-text">Live clinical notifications and order alerts</div>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseClinicalNotifModal" aria-label="Close modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="notif-tabs" role="tablist">
-                    <button type="button" class="notif-tab-btn active" id="btnTabNotifAlerts">Real-Time Alerts (<span id="notif-tab-badge">0</span>)</button>
-                    <button type="button" class="notif-tab-btn" id="btnTabNotifQueue">Department Orders Queue</button>
-                </div>
-                <div id="notif-tab-content-alerts">
-                    <div id="notif-alerts-list">
-                        <p class="text-muted">Loading clinical alerts...</p>
-                    </div>
-                </div>
-                <div id="notif-tab-content-queue" class="is-hidden">
-                    <div class="queue-station-filter-bar">
-                        <div class="queue-station-filter-left">
-                            <label for="notif-queue-station-select" class="form-label font-bold" id="notif-queue-station-label">Department Station:</label>
-                            <select id="notif-queue-station-select" class="form-control queue-station-dropdown">
-                                <option value="0">Loading Stations...</option>
-                            </select>
-                        </div>
-                        <a href="department_orders.html" class="queue-open-full-btn" id="btnNotifQueueOpenFullPage" title="Open full dedicated Department Orders page">
-                            Open Full Workspace Page &raquo;
-                        </a>
-                    </div>
-                    <div id="notif-queue-controls-container"></div>
-                    <div class="notif-queue-table-wrap" id="notif-queue-table-div">
-                        <p class="text-muted">Loading department orders...</p>
-                    </div>
+                <div id="notif-alerts-list">
+                    <p class="text-muted">Loading clinical alerts...</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -2765,42 +2742,7 @@ const ensureClinicalNotificationsModal = () => {
     const closeFooter = document.getElementById("btnCloseNotifFooter");
     if (closeFooter) closeFooter.addEventListener("click", () => closeModal("clinicalNotifModal"));
 
-    const tabAlerts = document.getElementById("btnTabNotifAlerts");
-    const tabQueue = document.getElementById("btnTabNotifQueue");
-    const contentAlerts = document.getElementById("notif-tab-content-alerts");
-    const contentQueue = document.getElementById("notif-tab-content-queue");
 
-    if (tabAlerts && tabQueue) {
-        tabAlerts.addEventListener("click", () => {
-            tabAlerts.classList.add("active");
-            tabQueue.classList.remove("active");
-            if (contentAlerts) contentAlerts.classList.remove("is-hidden");
-            if (contentQueue) contentQueue.classList.add("is-hidden");
-            const container = modal.querySelector(".modal-container");
-            if (container) container.classList.remove("notif-modal-wide");
-        });
-        tabQueue.addEventListener("click", () => {
-            tabQueue.classList.add("active");
-            tabAlerts.classList.remove("active");
-            if (contentAlerts) contentAlerts.classList.add("is-hidden");
-            if (contentQueue) contentQueue.classList.remove("is-hidden");
-            const container = modal.querySelector(".modal-container");
-            if (container) container.classList.add("notif-modal-wide");
-            fetchDepartmentOrdersQueue();
-        });
-    }
-
-    const stationSelect = document.getElementById("notif-queue-station-select");
-    if (stationSelect && !stationSelect.dataset.wired) {
-        stationSelect.dataset.wired = "true";
-        stationSelect.addEventListener("change", () => {
-            stationSelect.dataset.userChanged = "true";
-            fetchDepartmentOrdersQueue(parseInt(stationSelect.value, 10));
-        });
-    }
-
-    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-    setupQueueStationSelect(user);
 
     const toggleToastBtn = document.getElementById("btnToggleToastPopups");
     if (toggleToastBtn && !toggleToastBtn.dataset.wired) {
@@ -2918,23 +2860,28 @@ const showClinicalToastAlert = (n) => {
                 <span class="clinical-toast-time">${n.Formatted_Time || "Just now"}</span>
                 <div class="clinical-toast-footer-actions">
                     <button type="button" class="btn btn-secondary clinical-toast-btn btn-toast-disable">Disable Toasts</button>
-                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-open">View / Process</button>
+                    <button type="button" class="btn btn-outline clinical-toast-btn btn-toast-chart">Open Chart</button>
+                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-queue">Department Queue &rarr;</button>
                 </div>
             </div>
         </div>
     `;
 
     toast.querySelector(".clinical-toast-close").addEventListener("click", () => toast.remove());
-    toast.querySelector(".btn-toast-open").addEventListener("click", () => {
-        toast.remove();
-        const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-        const isDoc = (curUser.role_name && curUser.role_name.toLowerCase() === 'doctor') || Boolean(curUser.doctor_id);
-        if (!isDoc && (n.Notification_Type === "Order_Requested" || curUser.station_id)) {
-            window.location.href = `department_orders.html?station_id=${n.Target_Station_ID || curUser.station_id || ''}&request_id=${n.Request_ID || ''}`;
-        } else {
-            window.location.href = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders`;
-        }
-    });
+    const btnChart = toast.querySelector(".btn-toast-chart");
+    if (btnChart) {
+        btnChart.addEventListener("click", () => {
+            toast.remove();
+            window.location.href = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders&request_id=${n.Request_ID || ''}`;
+        });
+    }
+    const btnQueue = toast.querySelector(".btn-toast-queue");
+    if (btnQueue) {
+        btnQueue.addEventListener("click", () => {
+            toast.remove();
+            window.location.href = `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+        });
+    }
 
     const onDisableToasts = () => {
         showPopupConfirm("Disable notification toast popups for this device?\n\nReal-time alerts will continue to be recorded in your notifications center and Department Orders Queue.", () => {
@@ -3042,17 +2989,12 @@ const fetchRealtimeNotifications = () => {
                 else if (n.Notification_Type === "Order_Delivering") typeBadge = '<span class="badge-process badge-process-delivering">Out for Delivery</span>';
                 else if (n.Notification_Type === "Order_Administered") typeBadge = '<span class="badge-process badge-process-administered">Administered</span>';
 
-                const notifUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-                const notifIsDoc = (notifUser.role_name && notifUser.role_name.toLowerCase() === 'doctor') || Boolean(notifUser.doctor_id);
-                let notifLink = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders`;
-                let notifBtnLabel = "View in Chart";
-                if (!notifIsDoc && (n.Notification_Type === "Order_Requested" || notifUser.station_id)) {
-                    notifLink = `department_orders.html?station_id=${n.Target_Station_ID || notifUser.station_id || ''}&request_id=${n.Request_ID || ''}`;
-                    notifBtnLabel = "Open Dept Queue";
-                }
+                const reqParam = n.Request_ID ? `&request_id=${n.Request_ID}` : '';
+                const chartLink = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders${reqParam}`;
+                const queueLink = `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
 
                 html += `
-                    <div class="notif-item-card ${unreadClass}" data-notif-id="${n.Notification_ID}">
+                    <div class="notif-item-card ${unreadClass}" id="notif-card-${n.Notification_ID}" data-notif-id="${n.Notification_ID}">
                         <div class="notif-item-header">
                             <div class="notif-item-title">${n.Title}</div>
                             <div class="notif-item-time">${n.Formatted_Date} ${n.Formatted_Time}</div>
@@ -3060,7 +3002,10 @@ const fetchRealtimeNotifications = () => {
                         <div class="notif-item-msg">${n.Message}</div>
                         <div class="notif-item-footer">
                             <div>${typeBadge} • <span class="table-sub-text">Patient: <strong>${n.Patient_Name} (${n.Patient_Code})</strong></span></div>
-                            <a href="${notifLink}" class="btn btn-sm btn-outline">${notifBtnLabel}</a>
+                            <div class="notif-item-actions">
+                                <a href="${chartLink}" class="btn btn-sm btn-outline" onclick="handleNotifActionClick(event, ${n.Notification_ID}, '${chartLink}')">Open Chart</a>
+                                <a href="${queueLink}" class="btn btn-sm btn-primary" onclick="handleNotifActionClick(event, ${n.Notification_ID}, '${queueLink}')">Department Queue &rarr;</a>
+                            </div>
                         </div>
                     </div>
                 `;

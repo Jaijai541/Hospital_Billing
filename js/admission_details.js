@@ -2165,6 +2165,9 @@ const renderFilteredOrders = () => {
         'cancelled': 6
     };
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightReqId = parseInt(urlParams.get("request_id") || urlParams.get("highlight_order") || "0", 10);
+
     filtered.sort((a, b) => {
         if (orderSortBy === 'stage') {
             const wa = stageWeights[getOrderProcessStage(a.Status)] || 9;
@@ -2303,7 +2306,8 @@ const renderFilteredOrders = () => {
 
         const dosageInfo = o.Dosage_Instructions ? `<div class="table-sub-text-dark">Instructions: <em>${o.Dosage_Instructions}</em></div>` : '';
 
-        html += '<tr>';
+        const isHighlight = highlightReqId === parseInt(o.Request_ID, 10);
+        html += `<tr class="${isHighlight ? 'order-row-highlight' : ''}" id="order-row-${o.Request_ID}">`;
         html += `<td><span class="table-primary-text text-primary font-bold">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">${timeDetails}</span></td>`;
         html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • ${getCategoryPill(o.Category_Type)}</span>${dosageInfo}</td>`;
         html += `<td>${deptHandlingHtml}</td>`;
@@ -2315,6 +2319,15 @@ const renderFilteredOrders = () => {
 
     html += '</tbody></table>';
     container.innerHTML = html;
+
+    if (highlightReqId > 0) {
+        setTimeout(() => {
+            const el = document.getElementById(`order-row-${highlightReqId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 250);
+    }
 };
 
 const submitDoctorOrder = () => {

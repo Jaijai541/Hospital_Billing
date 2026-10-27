@@ -128,12 +128,18 @@
 }
 
 .dept-order-row-highlight {
-    animation: deptRowPulse 2s ease-in-out;
+    animation: deptRowPulse 0.8s ease-in-out 4;
 }
 
 @keyframes deptRowPulse {
-    0% { background-color: #fef08a; }
-    100% { background-color: transparent; }
+    0%, 100% {
+        background-color: transparent;
+        box-shadow: none;
+    }
+    50% {
+        background-color: #fef08a;
+        box-shadow: 0 0 18px rgba(234, 179, 8, 0.6);
+    }
 }
 
 .dept-order-id-cell {

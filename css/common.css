@@ -3848,3 +3848,22 @@ textarea.form-control {
     border-radius: 8px;
     padding: 10px 14px;
 }
+
+.notif-item-card-blinking {
+    animation: alertCardBlink 0.5s ease-in-out 2;
+}
+
+@keyframes alertCardBlink {
+    0%, 100% { background-color: #ffffff; }
+    50% { background-color: #fef08a; transform: scale(1.01); box-shadow: 0 0 12px rgba(234, 179, 8, 0.4); }
+}
+
+.notif-item-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-row-highlight {
+    animation: deptRowPulse 0.8s ease-in-out 4;
+}

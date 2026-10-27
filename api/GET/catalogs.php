@@ -11,7 +11,20 @@ class Catalog
         $sql = "SELECT c.Catalog_ID, c.Item_Name, c.Category_Type, c.Station_ID, c.Code_Prefix, c.Unit_Price, c.Is_Active,
                        CONCAT(c.Code_Prefix, '-', LPAD(c.Catalog_ID, 3, '0')) AS Formatted_Code,
                        COALESCE(s.Station_Name, 'Unassigned') AS Station_Name,
-                       COALESCE(s.Code_Prefix, '') AS Station_Prefix
+                       COALESCE(s.Code_Prefix, '') AS Station_Prefix,
+                       (
+                           SELECT GROUP_CONCAT(DISTINCT CONCAT(u.First_Name, ' ', u.Last_Name, ' (', r.Role_Name, ')') SEPARATOR ', ')
+                           FROM System_User u
+                           INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                           LEFT JOIN User_Department_Station uds ON u.User_ID = uds.User_ID
+                           WHERE (u.Station_ID = c.Station_ID OR uds.Station_ID = c.Station_ID) AND u.Is_Active = 1
+                       ) AS Assigned_Staff_List,
+                       (
+                           SELECT GROUP_CONCAT(DISTINCT CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) SEPARATOR ', ')
+                           FROM Doctor d
+                           LEFT JOIN Doctor_Department_Station dds ON d.Doctor_ID = dds.Doctor_ID
+                           WHERE (d.Station_ID = c.Station_ID OR dds.Station_ID = c.Station_ID) AND d.Is_Active = 1
+                       ) AS Assigned_Doctors_List
                 FROM Charge_Catalogs c
                 LEFT JOIN Enum_Department_Station s ON c.Station_ID = s.Station_ID
                 ORDER BY c.Is_Active DESC, c.Category_Type ASC, c.Item_Name ASC";

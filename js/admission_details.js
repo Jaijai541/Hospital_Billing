@@ -6,6 +6,46 @@ let admissionData = null;
 let catalogItems = [];
 let assignedDoctors = [];
 let availableHealthcarePersonnel = [];
+let currentAdministeringOrder = null;
+
+const updateOrderDeptCard = (item) => {
+    const card = document.getElementById('order_dept_card');
+    const stationBadge = document.getElementById('order_card_station_name');
+    const catBadge = document.getElementById('order_card_category');
+    const staffList = document.getElementById('order_card_staff_list');
+    const routeDesc = document.getElementById('order_card_routing_desc');
+
+    if (!card) return;
+
+    if (!item) {
+        card.classList.remove('active');
+        if (stationBadge) stationBadge.textContent = 'Select an item above';
+        if (catBadge) catBadge.textContent = 'Category';
+        if (staffList) staffList.textContent = 'Item selection will show department staff';
+        if (routeDesc) routeDesc.textContent = 'Select a medication, scan, or service to view dispatch routing.';
+        return;
+    }
+
+    card.classList.add('active');
+    const stationName = item.Station_Name || 'General Station';
+    const category = item.Category_Type || 'Clinical Item';
+    const assigned = item.Assigned_Staff_List || item.Assigned_Doctors_List || 'Hospital Clinical Team';
+
+    if (stationBadge) stationBadge.textContent = stationName;
+    if (catBadge) catBadge.textContent = category;
+    if (staffList) staffList.textContent = assigned;
+
+    let routeText = `Dispatched to ${stationName} queue for fulfillment.`;
+    if (category === 'Medicine') {
+        routeText = `Directly routed to ${stationName} for verification, packaging, and nurse administration.`;
+    } else if (category === 'Equipment Scan') {
+        routeText = `Dispatched to ${stationName} schedule for imaging capture and specialist interpretation.`;
+    } else if (category === 'Medical Service') {
+        routeText = `Assigned to ${stationName} for bedside/laboratory procedural execution and charge reconciliation.`;
+    }
+
+    if (routeDesc) routeDesc.textContent = routeText;
+};
 let availableBedsList = [];
 let dispensedMedicinesList = [];
 let currentUser = null;
@@ -404,6 +444,7 @@ const initClinicalModals = () => {
             if (orderCatId) orderCatId.value = '';
             if (orderCatName) orderCatName.value = '';
             if (orderQty) orderQty.value = '1';
+            updateOrderDeptCard(null);
             openModal('orderModal');
         });
     }
@@ -801,20 +842,27 @@ const wireLookupPickers = () => {
     const handleOpenCatalogPicker = () => {
         const catList = catalogItems || [];
         const categories = [...new Set(catList.map(it => it.Category_Type).filter(Boolean))];
+        const stations = [...new Set(catList.map(it => it.Station_Name).filter(Boolean))];
         openLookupPicker({
             title: 'Select Catalog Item / Medication / Procedure',
-            placeholder: 'Search item code, medicine, lab test, service...',
-            columns: ['Item Code', 'Item Name / Description', 'Category', 'Unit Price'],
+            placeholder: 'Search item code, medicine, department, handling staff...',
+            columns: ['Item Code', 'Item Name / Description', 'Fulfilling Department & Handled By', 'Category', 'Unit Price'],
             items: catList,
             filterOptions: [
-                { label: 'All Categories', value: 'all' },
-                ...categories.map(c => ({ label: c, value: c }))
+                { label: 'All Items & Departments', value: 'all' },
+                ...categories.map(c => ({ label: `Category: ${c}`, value: `cat:${c}` })),
+                ...stations.map(s => ({ label: `Dept: ${s}`, value: `dept:${s}` }))
             ],
-            categoryFilterFn: (it, val) => it.Category_Type === val,
+            categoryFilterFn: (it, val) => {
+                if (val.startsWith('cat:')) return it.Category_Type === val.replace('cat:', '');
+                if (val.startsWith('dept:')) return (it.Station_Name || '') === val.replace('dept:', '');
+                return true;
+            },
             sortOptions: [
                 { label: 'Default Order', value: 'default' },
                 { label: 'Name (A to Z)', value: 'name_asc' },
                 { label: 'Name (Z to A)', value: 'name_desc' },
+                { label: 'Department (A to Z)', value: 'dept_asc' },
                 { label: 'Price (Low to High)', value: 'price_asc' },
                 { label: 'Price (High to Low)', value: 'price_desc' }
             ],
@@ -824,6 +872,8 @@ const wireLookupPickers = () => {
                     arr.sort((a, b) => (a.Item_Name || '').localeCompare(b.Item_Name || ''));
                 } else if (val === 'name_desc') {
                     arr.sort((a, b) => (b.Item_Name || '').localeCompare(a.Item_Name || ''));
+                } else if (val === 'dept_asc') {
+                    arr.sort((a, b) => (a.Station_Name || '').localeCompare(b.Station_Name || ''));
                 } else if (val === 'price_asc') {
                     arr.sort((a, b) => parseFloat(a.Unit_Price || 0) - parseFloat(b.Unit_Price || 0));
                 } else if (val === 'price_desc') {
@@ -832,19 +882,29 @@ const wireLookupPickers = () => {
                 return arr;
             },
             filterFn: (it, q) => {
-                const str = `${it.Item_Code || ''} ${it.Item_Name || ''} ${it.Category_Type || ''}`.toLowerCase();
+                const str = `${it.Item_Code || ''} ${it.Item_Name || ''} ${it.Category_Type || ''} ${it.Station_Name || ''} ${it.Assigned_Staff_List || ''} ${it.Assigned_Doctors_List || ''}`.toLowerCase();
                 return str.includes(q);
             },
-            renderRowFn: (it) => `
-                <td><strong>${it.Item_Code}</strong></td>
-                <td>${it.Item_Name}</td>
-                <td><span class="badge badge-secondary">${it.Category_Type}</span></td>
-                <td><strong>₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
-            `,
+            renderRowFn: (it) => {
+                const staffText = it.Assigned_Staff_List || it.Assigned_Doctors_List || 'Hospital Clinical Team';
+                return `
+                    <td><strong>${it.Item_Code}</strong></td>
+                    <td>${it.Item_Name}</td>
+                    <td>
+                        <div class="dept-picker-col">
+                            <span class="badge badge-primary dept-badge-tag">${it.Station_Name || 'General Station'}</span>
+                            <div class="dept-staff-subtext">${staffText}</div>
+                        </div>
+                    </td>
+                    <td><span class="badge badge-secondary">${it.Category_Type}</span></td>
+                    <td><strong>₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+                `;
+            },
             getItemName: (it) => `[${it.Item_Code}] ${it.Item_Name}`,
             onSelect: (it) => {
                 document.getElementById('order_catalog_id').value = it.Catalog_ID;
                 document.getElementById('order_catalog_name').value = `[${it.Item_Code}] ${it.Item_Name} — ₱${parseFloat(it.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+                updateOrderDeptCard(it);
             }
         });
     };
@@ -1100,19 +1160,32 @@ const wireLookupPickers = () => {
     const btnBrowseAdminister = document.getElementById('btnBrowseAdministerPersonnel');
     const administerPersonnelText = document.getElementById('administer_personnel_text');
     const handleOpenAdministerPersonnelPicker = () => {
+        const targetStationName = currentAdministeringOrder ? (currentAdministeringOrder.Target_Station_Name || 'Department') : 'Department';
+        const hasMatchingDept = availableHealthcarePersonnel.some(p => p.isDeptMatch);
+
+        const filterOpts = [
+            { label: 'All Personnel', value: 'all' }
+        ];
+        if (hasMatchingDept) {
+            filterOpts.push({ label: `Matching Dept (${targetStationName})`, value: 'dept_match' });
+        }
+        filterOpts.push(
+            { label: 'Licensed Nurses', value: 'Licensed Nurse' },
+            { label: 'Assigned Attending Physicians', value: 'Assigned Physician' }
+        );
+
         openLookupPicker({
             title: 'Select Delivering Healthcare Personnel',
             placeholder: 'Search nurse or doctor name, role, department, specialty...',
             columns: ['Personnel Name', 'Healthcare Role', 'Department & Specialties'],
             items: availableHealthcarePersonnel,
-            filterOptions: [
-                { label: 'All Personnel', value: 'all' },
-                { label: 'Licensed Nurses', value: 'Licensed Nurse' },
-                { label: 'Assigned Attending Physicians', value: 'Assigned Physician' }
-            ],
-            categoryFilterFn: (p, val) => p.category === val,
+            filterOptions: filterOpts,
+            categoryFilterFn: (p, val) => {
+                if (val === 'dept_match') return !!p.isDeptMatch;
+                return p.category === val;
+            },
             sortOptions: [
-                { label: 'Default Order', value: 'default' },
+                { label: 'Default (Dept Matches First)', value: 'default' },
                 { label: 'Name (A to Z)', value: 'name_asc' },
                 { label: 'Name (Z to A)', value: 'name_desc' },
                 { label: 'Department (A to Z)', value: 'dept_asc' }
@@ -1129,17 +1202,20 @@ const wireLookupPickers = () => {
                 return arr;
             },
             filterFn: (p, q) => `${p.name || ''} ${p.role || ''} ${p.category || ''} ${p.department || ''} ${p.specialties || ''}`.toLowerCase().includes(q),
-            renderRowFn: (p) => `
-                <td>
-                    <strong>${p.name}</strong>
-                    <div class="table-sub-text">${p.category}</div>
-                </td>
-                <td><span class="badge ${p.type === 'doctor' ? 'badge-primary' : 'badge-info'}">${p.role}</span></td>
-                <td>
-                    <div class="table-primary-text font-bold">${p.department || '-'}</div>
-                    <div class="table-sub-text">${p.specialties || '-'}</div>
-                </td>
-            `,
+            renderRowFn: (p) => {
+                const matchTag = p.isDeptMatch ? `<span class="badge badge-success badge-dept-match">Dept Match</span>` : '';
+                return `
+                    <td>
+                        <strong>${p.name}</strong>${matchTag}
+                        <div class="table-sub-text">${p.category}</div>
+                    </td>
+                    <td><span class="badge ${p.type === 'doctor' ? 'badge-primary' : 'badge-info'}">${p.role}</span></td>
+                    <td>
+                        <div class="table-primary-text font-bold">${p.department || '-'}</div>
+                        <div class="table-sub-text">${p.specialties || '-'}</div>
+                    </td>
+                `;
+            },
             getItemName: (p) => `${p.name} (${p.department || p.category})`,
             onSelect: (p) => {
                 const idInput = document.getElementById('administer_personnel_id');
@@ -1313,8 +1389,7 @@ const loadAdmissionDetails = () => {
             const bannerPass = document.getElementById('banner-portal-passcode');
             if (bannerPass) {
                 const pass = admissionData.Access_Passcode || 'N/A';
-                bannerPass.textContent = `Passcode: ${pass}`;
-                bannerPass.style.cursor = 'pointer';
+                bannerPass.textContent = `Portal: ${pass}`;
                 bannerPass.title = `Patient Portal Passcode: ${pass} (Click to copy)`;
                 bannerPass.onclick = () => {
                     navigator.clipboard.writeText(pass).then(() => {
@@ -1329,12 +1404,15 @@ const loadAdmissionDetails = () => {
                     window.open(`patient_portal.html?code=${admissionData.Admission_Code || ('ADM-' + admissionId)}&passcode=${pass}`, '_blank');
                 };
             }
-            document.getElementById('banner-patient-age').textContent = `${admissionData.Date_Of_Birth} (${admissionData.Age} yrs old)`;
+            document.getElementById('banner-patient-age').textContent = `${admissionData.Age || 0} yrs old`;
             document.getElementById('banner-patient-gender-blood').textContent = `${admissionData.Gender_Name || 'N/A'} / Blood: ${admissionData.Blood_Type_Name || 'N/A'}`;
             
-            document.getElementById('banner-bed').textContent = admissionData.Bed_Code || 'Discharged / None';
-            document.getElementById('banner-room').textContent = admissionData.Room_Name ? `${admissionData.Room_Name} (${admissionData.Room_Type})` : 'N/A';
-            document.getElementById('banner-rate').textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
+            const bannerBed = document.getElementById('banner-bed');
+            if (bannerBed) bannerBed.textContent = admissionData.Bed_Code ? `Bed ${admissionData.Bed_Code}` : 'Discharged';
+            const bannerRoom = document.getElementById('banner-room');
+            if (bannerRoom) bannerRoom.textContent = admissionData.Room_Name ? `${admissionData.Room_Name} (${admissionData.Room_Type})` : 'Room N/A';
+            const bannerRate = document.getElementById('banner-rate');
+            if (bannerRate) bannerRate.textContent = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day` : 'N/A';
 
             const setFieldTxt = (id, txt) => {
                 const el = document.getElementById(id);
@@ -1785,6 +1863,7 @@ const renderOrdersTable = (orders) => {
     html += '<thead><tr>';
     html += '<th>Order Ref & Timestamp</th>';
     html += '<th>Prescribed Item & Doctor</th>';
+    html += '<th>Fulfilling Department & Handling</th>';
     html += '<th>Quantity & Amount</th>';
     html += '<th>Fulfillment Status</th>';
     html += '<th class="text-center">Actions</th>';
@@ -1793,6 +1872,26 @@ const renderOrdersTable = (orders) => {
     orders.forEach(o => {
         const unitPrice = parseFloat(o.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const total = parseFloat(o.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+        const deptName = o.Target_Station_Name || (o.Category_Type === 'Medicine' ? 'Central Pharmacy' : (o.Category_Type === 'Equipment Scan' ? 'Radiology & Imaging' : 'Laboratory & Services'));
+
+        let deptHandlingHtml = `<div><span class="badge badge-primary order-dept-badge">${deptName}</span>`;
+        if (o.Status === 'Administered') {
+            if (o.Prepared_By_Name) {
+                deptHandlingHtml += `<div class="order-prep-info">Prepared: <strong>${o.Prepared_By_Name}</strong> <span class="badge-role">(${o.Prepared_By_Station || o.Prepared_By_Role || 'Dept'})</span></div>`;
+            }
+            if (o.Administered_By_Name) {
+                deptHandlingHtml += `<div class="order-adm-info">Delivered: <strong>${o.Administered_By_Name}</strong> <span class="badge-role">(${o.Administered_By_Station || o.Administered_By_Type || 'Nurse'})</span></div>`;
+            }
+        } else if (o.Status === 'Prepared') {
+            if (o.Prepared_By_Name) {
+                deptHandlingHtml += `<div class="order-prep-info">Prepared: <strong>${o.Prepared_By_Name}</strong> <span class="badge-role">(${o.Prepared_By_Station || o.Prepared_By_Role || 'Dept'})</span></div>`;
+            }
+            deptHandlingHtml += `<div class="order-queue-info">Ready for Nurse Administration</div>`;
+        } else {
+            deptHandlingHtml += `<div class="order-queue-info">In Station Queue for ${deptName} staff</div>`;
+        }
+        deptHandlingHtml += `</div>`;
 
         let statusBadge = `<span class="badge badge-info">${o.Status}</span>`;
         let actionHtml = '<span class="text-muted">—</span>';
@@ -1828,6 +1927,7 @@ const renderOrdersTable = (orders) => {
         html += '<tr>';
         html += `<td><span class="table-primary-text text-primary">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">Req: ${o.Request_Timestamp}${o.Administered_Timestamp ? `<br>Adm: ${o.Administered_Timestamp}` : ''}</span></td>`;
         html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • <span class="badge badge-info">${o.Category_Type}</span></span></td>`;
+        html += `<td>${deptHandlingHtml}</td>`;
         html += `<td class="text-right"><span class="table-amount-prominent">₱${total}</span><span class="table-sub-text">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</span></td>`;
         html += `<td>${statusBadge}</td>`;
         html += `<td class="text-center">${actionHtml}</td>`;
@@ -1891,6 +1991,8 @@ const submitDoctorOrder = () => {
 };
 
 const openAdministerModal = (requestId, order, user) => {
+    currentAdministeringOrder = order;
+
     const hiddenInput = document.getElementById('administer_request_id');
     if (hiddenInput) hiddenInput.value = requestId;
 
@@ -1900,6 +2002,8 @@ const openAdministerModal = (requestId, order, user) => {
     const docEl = document.getElementById('adm_modal_doctor_name');
     const qtyEl = document.getElementById('adm_modal_qty');
     const catEl = document.getElementById('adm_modal_category');
+    const stationEl = document.getElementById('adm_modal_station_name');
+    const prepEl = document.getElementById('adm_modal_prep_by');
 
     if (refEl) refEl.textContent = `ORD-${String(requestId).padStart(3, '0')}`;
     if (amtEl) amtEl.textContent = order ? `₱${parseFloat(order.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '₱0.00';
@@ -1907,6 +2011,14 @@ const openAdministerModal = (requestId, order, user) => {
     if (docEl) docEl.textContent = order ? order.Doctor_Name : '-';
     if (qtyEl) qtyEl.textContent = order ? `${parseFloat(order.Quantity)} ${parseFloat(order.Quantity) > 1 ? 'units' : 'unit'} (₱${parseFloat(order.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2})} each)` : '-';
     if (catEl) catEl.textContent = order ? order.Category_Type : '-';
+
+    const fulfillingDept = order ? (order.Target_Station_Name || (order.Category_Type === 'Medicine' ? 'Central Pharmacy' : 'Clinical Station')) : '-';
+    if (stationEl) stationEl.textContent = fulfillingDept;
+
+    const prepText = (order && order.Prepared_By_Name)
+        ? `${order.Prepared_By_Name} (${order.Prepared_By_Station || order.Prepared_By_Role || 'Department Staff'})`
+        : 'Awaiting Dept Verification / Direct Delivery';
+    if (prepEl) prepEl.textContent = prepText;
 
     const idInput = document.getElementById('administer_personnel_id');
     const textInput = document.getElementById('administer_personnel_text');
@@ -1925,34 +2037,56 @@ const openAdministerModal = (requestId, order, user) => {
             const data = response.data || {};
             const nurses = data.nurses || [];
             const doctors = data.doctors || [];
+            const targetStationId = order ? String(order.Target_Station_ID || '') : '';
 
             availableHealthcarePersonnel = [
-                ...nurses.map(n => ({
-                    id: `user:${n.id}`,
-                    rawId: n.id,
-                    type: 'user',
-                    name: n.name,
-                    role: n.role_title,
-                    category: 'Licensed Nurse',
-                    department: n.department || 'Nurse Station',
-                    specialties: n.specialties || 'In-Patient Nursing Care'
-                })),
-                ...doctors.map(d => ({
-                    id: `doctor:${d.id}`,
-                    rawId: d.id,
-                    type: 'doctor',
-                    name: d.name,
-                    role: d.role_title,
-                    category: 'Assigned Physician',
-                    department: d.department || 'Clinical Department',
-                    specialties: d.specialties || 'General Practice'
-                }))
+                ...nurses.map(n => {
+                    const stIds = (n.station_ids || '').split(',').map(s => s.trim());
+                    const isMatch = !!(targetStationId && stIds.includes(targetStationId));
+                    return {
+                        id: `user:${n.id}`,
+                        rawId: n.id,
+                        type: 'user',
+                        name: n.name,
+                        role: n.role_title,
+                        category: 'Licensed Nurse',
+                        station_ids: stIds,
+                        isDeptMatch: isMatch,
+                        department: n.department || 'Nurse Station',
+                        specialties: n.specialties || 'In-Patient Nursing Care'
+                    };
+                }),
+                ...doctors.map(d => {
+                    const stIds = (d.station_ids || '').split(',').map(s => s.trim());
+                    const isMatch = !!(targetStationId && stIds.includes(targetStationId));
+                    return {
+                        id: `doctor:${d.id}`,
+                        rawId: d.id,
+                        type: 'doctor',
+                        name: d.name,
+                        role: d.role_title,
+                        category: 'Assigned Physician',
+                        station_ids: stIds,
+                        isDeptMatch: isMatch,
+                        department: d.department || 'Clinical Department',
+                        specialties: d.specialties || 'General Practice'
+                    };
+                })
             ];
+
+            availableHealthcarePersonnel.sort((a, b) => {
+                if (a.isDeptMatch && !b.isDeptMatch) return -1;
+                if (!a.isDeptMatch && b.isDeptMatch) return 1;
+                return 0;
+            });
 
             let defaultSelection = null;
             const currentUserId = user ? (user.user_id || user.User_ID) : null;
             if (currentUserId) {
                 defaultSelection = availableHealthcarePersonnel.find(p => p.type === 'user' && String(p.rawId) === String(currentUserId));
+            }
+            if (!defaultSelection) {
+                defaultSelection = availableHealthcarePersonnel.find(p => p.isDeptMatch);
             }
             if (!defaultSelection && availableHealthcarePersonnel.length > 0) {
                 defaultSelection = availableHealthcarePersonnel[0];

@@ -42,19 +42,17 @@
             </div>
 
             <div class="content-body">
-                <div class="chart-patient-hero mb-4" id="patient-hero-bar">
+                <div class="chart-patient-hero" id="patient-hero-bar">
                     <div class="hero-identity-left">
                         <div class="hero-avatar" id="hero-patient-avatar">--</div>
                         <div class="hero-name-group">
                             <div class="hero-name-row">
                                 <h1 class="hero-patient-name" id="banner-patient-name">Loading Patient...</h1>
                                 <span class="badge badge-primary hero-code-badge" id="banner-patient-code">PAT-000</span>
-                                <span class="badge badge-info hero-code-badge" id="banner-portal-passcode" title="Patient Portal Access Passcode (Click to copy)">Portal Code: --</span>
-                                <span class="badge badge-success hero-bed-badge" id="banner-bed">Bed --</span>
+                                <span class="hero-location-chip" id="banner-location-chip"><span id="banner-room">Room --</span> &bull; <span id="banner-bed">Bed --</span></span>
+                                <span class="badge badge-info hero-portal-badge" id="banner-portal-passcode" title="Patient Portal Access Passcode (Click to copy)">Portal: --</span>
                             </div>
                             <div class="hero-meta-row">
-                                <span class="hero-meta-item" id="banner-room">Room --</span>
-                                <span class="hero-meta-bullet">&bull;</span>
                                 <span class="hero-meta-item" id="banner-patient-age">-- yrs old</span>
                                 <span class="hero-meta-bullet">&bull;</span>
                                 <span class="hero-meta-item" id="banner-patient-gender-blood">-- / Blood: --</span>
@@ -66,15 +64,15 @@
                             <span class="badge badge-primary">Admitted</span>
                         </div>
                         <div class="hero-actions-wrap">
-                            <button type="button" class="btn btn-outline btn-sm" id="btnOpenPatientPortal" title="Open Patient Self-Service Portal">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                                <span>Patient Portal</span>
+                            <button type="button" class="btn btn-outline btn-sm hero-action-btn" id="btnOpenPatientPortal" title="Open Patient Self-Service Portal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                <span>Portal</span>
                             </button>
-                            <button type="button" class="btn btn-outline btn-sm" id="btnOpenAdmissionHistory" title="View Admission History">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span>Admission History</span>
+                            <button type="button" class="btn btn-outline btn-sm hero-action-btn" id="btnOpenAdmissionHistory" title="View Admission History">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span>History</span>
                             </button>
-                            <button type="button" id="btnRefreshChart" class="btn btn-outline btn-sm btn-icon" title="Refresh Patient Chart">
+                            <button type="button" id="btnRefreshChart" class="btn btn-outline btn-sm btn-icon hero-refresh-btn" title="Refresh Patient Chart">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                             </button>
                         </div>
@@ -263,7 +261,7 @@
                     <div class="clinical-slide-switcher clinical-subnav" id="clinicalSubNav" role="tablist">
                         <div class="slide-glider subnav-glider" id="subnavGlider"></div>
                         <button type="button" class="slide-tab-item subnav-btn active" data-sub="sub-orders" role="tab" aria-selected="true">
-                            <span class="slide-label">Pharmacy Orders</span>
+                            <span class="slide-label">Clinical Orders &amp; Requests</span>
                         </button>
                         <button type="button" class="slide-tab-item subnav-btn" data-sub="sub-rounds" role="tab" aria-selected="false">
                             <span class="slide-label">Doctor Visits</span>
@@ -275,15 +273,15 @@
 
                     <div class="sub-panel" id="sub-orders">
                         <div class="card mb-4">
-                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div class="card-header card-header-flex">
                                 <h2>Physician Orders & Requests (Medicines, Scans, Procedures) <span class="info-tip" tabindex="0" data-tooltip="Physicians submit clinical orders here. When administered or dispensed by pharmacy/nursing, charges automatically post to the Live Billing Ledger." aria-label="Orders information">i</span></h2>
-                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <div class="header-actions-group">
                                     <button type="button" class="btn btn-secondary btn-sm" id="btnOpenReturnModalPharmacy">+ Return Medicine</button>
                                     <button type="button" class="btn btn-primary btn-sm" id="btnOpenOrderModal">+ Place New Clinical Order</button>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Clinical Orders History</h3>
+                                <h3 class="orders-section-heading">Clinical Orders History</h3>
                                 <div class="table-responsive" id="orders-table-div">
                                 </div>
                             </div>
@@ -387,7 +385,7 @@
             </div>
         </main>
     </div>
-    <div class="modal-overlay" id="orderModal" style="display: none;">
+    <div class="modal-overlay" id="orderModal">
         <div class="modal-container">
             <div class="modal-header">
                 <h3>Place New Clinical Order <span class="info-tip" tabindex="0" data-tooltip="Select the prescribing doctor and catalog item. When administered or dispensed, the charge will post to the patient ledger." aria-label="Order instructions">i</span></h3>
@@ -397,19 +395,41 @@
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="order_doctor_name">Ordering Physician *</label>
-                        <div style="display: flex; gap: 8px;">
+                        <div class="input-lookup-group">
                             <input type="hidden" id="order_doctor_id">
-                            <input type="text" id="order_doctor_name" class="form-control" placeholder="Click Select to choose physician..." readonly style="background-color: #f8fafc; cursor: pointer;">
-                            <button type="button" class="btn btn-secondary" id="btnBrowseOrderDoctor" style="white-space: nowrap;">Select</button>
+                            <input type="text" id="order_doctor_name" class="form-control form-control-lookup" placeholder="Click Select to choose physician..." readonly>
+                            <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseOrderDoctor">Select</button>
                         </div>
                     </div>
 
                     <div class="form-group span-2">
                         <label class="form-label" for="order_catalog_name">Item / Medication / Procedure *</label>
-                        <div style="display: flex; gap: 8px;">
+                        <div class="input-lookup-group">
                             <input type="hidden" id="order_catalog_id">
-                            <input type="text" id="order_catalog_name" class="form-control" placeholder="Click Select to choose catalog item..." readonly style="background-color: #f8fafc; cursor: pointer;">
-                            <button type="button" class="btn btn-secondary" id="btnBrowseOrderCatalog" style="white-space: nowrap;">Select</button>
+                            <input type="text" id="order_catalog_name" class="form-control form-control-lookup" placeholder="Click Select to choose catalog item..." readonly>
+                            <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseOrderCatalog">Select</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group span-2" id="order_dept_card_container">
+                        <div class="order-dept-card" id="order_dept_card">
+                            <div class="dept-card-header">
+                                <div class="dept-card-header-left">
+                                    <span class="dept-card-label">Fulfilling Department Station:</span>
+                                    <span class="badge badge-primary dept-station-badge" id="order_card_station_name">Select an item above</span>
+                                </div>
+                                <span class="badge badge-secondary dept-category-badge" id="order_card_category">Category</span>
+                            </div>
+                            <div class="dept-card-body">
+                                <div class="dept-card-row">
+                                    <span class="dept-row-label">Assigned Department Personnel:</span>
+                                    <span class="dept-row-value" id="order_card_staff_list">Item selection will show department staff</span>
+                                </div>
+                                <div class="dept-card-row">
+                                    <span class="dept-row-label">Clinical Workflow Route:</span>
+                                    <span class="dept-row-value dept-route-desc" id="order_card_routing_desc">Select a medication, scan, or service to view dispatch routing.</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -463,6 +483,14 @@
                             <span class="administer-cell-label">Catalog Category</span>
                             <span id="adm_modal_category" class="administer-cell-value">-</span>
                         </div>
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Fulfilling Department</span>
+                            <span id="adm_modal_station_name" class="administer-cell-value">-</span>
+                        </div>
+                        <div class="administer-summary-cell">
+                            <span class="administer-cell-label">Department Prepared By</span>
+                            <span id="adm_modal_prep_by" class="administer-cell-value">-</span>
+                        </div>
                     </div>
                 </div>
 
@@ -501,10 +529,10 @@
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="round_doctor_name">Visiting Physician *</label>
-                        <div style="display: flex; gap: 8px;">
+                        <div class="input-lookup-group">
                             <input type="hidden" id="round_doctor_id">
-                            <input type="text" id="round_doctor_name" class="form-control" placeholder="Click Select to choose visiting physician..." readonly style="background-color: #f8fafc; cursor: pointer;">
-                            <button type="button" class="btn btn-secondary" id="btnBrowseRoundDoctor" style="white-space: nowrap;">Select</button>
+                            <input type="text" id="round_doctor_name" class="form-control form-control-lookup" placeholder="Click Select to choose visiting physician..." readonly>
+                            <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseRoundDoctor">Select</button>
                         </div>
                     </div>
 
@@ -531,10 +559,10 @@
                 <div class="form-grid">
                     <div class="form-group span-2">
                         <label class="form-label" for="transfer_bed_name">Select Target Vacant Bed *</label>
-                        <div style="display: flex; gap: 8px;">
+                        <div class="input-lookup-group">
                             <input type="hidden" id="transfer_bed_id">
-                            <input type="text" id="transfer_bed_name" class="form-control" placeholder="Click Select to choose target bed..." readonly style="background-color: #f8fafc; cursor: pointer;">
-                            <button type="button" class="btn btn-secondary" id="btnBrowseTransferBed" style="white-space: nowrap;">Select</button>
+                            <input type="text" id="transfer_bed_name" class="form-control form-control-lookup" placeholder="Click Select to choose target bed..." readonly>
+                            <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseTransferBed">Select</button>
                         </div>
                     </div>
                 </div>

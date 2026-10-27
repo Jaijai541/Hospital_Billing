@@ -9,14 +9,31 @@ class ClinicalOrderManager
         include "connection.php";
 
         $sql = "SELECT 
-                    Catalog_ID,
-                    CONCAT(Code_Prefix, '-', LPAD(Catalog_ID, 3, '0')) AS Item_Code,
-                    Item_Name,
-                    Category_Type,
-                    Unit_Price
-                FROM Charge_Catalogs
-                WHERE Is_Active = 1
-                ORDER BY Category_Type ASC, Item_Name ASC";
+                    c.Catalog_ID,
+                    CONCAT(c.Code_Prefix, '-', LPAD(c.Catalog_ID, 3, '0')) AS Item_Code,
+                    c.Item_Name,
+                    c.Category_Type,
+                    c.Station_ID,
+                    COALESCE(s.Station_Name, 'General Station') AS Station_Name,
+                    COALESCE(s.Code_Prefix, '') AS Station_Prefix,
+                    c.Unit_Price,
+                    (
+                        SELECT GROUP_CONCAT(DISTINCT CONCAT(u.First_Name, ' ', u.Last_Name, ' (', r.Role_Name, ')') SEPARATOR ', ')
+                        FROM System_User u
+                        INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                        LEFT JOIN User_Department_Station uds ON u.User_ID = uds.User_ID
+                        WHERE (u.Station_ID = c.Station_ID OR uds.Station_ID = c.Station_ID) AND u.Is_Active = 1
+                    ) AS Assigned_Staff_List,
+                    (
+                        SELECT GROUP_CONCAT(DISTINCT CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) SEPARATOR ', ')
+                        FROM Doctor d
+                        LEFT JOIN Doctor_Department_Station dds ON d.Doctor_ID = dds.Doctor_ID
+                        WHERE (d.Station_ID = c.Station_ID OR dds.Station_ID = c.Station_ID) AND d.Is_Active = 1
+                    ) AS Assigned_Doctors_List
+                FROM Charge_Catalogs c
+                LEFT JOIN Enum_Department_Station s ON c.Station_ID = s.Station_ID
+                WHERE c.Is_Active = 1
+                ORDER BY c.Category_Type ASC, c.Item_Name ASC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -52,6 +69,8 @@ class ClinicalOrderManager
                         WHEN u_prep.User_ID IS NOT NULL THEN CONCAT(u_prep.First_Name, ' ', u_prep.Last_Name)
                         ELSE NULL 
                     END AS Prepared_By_Name,
+                    COALESCE(r_prep.Role_Name, 'Department Staff') AS Prepared_By_Role,
+                    COALESCE(s_prep.Station_Name, s.Station_Name, 'Department') AS Prepared_By_Station,
                     CASE 
                         WHEN dor.Administered_By_Doctor_ID IS NOT NULL THEN CONCAT('Dr. ', d_adm.First_Name, ' ', d_adm.Last_Name)
                         WHEN dor.Administered_By_User_ID IS NOT NULL THEN CONCAT(u.First_Name, ' ', u.Last_Name)
@@ -67,6 +86,7 @@ class ClinicalOrderManager
                         WHEN dor.Administered_By_User_ID IS NOT NULL THEN 'Nurse'
                         ELSE NULL 
                     END AS Administered_By_Type,
+                    COALESCE(s_adm_u.Station_Name, s_adm_d.Station_Name, 'Nurse Station') AS Administered_By_Station,
                     DATE_FORMAT(dor.Request_Timestamp, '%Y-%m-%d %h:%i %p') AS Request_Timestamp,
                     DATE_FORMAT(dor.Prepared_Timestamp, '%Y-%m-%d %h:%i %p') AS Prepared_Timestamp,
                     DATE_FORMAT(dor.Administered_Timestamp, '%Y-%m-%d %h:%i %p') AS Administered_Timestamp
@@ -76,9 +96,13 @@ class ClinicalOrderManager
                 INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
                 LEFT JOIN Enum_Department_Station s ON dor.Target_Station_ID = s.Station_ID
                 LEFT JOIN System_User u_prep ON dor.Prepared_By_User_ID = u_prep.User_ID
+                LEFT JOIN Enum_User_Role r_prep ON u_prep.Role_ID = r_prep.Role_ID
+                LEFT JOIN Enum_Department_Station s_prep ON u_prep.Station_ID = s_prep.Station_ID
                 LEFT JOIN System_User u ON dor.Administered_By_User_ID = u.User_ID
                 LEFT JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                LEFT JOIN Enum_Department_Station s_adm_u ON u.Station_ID = s_adm_u.Station_ID
                 LEFT JOIN Doctor d_adm ON dor.Administered_By_Doctor_ID = d_adm.Doctor_ID
+                LEFT JOIN Enum_Department_Station s_adm_d ON d_adm.Station_ID = s_adm_d.Station_ID
                 WHERE ad.Admission_ID = :aid
                 ORDER BY dor.Request_ID DESC";
 
@@ -127,6 +151,7 @@ class ClinicalOrderManager
                 CONCAT(u.First_Name, ' ', u.Last_Name) AS name,
                 r.Role_Name AS role_title,
                 r.Access_Domain AS domain,
+                COALESCE(GROUP_CONCAT(DISTINCT COALESCE(st_all.Station_ID, s.Station_ID)), '') AS station_ids,
                 COALESCE(GROUP_CONCAT(DISTINCT st_all.Station_Name ORDER BY uds.Is_Primary DESC, st_all.Station_Name SEPARATOR ', '), s.Station_Name, 'Nurse Station') AS department,
                 COALESCE(NULLIF(GROUP_CONCAT(DISTINCT doc_s.Specialty_Name ORDER BY doc_s.Specialty_Name SEPARATOR ', '), ''), 'In-Patient Nursing Care') AS specialties
             FROM System_User u
@@ -153,6 +178,7 @@ class ClinicalOrderManager
                 COALESCE(dt.Type_Name, 'Attending Physician') AS role_title,
                 'Doctor' AS domain,
                 1 AS is_assigned,
+                COALESCE(GROUP_CONCAT(DISTINCT COALESCE(all_st.Station_ID, st.Station_ID)), '') AS station_ids,
                 COALESCE(GROUP_CONCAT(DISTINCT all_st.Station_Name ORDER BY dds.Is_Primary DESC, all_st.Station_Name SEPARATOR ', '), st.Station_Name, 'General Practice') AS department,
                 COALESCE(NULLIF(GROUP_CONCAT(DISTINCT s.Specialty_Name ORDER BY s.Specialty_Name SEPARATOR ', '), ''), 'General Practice') AS specialties
             FROM Admission_Doctor ad

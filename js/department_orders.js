@@ -38,10 +38,10 @@ const renderTrackingStepper = (o) => {
     const stage = getOrderProcessStage(o.Status);
 
     const step1Title = 'Requested';
-    const step2Title = isScan ? 'Preparing Equipment' : 'Preparing';
-    const step3Title = isScan ? 'Equipment Ready' : 'Prepared';
-    const step4Title = isScan ? 'Escorting Patient' : 'Delivering';
-    const step5Title = isScan ? 'Scan Completed' : 'Administered';
+    const step2Title = isScan ? 'Calibrating' : 'Preparing';
+    const step3Title = 'Ready';
+    const step4Title = isScan ? 'Escorting' : 'Delivering';
+    const step5Title = isScan ? 'Scanned' : 'Administered';
 
     let s1State = 'is-complete';
     let s2State = '';
@@ -80,13 +80,13 @@ const renderTrackingStepper = (o) => {
         badgeText = isScan ? 'Preparing Equipment' : 'Department Preparing';
     } else if (stage === 'prepared') {
         badgeClass = 'badge-process-prepared';
-        badgeText = isScan ? 'Equipment Ready (Nurse Dispatched)' : 'Prepared (Ready for Pickup)';
+        badgeText = isScan ? 'Equipment Ready' : 'Prepared & Ready';
     } else if (stage === 'delivering') {
         badgeClass = 'badge-process-delivering';
-        badgeText = isScan ? 'Escorting Patient to Scan' : 'Out for Delivery';
+        badgeText = isScan ? 'Escorting Patient' : 'Out for Delivery';
     } else if (stage === 'administered') {
         badgeClass = 'badge-process-administered';
-        badgeText = isScan ? 'Scan Completed & Recorded' : 'Delivered & Administered';
+        badgeText = isScan ? 'Scan Completed' : 'Administered';
     }
 
     let trackerMeta = '';
@@ -214,14 +214,14 @@ const renderDepartmentOrdersTable = () => {
 
         let actionCellHtml = '';
         if (stage === 'requested') {
-            const btnLabel = isScan ? 'Prepare Equipment' : 'Start Preparing';
+            const btnLabel = isScan ? 'Start Prep' : 'Start Preparing';
             actionCellHtml = `
                 <div class="dept-action-btn-group">
                     <button type="button" class="dept-btn-prep" onclick="handleStartPreparing(${o.Request_ID})">${btnLabel}</button>
                 </div>
             `;
         } else if (stage === 'preparing') {
-            const btnLabel = isScan ? 'Equipment Ready &amp; Dispatch Nurse' : 'Mark Prepared &amp; Assign Nurse';
+            const btnLabel = isScan ? 'Ready • Dispatch' : 'Ready • Assign';
             actionCellHtml = `
                 <div class="dept-action-btn-group">
                     <button type="button" class="dept-btn-ready" onclick="openAssignNurseModal(${o.Request_ID}, ${isScan})">${btnLabel}</button>
@@ -229,15 +229,15 @@ const renderDepartmentOrdersTable = () => {
             `;
         } else if (stage === 'prepared') {
             actionCellHtml = `
-                <div class="dept-meta-assigned">Awaiting Nurse Pickup${o.Assigned_Nurse_Name ? `: <strong>${o.Assigned_Nurse_Name}</strong>` : ''}</div>
+                <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Assigned Nurse: ' + o.Assigned_Nurse_Name : ''}">Awaiting Nurse</div>
             `;
         } else if (stage === 'delivering') {
             actionCellHtml = `
-                <div class="dept-meta-assigned">${isScan ? 'En Route to Scan Suite' : 'Out for Delivery'}${o.Assigned_Nurse_Name ? `: <strong>${o.Assigned_Nurse_Name}</strong>` : ''}</div>
+                <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Nurse: ' + o.Assigned_Nurse_Name : ''}">${isScan ? 'Escorting' : 'In Transit'}</div>
             `;
         } else if (stage === 'administered') {
             actionCellHtml = `
-                <span class="badge badge-success">Completed &amp; Recorded</span>
+                <span class="badge badge-success">${isScan ? 'Scanned' : 'Administered'}</span>
             `;
         } else {
             actionCellHtml = `<span class="badge badge-secondary">Cancelled</span>`;

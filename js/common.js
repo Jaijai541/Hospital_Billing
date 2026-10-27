@@ -1049,6 +1049,10 @@ const showPopupAlert = (message, type = null, title = null, callback = null) => 
     return showToast(message, type, title, callback);
 };
 
+window.showToast = showToast;
+window.showToastNotification = showToast;
+window.showPopupAlert = showPopupAlert;
+
 window.alert = (msg, callback) => {
     showToast(msg, null, null, callback);
 };

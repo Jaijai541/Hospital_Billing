@@ -322,15 +322,20 @@ const handleStartPreparing = (requestId) => {
 
         axios.post("../api/POST/clinical_orders.php", fd).then(res => {
             if (res.data && res.data.success) {
-                showToastNotification("Order status updated to Preparing. Doctor notified.", "success");
+                showToast(res.data.message || "Order status updated to Preparing. Doctor notified.", "success");
                 loadDepartmentOrders();
                 if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
             } else {
                 alert(res.data.error || "Failed to start preparing order.");
             }
         }).catch(err => {
-            const msg = (err.response && err.response.data && err.response.data.error) ? err.response.data.error : "Network error";
-            alert(msg);
+            if (err.response && err.response.data && err.response.data.error) {
+                alert(err.response.data.error);
+            } else if (!err.response) {
+                console.error(err);
+            } else {
+                alert("Network error");
+            }
         });
     }, null, {
         title: "Confirm Order Preparation",
@@ -438,15 +443,20 @@ const confirmAssignNurseAction = () => {
     axios.post("../api/POST/clinical_orders.php", fd).then(res => {
         if (res.data && res.data.success) {
             closeModal("assignNurseModal");
-            showToastNotification(res.data.message || "Order marked as Prepared. Nurse alerted.", "success");
+            showToast(res.data.message || "Order marked as Prepared. Nurse alerted.", "success");
             loadDepartmentOrders();
             if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
         } else {
             alert(res.data.error || "Failed to mark order prepared.");
         }
     }).catch(err => {
-        const msg = (err.response && err.response.data && err.response.data.error) ? err.response.data.error : "Network error";
-        alert(msg);
+        if (err.response && err.response.data && err.response.data.error) {
+            alert(err.response.data.error);
+        } else if (!err.response) {
+            console.error(err);
+        } else {
+            alert("Network error");
+        }
     });
 };
 

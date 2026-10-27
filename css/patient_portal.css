@@ -62,10 +62,10 @@ body.portal-body {
 
 .portal-main {
     flex: 1;
-    max-width: 1080px;
+    max-width: 1020px;
     width: 100%;
-    margin: 24px auto;
-    padding: 0 16px;
+    margin: 14px auto;
+    padding: 0 14px;
     box-sizing: border-box;
 }
 
@@ -170,9 +170,9 @@ body.portal-body {
 .portal-patient-card {
     background-color: var(--portal-surface);
     border: 1px solid var(--portal-border);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -181,32 +181,32 @@ body.portal-body {
     justify-content: space-between;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
     border-bottom: 1px solid var(--portal-border);
-    padding-bottom: 14px;
-    margin-bottom: 14px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .patient-name-title {
-    margin: 0 0 4px 0;
-    font-size: 1.4rem;
+    margin: 0 0 2px 0;
+    font-size: 1.25rem;
     font-weight: 800;
     color: var(--portal-text);
 }
 
 .patient-codes-row {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     color: var(--portal-text-muted);
 }
 
 .portal-status-pill {
     display: inline-block;
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 9999px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 .status-admitted {
@@ -223,39 +223,39 @@ body.portal-body {
 
 .patient-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 6px 14px;
 }
 
 .info-item-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--portal-text-muted);
-    letter-spacing: 0.5px;
-    margin-bottom: 2px;
+    letter-spacing: 0.4px;
+    margin-bottom: 1px;
 }
 
 .info-item-value {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--portal-text);
 }
 
 .portal-nav-tabs {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     border-bottom: 2px solid var(--portal-border);
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .portal-tab-btn {
-    padding: 10px 18px;
+    padding: 6px 14px;
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -2px;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--portal-text-muted);
     cursor: pointer;
@@ -278,9 +278,9 @@ body.portal-body {
 .portal-card {
     background-color: var(--portal-surface);
     border: 1px solid var(--portal-border);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -288,85 +288,124 @@ body.portal-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 10px;
+    padding-bottom: 6px;
+}
+
+.portal-card-header:not(:first-child) {
+    margin-top: 14px;
 }
 
 .portal-card-title {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: var(--portal-text);
 }
 
 .notice-banner-portal {
     background-color: var(--portal-primary-light);
-    border-left: 4px solid var(--portal-primary);
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 0.88rem;
+    border-left: 3px solid var(--portal-primary);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.82rem;
     color: #0c4a6e;
-    margin-bottom: 16px;
-    line-height: 1.45;
+    margin-bottom: 8px;
+    line-height: 1.35;
 }
 
 .settled-banner-portal {
     background-color: var(--portal-success-light);
-    border-left: 4px solid var(--portal-success);
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 0.88rem;
+    border-left: 3px solid var(--portal-success);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.82rem;
     color: #14532d;
-    margin-bottom: 16px;
-    line-height: 1.45;
+    margin-bottom: 8px;
+    line-height: 1.35;
 }
 
 .portal-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
-    margin-bottom: 16px;
+    font-size: 0.86rem;
+    margin-bottom: 8px;
 }
 
 .portal-table th {
     background-color: #f8fafc;
     color: #475569;
     font-weight: 700;
-    padding: 10px 12px;
+    padding: 6px 10px;
     text-align: left;
     border-bottom: 1px solid var(--portal-border);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.3px;
 }
 
 .portal-table td {
-    padding: 10px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid #f1f5f9;
     color: #1e293b;
+    line-height: 1.3;
 }
 
 .portal-table tfoot td {
     border-top: 1px solid var(--portal-border);
     background-color: #f8fafc;
     font-weight: 700;
+    padding: 7px 10px;
+}
+
+.portal-item-meta {
+    font-size: 0.78rem;
+    color: var(--portal-text-muted);
+    margin-top: 2px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+
+.badge-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.badge-warning {
+    background-color: var(--portal-warning-light);
+    color: var(--portal-warning);
+    border: 1px solid #fde68a;
+}
+
+.badge-success {
+    background-color: var(--portal-success-light);
+    color: var(--portal-success);
+    border: 1px solid #bbf7d0;
 }
 
 .portal-summary-box {
     background-color: #f8fafc;
     border: 1px solid var(--portal-border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin-top: 16px;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin-top: 8px;
 }
 
 .summary-row-portal {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    font-size: 0.92rem;
+    padding: 3px 0;
+    font-size: 0.88rem;
     color: #334155;
 }
 
@@ -374,31 +413,31 @@ body.portal-body {
     font-weight: 700;
     color: var(--portal-text);
     border-top: 1px solid #cbd5e1;
-    margin-top: 6px;
-    padding-top: 10px;
+    margin-top: 4px;
+    padding-top: 5px;
 }
 
 .balance-card-callout {
     background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
     border: 1.5px solid #0284c7;
-    border-radius: 10px;
-    padding: 16px 20px;
+    border-radius: 8px;
+    padding: 8px 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
+    margin-top: 8px;
 }
 
 .balance-label-portal {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 800;
     color: #0369a1;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 .balance-val-portal {
-    font-size: 1.45rem;
+    font-size: 1.25rem;
     font-weight: 900;
     color: #0f172a;
 }

@@ -241,7 +241,7 @@ const renderPartialTab = (pb) => {
                 <tr>
                     <td>
                         <strong>${it.Description || "Charge"}</strong>
-                        <div class="text-muted" style="font-size: 0.8rem;">Station: ${it.Station_Name || "Hospital"}</div>
+                        <div class="portal-item-meta">Station: ${it.Station_Name || "Hospital"}</div>
                     </td>
                     <td><span class="badge badge-secondary">${it.Category || "Hospital Charge"}</span></td>
                     <td class="${amtClass}">${amtSign}${formatMoney(Math.abs(it.Total_Charge))}</td>
@@ -351,7 +351,7 @@ const renderFinalTab = (fi, payments, appliedDiscounts) => {
             let html = "";
             payments.forEach(p => {
                 const isAdv = (p.Is_Advance == 1);
-                const tag = isAdv ? '<span class="badge badge-warning" style="font-size: 10.5px;">Advance Deposit</span>' : '<span class="badge badge-success" style="font-size: 10.5px;">Official Settlement</span>';
+                const tag = isAdv ? '<span class="badge badge-warning">Advance Deposit</span>' : '<span class="badge badge-success">Official Settlement</span>';
                 html += `
                     <tr>
                         <td><strong>${p.Receipt_Number}</strong> ${tag}</td>

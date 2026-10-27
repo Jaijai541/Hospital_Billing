@@ -4,6 +4,7 @@ let currentSearchQuery = '';
 let currentSortOption = 'stage';
 let selectedStationIds = [];
 let cachedAllStations = [];
+let tempModalSelectedStations = [];
 let activeNursesList = [];
 let selectedNurseUserId = 0;
 
@@ -487,94 +488,260 @@ const confirmAssignNurseAction = () => {
     });
 };
 
-const openDepartmentStationPicker = async () => {
-    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
-
-    let availableStations = [];
-    if (isHigherUp) {
-        if (!cachedAllStations || cachedAllStations.length === 0) {
-            try {
-                const res = await axios.get("../api/GET/departments.php", {
-                    params: { operation: "getActiveDepartments" }
-                });
-                cachedAllStations = res.data || [];
-            } catch (e) {
-                cachedAllStations = [];
-            }
-        }
-        availableStations = cachedAllStations;
-    } else {
-        const assigned = Array.isArray(user.assigned_stations) ? user.assigned_stations : [];
-        if (assigned.length === 0 && user.station_id) {
-            assigned.push({
-                Station_ID: parseInt(user.station_id, 10),
-                Station_Name: user.station_name || "Department Station",
-                Code_Prefix: ""
-            });
-        }
-        availableStations = assigned;
-    }
-
-    if (availableStations.length === 0) return;
-
-    const items = availableStations.map(st => ({
-        id: String(st.Station_ID),
-        text: st.Station_Name,
-        subtext: st.Code_Prefix ? "Prefix: " + st.Code_Prefix : ""
-    }));
-
-    const currentSelectedStrings = selectedStationIds.map(id => String(id));
-
-    openMultiLookupPicker({
-        title: "Select Department Station(s) to Display",
-        items: items,
-        selectedIds: currentSelectedStrings,
-        onConfirm: (confirmedIds, confirmedItems) => {
-            selectedStationIds = confirmedIds.map(id => parseInt(id, 10)).filter(id => id > 0);
-            updateStationPickerUI(isHigherUp, items, confirmedItems);
-            loadDepartmentOrders();
-        }
-    });
+const getStationIcon = (name = "", prefix = "") => {
+    const n = (name + " " + prefix).toLowerCase();
+    if (n.includes("pharm")) return "💊";
+    if (n.includes("lab")) return "🧪";
+    if (n.includes("radio") || n.includes("xray") || n.includes("imag") || n.includes("scan")) return "🩻";
+    if (n.includes("nurse") || n.includes("ward")) return "🩺";
+    if (n.includes("emerg") || n.includes("er")) return "🚨";
+    if (n.includes("diet") || n.includes("food") || n.includes("nutri")) return "🥗";
+    if (n.includes("supply") || n.includes("csr")) return "📦";
+    return "🏥";
 };
 
-const updateStationPickerUI = (isHigherUp, allItems, confirmedItems) => {
+const updateStationButtonDisplay = (isHigherUp) => {
+    const labelEl = document.getElementById("station_button_label");
+    const badgeEl = document.getElementById("station_button_badge");
     const hiddenInput = document.getElementById("select_department_station");
     const textInput = document.getElementById("select_department_station_text");
+
     if (hiddenInput) {
         hiddenInput.value = selectedStationIds.join(",");
     }
-    if (textInput) {
-        if (selectedStationIds.length === 0 || (isHigherUp && selectedStationIds.length === allItems.length)) {
-            textInput.value = "All Hospital Stations";
-        } else if (confirmedItems.length === 1) {
-            textInput.value = confirmedItems[0].text;
-        } else {
-            textInput.value = confirmedItems.length + " Stations: " + confirmedItems.map(item => item.text).join(", ");
-        }
-        textInput.title = textInput.value;
+
+    if (!labelEl || !badgeEl) return;
+
+    if (cachedAllStations.length > 0 && selectedStationIds.length === cachedAllStations.length) {
+        labelEl.innerHTML = `<span>🌟 All Stations</span>`;
+        badgeEl.textContent = `${cachedAllStations.length} Stations`;
+        badgeEl.className = "badge badge-primary";
+        if (textInput) textInput.value = "All Stations";
+    } else if (selectedStationIds.length === 1) {
+        const found = cachedAllStations.find(s => parseInt(s.Station_ID, 10) === selectedStationIds[0]);
+        const name = found ? found.Station_Name : "Station";
+        const icon = found ? getStationIcon(found.Station_Name, found.Code_Prefix) : "🏥";
+        labelEl.innerHTML = `<span>${icon} ${name}</span>`;
+        badgeEl.textContent = "1 Station";
+        badgeEl.className = "badge badge-info";
+        if (textInput) textInput.value = name;
+    } else {
+        labelEl.innerHTML = `<span>🏥 Multiple Stations</span>`;
+        badgeEl.textContent = `${selectedStationIds.length} Stations`;
+        badgeEl.className = "badge badge-info";
+        if (textInput) textInput.value = `${selectedStationIds.length} Stations Selected`;
     }
+};
+
+const updateStationChips = (isHigherUp) => {
+    const container = document.getElementById("station_chips_container");
+    const list = document.getElementById("station_chips_list");
+    if (!container || !list) return;
+
+    list.innerHTML = "";
+
+    if (cachedAllStations.length > 0 && selectedStationIds.length === cachedAllStations.length) {
+        container.style.display = "flex";
+        list.innerHTML = `<span class="category-chip" style="background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8;">🌟 All ${cachedAllStations.length} Stations</span>`;
+        return;
+    }
+
+    if (selectedStationIds.length > 1) {
+        container.style.display = "flex";
+        selectedStationIds.forEach(stId => {
+            const st = cachedAllStations.find(s => parseInt(s.Station_ID, 10) === stId);
+            if (!st) return;
+            const icon = getStationIcon(st.Station_Name, st.Code_Prefix);
+
+            const chip = document.createElement("span");
+            chip.className = "category-chip";
+            chip.innerHTML = `
+                <span>${icon} ${st.Station_Name}</span>
+                <span class="category-chip-remove" title="Remove ${st.Station_Name} from view">&times;</span>
+            `;
+
+            const removeBtn = chip.querySelector(".category-chip-remove");
+            if (removeBtn) {
+                removeBtn.addEventListener("click", () => removeStationFromView(stId));
+            }
+
+            list.appendChild(chip);
+        });
+        return;
+    }
+
+    container.style.display = "none";
+};
+
+const removeStationFromView = (stId) => {
+    if (selectedStationIds.length <= 1) {
+        if (typeof showToast === "function") {
+            showToast("At least one station must remain selected.", "warning");
+        } else {
+            alert("At least one station must remain selected.");
+        }
+        return;
+    }
+    selectedStationIds = selectedStationIds.filter(id => id !== stId);
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
+    updateStationButtonDisplay(isHigherUp);
+    updateStationChips(isHigherUp);
+    loadDepartmentOrders();
+};
+
+const openStationWindow = () => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
+
+    if (selectedStationIds.length === 0 || (isHigherUp && selectedStationIds.length === cachedAllStations.length)) {
+        tempModalSelectedStations = cachedAllStations.map(s => parseInt(s.Station_ID, 10));
+    } else {
+        tempModalSelectedStations = [...selectedStationIds];
+    }
+
+    const searchInput = document.getElementById("station_filter_search");
+    if (searchInput) searchInput.value = "";
+
+    const badgeTotal = document.getElementById("window_total_stations_badge");
+    if (badgeTotal) badgeTotal.textContent = `${cachedAllStations.length} Stations`;
+
+    renderStationCardsGrid();
+    updateStationModalSummary();
+    openModal("stationWindowModal");
+};
+
+const closeStationWindow = () => {
+    closeModal("stationWindowModal");
+};
+
+const renderStationCardsGrid = () => {
+    const grid = document.getElementById("station_cards_grid");
+    if (!grid) return;
+
+    const searchInput = document.getElementById("station_filter_search");
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+    grid.innerHTML = "";
+
+    const visibleStations = cachedAllStations.filter(st => {
+        return !query || st.Station_Name.toLowerCase().includes(query) || (st.Code_Prefix && st.Code_Prefix.toLowerCase().includes(query));
+    });
+
+    if (visibleStations.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">No matching stations found.</div>`;
+        return;
+    }
+
+    visibleStations.forEach(st => {
+        const stId = parseInt(st.Station_ID, 10);
+        const isSelected = tempModalSelectedStations.includes(stId);
+        const icon = getStationIcon(st.Station_Name, st.Code_Prefix);
+
+        const card = document.createElement("div");
+        card.className = `category-card ${isSelected ? "selected" : ""}`;
+        card.setAttribute("data-id", String(stId));
+
+        card.innerHTML = `
+            <div class="category-card-left">
+                <input type="checkbox" class="category-card-cb" value="${stId}" ${isSelected ? "checked" : ""} style="cursor: pointer; pointer-events: none;">
+                <span class="category-card-icon">${icon}</span>
+                <div>
+                    <div class="category-card-title">${st.Station_Name}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${st.Code_Prefix ? "Prefix: " + st.Code_Prefix : "Department Station"}</div>
+                </div>
+            </div>
+            <div>
+                <span class="badge ${isSelected ? "badge-primary" : "badge-secondary"}" style="font-size: 11px; padding: 2px 7px;">${st.Code_Prefix || "STN"}</span>
+            </div>
+        `;
+
+        card.addEventListener("click", () => {
+            toggleModalStation(stId);
+        });
+
+        grid.appendChild(card);
+    });
+};
+
+const toggleModalStation = (stId) => {
+    const idx = tempModalSelectedStations.indexOf(stId);
+    if (idx > -1) {
+        tempModalSelectedStations.splice(idx, 1);
+    } else {
+        tempModalSelectedStations.push(stId);
+    }
+
+    const card = document.querySelector(`.category-card[data-id="${stId}"]`);
+    if (card) {
+        const isSelected = tempModalSelectedStations.includes(stId);
+        card.classList.toggle("selected", isSelected);
+        const cb = card.querySelector(".category-card-cb");
+        if (cb) cb.checked = isSelected;
+        const badge = card.querySelector(".badge");
+        if (badge) {
+            badge.className = `badge ${isSelected ? "badge-primary" : "badge-secondary"}`;
+        }
+    }
+
+    updateStationModalSummary();
+};
+
+const updateStationModalSummary = () => {
+    const summaryEl = document.getElementById("station_modal_selection_summary");
+    if (!summaryEl) return;
+
+    const count = tempModalSelectedStations.length;
+    if (count === cachedAllStations.length) {
+        summaryEl.textContent = `All ${count} stations selected`;
+    } else {
+        summaryEl.textContent = `${count} station${count === 1 ? "" : "s"} selected`;
+    }
+};
+
+const selectAllModalStations = () => {
+    tempModalSelectedStations = cachedAllStations.map(s => parseInt(s.Station_ID, 10));
+    renderStationCardsGrid();
+    updateStationModalSummary();
+};
+
+const clearAllModalStations = () => {
+    tempModalSelectedStations = [];
+    renderStationCardsGrid();
+    updateStationModalSummary();
+};
+
+const applyStationWindowSelection = () => {
+    if (tempModalSelectedStations.length === 0) {
+        if (typeof showPopupAlert === "function") {
+            showPopupAlert("Please select at least one station to display.", "warning");
+        } else {
+            alert("Please select at least one station to display.");
+        }
+        return;
+    }
+
+    selectedStationIds = [...tempModalSelectedStations];
+    closeStationWindow();
+
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
+
+    updateStationButtonDisplay(isHigherUp);
+    updateStationChips(isHigherUp);
+    loadDepartmentOrders();
 };
 
 const setupStationNavigation = async (user) => {
     const pillContainer = document.getElementById("dept-station-pill-container");
     const activeStationName = document.getElementById("dept-active-station-name");
     const selectContainer = document.getElementById("dept-station-select-container");
-    const textInput = document.getElementById("select_department_station_text");
-    const btnBrowse = document.getElementById("btnBrowseDepartmentStation");
     if (!selectContainer) return;
 
     const isHigherUp = parseInt(user.is_higher_up, 10) === 1 || parseInt(user.role_id, 10) === 1 || (user.access_domain || "").toLowerCase() === "admin" || (user.role_name || "").toLowerCase().includes("admin");
 
     const urlParams = new URLSearchParams(window.location.search);
     const paramStationId = parseInt(urlParams.get("station_id") || "0", 10);
-
-    if (textInput) {
-        textInput.addEventListener("click", openDepartmentStationPicker);
-    }
-    if (btnBrowse) {
-        btnBrowse.addEventListener("click", openDepartmentStationPicker);
-    }
 
     if (isHigherUp) {
         if (pillContainer) pillContainer.style.display = "none";
@@ -589,19 +756,13 @@ const setupStationNavigation = async (user) => {
             cachedAllStations = [];
         }
 
-        const items = cachedAllStations.map(st => ({
-            id: String(st.Station_ID),
-            text: st.Station_Name
-        }));
-
         if (paramStationId > 0) {
             selectedStationIds = [paramStationId];
-            const found = cachedAllStations.find(s => parseInt(s.Station_ID, 10) === paramStationId);
-            updateStationPickerUI(true, items, found ? [{ text: found.Station_Name }] : []);
         } else {
-            selectedStationIds = [];
-            updateStationPickerUI(true, items, []);
+            selectedStationIds = cachedAllStations.map(s => parseInt(s.Station_ID, 10));
         }
+        updateStationButtonDisplay(true);
+        updateStationChips(true);
         loadDepartmentOrders();
         return;
     }
@@ -629,20 +790,15 @@ const setupStationNavigation = async (user) => {
 
     if (pillContainer) pillContainer.style.display = "none";
     selectContainer.style.display = "inline-flex";
-
-    const items = assigned.map(st => ({
-        id: String(st.Station_ID),
-        text: st.Station_Name
-    }));
+    cachedAllStations = assigned;
 
     if (paramStationId > 0 && assigned.some(s => s.Station_ID === paramStationId)) {
         selectedStationIds = [paramStationId];
-        const found = assigned.find(s => s.Station_ID === paramStationId);
-        updateStationPickerUI(false, items, found ? [{ text: found.Station_Name }] : []);
     } else {
-        selectedStationIds = assigned.map(s => s.Station_ID);
-        updateStationPickerUI(false, items, items);
+        selectedStationIds = assigned.map(s => parseInt(s.Station_ID, 10));
     }
+    updateStationButtonDisplay(false);
+    updateStationChips(false);
 
     loadDepartmentOrders();
 };
@@ -656,6 +812,60 @@ document.addEventListener("DOMContentLoaded", () => {
     const user = JSON.parse(userJson);
 
     setupStationNavigation(user);
+
+    const btnOpenStationFilter = document.getElementById("btnOpenStationWindowFilter");
+    if (btnOpenStationFilter) {
+        btnOpenStationFilter.addEventListener("click", openStationWindow);
+    }
+    const capsuleContainer = document.getElementById("dept-station-select-container");
+    if (capsuleContainer) {
+        capsuleContainer.addEventListener("click", (e) => {
+            if (e.target !== btnOpenStationFilter && !btnOpenStationFilter.contains(e.target)) {
+                openStationWindow();
+            }
+        });
+    }
+    const btnSelectAllStations = document.getElementById("btnStationModalSelectAll");
+    if (btnSelectAllStations) {
+        btnSelectAllStations.addEventListener("click", selectAllModalStations);
+    }
+    const btnClearAllStations = document.getElementById("btnStationModalClearAll");
+    if (btnClearAllStations) {
+        btnClearAllStations.addEventListener("click", clearAllModalStations);
+    }
+    const stationSearch = document.getElementById("station_filter_search");
+    if (stationSearch) {
+        stationSearch.addEventListener("input", renderStationCardsGrid);
+    }
+    const btnCloseStationModal = document.getElementById("btnCloseStationWindowModal");
+    if (btnCloseStationModal) {
+        btnCloseStationModal.addEventListener("click", closeStationWindow);
+    }
+    const btnCancelStationModal = document.getElementById("btnCancelStationWindow");
+    if (btnCancelStationModal) {
+        btnCancelStationModal.addEventListener("click", closeStationWindow);
+    }
+    const btnApplyStationModal = document.getElementById("btnApplyStationWindow");
+    if (btnApplyStationModal) {
+        btnApplyStationModal.addEventListener("click", applyStationWindowSelection);
+    }
+    const btnResetAll = document.getElementById("btnResetToAllStations");
+    if (btnResetAll) {
+        btnResetAll.addEventListener("click", () => {
+            selectedStationIds = cachedAllStations.map(s => parseInt(s.Station_ID, 10));
+            const u = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const higherUp = parseInt(u.is_higher_up, 10) === 1 || parseInt(u.role_id, 10) === 1 || (u.access_domain || "").toLowerCase() === "admin" || (u.role_name || "").toLowerCase().includes("admin");
+            updateStationButtonDisplay(higherUp);
+            updateStationChips(higherUp);
+            loadDepartmentOrders();
+        });
+    }
+    const stationModal = document.getElementById("stationWindowModal");
+    if (stationModal) {
+        stationModal.addEventListener("click", (e) => {
+            if (e.target === stationModal) closeStationWindow();
+        });
+    }
 
     const refreshBtn = document.getElementById("btnRefreshDeptOrders");
     if (refreshBtn) {

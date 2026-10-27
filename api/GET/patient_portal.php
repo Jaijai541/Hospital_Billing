@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
+require_once "ledger.php";
 
 class PatientPortalManager
 {
@@ -113,7 +114,6 @@ class PatientPortalManager
     function getPatientBillDetails($json = '{}')
     {
         include "connection.php";
-        require_once "ledger.php";
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -205,7 +205,8 @@ class PatientPortalManager
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+$reqMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($reqMethod == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
 } else if ($_SERVER['REQUEST_METHOD'] == 'POST') {

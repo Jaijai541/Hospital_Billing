@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient &amp; Family Billing Portal — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/patient_portal.css?v=19.2">
+    <link rel="stylesheet" href="../css/patient_portal.css?v=19.3">
 </head>
 <body class="portal-body">
 
@@ -104,6 +104,31 @@
 
                     <div class="notice-banner-portal">
                         <strong>Clinical Interim Notice:</strong> Attending Physician Professional Fees (PF) are excluded from this interim bill. Physician fees are finalized upon discharge. Statutory discounts (PhilHealth, Senior, PWD) and final settlement are assessed upon patient release.
+                    </div>
+
+                                        <div class="portal-daily-history-wrap">
+                        <div class="portal-card-header">
+                            <h4 class="portal-card-title">Day-by-Day Historical Progression</h4>
+                        </div>
+                        <div id="portal-day-filter-bar" class="portal-day-filter-bar no-print"></div>
+                        <div id="portal-combines-banner" class="portal-combines-banner hidden-element"></div>
+                        <table class="portal-table daily-history-table">
+                            <thead>
+                                <tr>
+                                    <th width="20%">Confinement Day</th>
+                                    <th width="32%">Services / Items Incurred</th>
+                                    <th width="18%" class="text-right">Day Net Charge</th>
+                                    <th width="30%">Stated Combination</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portal-daily-history-tbody">
+                                <tr><td colspan="4" class="text-center text-muted">Calculating daily progression...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="portal-card-header">
+                        <h4 class="portal-card-title">Accumulated Hospital Particulars</h4>
                     </div>
 
                     <table class="portal-table">
@@ -235,6 +260,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/patient_portal.js?v=19.2"></script>
+    <script src="../js/patient_portal.js?v=19.3"></script>
 </body>
 </html>

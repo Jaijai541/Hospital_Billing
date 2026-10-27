@@ -29,6 +29,11 @@ class LedgerManager
                     bl.Total_Charge,
                     bl.Transaction_Type,
                     DATE_FORMAT(bl.Timestamp, '%Y-%m-%d %h:%i %p') AS Formatted_Timestamp,
+                    GREATEST(1, DATEDIFF(DATE(bl.Timestamp), DATE(a.Admission_Date)) + 1) AS Day_Number,
+                    CONCAT('Day ', GREATEST(1, DATEDIFF(DATE(bl.Timestamp), DATE(a.Admission_Date)) + 1)) AS Day_Label,
+                    DATE_FORMAT(bl.Timestamp, '%b %d, %Y') AS Formatted_Item_Date,
+                    DATE_FORMAT(bl.Timestamp, '%Y-%m-%d') AS Item_Date,
+                    DATE_FORMAT(bl.Timestamp, '%h:%i %p') AS Formatted_Item_Time,
                     c.Item_Name AS Catalog_Item_Name,
                     c.Category_Type AS Catalog_Category,
                     c.Code_Prefix AS Catalog_Prefix,
@@ -44,6 +49,7 @@ class LedgerManager
                     rb.Bed_Code,
                     rt.Type_Name AS Room_Type_Name
                 FROM Billing_Ledger bl
+                INNER JOIN Admission a ON bl.Admission_ID = a.Admission_ID
                 LEFT JOIN Enum_Department_Station eds ON bl.Station_ID = eds.Station_ID
                 LEFT JOIN Charge_Catalogs c ON bl.Catalog_ID = c.Catalog_ID
                 LEFT JOIN Doctor_Order_Request dor ON bl.Request_ID = dor.Request_ID
@@ -102,7 +108,12 @@ class LedgerManager
                 'Unit_Price' => floatval($row['Unit_Price']),
                 'Total_Charge' => floatval($row['Total_Charge']),
                 'Transaction_Type' => $row['Transaction_Type'],
-                'Timestamp' => $row['Formatted_Timestamp']
+                'Timestamp' => $row['Formatted_Timestamp'],
+                'Day_Number' => intval($row['Day_Number'] ?? 1),
+                'Day_Label' => $row['Day_Label'] ?? 'Day 1',
+                'Item_Date' => $row['Item_Date'] ?? '',
+                'Formatted_Item_Date' => $row['Formatted_Item_Date'] ?? '',
+                'Formatted_Item_Time' => $row['Formatted_Item_Time'] ?? ''
             ];
         }
 
@@ -142,7 +153,12 @@ class LedgerManager
                 'Total_Charge' => $activeFee,
                 'Transaction_Type' => 'Charge',
                 'Timestamp' => $activeStay['Formatted_Date_In'] . ' (Active)',
-                'Is_Active_Stay' => 1
+                'Is_Active_Stay' => 1,
+                'Day_Number' => $activeDays,
+                'Day_Label' => "Day {$activeDays}",
+                'Item_Date' => date('Y-m-d'),
+                'Formatted_Item_Date' => date('M d, Y'),
+                'Formatted_Item_Time' => 'Active'
             ];
         }
 
@@ -463,14 +479,161 @@ class LedgerManager
             'remaining_balance' => round($remainingBal, 2)
         ];
 
+        $bill['Daily_Progression'] = $this->buildDailyProgression($conn, $admissionId, $roomStays, $ledgerItems, $bill['Admission_Date']);
+
         return json_encode($bill);
+    }
+
+    function buildDailyProgression($conn, $admissionId, $roomStays, $ledgerItems, $admissionDateStr)
+    {
+        date_default_timezone_set('Asia/Manila');
+        $admStart = substr($admissionDateStr, 0, 10);
+        $nowStr = date('Y-m-d');
+
+        $maxDateStr = $nowStr;
+        foreach ($ledgerItems as $it) {
+            $rawTime = $it['Timestamp'] ?? '';
+            $itDate = substr($rawTime, 0, 10);
+            if ($itDate && strtotime($itDate) && $itDate > $maxDateStr) {
+                $maxDateStr = $itDate;
+            }
+        }
+        foreach ($roomStays as $st) {
+            $inDate = substr($st['Date_In'], 0, 10);
+            if ($inDate && $inDate > $maxDateStr) $maxDateStr = $inDate;
+            if (!empty($st['Date_Out'])) {
+                $outDate = substr($st['Date_Out'], 0, 10);
+                if ($outDate && $outDate > $maxDateStr) $maxDateStr = $outDate;
+            }
+        }
+
+        $d1 = new DateTime($admStart);
+        $d2 = new DateTime($maxDateStr);
+        $daysDiff = $d1->diff($d2)->days;
+        $totalDays = max(1, $daysDiff + 1);
+
+        $roomByDate = [];
+        foreach ($roomStays as $stay) {
+            $inDate = substr($stay['Date_In'], 0, 10);
+            $days = intval($stay['Calculated_Days']);
+            $rate = floatval($stay['Daily_Rate']);
+            for ($d = 0; $d < $days; $d++) {
+                $cDate = date('Y-m-d', strtotime("$inDate +$d days"));
+                $roomByDate[$cDate][] = [
+                    'name' => "{$stay['Bed_Code']} ({$stay['Room_Name']} - {$stay['Room_Type_Name']})",
+                    'detail' => "1 day x ₱" . number_format($rate, 2),
+                    'amount' => $rate,
+                    'category' => 'Room and Board Accommodations',
+                    'station' => 'Admissions & Bed Management',
+                    'isReturn' => false,
+                    'time' => '12:00 AM'
+                ];
+            }
+        }
+
+        $itemsByDate = [];
+        foreach ($ledgerItems as $it) {
+            $cat = $it['Category'] ?? '';
+            $desc = $it['Description'] ?? '';
+            $amt = floatval($it['Total_Charge'] ?? 0);
+            $isReturn = ($it['Transaction_Type'] === 'Return' || $amt < 0);
+
+            if (!empty($it['Transfer_ID']) || stripos($cat, 'room') !== false || stripos($desc, 'board & lodging') !== false) {
+                continue;
+            }
+            if (!empty($it['Round_ID']) || stripos($cat, 'doctor') !== false || stripos($desc, 'bedside round') !== false) {
+                continue;
+            }
+
+            $rawTime = $it['Timestamp'] ?? '';
+            $itemDate = substr($rawTime, 0, 10);
+            if (!$itemDate || !strtotime($itemDate)) {
+                $itemDate = $admStart;
+            }
+            $timePart = (strlen($rawTime) > 10) ? trim(substr($rawTime, 10)) : '';
+
+            $itemsByDate[$itemDate][] = [
+                'name' => $it['Description'],
+                'detail' => abs(floatval($it['Quantity'])) . " x ₱" . number_format(floatval($it['Unit_Price']), 2),
+                'amount' => $amt,
+                'category' => $it['Category'],
+                'station' => $it['Station_Name'] ?? 'General',
+                'isReturn' => $isReturn,
+                'time' => $timePart
+            ];
+        }
+
+        $progression = [];
+        $cumulative = 0.00;
+        $statedComponents = [];
+
+        for ($i = 0; $i < $totalDays; $i++) {
+            $dayNum = $i + 1;
+            $dayDate = date('Y-m-d', strtotime("$admStart +$i days"));
+            $formattedDate = date('M d, Y', strtotime($dayDate));
+
+            $dayItems = [];
+            $dayCharges = 0.00;
+            $dayReturns = 0.00;
+
+            if (isset($roomByDate[$dayDate])) {
+                foreach ($roomByDate[$dayDate] as $rItem) {
+                    $dayCharges += $rItem['amount'];
+                    $rItem['day_number'] = $dayNum;
+                    $rItem['day_label'] = "Day {$dayNum}";
+                    $dayItems[] = $rItem;
+                }
+            }
+
+            if (isset($itemsByDate[$dayDate])) {
+                foreach ($itemsByDate[$dayDate] as $cItem) {
+                    if ($cItem['isReturn']) {
+                        $dayReturns += abs($cItem['amount']);
+                    } else {
+                        $dayCharges += $cItem['amount'];
+                    }
+                    $cItem['day_number'] = $dayNum;
+                    $cItem['day_label'] = "Day {$dayNum}";
+                    $dayItems[] = $cItem;
+                }
+            }
+
+            $dayNet = round($dayCharges - $dayReturns, 2);
+            $cumulative = round($cumulative + $dayNet, 2);
+
+            $statedComponents[] = "Day {$dayNum} (₱" . number_format($dayNet, 2) . ")";
+            $statedBreakdown = implode(" + ", $statedComponents);
+
+            if ($dayNum === 1) {
+                $combText = "Day 1 Incurred Charges: ₱" . number_format($dayNet, 2);
+            } else {
+                $combText = "Combines " . $statedBreakdown . " = ₱" . number_format($cumulative, 2);
+            }
+
+            $progression[] = [
+                'day_number' => $dayNum,
+                'day_label' => "Day {$dayNum}",
+                'date' => $dayDate,
+                'formatted_date' => $formattedDate,
+                'day_charges_total' => round($dayCharges, 2),
+                'day_returns_total' => round($dayReturns, 2),
+                'day_net_total' => $dayNet,
+                'cumulative_total' => $cumulative,
+                'stated_breakdown' => $statedBreakdown,
+                'combination_text' => $combText,
+                'items' => $dayItems
+            ];
+        }
+
+        return $progression;
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+$reqMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($reqMethod == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
-} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} else if ($reqMethod == 'POST') {
     $operation = $_POST['operation'] ?? "";
     $json = $_POST['json'] ?? "{}";
 }

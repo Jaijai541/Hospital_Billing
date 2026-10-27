@@ -2,6 +2,8 @@ const portalApi = "../api/GET/patient_portal.php";
 
 let activeAdmissionId = null;
 let activePasscode = null;
+let portalPartialBillData = null;
+let portalActiveDayFilter = "all";
 
 const formatMoney = (val) => {
     return parseFloat(val || 0).toLocaleString("en-PH", {
@@ -222,26 +224,133 @@ const renderPortalDashboard = (data) => {
     renderFinalTab(fi, payments, data.applied_discounts || []);
 };
 
-const renderPartialTab = (pb) => {
+const renderPortalDailyHistory = (progression) => {
+    const filterBar = document.getElementById("portal-day-filter-bar");
+    const tbody = document.getElementById("portal-daily-history-tbody");
+    if (!tbody || !progression || progression.length === 0) return;
+
+    if (filterBar) {
+        let filterHtml = `<button type="button" class="portal-day-pill ${portalActiveDayFilter === 'all' ? 'active' : ''}" data-day="all">All Days (Cumulative Running Bill)</button>`;
+        progression.forEach(dp => {
+            const isActive = portalActiveDayFilter === String(dp.day_number);
+            filterHtml += `<button type="button" class="portal-day-pill ${isActive ? 'active' : ''}" data-day="${dp.day_number}">${dp.day_label} (${dp.formatted_date})</button>`;
+        });
+        filterBar.innerHTML = filterHtml;
+
+        const btns = filterBar.querySelectorAll(".portal-day-pill");
+        btns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetDay = btn.getAttribute("data-day");
+                selectPortalDayFilter(targetDay);
+            });
+        });
+    }
+
+    let rowsHtml = "";
+    progression.forEach(dp => {
+        let itemsSummary = [];
+        dp.items.forEach(it => {
+            itemsSummary.push(`${it.name} [₱${formatMoney(it.amount)}]`);
+        });
+        const summaryText = itemsSummary.length > 0 ? itemsSummary.join("; ") : "No charges incurred on this day";
+
+        rowsHtml += `
+            <tr>
+                <td>
+                    <span class="portal-day-badge">${dp.day_label}</span>
+                    <div class="portal-progression-meta">${dp.formatted_date}</div>
+                </td>
+                <td>
+                    <div class="portal-progression-meta">${summaryText}</div>
+                </td>
+                <td class="text-right">
+                    <strong>₱${formatMoney(dp.day_net_total)}</strong>
+                </td>
+                <td>
+                    <div class="portal-combines-text">${dp.combination_text}</div>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = rowsHtml;
+
+    updatePortalCombinesBanner(progression);
+};
+
+const updatePortalCombinesBanner = (progression) => {
+    const banner = document.getElementById("portal-combines-banner");
+    if (!banner) return;
+
+    if (portalActiveDayFilter === "all") {
+        if (progression.length > 0) {
+            const last = progression[progression.length - 1];
+            banner.classList.remove("hidden-element");
+            banner.innerHTML = `<strong>Statement of Running Cumulative Charges:</strong> ${last.combination_text}`;
+        } else {
+            banner.classList.add("hidden-element");
+        }
+    } else {
+        const dayInt = parseInt(portalActiveDayFilter, 10);
+        const selected = progression.find(p => p.day_number === dayInt);
+        if (selected) {
+            banner.classList.remove("hidden-element");
+            if (dayInt === 1) {
+                banner.innerHTML = `<strong>Viewing Day 1 Charges:</strong> Incurred on Day 1 = ₱${formatMoney(selected.day_net_total)}`;
+            } else {
+                banner.innerHTML = `<strong>Viewing Combined Charges as of Day ${dayInt}:</strong> ${selected.combination_text}`;
+            }
+        }
+    }
+};
+
+const selectPortalDayFilter = (targetDay) => {
+    portalActiveDayFilter = targetDay;
+    if (!portalPartialBillData) return;
+
+    const btns = document.querySelectorAll("#portal-day-filter-bar .portal-day-pill");
+    btns.forEach(b => {
+        if (b.getAttribute("data-day") === targetDay) {
+            b.classList.add("active");
+        } else {
+            b.classList.remove("active");
+        }
+    });
+
+    const progression = portalPartialBillData.Daily_Progression || [];
+    updatePortalCombinesBanner(progression);
+    renderPortalPartialItems(portalPartialBillData, targetDay);
+};
+
+const renderPortalPartialItems = (pb, maxDayFilter = "all") => {
     const tbody = document.getElementById("portal-partial-items-tbody");
     if (!tbody) return;
 
     const items = pb.Ledger_Items || [];
-    const nonPfItems = items.filter(it => it.Category !== "Doctor Professional Fee");
+    const maxDay = maxDayFilter === "all" ? null : parseInt(maxDayFilter, 10);
+
+    const nonPfItems = items.filter(it => {
+        if (it.Category === "Doctor Professional Fee") return false;
+        if (maxDay !== null) {
+            const itemDay = it.Day_Number !== undefined ? parseInt(it.Day_Number, 10) : 1;
+            return itemDay <= maxDay;
+        }
+        return true;
+    });
 
     if (nonPfItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No accumulated hospital charges logged yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No accumulated hospital charges logged for the selected period.</td></tr>';
     } else {
         let html = "";
         nonPfItems.forEach(it => {
             const isReturn = (it.Transaction_Type === "Return");
             const amtClass = isReturn ? "text-success text-right font-bold" : "text-right font-bold";
             const amtSign = isReturn ? "-₱" : "₱";
+            const dayTag = it.Day_Label ? `<span class="badge-portal-day">${it.Day_Label}</span>` : "";
             html += `
                 <tr>
                     <td>
-                        <strong>${it.Description || "Charge"}</strong>
-                        <div class="portal-item-meta">Station: ${it.Station_Name || "Hospital"}</div>
+                        <strong>${dayTag}${it.Description || "Charge"}</strong>
+                        <div class="portal-item-meta">Station: ${it.Station_Name || "Hospital"} ${it.Formatted_Item_Date ? '&bull; ' + it.Formatted_Item_Date : ''}</div>
                     </td>
                     <td><span class="badge badge-secondary">${it.Category || "Hospital Charge"}</span></td>
                     <td class="${amtClass}">${amtSign}${formatMoney(Math.abs(it.Total_Charge))}</td>
@@ -251,12 +360,28 @@ const renderPartialTab = (pb) => {
         tbody.innerHTML = html;
     }
 
+    const progression = pb.Daily_Progression || [];
+    let hospTotal = 0;
+    let returns = 0;
+    let net = 0;
+
+    if (maxDay !== null) {
+        const selectedProg = progression.find(p => p.day_number === maxDay);
+        if (selectedProg) {
+            hospTotal = selectedProg.cumulative_total;
+            returns = selectedProg.day_returns_total || 0;
+            net = selectedProg.cumulative_total;
+        }
+    } else {
+        const summary = pb.Summary || {};
+        hospTotal = parseFloat(summary.hospital_charges_total || summary.gross_total || 0);
+        returns = parseFloat(summary.return_total || 0);
+        net = parseFloat(summary.net_accumulated_total || (hospTotal - returns));
+    }
+
     const summary = pb.Summary || {};
-    const hospTotal = parseFloat(summary.hospital_charges_total || summary.gross_total || 0);
-    const returns = parseFloat(summary.return_total || 0);
     const advancePaid = parseFloat(summary.advance_payments_total || 0);
-    const net = parseFloat(summary.net_accumulated_total || (hospTotal - returns));
-    const balance = parseFloat(summary.remaining_balance || Math.max(0, net - advancePaid));
+    const balance = Math.max(0, net - advancePaid);
 
     document.getElementById("portal-partial-subtotal").textContent = `₱${formatMoney(hospTotal)}`;
     document.getElementById("pb-sum-hosp-display").textContent = `₱${formatMoney(hospTotal)}`;
@@ -283,6 +408,12 @@ const renderPartialTab = (pb) => {
 
     document.getElementById("pb-sum-net-display").textContent = `₱${formatMoney(net)}`;
     document.getElementById("pb-sum-balance-display").textContent = `₱${formatMoney(balance)}`;
+};
+
+const renderPartialTab = (pb) => {
+    portalPartialBillData = pb;
+    renderPortalDailyHistory(pb.Daily_Progression || []);
+    renderPortalPartialItems(pb, portalActiveDayFilter);
 };
 
 const renderFinalTab = (fi, payments, appliedDiscounts) => {

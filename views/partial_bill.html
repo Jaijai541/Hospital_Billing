@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interim Statement of Account &amp; Partial Bill — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=18.8">
-    <link rel="stylesheet" href="../css/invoice_print.css?v=18.3">
-    <link rel="stylesheet" href="../css/partial_bill.css?v=18.3">
+    <link rel="stylesheet" href="../css/common.css?v=19.3">
+    <link rel="stylesheet" href="../css/invoice_print.css?v=19.3">
+    <link rel="stylesheet" href="../css/partial_bill.css?v=19.3">
 </head>
 <body class="print-body">
     <div class="no-print print-toolbar">
@@ -69,7 +69,27 @@
             <span id="pb-patient-complaint"></span>
         </div>
 
-        <div class="billing-section-header">HOSPITAL CHARGES (RUNNING TO DATE)</div>
+        <div class="billing-section-header">DAILY INTERIM CHARGES PROGRESSION &amp; HISTORY</div>
+        <div id="pb-daily-history-wrap" class="daily-history-section">
+            <div id="pb-day-filter-bar" class="daily-history-filter-bar no-print"></div>
+            <div id="pb-combines-callout" class="stated-combines-box hidden-element"></div>
+            <table class="soa-table charges-breakdown-table daily-history-table">
+                <thead>
+                    <tr class="header-row">
+                        <th width="16%" class="text-left">CONFINEMENT DAY</th>
+                        <th width="28%" class="text-left">DAY INCURRED SERVICES</th>
+                        <th width="16%" class="text-right">DAY NET CHARGE</th>
+                        <th width="18%" class="text-right">CUMULATIVE TOTAL</th>
+                        <th width="22%" class="text-left">STATED COMBINATION</th>
+                    </tr>
+                </thead>
+                <tbody id="pb-daily-history-tbody">
+                    <tr><td colspan="5" class="text-center-muted">Computing daily interim progression...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="billing-section-header">HOSPITAL CHARGES BY CATEGORY (RUNNING TO DATE)</div>
         <table class="soa-table charges-breakdown-table">
             <thead>
                 <tr class="header-row">
@@ -216,7 +236,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/common.js?v=19.0"></script>
-    <script src="../js/partial_bill.js?v=18.3"></script>
+    <script src="../js/common.js?v=19.3"></script>
+    <script src="../js/partial_bill.js?v=19.3"></script>
 </body>
 </html>

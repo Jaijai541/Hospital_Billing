@@ -205,6 +205,12 @@ const renderDepartmentOrdersTable = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const highlightRequestId = parseInt(urlParams.get("request_id") || "0", 10);
 
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const isHigherUpUser = parseInt(curUser.is_higher_up, 10) === 1 || parseInt(curUser.role_id, 10) === 1 || (curUser.access_domain || "").toLowerCase() === "admin" || (curUser.role_name || "").toLowerCase().includes("admin");
+    const isNurseOrClinical = (curUser.access_domain || "").toLowerCase() === "clinical" || (curUser.role_name || "").toLowerCase().includes("nurse") || (curUser.station_id && parseInt(curUser.station_id, 10) === 5);
+    const isCurrentStationNurse = (selectedStationId === 5);
+    const canDeliver = isHigherUpUser || isNurseOrClinical || isCurrentStationNurse;
+
     let html = '';
     list.forEach(o => {
         const isScan = (o.Category_Type === 'Equipment Scan' || o.Category_Type === 'Service');
@@ -228,13 +234,33 @@ const renderDepartmentOrdersTable = () => {
                 </div>
             `;
         } else if (stage === 'prepared') {
-            actionCellHtml = `
-                <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Assigned Nurse: ' + o.Assigned_Nurse_Name : ''}">Awaiting Nurse</div>
-            `;
+            const btnDeliverText = isScan ? 'Transport Patient' : 'Pick Up & Deliver';
+            if (canDeliver) {
+                actionCellHtml = `
+                    <div class="dept-action-btn-group">
+                        ${o.Assigned_Nurse_Name ? `<div class="dept-order-assigned-label">Assigned: <strong>${o.Assigned_Nurse_Name}</strong></div>` : ''}
+                        <button type="button" class="dept-btn-deliver" onclick="handleReceiveOrderForDelivery(${o.Request_ID})">${btnDeliverText}</button>
+                    </div>
+                `;
+            } else {
+                actionCellHtml = `
+                    <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Assigned Nurse: ' + o.Assigned_Nurse_Name : ''}">Awaiting Nurse (${o.Assigned_Nurse_Name || 'Assigned'})</div>
+                `;
+            }
         } else if (stage === 'delivering') {
-            actionCellHtml = `
-                <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Nurse: ' + o.Assigned_Nurse_Name : ''}">${isScan ? 'Escorting' : 'In Transit'}</div>
-            `;
+            const btnAdminText = isScan ? 'Complete Scan' : 'Deliver & Administer';
+            if (canDeliver) {
+                actionCellHtml = `
+                    <div class="dept-action-btn-group">
+                        ${o.Assigned_Nurse_Name ? `<div class="dept-order-assigned-label">Nurse: <strong>${o.Assigned_Nurse_Name}</strong></div>` : ''}
+                        <button type="button" class="dept-btn-administer" onclick="handleAdministerOrderFromQueue(${o.Request_ID})">${btnAdminText}</button>
+                    </div>
+                `;
+            } else {
+                actionCellHtml = `
+                    <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Nurse: ' + o.Assigned_Nurse_Name : ''}">${isScan ? 'Escorting' : 'In Transit'} (${o.Assigned_Nurse_Name || 'Nurse'})</div>
+                `;
+            }
         } else if (stage === 'administered') {
             actionCellHtml = `
                 <span class="badge badge-success">${isScan ? 'Scanned' : 'Administered'}</span>
@@ -617,6 +643,93 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 15000);
 });
 
+const handleReceiveOrderForDelivery = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const order = (cachedDeptOrders || []).find(x => String(x.Request_ID) === String(requestId));
+    const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
+
+    const promptText = isScan
+        ? "Confirm patient escort/transport to scan room?\n\nThe ordering doctor will receive an alert that the patient is in transit to the scan room."
+        : "Confirm receiving prepared medication from department?\n\nThe ordering doctor will receive an alert that the item was received and is now being delivered to the patient.";
+
+    showPopupConfirm(promptText, () => {
+        const formData = new FormData();
+        formData.append("operation", "receiveOrderForDelivery");
+        formData.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID
+        }));
+
+        axios.post("../api/POST/clinical_orders.php", formData)
+            .then(res => {
+                if (res.data && res.data.success) {
+                    showToast(res.data.message || "Order marked as received and out for delivery.", "success");
+                    loadDepartmentOrders();
+                    if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+                } else {
+                    alert(res.data.error || "Failed to update delivery status.");
+                }
+            })
+            .catch(err => {
+                if (err.response && err.response.data && err.response.data.error) {
+                    alert(err.response.data.error);
+                } else {
+                    alert("Network error updating delivery status.");
+                }
+            });
+    }, null, {
+        title: isScan ? "Confirm Patient Transport" : "Confirm Item Pickup",
+        confirmText: isScan ? "Start Transport" : "Pick Up & Deliver",
+        type: "info"
+    });
+};
+
+const handleAdministerOrderFromQueue = (requestId) => {
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const order = (cachedDeptOrders || []).find(x => String(x.Request_ID) === String(requestId));
+    const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
+    const deliveringPersonnelName = (order && order.Assigned_Nurse_Name) ? order.Assigned_Nurse_Name : (user.full_name || user.username || "Nurse");
+    const deliveringPersonnelUserId = (order && order.Assigned_Nurse_User_ID) ? order.Assigned_Nurse_User_ID : (user.user_id || user.User_ID);
+
+    const promptText = isScan
+        ? `Confirm diagnostic scan completion and bedside charting for ${order ? order.Item_Name : 'item'}?\n\nStaff: ${deliveringPersonnelName}\n\nThis will record the scan as completed and post the official charge to the patient's billing ledger.`
+        : `Confirm bedside administration of ${order ? order.Item_Name : 'medication'} to patient ${order ? order.Patient_Name : ''}?\n\nDelivering Staff: ${deliveringPersonnelName}\n\nThis will record the medication as Administered and post the official charge to the live billing ledger.`;
+
+    showPopupConfirm(promptText, () => {
+        const formData = new FormData();
+        formData.append("operation", "administerOrder");
+        formData.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: deliveringPersonnelUserId,
+            doctor_id: null
+        }));
+
+        axios.post("../api/POST/clinical_orders.php", formData)
+            .then(res => {
+                if (res.data && res.data.success) {
+                    showToast(res.data.message || "Order successfully administered and charged.", "success");
+                    loadDepartmentOrders();
+                    if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+                } else {
+                    alert(res.data.error || "Failed to administer order.");
+                }
+            })
+            .catch(err => {
+                if (err.response && err.response.data && err.response.data.error) {
+                    alert(err.response.data.error);
+                } else {
+                    alert("Network error administering order.");
+                }
+            });
+    }, null, {
+        title: isScan ? "Confirm Scan Completion" : "Confirm Administration",
+        confirmText: isScan ? "Confirm Complete" : "Administer & Charge",
+        type: "info"
+    });
+};
+
 window.handleStartPreparing = handleStartPreparing;
 window.openAssignNurseModal = openAssignNurseModal;
 window.selectNurseItem = selectNurseItem;
+window.handleReceiveOrderForDelivery = handleReceiveOrderForDelivery;
+window.handleAdministerOrderFromQueue = handleAdministerOrderFromQueue;

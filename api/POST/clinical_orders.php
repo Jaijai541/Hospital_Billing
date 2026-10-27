@@ -356,7 +356,7 @@ class ClinicalOrderManager
         }
 
         try {
-            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID, dor.Assigned_Nurse_User_ID,
                                 ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
@@ -388,12 +388,16 @@ class ClinicalOrderManager
 
             $userStationIds = [];
             $isHigherUp = false;
+            $userRoleName = '';
+            $accessDomain = '';
             if ($userId > 0) {
-                $uRoleStmt = $conn->prepare("SELECT u.Role_ID, u.Station_ID, r.Is_Higher_Up FROM System_User u INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID WHERE u.User_ID = :uid");
+                $uRoleStmt = $conn->prepare("SELECT u.Role_ID, u.Station_ID, r.Role_Name, r.Access_Domain, r.Is_Higher_Up FROM System_User u INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID WHERE u.User_ID = :uid");
                 $uRoleStmt->execute([':uid' => $userId]);
                 $uRole = $uRoleStmt->fetch(PDO::FETCH_ASSOC);
                 if ($uRole) {
                     $isHigherUp = (intval($uRole['Is_Higher_Up']) === 1 || intval($uRole['Role_ID']) === 1);
+                    $userRoleName = strtolower($uRole['Role_Name'] ?? '');
+                    $accessDomain = strtolower($uRole['Access_Domain'] ?? '');
                     if (!empty($uRole['Station_ID'])) $userStationIds[] = intval($uRole['Station_ID']);
                 }
                 $udsStmt = $conn->prepare("SELECT Station_ID FROM User_Department_Station WHERE User_ID = :uid");
@@ -405,8 +409,16 @@ class ClinicalOrderManager
             }
 
             $orderTargetStation = intval($order['Target_Station_ID'] ?? 0);
-            if (!$isHigherUp && !empty($userStationIds) && $orderTargetStation > 0 && !in_array($orderTargetStation, $userStationIds)) {
-                return json_encode(['error' => 'Unauthorized: This order is routed to ' . $order['Station_Name'] . '. Your department does not have permission to fulfill it.']);
+            $isNurseOrClinical = (
+                strpos($userRoleName, 'nurse') !== false ||
+                $accessDomain === 'clinical' ||
+                in_array(5, $userStationIds) ||
+                (intval($order['Assigned_Nurse_User_ID'] ?? 0) === $userId)
+            );
+            $isDeptAuthorized = ($orderTargetStation <= 0 || in_array($orderTargetStation, $userStationIds));
+
+            if (!$isHigherUp && !$isNurseOrClinical && !$isDeptAuthorized) {
+                return json_encode(['error' => 'Unauthorized: Only assigned nurses, clinical staff, or the fulfilling department can receive this order for delivery.']);
             }
 
             $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 

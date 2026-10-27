@@ -275,6 +275,47 @@
     white-space: nowrap;
 }
 
+.dept-btn-deliver {
+    background-color: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.dept-btn-deliver:hover {
+    background-color: #1d4ed8;
+}
+
+.dept-btn-administer {
+    background-color: #059669;
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.dept-btn-administer:hover {
+    background-color: #047857;
+}
+
+.dept-order-assigned-label {
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+
 .nurse-picker-list {
     max-height: 260px;
     overflow-y: auto;

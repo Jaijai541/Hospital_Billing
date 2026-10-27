@@ -377,6 +377,15 @@ class ClinicalOrderManager
         }
         $assignedStationIds = array_values(array_unique(array_filter($assignedStationIds, fn($id) => $id > 0)));
 
+        $nsIds = [];
+        $nsStmt = $conn->query("SELECT Station_ID FROM Enum_Department_Station WHERE Code_Prefix = 'NRS' OR Station_Name LIKE '%Nurse%'");
+        if ($nsStmt) {
+            $nsIds = array_map('intval', $nsStmt->fetchAll(PDO::FETCH_COLUMN));
+        }
+        if (empty($nsIds)) {
+            $nsIds = [5];
+        }
+
         $where = "WHERE 1=1";
         $params = [];
 
@@ -389,15 +398,28 @@ class ClinicalOrderManager
                 if (!in_array($stationId, $assignedStationIds)) {
                     return json_encode([]);
                 }
-                $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+                if (in_array($stationId, $nsIds)) {
+                    $where .= " AND ((dor.Target_Station_ID = :sid OR c.Station_ID = :sid) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
+                } else {
+                    $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+                }
                 $params[':sid'] = $stationId;
             } else {
+                $hasNurseStationAccess = !empty(array_intersect($assignedStationIds, $nsIds));
                 $stationIdList = implode(",", $assignedStationIds);
-                $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
+                if ($hasNurseStationAccess) {
+                    $where .= " AND ((dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList)) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
+                } else {
+                    $where .= " AND (dor.Target_Station_ID IN ($stationIdList) OR c.Station_ID IN ($stationIdList))";
+                }
             }
         } else {
             if ($stationId > 0) {
-                $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+                if (in_array($stationId, $nsIds)) {
+                    $where .= " AND ((dor.Target_Station_ID = :sid OR c.Station_ID = :sid) OR (dor.Status IN ('Prepared', 'Delivering', 'Administered')))";
+                } else {
+                    $where .= " AND (dor.Target_Station_ID = :sid OR c.Station_ID = :sid)";
+                }
                 $params[':sid'] = $stationId;
             }
         }

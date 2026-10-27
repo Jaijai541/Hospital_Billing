@@ -2238,7 +2238,7 @@ const renderFilteredOrders = () => {
     html += '<th>Fulfilling Department &amp; Staff</th>';
     html += '<th>Quantity &amp; Amount</th>';
     html += '<th>Process &amp; Delivery Tracking</th>';
-    html += '<th class="text-center">Lifecycle Action</th>';
+    html += '<th class="text-center">Status &amp; Actions</th>';
     html += '</tr></thead><tbody>';
 
     filtered.forEach(o => {
@@ -2278,15 +2278,13 @@ const renderFilteredOrders = () => {
                 ${canCancelOrder ? `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>` : ''}
             `;
         } else if (stage === 'prepared') {
-            const btnDeliverText = isScan ? 'Transport Patient to Scan' : 'Pick Up &amp; Deliver';
             actionHtml = `
-                <button type="button" class="btn btn-sm btn-primary" onclick="receiveOrderForDelivery(${o.Request_ID})">${btnDeliverText}</button>
+                <span class="badge badge-process badge-process-prepared">${isScan ? 'Ready for Escort' : 'Awaiting Nurse Pickup'}</span>
                 ${canCancelOrder ? `<button type="button" class="btn btn-sm btn-danger btn-delete" onclick="cancelOrder(${o.Request_ID})">Cancel</button>` : ''}
             `;
         } else if (stage === 'delivering') {
-            const btnAdminText = isScan ? 'Scan Completed &amp; Recorded' : 'Deliver &amp; Administer';
             actionHtml = `
-                <button type="button" class="btn btn-sm btn-success" onclick="administerOrder(${o.Request_ID})">${btnAdminText}</button>
+                <span class="badge badge-process badge-process-delivering">${isScan ? 'Patient In Transit' : 'Out for Delivery'}</span>
             `;
         } else if (stage === 'administered') {
             actionHtml = `<span class="badge badge-success">Completed &amp; Administered</span>`;

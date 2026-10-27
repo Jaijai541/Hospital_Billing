@@ -22,6 +22,13 @@ const handleUserLogout = async () => {
     window.location.href = "login.html";
 };
 
+const getCategoryPill = (catType) => {
+    const cat = String(catType || '').trim();
+    if (cat === 'Medicine') return `<span class="cat-pill cat-med">${cat}</span>`;
+    if (cat === 'Equipment Scan' || cat === 'Scan') return `<span class="cat-pill cat-scan">${cat}</span>`;
+    return `<span class="cat-pill cat-srv">${cat || 'Service'}</span>`;
+};
+
 const enforcePageRbacGuard = (user) => {
     if (!user) return false;
     const pathParts = window.location.pathname.split("/");

@@ -6,6 +6,14 @@ let selectedStationId = 0;
 let activeNursesList = [];
 let selectedNurseUserId = 0;
 
+const getCategoryPill = (catType) => {
+    const cat = String(catType || '').trim();
+    if (cat === 'Medicine') return `<span class="cat-pill cat-med">${cat}</span>`;
+    if (cat === 'Equipment Scan' || cat === 'Scan') return `<span class="cat-pill cat-scan">${cat}</span>`;
+    return `<span class="cat-pill cat-srv">${cat || 'Service'}</span>`;
+};
+
+
 const getOrderProcessStage = (status) => {
     const s = (status || '').toLowerCase();
     if (s === 'requested' || s === 'pending') return 'requested';
@@ -100,37 +108,31 @@ const renderTrackingStepper = (o) => {
     }
 
     return `
-        <div class="stepper-wrapper-cell">
-            <div class="stepper-badge-row">
-                <span class="badge badge-process ${badgeClass}">${badgeText}</span>
-            </div>
+        <div class="order-tracking-cell">
+            <div><span class="badge-process ${badgeClass}">${badgeText}</span></div>
             <div class="tracking-stepper">
-                <div class="stepper-step ${s1State}">
-                    <div class="step-circle"><span class="step-num">1</span></div>
-                    <div class="step-title">${step1Title}</div>
+                <div class="tracking-step ${s1State}">
+                    <div class="tracking-node" title="Doctor Order Placed">1</div>
+                    <div class="tracking-label">${step1Title}</div>
                 </div>
-                <div class="stepper-connector ${stage !== 'requested' ? 'is-complete' : ''}"></div>
-                <div class="stepper-step ${s2State}">
-                    <div class="step-circle"><span class="step-num">2</span></div>
-                    <div class="step-title">${step2Title}</div>
+                <div class="tracking-step ${s2State}">
+                    <div class="tracking-node" title="Department Prepares Item / Scan Room">2</div>
+                    <div class="tracking-label">${step2Title}</div>
                 </div>
-                <div class="stepper-connector ${stage === 'prepared' || stage === 'delivering' || stage === 'administered' ? 'is-complete' : ''}"></div>
-                <div class="stepper-step ${s3State}">
-                    <div class="step-circle"><span class="step-num">3</span></div>
-                    <div class="step-title">${step3Title}</div>
+                <div class="tracking-step ${s3State}">
+                    <div class="tracking-node" title="Ready / Active Nurse Assigned">3</div>
+                    <div class="tracking-label">${step3Title}</div>
                 </div>
-                <div class="stepper-connector ${stage === 'delivering' || stage === 'administered' ? 'is-complete' : ''}"></div>
-                <div class="stepper-step ${s4State}">
-                    <div class="step-circle"><span class="step-num">4</span></div>
-                    <div class="step-title">${step4Title}</div>
+                <div class="tracking-step ${s4State}">
+                    <div class="tracking-node" title="Nurse Picked Up / Patient In Transit">4</div>
+                    <div class="tracking-label">${step4Title}</div>
                 </div>
-                <div class="stepper-connector ${stage === 'administered' ? 'is-complete' : ''}"></div>
-                <div class="stepper-step ${s5State}">
-                    <div class="step-circle"><span class="step-num">5</span></div>
-                    <div class="step-title">${step5Title}</div>
+                <div class="tracking-step ${s5State}">
+                    <div class="tracking-node" title="Delivered & Administered">5</div>
+                    <div class="tracking-label">${step5Title}</div>
                 </div>
             </div>
-            <div class="stepper-meta-text">${trackerMeta}</div>
+            <div class="tracking-meta-desc">${trackerMeta}</div>
         </div>
     `;
 };

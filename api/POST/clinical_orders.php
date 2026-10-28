@@ -340,6 +340,102 @@ class ClinicalOrderManager
         return $this->markOrderPrepared($json);
     }
 
+    function reassignOrderNurse($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $requestId = intval($json['request_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $newNurseUserId = intval($json['new_nurse_user_id'] ?? ($json['nurse_user_id'] ?? 0));
+
+        if (empty($requestId)) {
+            return json_encode(['error' => 'Request ID is required.']);
+        }
+        if (empty($newNurseUserId)) {
+            return json_encode(['error' => 'Please select an on-duty nurse to assign.']);
+        }
+
+        try {
+            $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
+                                dor.Assigned_Nurse_User_ID, dor.Prepared_By_User_ID,
+                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                c.Item_Name, c.Category_Type,
+                                COALESCE(s.Station_Name, 'Department') AS Station_Name,
+                                CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
+                                COALESCE(r.Room_Name, 'Ward') AS Room_Name,
+                                COALESCE(rb.Bed_Code, 'Bed') AS Bed_Code
+                         FROM Doctor_Order_Request dor
+                         INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID
+                         INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                         INNER JOIN Admission a ON ad.Admission_ID = a.Admission_ID
+                         INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                         INNER JOIN Charge_Catalogs c ON dor.Catalog_ID = c.Catalog_ID
+                         LEFT JOIN Enum_Department_Station s ON dor.Target_Station_ID = s.Station_ID
+                         LEFT JOIN Room_Transfer_Log rtl ON a.Admission_ID = rtl.Admission_ID AND rtl.Date_Out IS NULL
+                         LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                         LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                         WHERE dor.Request_ID = :rid";
+            $orderStmt = $conn->prepare($orderSql);
+            $orderStmt->execute([':rid' => $requestId]);
+            $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$order) {
+                return json_encode(['error' => 'Order not found.']);
+            }
+            if ($order['Status'] === 'Administered') {
+                return json_encode(['error' => 'Order has already been administered.']);
+            }
+            if ($order['Status'] === 'Cancelled') {
+                return json_encode(['error' => 'Order is cancelled.']);
+            }
+
+            $nurseStmt = $conn->prepare("SELECT CONCAT(First_Name, ' ', Last_Name) AS Full_Name FROM System_User WHERE User_ID = :uid AND Is_Active = 1");
+            $nurseStmt->execute([':uid' => $newNurseUserId]);
+            $newNurseName = $nurseStmt->fetchColumn();
+            if (!$newNurseName) {
+                return json_encode(['error' => 'Selected replacement nurse not found or inactive.']);
+            }
+
+            $oldNurseUserId = intval($order['Assigned_Nurse_User_ID'] ?? 0);
+            if ($oldNurseUserId === $newNurseUserId) {
+                return json_encode(['error' => 'Selected nurse is already assigned to this order.']);
+            }
+
+            $upStmt = $conn->prepare("UPDATE Doctor_Order_Request SET Assigned_Nurse_User_ID = :nuid WHERE Request_ID = :rid");
+            $upStmt->execute([':nuid' => $newNurseUserId, ':rid' => $requestId]);
+
+            $isScan = ($order['Category_Type'] === 'Equipment Scan' || $order['Category_Type'] === 'Service');
+            $location = "{$order['Room_Name']} - {$order['Bed_Code']}";
+
+            if ($isScan) {
+                $notifTitle = "Escort Reassigned: {$order['Item_Name']}";
+                $notifMsg = "You have been assigned to escort {$order['Patient_Name']} ($location) to {$order['Station_Name']} for {$order['Item_Name']}.";
+            } else {
+                $notifTitle = "Delivery Reassigned: {$order['Item_Name']}";
+                $notifMsg = "You have been assigned to pick up {$order['Item_Name']} at {$order['Station_Name']} and deliver to {$order['Patient_Name']} ($location).";
+            }
+            $notifSql = "INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                         VALUES (:aid, :rid, :suid, :tuid, :title, :msg, 'Order_Prepared', 0, NOW())";
+            $notifStmt = $conn->prepare($notifSql);
+            $notifStmt->execute([
+                ':aid' => $order['Admission_ID'],
+                ':rid' => $requestId,
+                ':suid' => $userId > 0 ? $userId : null,
+                ':tuid' => $newNurseUserId,
+                ':title' => $notifTitle,
+                ':msg' => $notifMsg
+            ]);
+
+            return json_encode([
+                'success' => true,
+                'message' => "Order delivery reassigned to Nurse {$newNurseName}. They have been alerted for pickup."
+            ]);
+        } catch (Exception $e) {
+            return json_encode(['error' => 'Failed to reassign nurse: ' . $e->getMessage()]);
+        }
+    }
+
     function receiveOrderForDelivery($json = '{}')
     {
         include "connection.php";
@@ -409,16 +505,23 @@ class ClinicalOrderManager
             }
 
             $orderTargetStation = intval($order['Target_Station_ID'] ?? 0);
-            $isNurseOrClinical = (
-                strpos($userRoleName, 'nurse') !== false ||
-                $accessDomain === 'clinical' ||
-                in_array(5, $userStationIds) ||
-                (intval($order['Assigned_Nurse_User_ID'] ?? 0) === $userId)
-            );
-            $isDeptAuthorized = ($orderTargetStation <= 0 || in_array($orderTargetStation, $userStationIds));
-
-            if (!$isHigherUp && !$isNurseOrClinical && !$isDeptAuthorized) {
-                return json_encode(['error' => 'Unauthorized: Only assigned nurses, clinical staff, or the fulfilling department can receive this order for delivery.']);
+            $assignedNurseId = intval($order['Assigned_Nurse_User_ID'] ?? 0);
+            if ($assignedNurseId > 0 && !$isHigherUp) {
+                if ($userId !== $assignedNurseId) {
+                    $assignedNameStmt = $conn->prepare("SELECT CONCAT(First_Name, ' ', Last_Name) FROM System_User WHERE User_ID = :anid");
+                    $assignedNameStmt->execute([':anid' => $assignedNurseId]);
+                    $assignedName = $assignedNameStmt->fetchColumn() ?: 'the assigned nurse';
+                    return json_encode([
+                        'error' => "This order is assigned to Nurse {$assignedName} for delivery. Only the assigned nurse can pick it up. If unavailable, please switch or reassign the nurse."
+                    ]);
+                }
+            } else if ($assignedNurseId <= 0 && !$isHigherUp) {
+                $isActualNurse = (strpos($userRoleName, 'nurse') !== false || in_array(5, $userStationIds));
+                if (!$isActualNurse) {
+                    return json_encode([
+                        'error' => 'Only an on-duty nurse can pick up orders for patient delivery. Please assign a nurse first.'
+                    ]);
+                }
             }
 
             $updateStmt = $conn->prepare("UPDATE Doctor_Order_Request 
@@ -502,6 +605,7 @@ class ClinicalOrderManager
                             dor.Quantity,
                             dor.Status,
                             dor.Target_Station_ID,
+                            dor.Assigned_Nurse_User_ID,
                             ad.Admission_ID,
                             ad.Doctor_ID,
                             d.User_ID AS Doctor_User_ID,
@@ -531,6 +635,28 @@ class ClinicalOrderManager
             if ($order['Status'] === 'Administered') {
                 $conn->rollBack();
                 return json_encode(['error' => "This order has already been administered."]);
+            }
+
+            $isHigherUp = false;
+            if ($userId > 0) {
+                $uRoleStmt = $conn->prepare("SELECT u.Role_ID, r.Is_Higher_Up FROM System_User u INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID WHERE u.User_ID = :uid");
+                $uRoleStmt->execute([':uid' => $userId]);
+                $uRole = $uRoleStmt->fetch(PDO::FETCH_ASSOC);
+                if ($uRole) {
+                    $isHigherUp = (intval($uRole['Is_Higher_Up']) === 1 || intval($uRole['Role_ID']) === 1);
+                }
+            }
+            $assignedNurseId = intval($order['Assigned_Nurse_User_ID'] ?? 0);
+            if ($assignedNurseId > 0 && empty($doctorId) && !$isHigherUp) {
+                if ($userId !== $assignedNurseId) {
+                    $assignedNameStmt = $conn->prepare("SELECT CONCAT(First_Name, ' ', Last_Name) FROM System_User WHERE User_ID = :anid");
+                    $assignedNameStmt->execute([':anid' => $assignedNurseId]);
+                    $assignedName = $assignedNameStmt->fetchColumn() ?: 'the assigned nurse';
+                    $conn->rollBack();
+                    return json_encode([
+                        'error' => "This order is being delivered by Nurse {$assignedName}. Only the delivering nurse can complete administration, or switch nurse if unavailable."
+                    ]);
+                }
             }
 
             $administerStmt = $conn->prepare("UPDATE Doctor_Order_Request 
@@ -779,6 +905,9 @@ switch ($operation) {
         break;
     case 'prepareOrder':
         echo $clinical->prepareOrder($json);
+        break;
+    case 'reassignOrderNurse':
+        echo $clinical->reassignOrderNurse($json);
         break;
     case 'receiveOrderForDelivery':
         echo $clinical->receiveOrderForDelivery($json);

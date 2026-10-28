@@ -7,6 +7,7 @@ let cachedAllStations = [];
 let tempModalSelectedStations = [];
 let activeNursesList = [];
 let selectedNurseUserId = 0;
+let currentPickerAssignedNurseId = 0;
 
 
 
@@ -208,10 +209,13 @@ const renderDepartmentOrdersTable = () => {
     const highlightRequestId = parseInt(urlParams.get("request_id") || "0", 10);
 
     const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
-    const isHigherUpUser = parseInt(curUser.is_higher_up, 10) === 1 || parseInt(curUser.role_id, 10) === 1 || (curUser.access_domain || "").toLowerCase() === "admin" || (curUser.role_name || "").toLowerCase().includes("admin");
-    const isNurseOrClinical = (curUser.access_domain || "").toLowerCase() === "clinical" || (curUser.role_name || "").toLowerCase().includes("nurse") || (curUser.station_id && parseInt(curUser.station_id, 10) === 5);
-    const isCurrentStationNurse = selectedStationIds.includes(5) || selectedStationIds.length === 0;
-    const canDeliver = isHigherUpUser || isNurseOrClinical || isCurrentStationNurse;
+    const curUserId = parseInt(curUser.user_id || curUser.User_ID || 0, 10);
+    const curRoleName = (curUser.role_name || "").toLowerCase();
+    const curAccessDomain = (curUser.access_domain || "").toLowerCase();
+    const curUserStationId = parseInt(curUser.station_id || 0, 10);
+    const isHigherUpUser = parseInt(curUser.is_higher_up, 10) === 1 || parseInt(curUser.role_id, 10) === 1 || curAccessDomain === "admin" || curRoleName.includes("admin");
+    const isNurseRole = curRoleName.includes("nurse") || (!curRoleName.includes("doctor") && curUserStationId === 5);
+    const curUserStationIds = Array.isArray(curUser.station_ids) ? curUser.station_ids.map(x => parseInt(x, 10)) : (curUserStationId ? [curUserStationId] : []);
 
     let html = '';
     list.forEach(o => {
@@ -219,6 +223,13 @@ const renderDepartmentOrdersTable = () => {
         const stage = getOrderProcessStage(o.Status);
         const isRowHighlight = highlightRequestId === parseInt(o.Request_ID, 10);
         const rowClass = isRowHighlight ? 'dept-order-row-highlight' : '';
+
+        const assignedNurseUserId = parseInt(o.Assigned_Nurse_User_ID || 0, 10);
+        const hasAssignedNurse = (assignedNurseUserId > 0);
+        const isAssignedNurse = (hasAssignedNurse && assignedNurseUserId === curUserId);
+        const targetStationId = parseInt(o.Target_Station_ID || 0, 10);
+        const isDeptPersonnel = isHigherUpUser || (targetStationId > 0 && curUserStationIds.includes(targetStationId)) || (parseInt(o.Prepared_By_User_ID || 0, 10) === curUserId) || selectedStationIds.includes(targetStationId);
+        const canSwitchNurse = isHigherUpUser || isAssignedNurse || isDeptPersonnel;
 
         let actionCellHtml = '';
         if (stage === 'requested') {
@@ -237,30 +248,50 @@ const renderDepartmentOrdersTable = () => {
             `;
         } else if (stage === 'prepared') {
             const btnDeliverText = isScan ? 'Transport Patient' : 'Pick Up & Deliver';
-            if (canDeliver) {
+            const canPickUpThisOrder = isHigherUpUser || isAssignedNurse || (!hasAssignedNurse && isNurseRole);
+
+            if (canPickUpThisOrder) {
                 actionCellHtml = `
                     <div class="dept-action-btn-group">
-                        ${o.Assigned_Nurse_Name ? `<div class="dept-order-assigned-label">Assigned: <strong>${o.Assigned_Nurse_Name}</strong></div>` : ''}
-                        <button type="button" class="dept-btn-deliver" onclick="handleReceiveOrderForDelivery(${o.Request_ID})">${btnDeliverText}</button>
+                        ${hasAssignedNurse ? `<div class="dept-order-assigned-label">${isAssignedNurse ? 'Assigned to: <strong>You</strong>' : `Assigned: <strong>${o.Assigned_Nurse_Name}</strong>`}</div>` : ''}
+                        <div class="dept-btn-action-row">
+                            <button type="button" class="dept-btn-deliver" onclick="handleReceiveOrderForDelivery(${o.Request_ID})">${btnDeliverText}</button>
+                            ${canSwitchNurse ? `<button type="button" class="dept-btn-switch" onclick="openSwitchNurseModal(${o.Request_ID}, ${isScan})" title="Switch to another nurse if unavailable">Switch Nurse</button>` : ''}
+                        </div>
                     </div>
                 `;
             } else {
                 actionCellHtml = `
-                    <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Assigned Nurse: ' + o.Assigned_Nurse_Name : ''}">Awaiting Nurse (${o.Assigned_Nurse_Name || 'Assigned'})</div>
+                    <div class="dept-action-btn-group">
+                        <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Assigned Nurse: ' + o.Assigned_Nurse_Name : ''}">
+                            Awaiting Nurse: <strong>${o.Assigned_Nurse_Name || 'Assigned'}</strong>
+                        </div>
+                        ${canSwitchNurse ? `<button type="button" class="dept-btn-switch" onclick="openSwitchNurseModal(${o.Request_ID}, ${isScan})" title="Switch to another nurse if unavailable">Switch Nurse</button>` : ''}
+                    </div>
                 `;
             }
         } else if (stage === 'delivering') {
             const btnAdminText = isScan ? 'Complete Scan' : 'Deliver & Administer';
-            if (canDeliver) {
+            const canAdministerThisOrder = isHigherUpUser || isAssignedNurse;
+
+            if (canAdministerThisOrder) {
                 actionCellHtml = `
                     <div class="dept-action-btn-group">
-                        ${o.Assigned_Nurse_Name ? `<div class="dept-order-assigned-label">Nurse: <strong>${o.Assigned_Nurse_Name}</strong></div>` : ''}
-                        <button type="button" class="dept-btn-administer" onclick="handleAdministerOrderFromQueue(${o.Request_ID})">${btnAdminText}</button>
+                        <div class="dept-order-assigned-label">${isAssignedNurse ? 'Delivering by: <strong>You</strong>' : `Nurse: <strong>${o.Assigned_Nurse_Name}</strong>`}</div>
+                        <div class="dept-btn-action-row">
+                            <button type="button" class="dept-btn-administer" onclick="handleAdministerOrderFromQueue(${o.Request_ID})">${btnAdminText}</button>
+                            ${canSwitchNurse ? `<button type="button" class="dept-btn-switch" onclick="openSwitchNurseModal(${o.Request_ID}, ${isScan})" title="Hand off delivery to another nurse if unavailable">Switch Nurse</button>` : ''}
+                        </div>
                     </div>
                 `;
             } else {
                 actionCellHtml = `
-                    <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Nurse: ' + o.Assigned_Nurse_Name : ''}">${isScan ? 'Escorting' : 'In Transit'} (${o.Assigned_Nurse_Name || 'Nurse'})</div>
+                    <div class="dept-action-btn-group">
+                        <div class="dept-meta-assigned" title="${o.Assigned_Nurse_Name ? 'Nurse: ' + o.Assigned_Nurse_Name : ''}">
+                            ${isScan ? 'Escorting:' : 'In Transit:'} <strong>${o.Assigned_Nurse_Name || 'Nurse'}</strong>
+                        </div>
+                        ${canSwitchNurse ? `<button type="button" class="dept-btn-switch" onclick="openSwitchNurseModal(${o.Request_ID}, ${isScan})" title="Hand off delivery to another nurse if unavailable">Switch Nurse</button>` : ''}
+                    </div>
                 `;
             }
         } else if (stage === 'administered') {
@@ -374,13 +405,16 @@ const handleStartPreparing = (requestId) => {
 
 const openAssignNurseModal = async (requestId, isScan) => {
     const reqInput = document.getElementById("assign_nurse_request_id");
+    const modeInput = document.getElementById("assign_nurse_mode");
     const title = document.getElementById("assignNurseModalTitle");
     const prompt = document.getElementById("assignNursePromptText");
     const confirmBtn = document.getElementById("btnConfirmAssignNurse");
     const searchInput = document.getElementById("nurse_search_input");
 
     if (reqInput) reqInput.value = String(requestId);
+    if (modeInput) modeInput.value = "assign";
     if (searchInput) searchInput.value = '';
+    currentPickerAssignedNurseId = 0;
     selectedNurseUserId = 0;
 
     if (isScan) {
@@ -405,9 +439,44 @@ const openAssignNurseModal = async (requestId, isScan) => {
     }
 };
 
+const openSwitchNurseModal = async (requestId, isScan) => {
+    const reqInput = document.getElementById("assign_nurse_request_id");
+    const modeInput = document.getElementById("assign_nurse_mode");
+    const title = document.getElementById("assignNurseModalTitle");
+    const prompt = document.getElementById("assignNursePromptText");
+    const confirmBtn = document.getElementById("btnConfirmAssignNurse");
+    const searchInput = document.getElementById("nurse_search_input");
+
+    const order = (cachedDeptOrders || []).find(x => String(x.Request_ID) === String(requestId));
+    const currentNurseName = (order && order.Assigned_Nurse_Name) ? order.Assigned_Nurse_Name : "Current Nurse";
+
+    if (reqInput) reqInput.value = String(requestId);
+    if (modeInput) modeInput.value = "switch";
+    if (searchInput) searchInput.value = '';
+    currentPickerAssignedNurseId = (order && order.Assigned_Nurse_User_ID) ? parseInt(order.Assigned_Nurse_User_ID, 10) : 0;
+    selectedNurseUserId = 0;
+
+    if (title) title.textContent = isScan ? "Switch Escort Nurse" : "Switch Delivering Nurse";
+    if (prompt) prompt.innerHTML = '<strong>' + currentNurseName + '</strong> is currently assigned. If unavailable, select another on-duty nurse to take over:';
+    if (confirmBtn) confirmBtn.textContent = "Confirm Switch & Alert Nurse";
+
+    try {
+        const res = await axios.get("../api/GET/clinical_orders.php", {
+            params: { operation: "getActiveNurses" }
+        });
+        activeNursesList = Array.isArray(res.data) ? res.data : [];
+        renderNursePickerList();
+        openModal("assignNurseModal");
+    } catch (e) {
+        alert("Failed to load active nurses list.");
+    }
+};
+
 const renderNursePickerList = () => {
     const container = document.getElementById("nurse-picker-list-container");
     const searchInput = document.getElementById("nurse_search_input");
+    const modeInput = document.getElementById("assign_nurse_mode");
+    const isSwitch = modeInput && modeInput.value === "switch";
     const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
     if (!container) return;
 
@@ -421,17 +490,28 @@ const renderNursePickerList = () => {
         return;
     }
 
-    let html = '';
-    filtered.forEach((n, idx) => {
-        if (!selectedNurseUserId && idx === 0) {
-            selectedNurseUserId = parseInt(n.id, 10);
+    if (!selectedNurseUserId) {
+        const firstAvailable = filtered.find(n => !isSwitch || parseInt(n.id, 10) !== currentPickerAssignedNurseId);
+        if (firstAvailable) {
+            selectedNurseUserId = parseInt(firstAvailable.id, 10);
+        } else if (filtered.length > 0) {
+            selectedNurseUserId = parseInt(filtered[0].id, 10);
         }
+    }
+
+    let html = '';
+    filtered.forEach(n => {
+        const isCurrent = (currentPickerAssignedNurseId > 0 && parseInt(n.id, 10) === currentPickerAssignedNurseId);
         const isSel = (parseInt(n.id, 10) === selectedNurseUserId);
         const selClass = isSel ? 'selected' : '';
+        const curClass = isCurrent ? 'current-assigned' : '';
         html += `
-            <div class="nurse-picker-item ${selClass}" onclick="selectNurseItem(${n.id})">
+            <div class="nurse-picker-item ${selClass} ${curClass}" onclick="selectNurseItem(${n.id})">
                 <div>
-                    <div class="nurse-name-text">${n.name}</div>
+                    <div class="nurse-name-text">
+                        ${n.name}
+                        ${isCurrent ? '<span class="badge badge-secondary" style="font-size: 10px; margin-left: 6px; padding: 2px 6px;">Currently Assigned</span>' : ''}
+                    </div>
                     <div class="nurse-role-text">${n.role_title} • ${n.station_name}</div>
                 </div>
                 <div>
@@ -451,6 +531,8 @@ const selectNurseItem = (nurseId) => {
 
 const confirmAssignNurseAction = () => {
     const reqInput = document.getElementById("assign_nurse_request_id");
+    const modeInput = document.getElementById("assign_nurse_mode");
+    const isSwitch = modeInput && modeInput.value === "switch";
     const requestId = parseInt(reqInput ? reqInput.value : "0", 10);
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
 
@@ -460,32 +542,54 @@ const confirmAssignNurseAction = () => {
         return;
     }
 
-    const fd = new FormData();
-    fd.append("operation", "markOrderPrepared");
-    fd.append("json", JSON.stringify({
-        request_id: requestId,
-        user_id: user.user_id,
-        nurse_user_id: selectedNurseUserId
-    }));
+    if (isSwitch) {
+        if (currentPickerAssignedNurseId > 0 && selectedNurseUserId === currentPickerAssignedNurseId) {
+            alert("The selected nurse is already assigned to this order. Please select a different nurse to switch.");
+            return;
+        }
 
-    axios.post("../api/POST/clinical_orders.php", fd).then(res => {
-        if (res.data && res.data.success) {
-            closeModal("assignNurseModal");
-            showToast(res.data.message || "Order marked as Prepared. Nurse alerted.", "success");
-            loadDepartmentOrders();
-            if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
-        } else {
-            alert(res.data.error || "Failed to mark order prepared.");
-        }
-    }).catch(err => {
-        if (err.response && err.response.data && err.response.data.error) {
-            alert(err.response.data.error);
-        } else if (!err.response) {
-            console.error(err);
-        } else {
-            alert("Network error");
-        }
-    });
+        const fd = new FormData();
+        fd.append("operation", "reassignOrderNurse");
+        fd.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID,
+            new_nurse_user_id: selectedNurseUserId
+        }));
+
+        axios.post("../api/POST/clinical_orders.php", fd).then(res => {
+            if (res.data && res.data.success) {
+                closeModal("assignNurseModal");
+                showToast(res.data.message || "Nurse reassigned successfully.", "success");
+                loadDepartmentOrders();
+                if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+            } else {
+                alert(res.data.error || "Failed to reassign nurse.");
+            }
+        }).catch(() => {
+            alert("Network error reassigning nurse.");
+        });
+    } else {
+        const fd = new FormData();
+        fd.append("operation", "markOrderPrepared");
+        fd.append("json", JSON.stringify({
+            request_id: requestId,
+            user_id: user.user_id || user.User_ID,
+            nurse_user_id: selectedNurseUserId
+        }));
+
+        axios.post("../api/POST/clinical_orders.php", fd).then(res => {
+            if (res.data && res.data.success) {
+                closeModal("assignNurseModal");
+                showToast(res.data.message || "Order marked as Prepared. Nurse alerted.", "success");
+                loadDepartmentOrders();
+                if (typeof fetchRealtimeNotifications === "function") fetchRealtimeNotifications();
+            } else {
+                alert(res.data.error || "Failed to mark order prepared.");
+            }
+        }).catch(() => {
+            alert("Network error updating order status.");
+        });
+    }
 };
 
 const getStationIcon = (name = "", prefix = "") => {
@@ -971,7 +1075,7 @@ const handleAdministerOrderFromQueue = (requestId) => {
     const order = (cachedDeptOrders || []).find(x => String(x.Request_ID) === String(requestId));
     const isScan = order && (order.Category_Type === 'Equipment Scan' || order.Category_Type === 'Service');
     const deliveringPersonnelName = (order && order.Assigned_Nurse_Name) ? order.Assigned_Nurse_Name : (user.full_name || user.username || "Nurse");
-    const deliveringPersonnelUserId = (order && order.Assigned_Nurse_User_ID) ? order.Assigned_Nurse_User_ID : (user.user_id || user.User_ID);
+    const deliveringPersonnelUserId = (user.user_id || user.User_ID);
 
     const promptText = isScan
         ? `Confirm diagnostic scan completion and bedside charting for ${order ? order.Item_Name : 'item'}?\n\nStaff: ${deliveringPersonnelName}\n\nThis will record the scan as completed and post the official charge to the patient's billing ledger.`
@@ -1012,6 +1116,7 @@ const handleAdministerOrderFromQueue = (requestId) => {
 
 window.handleStartPreparing = handleStartPreparing;
 window.openAssignNurseModal = openAssignNurseModal;
+window.openSwitchNurseModal = openSwitchNurseModal;
 window.selectNurseItem = selectNurseItem;
 window.handleReceiveOrderForDelivery = handleReceiveOrderForDelivery;
 window.handleAdministerOrderFromQueue = handleAdministerOrderFromQueue;

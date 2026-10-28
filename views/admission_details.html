@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=20.7">
-    <link rel="stylesheet" href="../css/admission_details.css?v=20.7">
+    <link rel="stylesheet" href="../css/admission_details.css?v=20.8">
 </head>
 <body>
 
@@ -30,9 +30,13 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                         <span>Void Accidental Admission</span>
                     </button>
+                    <button type="button" id="btnOrderDoctorDischarge" class="chart-topbar-btn chart-btn-doctor-discharge chart-topbar-btn-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span id="btnOrderDoctorDischargeText">Order Discharge (May Go Home)</span>
+                    </button>
                     <button type="button" id="btnChartDischarge" class="chart-topbar-btn chart-btn-discharge chart-topbar-btn-hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                        <span>Discharge Patient</span>
+                        <span>Final Billing Clearance</span>
                     </button>
                     <button type="button" id="btnChartGatePass" class="chart-topbar-btn chart-btn-gatepass chart-topbar-btn-hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -870,10 +874,47 @@
         </div>
     </div>
 
+        <div class="modal-overlay" id="doctorDischargeModal">
+        <div class="modal-container" style="max-width: 580px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="margin: 0;">Doctor's Discharge Order (May Go Home)</h3>
+                    <div class="table-sub-text">Clinical Medical Clearance Protocol</div>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseDoctorDischargeModal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 18px 22px;">
+                <div class="banner-notice banner-notice-info" style="margin-bottom: 16px; padding: 10px 14px; font-size: 13px;">
+                    <strong>Clinical Protocol:</strong> Issuing this medical discharge order certifies that the patient is medically cleared to leave. The patient will then be queued for <strong>Final Billing Clearance &amp; Bed Release</strong>.
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" for="doc_discharge_doctor_name">Ordering Attending Physician *</label>
+                    <div class="input-lookup-group">
+                        <input type="hidden" id="doc_discharge_doctor_id">
+                        <input type="text" id="doc_discharge_doctor_name" class="form-control form-control-lookup" placeholder="Select Attending Doctor..." readonly>
+                        <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseDocDischargeDoctor">Select</button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" for="doc_discharge_diagnosis">Confirmed Final Diagnosis *</label>
+                    <input type="text" id="doc_discharge_diagnosis" class="form-control" placeholder="e.g. Acute Gastroenteritis, Resolved; Essential Hypertension">
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" for="doc_discharge_instructions">Take-Home Medications &amp; Discharge Instructions (Optional)</label>
+                    <textarea id="doc_discharge_instructions" class="form-control" rows="3" placeholder="e.g. Continue Ciprofloxacin 500mg BID for 5 days. Follow-up clinic visit after 1 week. Low-fat, soft diet."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 14px 22px; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary" id="btnCancelDoctorDischargeModal">Cancel</button>
+                <button type="button" class="btn btn-success" id="btnConfirmDoctorDischargeOrder" style="font-weight: 600;">✔ Issue Medical Discharge Order</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=20.7"></script>
     <script src="../js/common.js?v=20.7"></script>
-    <script src="../js/admission_details.js?v=20.7"></script>
+    <script src="../js/admission_details.js?v=20.8"></script>
 </body>
 </html>
 

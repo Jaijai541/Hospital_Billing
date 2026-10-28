@@ -248,26 +248,32 @@ class AdmissionManager
         try {
             $conn->beginTransaction();
 
-            $statusCheck = $conn->prepare("SELECT Status FROM Admission WHERE Admission_ID = :aid");
+            $statusCheck = $conn->prepare("SELECT Status, Medical_Discharge_Date FROM Admission WHERE Admission_ID = :aid");
             $statusCheck->execute([':aid' => $admissionId]);
-            $currentStatus = $statusCheck->fetchColumn();
+            $admRow = $statusCheck->fetch(PDO::FETCH_ASSOC);
 
-            if (!$currentStatus) {
+            if (!$admRow) {
                 $conn->rollBack();
                 return json_encode(['error' => 'Admission record not found.']);
             }
 
-            if ($currentStatus === 'Billed') {
+            if ($admRow['Status'] === 'Billed') {
                 $conn->rollBack();
                 return json_encode(['error' => 'Patient admission is already settled and billed.']);
             }
 
-            if ($currentStatus === 'Discharged') {
+            if ($admRow['Status'] === 'Discharged') {
                 $conn->commit();
                 return json_encode([
                     'success' => true,
                     'message' => 'Patient is already discharged.'
                 ]);
+            }
+
+            $adminOverride = !empty($json['admin_override']);
+            if (empty($admRow['Medical_Discharge_Date']) && !$adminOverride) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Medical Clearance Required: An attending physician must first issue a Doctor\'s Discharge Order (May Go Home) before billing discharge and bed release.']);
             }
 
             $currStayStmt = $conn->prepare("
@@ -332,6 +338,132 @@ class AdmissionManager
         } catch (Exception $e) {
             $conn->rollBack();
             return json_encode(['error' => 'Discharge failed: ' . $e->getMessage()]);
+        }
+    }
+
+    function orderMedicalDischarge($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        $instructions = trim($json['discharge_instructions'] ?? '');
+        $diagnosis = trim($json['diagnosis'] ?? '');
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+
+        if ($doctorId > 0) {
+            $chkAssigned = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
+            $chkAssigned->execute([':aid' => $admissionId, ':did' => $doctorId]);
+            if (intval($chkAssigned->fetchColumn()) === 0) {
+                return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
+            }
+        } else {
+            $firstDoc = $conn->prepare("SELECT Doctor_ID FROM Admission_Doctor WHERE Admission_ID = :aid ORDER BY Admission_Doctor_ID ASC LIMIT 1");
+            $firstDoc->execute([':aid' => $admissionId]);
+            $doctorId = intval($firstDoc->fetchColumn() ?: 0);
+            if (!$doctorId) {
+                return json_encode(['error' => 'Please select the attending physician ordering the medical discharge.']);
+            }
+        }
+
+        try {
+            $conn->beginTransaction();
+
+            $statusCheck = $conn->prepare("SELECT Status, Medical_Discharge_Date FROM Admission WHERE Admission_ID = :aid");
+            $statusCheck->execute([':aid' => $admissionId]);
+            $row = $statusCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$row) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Admission record not found.']);
+            }
+
+            if ($row['Status'] === 'Billed' || $row['Status'] === 'Discharged') {
+                $conn->rollBack();
+                return json_encode(['error' => 'Cannot issue discharge order: Patient is already discharged or billed.']);
+            }
+
+            $updateSql = "UPDATE Admission SET 
+                            Medical_Discharge_Date = NOW(),
+                            Medical_Discharge_Doctor_ID = :did,
+                            Discharge_Instructions = :inst";
+            $params = [
+                ':aid' => $admissionId,
+                ':did' => $doctorId > 0 ? $doctorId : null,
+                ':inst' => !empty($instructions) ? $instructions : null
+            ];
+
+            if (!empty($diagnosis)) {
+                $updateSql .= ", Diagnosis = :diag";
+                $params[':diag'] = $diagnosis;
+            }
+
+            $updateSql .= " WHERE Admission_ID = :aid";
+
+            $stmt = $conn->prepare($updateSql);
+            $stmt->execute($params);
+
+            $docName = 'Attending Physician';
+            if ($doctorId > 0) {
+                $dStmt = $conn->prepare("SELECT CONCAT('Dr. ', First_Name, ' ', Last_Name) FROM Doctor WHERE Doctor_ID = :did");
+                $dStmt->execute([':did' => $doctorId]);
+                $docName = $dStmt->fetchColumn() ?: $docName;
+            }
+
+            $conn->commit();
+            return json_encode([
+                'success' => true,
+                'message' => "Doctor's discharge order (May Go Home) officially recorded by {$docName}. Patient is now medically cleared for final billing clearance."
+            ]);
+        } catch (Exception $e) {
+            $conn->rollBack();
+            return json_encode(['error' => 'Failed to record discharge order: ' . $e->getMessage()]);
+        }
+    }
+
+    function revokeMedicalDischarge($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+
+        try {
+            $statusCheck = $conn->prepare("SELECT Status FROM Admission WHERE Admission_ID = :aid");
+            $statusCheck->execute([':aid' => $admissionId]);
+            $status = $statusCheck->fetchColumn();
+
+            if ($status === 'Billed' || $status === 'Discharged') {
+                return json_encode(['error' => 'Cannot revoke: Patient is already discharged or billed.']);
+            }
+
+            $stmt = $conn->prepare("UPDATE Admission SET Medical_Discharge_Date = NULL, Medical_Discharge_Doctor_ID = NULL, Discharge_Instructions = NULL WHERE Admission_ID = :aid");
+            $stmt->execute([':aid' => $admissionId]);
+
+            return json_encode([
+                'success' => true,
+                'message' => 'Medical discharge order revoked. Patient returned to active clinical care.'
+            ]);
+        } catch (Exception $e) {
+            return json_encode(['error' => 'Failed to revoke discharge order: ' . $e->getMessage()]);
         }
     }
 
@@ -429,6 +561,12 @@ switch ($operation) {
         break;
     case 'dischargePatient':
         echo $admission->dischargePatient($json);
+        break;
+    case 'orderMedicalDischarge':
+        echo $admission->orderMedicalDischarge($json);
+        break;
+    case 'revokeMedicalDischarge':
+        echo $admission->revokeMedicalDischarge($json);
         break;
     case 'updateDiagnosis':
     case 'updateClinicalAssessment':

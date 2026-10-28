@@ -1657,18 +1657,47 @@ const loadAdmissionDetails = () => {
 
             populateAssignedDoctorDropdowns();
 
-            const isNurseRole = currentUser && (
-                currentUser.access_domain === 'Clinical' ||
+            const isAdminRole = Boolean(currentUser && (parseInt(currentUser.role_id, 10) === 1 || parseInt(currentUser.is_higher_up, 10) === 1 || (currentUser.access_domain || '').toLowerCase() === 'admin'));
+            const isFinanceRole = Boolean(currentUser && ((currentUser.access_domain || '').toLowerCase() === 'finance' || (currentUser.role_name || '').toLowerCase().includes('billing') || (currentUser.role_name || '').toLowerCase().includes('cashier')));
+            const isNurseRole = Boolean(currentUser && !isDoctorRole && !isAdminRole && !isFinanceRole && (
+                (currentUser.role_name || '').toLowerCase().includes('nurse') ||
                 [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
-                (currentUser.role_name || '').toLowerCase().includes('nurse')
-            );
+                (currentUser.access_domain || '').toLowerCase() === 'clinical'
+            ));
+
+            const canDoctorDischarge = (isDoctorRole && isAssignedDoctor) || isAdminRole;
+            const canFinanceDischarge = isFinanceRole || isAdminRole;
+
+            const btnDocDischarge = document.getElementById('btnOrderDoctorDischarge');
+            const btnDocDischargeText = document.getElementById('btnOrderDoctorDischargeText');
+            if (btnDocDischarge) {
+                if (canDoctorDischarge && admissionData.Status === 'Admitted') {
+                    btnDocDischarge.style.display = 'inline-flex';
+                    if (admissionData.Medical_Discharge_Date) {
+                        btnDocDischarge.classList.add('chart-btn-cleared');
+                        if (btnDocDischargeText) btnDocDischargeText.textContent = `✔ Medically Cleared (${admissionData.Medical_Discharge_Doctor_Name || 'Doctor'})`;
+                        btnDocDischarge.title = "Patient is medically cleared. Click to review or update discharge instructions.";
+                    } else {
+                        btnDocDischarge.classList.remove('chart-btn-cleared');
+                        if (btnDocDischargeText) btnDocDischargeText.textContent = "Order Discharge (May Go Home)";
+                        btnDocDischarge.title = "Issue medical clearance for patient to go home and queue for billing clearance.";
+                    }
+                    btnDocDischarge.onclick = () => openDoctorDischargeModal(Boolean(admissionData.Medical_Discharge_Date));
+                } else {
+                    btnDocDischarge.style.display = 'none';
+                }
+            }
 
             const btnDischarge = document.getElementById('btnChartDischarge');
             if (btnDischarge) {
-                if (isNurseRole) {
-                    btnDischarge.style.display = 'none';
-                } else if (admissionData.Status === 'Admitted') {
+                if (canFinanceDischarge && admissionData.Status === 'Admitted') {
                     btnDischarge.style.display = 'inline-flex';
+                    if (admissionData.Medical_Discharge_Date) {
+                        btnDischarge.classList.remove('btn-disabled');
+                        btnDischarge.title = "Patient is medically cleared. Click to process final billing clearance and bed release.";
+                    } else {
+                        btnDischarge.title = "Waiting for Doctor Discharge Order (May Go Home). Admin can override.";
+                    }
                     btnDischarge.onclick = () => dischargePatientFromChart(admissionData.Admission_ID, admissionData.Full_Name);
                 } else {
                     btnDischarge.style.display = 'none';
@@ -1782,72 +1811,199 @@ const loadAdmissionDetails = () => {
         });
 };
 
-const dischargePatientFromChart = (admId, patientName) => {
-    const isNurseRole = currentUser && (
-        currentUser.access_domain === 'Clinical' ||
-        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
-        (currentUser.role_name || '').toLowerCase().includes('nurse')
-    );
-    if (isNurseRole) {
-        showToast("Access Denied: Patient discharge is restricted to Finance Staff and Administrators.", "warning");
+const dischargePatientFromChart = (admId, patientName, forceAdminOverride = false) => {
+    const isDoctorRole = Boolean(currentUser && ((currentUser.role_name || '').toLowerCase().includes('doctor') || currentUser.doctor_id));
+    const isAdminRole = Boolean(currentUser && (parseInt(currentUser.role_id, 10) === 1 || parseInt(currentUser.is_higher_up, 10) === 1 || (currentUser.access_domain || '').toLowerCase() === 'admin'));
+    const isFinanceRole = Boolean(currentUser && ((currentUser.access_domain || '').toLowerCase() === 'finance' || (currentUser.role_name || '').toLowerCase().includes('billing') || (currentUser.role_name || '').toLowerCase().includes('cashier')));
+
+    if (!isAdminRole && !isFinanceRole) {
+        showToast("Access Restricted: Final billing clearance and bed release must be authorized by Finance/Billing Staff or an Administrator.", "warning");
         return;
     }
 
-    const rawDiag = (admissionData && admissionData.Diagnosis) ? admissionData.Diagnosis.trim() : '';
-    const hasDiag = rawDiag && rawDiag.toLowerCase() !== 'pending clinical diagnosis' && rawDiag.toLowerCase() !== 'loading...';
+    const isMedicallyCleared = Boolean(admissionData && admissionData.Medical_Discharge_Date);
 
-    const confirmMsg = !hasDiag
-        ? `Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nNotice: No clinical diagnosis was entered. Patient will be discharged under standard clearance ("Medically cleared for discharge / Under observation").\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`
-        : `Are you sure you want to discharge patient "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, automatically post the final Board & Lodging fee to their Billing Ledger, and release the bed for other patients.`;
+    if (!isMedicallyCleared && !forceAdminOverride) {
+        if (isAdminRole) {
+            showPopupConfirm(
+                `Medical Clearance Pending: The attending physician has not yet issued a Doctor's Discharge Order (May Go Home) for "${patientName}".\n\nAs an Administrator, do you wish to override and proceed directly with Final Billing Clearance & Bed Release?`,
+                () => {
+                    executeDischargePatient(admId, patientName, true);
+                }
+            );
+            return;
+        } else {
+            showPopupAlert("Medical Clearance Required: An attending physician must first issue a Doctor's Discharge Order (May Go Home) before final billing clearance and bed release can be processed.", "warning");
+            return;
+        }
+    }
+
+    executeDischargePatient(admId, patientName, forceAdminOverride);
+};
+
+const executeDischargePatient = (admId, patientName, adminOverride = false) => {
+    const confirmMsg = `Are you sure you want to process Final Billing Clearance for "${patientName}" (Admission #${admId})?\n\nThis will close the active bed stay, finalize Board & Lodging charges on the ledger, release the bed, and unlock the Final Statement of Account (SOA).`;
 
     showPopupConfirm(confirmMsg, () => {
         const formData = new FormData();
         formData.append('operation', 'dischargePatient');
-        formData.append('json', JSON.stringify({ admission_id: admId }));
+        formData.append('json', JSON.stringify({
+            admission_id: admId,
+            user_id: currentUser ? currentUser.user_id : 0,
+            admin_override: adminOverride ? 1 : 0
+        }));
 
         axios.post(`${postApiUrl}/admissions.php`, formData)
             .then(response => {
                 let resData = response.data;
                 if (typeof resData === 'string') {
-                    try {
-                        resData = JSON.parse(resData);
-                    } catch (e) {}
+                    try { resData = JSON.parse(resData); } catch (e) {}
                 }
 
                 if (resData && resData.success) {
-                    alert(resData.message, () => {
-                        if (typeof switchClinicalTab === 'function') {
-                            switchClinicalTab('tab-settlement');
-                        }
-                    });
+                    showToast(resData.message, "success");
+                    if (typeof switchClinicalTab === 'function') {
+                        switchClinicalTab('tab-settlement');
+                    }
                     try {
                         loadAdmissionDetails();
                         loadTransfers();
-                        loadAvailableBeds();
-                        loadLedger();
                         loadLedgerSummary();
-                        if (typeof renderSettlementSection === 'function') {
-                            renderSettlementSection();
-                        }
-                    } catch (refreshErr) {
-                        console.error("admission_details.js: Error refreshing chart after discharge:", refreshErr);
-                    }
+                        loadLedgerItems();
+                    } catch(e) {}
+                } else if (resData && resData.error) {
+                    showPopupAlert("Discharge Error: " + resData.error, "warning");
                 } else {
-                    const errMsg = (resData && (resData.error || resData.message)) ? (resData.error || resData.message) : "Unknown error";
-                    alert("Discharge Error: " + errMsg);
+                    showPopupAlert("Unexpected response while processing discharge.", "warning");
                 }
             })
             .catch(err => {
                 console.error("admission_details.js: Error discharging patient:", err);
-                const errMsg = (err && err.response && err.response.data && err.response.data.error)
-                    ? err.response.data.error
-                    : (err && err.message ? err.message : "Network error discharging patient.");
-                alert("Discharge Error: " + errMsg);
+                showPopupAlert("Network error occurred while discharging patient.", "danger");
             });
-    }, null, {
-        title: "Confirm Clinical Discharge",
-        confirmText: "Discharge Patient",
-        type: "warning"
+    });
+};
+
+const openDoctorDischargeModal = (isEdit = false) => {
+    const isDoctorRole = Boolean(currentUser && ((currentUser.role_name || '').toLowerCase().includes('doctor') || currentUser.doctor_id));
+    const isAdminRole = Boolean(currentUser && (parseInt(currentUser.role_id, 10) === 1 || parseInt(currentUser.is_higher_up, 10) === 1 || (currentUser.access_domain || '').toLowerCase() === 'admin'));
+
+    const isAttendingDoctor = !isDoctorRole || assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(currentUser.doctor_id, 10));
+    if (!isAdminRole && (!isDoctorRole || !isAttendingDoctor)) {
+        showToast("Access Restricted: Only assigned attending physicians or administrators can issue medical discharge orders.", "warning");
+        return;
+    }
+
+    const docIdInput = document.getElementById('doc_discharge_doctor_id');
+    const docNameInput = document.getElementById('doc_discharge_doctor_name');
+    const diagInput = document.getElementById('doc_discharge_diagnosis');
+    const instInput = document.getElementById('doc_discharge_instructions');
+
+    let currentDocId = 0;
+    let currentDocName = '';
+
+    if (isDoctorRole && currentUser.doctor_id) {
+        currentDocId = parseInt(currentUser.doctor_id, 10);
+        const found = assignedDoctors.find(d => parseInt(d.Doctor_ID, 10) === currentDocId);
+        currentDocName = found ? found.Doctor_Name : (currentUser.full_name || 'Dr. ' + (currentUser.username || ''));
+    } else if (admissionData && admissionData.Medical_Discharge_Doctor_ID) {
+        currentDocId = parseInt(admissionData.Medical_Discharge_Doctor_ID, 10);
+        currentDocName = admissionData.Medical_Discharge_Doctor_Name || 'Attending Doctor';
+    } else if (assignedDoctors && assignedDoctors.length > 0) {
+        currentDocId = parseInt(assignedDoctors[0].Doctor_ID, 10);
+        currentDocName = assignedDoctors[0].Doctor_Name;
+    }
+
+    if (docIdInput) docIdInput.value = currentDocId || '';
+    if (docNameInput) docNameInput.value = currentDocName || '';
+
+    const currentDiag = (admissionData && admissionData.Diagnosis) ? admissionData.Diagnosis.trim() : '';
+    const validDiag = (currentDiag && currentDiag.toLowerCase() !== 'pending clinical diagnosis' && currentDiag.toLowerCase() !== 'loading...') ? currentDiag : '';
+    if (diagInput) diagInput.value = validDiag;
+
+    if (instInput) instInput.value = (admissionData && admissionData.Discharge_Instructions) ? admissionData.Discharge_Instructions : '';
+
+    const btnBrowse = document.getElementById('btnBrowseDocDischargeDoctor');
+    if (btnBrowse) {
+        btnBrowse.style.display = (isDoctorRole && !isAdminRole) ? 'none' : 'inline-block';
+    }
+
+    openModal('doctorDischargeModal');
+};
+
+const submitDoctorDischargeOrder = () => {
+    const docId = parseInt(document.getElementById('doc_discharge_doctor_id')?.value || '0', 10);
+    const diagnosis = (document.getElementById('doc_discharge_diagnosis')?.value || '').trim();
+    const instructions = (document.getElementById('doc_discharge_instructions')?.value || '').trim();
+
+    if (!docId) {
+        showToast("Please select the ordering attending physician.", "warning");
+        return;
+    }
+
+    if (!diagnosis) {
+        showToast("Please provide the confirmed final diagnosis before issuing medical discharge.", "warning");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('operation', 'orderMedicalDischarge');
+    formData.append('json', JSON.stringify({
+        admission_id: admissionId,
+        user_id: currentUser ? currentUser.user_id : 0,
+        doctor_id: docId,
+        diagnosis: diagnosis,
+        discharge_instructions: instructions
+    }));
+
+    axios.post(`${postApiUrl}/admissions.php`, formData)
+        .then(response => {
+            let resData = response.data;
+            if (typeof resData === 'string') {
+                try { resData = JSON.parse(resData); } catch (e) {}
+            }
+
+            if (resData && resData.success) {
+                closeModal('doctorDischargeModal');
+                showToast(resData.message, "success");
+                loadAdmissionDetails();
+            } else {
+                showPopupAlert((resData && resData.error) ? resData.error : "Failed to record discharge order.", "warning");
+            }
+        })
+        .catch(err => {
+            console.error("Error issuing discharge order:", err);
+            showPopupAlert("Network or server error while recording discharge order.", "danger");
+        });
+};
+
+const revokeDoctorDischargeOrder = () => {
+    showPopupConfirm("Are you sure you want to revoke the Medical Discharge Order? The patient will return to active clinical care.", () => {
+        const formData = new FormData();
+        formData.append('operation', 'revokeMedicalDischarge');
+        formData.append('json', JSON.stringify({
+            admission_id: admissionId,
+            user_id: currentUser ? currentUser.user_id : 0
+        }));
+
+        axios.post(`${postApiUrl}/admissions.php`, formData)
+            .then(response => {
+                let resData = response.data;
+                if (typeof resData === 'string') {
+                    try { resData = JSON.parse(resData); } catch (e) {}
+                }
+
+                if (resData && resData.success) {
+                    showToast(resData.message, "success");
+                    loadAdmissionDetails();
+                } else {
+                    showPopupAlert((resData && resData.error) ? resData.error : "Failed to revoke discharge order.", "warning");
+                }
+            })
+            .catch(err => {
+                console.error("Error revoking discharge order:", err);
+                showPopupAlert("Network or server error while revoking discharge order.", "danger");
+            });
     });
 };
 
@@ -3443,12 +3599,15 @@ const handleAddAdvanceVoucher = () => {
 };
 
 const openAdvancePaymentModal = () => {
-    const isNurseRole = currentUser && (
-        currentUser.access_domain === 'Clinical' ||
-        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
-        (currentUser.role_name || '').toLowerCase().includes('nurse')
+    const isFinanceOrAdmin = currentUser && (
+        parseInt(currentUser.role_id, 10) === 1 ||
+        parseInt(currentUser.is_higher_up, 10) === 1 ||
+        (currentUser.access_domain || '').toLowerCase() === 'admin' ||
+        (currentUser.access_domain || '').toLowerCase() === 'finance' ||
+        (currentUser.role_name || '').toLowerCase().includes('billing') ||
+        (currentUser.role_name || '').toLowerCase().includes('cashier')
     );
-    if (isNurseRole) {
+    if (!isFinanceOrAdmin) {
         showPopupAlert('Access Restricted: Advance payments and cash collections must be processed by Finance Staff or the Cashier.', 'warning');
         return;
     }
@@ -3539,13 +3698,16 @@ const showAdvanceMethodPicker = () => {
 };
 
 const submitAdvancePayment = () => {
-    const isNurseRole = currentUser && (
-        currentUser.access_domain === 'Clinical' ||
-        [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
-        (currentUser.role_name || '').toLowerCase().includes('nurse')
+    const isFinanceOrAdmin = currentUser && (
+        parseInt(currentUser.role_id, 10) === 1 ||
+        parseInt(currentUser.is_higher_up, 10) === 1 ||
+        (currentUser.access_domain || '').toLowerCase() === 'admin' ||
+        (currentUser.access_domain || '').toLowerCase() === 'finance' ||
+        (currentUser.role_name || '').toLowerCase().includes('billing') ||
+        (currentUser.role_name || '').toLowerCase().includes('cashier')
     );
-    if (isNurseRole) {
-        showPopupAlert('Access Restricted: Clinical nurses cannot collect payments or issue Official Receipts.', 'warning');
+    if (!isFinanceOrAdmin) {
+        showPopupAlert('Access Restricted: Clinical staff cannot collect payments or issue Official Receipts.', 'warning');
         return;
     }
     const methodInput = document.getElementById('adv_method_id');
@@ -3835,11 +3997,22 @@ const renderAdmittedDischargeGateCard = (advList) => {
     const container = document.getElementById('settlement-container');
     if (!container) return;
 
-    const isNurseRole = currentUser && (
-        currentUser.access_domain === 'Clinical' ||
+    const isDoctorRole = Boolean(currentUser && ((currentUser.role_name || '').toLowerCase().includes('doctor') || currentUser.doctor_id));
+    const isAdminRole = Boolean(currentUser && (parseInt(currentUser.role_id, 10) === 1 || parseInt(currentUser.is_higher_up, 10) === 1 || (currentUser.access_domain || '').toLowerCase() === 'admin'));
+    const isFinanceRole = Boolean(currentUser && ((currentUser.access_domain || '').toLowerCase() === 'finance' || (currentUser.role_name || '').toLowerCase().includes('billing') || (currentUser.role_name || '').toLowerCase().includes('cashier')));
+    const isNurseRole = Boolean(currentUser && !isDoctorRole && !isAdminRole && !isFinanceRole && (
+        (currentUser.role_name || '').toLowerCase().includes('nurse') ||
         [3, 4].includes(parseInt(currentUser.role_id, 10)) ||
-        (currentUser.role_name || '').toLowerCase().includes('nurse')
-    );
+        (currentUser.access_domain || '').toLowerCase() === 'clinical'
+    ));
+
+    const isAttendingDoctor = !isDoctorRole || assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(currentUser.doctor_id, 10));
+    const canDoctorDischarge = (isDoctorRole && isAttendingDoctor) || isAdminRole;
+    const canFinanceDischarge = isFinanceRole || isAdminRole;
+    const isMedicallyCleared = Boolean(admissionData && admissionData.Medical_Discharge_Date);
+    const medDocName = (admissionData && admissionData.Medical_Discharge_Doctor_Name) ? admissionData.Medical_Discharge_Doctor_Name : 'Attending Physician';
+    const medClearDate = (admissionData && admissionData.Formatted_Medical_Discharge_Date) ? admissionData.Formatted_Medical_Discharge_Date : '';
+    const medInstructions = (admissionData && admissionData.Discharge_Instructions) ? admissionData.Discharge_Instructions : '';
 
     const runningGross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
     const totalAdvPaid = (advList || []).reduce((acc, p) => acc + parseFloat(p.Amount_Paid || 0), 0);
@@ -3863,65 +4036,106 @@ const renderAdmittedDischargeGateCard = (advList) => {
             </div>
 
             <div class="clearance-protocol-container">
-                <div class="clearance-protocol-card ${hasDiagnosis ? 'protocol-cleared' : 'protocol-pending'}">
+                <div class="clearance-protocol-card ${isMedicallyCleared ? 'protocol-cleared' : 'protocol-pending'}">
                     <div>
                         <div class="protocol-header">
                             <div class="protocol-step-badge-group">
-                                <span class="protocol-number ${hasDiagnosis ? 'number-cleared' : ''}">${hasDiagnosis ? '✔' : '1'}</span>
-                                <span class="protocol-title">Step 1: Clinical Medical Clearance</span>
+                                <span class="protocol-number ${isMedicallyCleared ? 'number-cleared' : ''}">${isMedicallyCleared ? '✔' : '1'}</span>
+                                <span class="protocol-title">Step 1: Clinical Medical Clearance (Doctor's Order)</span>
                             </div>
-                            <span class="badge ${hasDiagnosis ? 'badge-success' : 'badge-info'}">
-                                ${hasDiagnosis ? 'Cleared &amp; Recorded' : 'Default / Optional'}
+                            <span class="badge ${isMedicallyCleared ? 'badge-success' : 'badge-warning'}">
+                                ${isMedicallyCleared ? '✔ Medically Cleared' : 'Pending Doctor Order'}
                             </span>
                         </div>
                         <div class="protocol-body">
-                            ${hasDiagnosis ? `
-                                <div class="protocol-diagnosis-display">
-                                    <div class="protocol-diagnosis-label">Confirmed Clinical Diagnosis:</div>
-                                    <div class="protocol-diagnosis-text">${rawDiag}</div>
+                            ${isMedicallyCleared ? `
+                                <div class="medical-clearance-box">
+                                    <div class="medical-clearance-grid">
+                                        <div class="medical-clearance-item">
+                                            <strong>Discharging Physician:</strong>
+                                            <span>${medDocName}</span>
+                                        </div>
+                                        <div class="medical-clearance-item">
+                                            <strong>Cleared Timestamp:</strong>
+                                            <span>${medClearDate}</span>
+                                        </div>
+                                        <div class="medical-clearance-item" style="grid-column: 1 / -1;">
+                                            <strong>Confirmed Final Diagnosis:</strong>
+                                            <span>${rawDiag || 'Under Observation'}</span>
+                                        </div>
+                                        <div class="medical-clearance-item" style="grid-column: 1 / -1;">
+                                            <strong>Take-Home Regimen &amp; Discharge Instructions:</strong>
+                                            <span>${medInstructions || 'Standard post-discharge care'}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             ` : `
-                                <p>No specific clinical diagnosis recorded. Patient can still be discharged under standard medical clearance (<strong>Medically cleared for discharge / Under observation</strong>), or a specific diagnosis can be added below.</p>
+                                <p>The attending physician must review the patient and issue a <strong>Doctor's Discharge Order (May Go Home)</strong> to certify medical clearance before final billing and bed release.</p>
                             `}
                         </div>
                     </div>
                     <div class="protocol-actions">
-                        ${hasDiagnosis ? `
-                            <button type="button" class="btn btn-outline btn-sm btn-edit-diag" onclick="window.openDiagnosisModal()">
-                                ✎ Update Clinical Diagnosis
-                            </button>
+                        ${isMedicallyCleared ? `
+                            ${canDoctorDischarge ? `
+                                <button type="button" class="btn btn-outline btn-sm" onclick="openDoctorDischargeModal(true)">
+                                    ✎ Edit Discharge Instructions
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm text-danger" onclick="revokeDoctorDischargeOrder()">
+                                    Revoke Clearance
+                                </button>
+                            ` : `
+                                <span class="badge badge-success">Clearance Certified</span>
+                            `}
                         ` : `
-                            <button type="button" class="btn btn-outline btn-sm btn-record-diag" onclick="window.openDiagnosisModal()">
-                                + Enter Specific Diagnosis (Optional)
-                            </button>
+                            ${canDoctorDischarge ? `
+                                <button type="button" class="btn btn-success btn-sm" onclick="openDoctorDischargeModal()">
+                                    ✔ Issue Doctor's Discharge Order (May Go Home)
+                                </button>
+                            ` : `
+                                <span class="table-sub-text" style="color: #64748b; font-style: italic;">Awaiting Attending Physician Medical Clearance.</span>
+                            `}
                         `}
                     </div>
                 </div>
 
-                <div class="clearance-protocol-card protocol-ready">
+                <div class="clearance-protocol-card ${isMedicallyCleared ? 'protocol-ready' : 'protocol-pending'}">
                     <div>
                         <div class="protocol-header">
                             <div class="protocol-step-badge-group">
-                                <span class="protocol-number number-ready">2</span>
-                                <span class="protocol-title">Step 2: Bed Release &amp; Final SOA</span>
+                                <span class="protocol-number ${isMedicallyCleared ? 'number-ready' : ''}">2</span>
+                                <span class="protocol-title">Step 2: Bed Release &amp; Final Billing Clearance</span>
                             </div>
-                            <span class="badge badge-success">
-                                Ready for Discharge
+                            <span class="badge ${isMedicallyCleared ? 'badge-primary' : 'badge-secondary'}">
+                                ${isMedicallyCleared ? 'Ready for Billing Clearance' : 'Pending Step 1'}
                             </span>
                         </div>
                         <div class="protocol-body">
                             <p>
-                                Patient occupies <strong>Bed ${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Discharging will conclude board &amp; lodging charges, free the bed, and unlock the <strong>Final SOA Settlement Desk</strong> for PhilHealth, statutory discounts, and cashier settlement.
+                                ${isMedicallyCleared ? `
+                                    Doctor clearance granted! Processing discharge will finalize board &amp; lodging charges, release <strong>Bed ${admissionData.Bed_Code || 'Assigned Bed'}</strong>, and unlock the <strong>Final Statement of Account (SOA)</strong> for PhilHealth, statutory discounts, and cashier settlement.
+                                ` : `
+                                    Patient occupies <strong>Bed ${admissionData.Bed_Code || 'Assigned Bed'}</strong>. Billing clearance and Final SOA generation are on hold until medical clearance is recorded by the attending doctor.
+                                `}
                             </p>
                         </div>
                     </div>
                     <div class="protocol-actions">
-                        ${isNurseRole ? `
-                            <span class="badge badge-info">Discharge clearance must be authorized by Finance Staff or Hospital Administrator.</span>
+                        ${isMedicallyCleared ? `
+                            ${canFinanceDischarge ? `
+                                <button type="button" class="btn btn-warning btn-unlock-soa" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${(admissionData.Full_Name || '').replace(/'/g, "\'")}')">
+                                    Process Final Billing Clearance &amp; Unlock SOA
+                                </button>
+                            ` : `
+                                <span class="badge badge-info">Billing clearance must be authorized by Finance Staff or Hospital Administrator.</span>
+                            `}
                         ` : `
-                            <button type="button" class="btn btn-warning btn-unlock-soa" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${(admissionData.Full_Name || '').replace(/'/g, "\'")}')">
-                                Process Patient Discharge &amp; Unlock Final SOA
-                            </button>
+                            ${isAdminRole ? `
+                                <button type="button" class="btn btn-outline btn-sm text-warning" onclick="dischargePatientFromChart(${admissionData.Admission_ID}, '${(admissionData.Full_Name || '').replace(/'/g, "\'")}', true)">
+                                    Admin Override &amp; Discharge
+                                </button>
+                            ` : `
+                                <span class="table-sub-text" style="color: #64748b;">Awaiting Doctor Medical Clearance.</span>
+                            `}
                         `}
                     </div>
                 </div>

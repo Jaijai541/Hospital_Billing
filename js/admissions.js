@@ -511,7 +511,11 @@ const renderAdmissionsTable = (admissions) => {
 
         let statusBadge = '<span class="badge badge-info">' + a.Status + '</span>';
         if (a.Status === 'Admitted') {
-            statusBadge = '<span class="badge badge-primary badge-admitted-pill">Admitted</span>';
+            if (a.Medical_Discharge_Date) {
+                statusBadge = '<span class="badge badge-success" title="Medically cleared by doctor; awaiting billing clearance">✔ Medically Cleared</span>';
+            } else {
+                statusBadge = '<span class="badge badge-primary badge-admitted-pill">Admitted</span>';
+            }
         } else if (a.Status === 'Discharged') {
             statusBadge = '<span class="badge badge-warning">Discharged</span>';
         } else if (a.Status === 'Billed') {

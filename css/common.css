@@ -3836,6 +3836,12 @@ textarea.form-control {
     color: #92400e;
 }
 
+.banner-notice-info {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
 .banner-notice-inner {
     display: flex;
     align-items: center;

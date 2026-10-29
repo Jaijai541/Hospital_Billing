@@ -63,6 +63,7 @@ class AdmissionManager
                     a.Discharge_Instructions,
                     rb.Bed_Code,
                     r.Room_Name,
+                    rt.Room_Type_ID,
                     rt.Type_Name AS Room_Type,
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     (
@@ -208,6 +209,7 @@ class AdmissionManager
                     rtl.Bed_ID,
                     rb.Bed_Code,
                     r.Room_Name,
+                    rt.Room_Type_ID,
                     rt.Type_Name AS Room_Type,
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Bed_Date_In,

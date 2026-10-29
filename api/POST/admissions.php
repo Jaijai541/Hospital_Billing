@@ -438,14 +438,8 @@ class AdmissionManager
             $pendingStmt->execute([':aid' => $admissionId]);
             $pendingOrder = $pendingStmt->fetch(PDO::FETCH_ASSOC);
 
-            $adminOverride = !empty($json['admin_override']) && $isSystemAdmin;
-            if (!$pendingOrder && !$adminOverride) {
-                $conn->rollBack();
-                return json_encode(['error' => "Doctor Transfer Order Required: An attending physician must first issue a Bed Transfer Order before Nurse Station staff can move this patient's bed."]);
-            }
-
             $targetBedStmt = $conn->prepare("
-                SELECT rb.Is_Available, rb.Bed_Code, r.Room_Name, rt.Type_Name AS Room_Type
+                SELECT rb.Is_Available, rb.Bed_Code, r.Room_Name, rt.Room_Type_ID, rt.Type_Name AS Room_Type
                 FROM Room_Bed rb
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
@@ -466,7 +460,9 @@ class AdmissionManager
                     GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) AS Calculated_Days,
                     COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                     rb.Bed_Code,
-                    r.Room_Name
+                    r.Room_Name,
+                    rt.Room_Type_ID,
+                    rt.Type_Name AS Room_Type
                 FROM Room_Transfer_Log rtl
                 INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID
@@ -484,6 +480,18 @@ class AdmissionManager
             if ($currentStay['Bed_ID'] == $newBedId) {
                 $conn->rollBack();
                 return json_encode(['error' => 'Patient is already assigned to this bed.']);
+            }
+
+            $adminOverride = !empty($json['admin_override']) && $isSystemAdmin;
+            $isSameTier = (intval($currentStay['Room_Type_ID'] ?? 0) === intval($targetBed['Room_Type_ID'] ?? 0));
+
+            if (!$pendingOrder && !$adminOverride) {
+                if (!$isSameTier) {
+                    $conn->rollBack();
+                    return json_encode([
+                        'error' => "Doctor Transfer Order Required: Moving patient across room tiers (from {$currentStay['Room_Type']} to {$targetBed['Room_Type']}) requires an Attending Physician's Bed Transfer Order. Nurse Station direct transfers are permitted for same-tier room moves only."
+                    ]);
+                }
             }
 
             $totalDays = max(1, intval($currentStay['Calculated_Days'] ?? 1));
@@ -562,6 +570,33 @@ class AdmissionManager
                         ':tuid' => $targetDocUserId,
                         ':title' => "Bed Transfer Completed: {$patFullName}",
                         ':msg' => "{$staffDisplayName} transferred {$patFullName} ({$admCode}) into Bed {$targetBed['Bed_Code']} ({$targetBed['Room_Name']} - {$targetBed['Room_Type']})."
+                    ]);
+                }
+            } else {
+                $docLookupStmt = $conn->prepare("
+                    SELECT d.User_ID
+                    FROM Admission_Doctor ad
+                    INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                    WHERE ad.Admission_ID = :aid AND d.User_ID IS NOT NULL AND d.User_ID != :uid
+                    LIMIT 1
+                ");
+                $docLookupStmt->execute([':aid' => $admissionId, ':uid' => $userId]);
+                $assignedDoc = $docLookupStmt->fetch(PDO::FETCH_ASSOC);
+                if ($assignedDoc && !empty($assignedDoc['User_ID'])) {
+                    $patFullName = $admRow['Full_Name'] ?? 'In-Patient';
+                    $admCode = $admRow['Admission_Code'] ?? ('ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT));
+                    $docNotifStmt = $conn->prepare("
+                        INSERT INTO Clinical_Notification
+                            (Admission_ID, Request_ID, Sender_User_ID, Target_Role_ID, Target_Station_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                        VALUES
+                            (:aid, NULL, :sender, NULL, NULL, :tuid, :title, :msg, 'Lateral_Bed_Transfer', 0, NOW())
+                    ");
+                    $docNotifStmt->execute([
+                        ':aid' => $admissionId,
+                        ':sender' => $userId > 0 ? $userId : null,
+                        ':tuid' => $assignedDoc['User_ID'],
+                        ':title' => "Lateral Bed Transfer: {$patFullName}",
+                        ':msg' => "{$staffDisplayName} completed a direct lateral transfer of {$patFullName} ({$admCode}) from Bed {$currentStay['Bed_Code']} to Bed {$targetBed['Bed_Code']} ({$targetBed['Room_Name']} - {$targetBed['Room_Type']})."
                     ]);
                 }
             }

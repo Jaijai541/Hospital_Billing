@@ -26,6 +26,28 @@ class InvoiceManager
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
+    function getFixedDiscounts()
+    {
+        include "connection.php";
+
+        $sql = "SELECT 
+                    d.Discount_ID,
+                    d.Discount_Name,
+                    d.Discount_Type_ID,
+                    COALESCE(edt.Type_Name, 'Fixed') AS Discount_Type,
+                    d.Discount_Percentage,
+                    d.Fixed_Amount,
+                    d.Is_Vat_Exempt
+                FROM Enum_Discount d
+                LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
+                WHERE d.Is_Active = 1 AND (d.Discount_Type_ID = 2 OR edt.Type_Name = 'Fixed' OR d.Fixed_Amount > 0)
+                ORDER BY d.Fixed_Amount DESC, d.Discount_Name ASC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     function getAllInvoices($json = '{}')
     {
         include "connection.php";
@@ -245,6 +267,32 @@ class InvoiceManager
         $pnStmt->execute([':iid' => $invoice['Invoice_ID']]);
         $invoice['Promissory_Note'] = $pnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
+        $paySql = "SELECT 
+                    ip.Payment_ID,
+                    ip.Invoice_ID,
+                    ip.Admission_ID,
+                    ip.Receipt_Number,
+                    ip.Amount_Paid,
+                    ip.Balance_Before,
+                    ip.Balance_After,
+                    ip.Payment_Method_ID,
+                    ip.Is_Advance,
+                    epm.Method_Name AS Payment_Method,
+                    epm.Category_Type,
+                    COALESCE(ip.Notes, '') AS Notes,
+                    DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Payment_Date,
+                    COALESCE(ip.Discount_Amount, 0.00) AS Discount_Amount,
+                    COALESCE(ip.Discount_Name, '') AS Discount_Name,
+                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name
+                   FROM Invoice_Payment ip
+                   INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
+                   INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
+                   WHERE (ip.Invoice_ID = :iid OR ip.Admission_ID = :aid)
+                   ORDER BY ip.Payment_ID ASC";
+        $payStmt = $conn->prepare($paySql);
+        $payStmt->execute([':iid' => $invoice['Invoice_ID'], ':aid' => $aid]);
+        $invoice['Payments'] = $payStmt->fetchAll(PDO::FETCH_ASSOC);
+
         return json_encode($invoice);
     }
 
@@ -437,6 +485,8 @@ class InvoiceManager
                     epm.Category_Type,
                     COALESCE(ip.Notes, '') AS Notes,
                     DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Payment_Date,
+                    COALESCE(ip.Discount_Amount, 0.00) AS Discount_Amount,
+                    COALESCE(ip.Discount_Name, '') AS Discount_Name,
                     u.User_ID AS Cashier_User_ID,
                     CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
                     COALESCE(fi.Net_Amount_Due, ip.Balance_Before) AS Net_Amount_Due,
@@ -451,11 +501,13 @@ class InvoiceManager
                 INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                 INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
                 INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
-                WHERE " . (!empty($invoiceId) ? "ip.Invoice_ID = :iid" : "ip.Admission_ID = :aid") . "
+                WHERE " . (!empty($invoiceId) && !empty($admissionId) ? "(ip.Invoice_ID = :iid OR ip.Admission_ID = :aid)" : (!empty($invoiceId) ? "ip.Invoice_ID = :iid" : "ip.Admission_ID = :aid")) . "
                 ORDER BY ip.Payment_ID ASC";
 
         $stmt = $conn->prepare($sql);
-        if (!empty($invoiceId)) {
+        if (!empty($invoiceId) && !empty($admissionId)) {
+            $stmt->execute([':iid' => $invoiceId, ':aid' => $admissionId]);
+        } elseif (!empty($invoiceId)) {
             $stmt->execute([':iid' => $invoiceId]);
         } else {
             $stmt->execute([':aid' => $admissionId]);
@@ -484,6 +536,10 @@ class InvoiceManager
                     ip.Balance_Before,
                     ip.Balance_After,
                     ip.Payment_Method_ID,
+                    ip.Discount_ID,
+                    COALESCE(ip.Discount_Amount, 0.00) AS Payment_Discount_Amount,
+                    COALESCE(ip.Discount_Name, pay_d.Discount_Name, CASE WHEN ip.Discount_Amount > 0 THEN 'Discount / Assistance' ELSE 'None' END) AS Payment_Discount_Name,
+                    pay_d.Fixed_Amount AS Payment_Fixed_Amount,
                     ip.Is_Advance,
                     epm.Method_Name AS Payment_Method,
                     epm.Category_Type,
@@ -518,6 +574,7 @@ class InvoiceManager
                 INNER JOIN Enum_User_Role ur ON u.Role_ID = ur.Role_ID
                 INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
                 LEFT JOIN Enum_Discount d ON fi.Discount_ID = d.Discount_ID
+                LEFT JOIN Enum_Discount pay_d ON ip.Discount_ID = pay_d.Discount_ID
                 LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
                 WHERE " . (!empty($paymentId) ? "ip.Payment_ID = :pid" : "ip.Receipt_Number = :rnum");
 
@@ -606,6 +663,10 @@ class InvoiceManager
                     ip.Balance_Before,
                     ip.Balance_After,
                     ip.Payment_Method_ID,
+                    ip.Discount_ID,
+                    COALESCE(ip.Discount_Amount, 0.00) AS Discount_Amount,
+                    COALESCE(ip.Discount_Name, d.Discount_Name, CASE WHEN ip.Discount_Amount > 0 THEN 'Discount / Assistance' ELSE 'None' END) AS Applied_Discount_Name,
+                    d.Fixed_Amount AS Applied_Fixed_Amount,
                     epm.Method_Name AS Payment_Method,
                     epm.Category_Type,
                     COALESCE(ip.Notes, 'Advance Patient Deposit') AS Notes,
@@ -616,6 +677,7 @@ class InvoiceManager
                 FROM Invoice_Payment ip
                 INNER JOIN System_User u ON ip.Cashier_User_ID = u.User_ID
                 INNER JOIN Enum_Payment_Method epm ON ip.Payment_Method_ID = epm.Payment_Method_ID
+                LEFT JOIN Enum_Discount d ON ip.Discount_ID = d.Discount_ID
                 WHERE ip.Admission_ID = :aid AND (ip.Is_Advance = 1 OR ip.Invoice_ID IS NULL)
                 ORDER BY ip.Payment_ID ASC";
 
@@ -624,13 +686,17 @@ class InvoiceManager
         $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $totalAdvance = 0.00;
+        $totalDiscount = 0.00;
         foreach ($payments as $p) {
             $totalAdvance += floatval($p['Amount_Paid']);
+            $totalDiscount += floatval($p['Discount_Amount'] ?? 0.00);
         }
 
         return json_encode([
             'payments' => $payments,
             'total_advance_amount' => round($totalAdvance, 2),
+            'total_discount_amount' => round($totalDiscount, 2),
+            'total_credit_amount' => round($totalAdvance + $totalDiscount, 2),
             'count' => count($payments)
         ]);
     }
@@ -729,6 +795,244 @@ class InvoiceManager
         $stmt->execute($params);
         return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
+
+    function getDischargeClearance($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $invoiceId = intval($json['invoice_id'] ?? 0);
+        $admissionId = intval($json['admission_id'] ?? 0);
+
+        if (empty($invoiceId) && empty($admissionId)) {
+            return json_encode(['error' => 'Invoice ID or Admission ID is required.']);
+        }
+
+        if (empty($admissionId) && !empty($invoiceId)) {
+            $stmtAid = $conn->prepare("SELECT Admission_ID FROM Final_Invoice WHERE Invoice_ID = :iid");
+            $stmtAid->execute([':iid' => $invoiceId]);
+            $admissionId = intval($stmtAid->fetchColumn());
+        }
+
+        $sql = "SELECT 
+                    a.Admission_ID,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    a.Chief_Complaint,
+                    a.Diagnosis,
+                    DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
+                    a.Status AS Admission_Status,
+                    p.Patient_ID,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                    CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
+                    p.Date_Of_Birth,
+                    TIMESTAMPDIFF(YEAR, p.Date_Of_Birth, CURDATE()) AS Age,
+                    g.Gender_Name,
+                    bt.Blood_Type_Name,
+                    p.Contact_Number,
+                    p.Address,
+                    p.Emergency_Contact_Name,
+                    p.Emergency_Contact_Number
+                FROM Admission a
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                LEFT JOIN Enum_Gender g ON p.Gender_ID = g.Gender_ID
+                LEFT JOIN Enum_Blood_Type bt ON p.Blood_Type_ID = bt.Blood_Type_ID
+                WHERE a.Admission_ID = :aid";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':aid' => $admissionId]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$data) {
+            return json_encode(['error' => 'Admission record not found.']);
+        }
+
+        $staySql = "SELECT 
+                        rtl.Transfer_ID,
+                        rtl.Bed_ID,
+                        rb.Bed_Code,
+                        r.Room_Name,
+                        rt.Type_Name AS Room_Type,
+                        f.Floor_Number,
+                        COALESCE(f.Floor_Name, CONCAT('Floor ', f.Floor_Number)) AS Floor_Name,
+                        f.Building_Wing,
+                        DATE_FORMAT(rtl.Date_In, '%Y-%m-%d %h:%i %p') AS Bed_Date_In,
+                        DATE_FORMAT(rtl.Date_Out, '%Y-%m-%d %h:%i %p') AS Bed_Date_Out,
+                        rtl.Total_Days
+                    FROM Room_Transfer_Log rtl
+                    INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                    INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                    LEFT JOIN Enum_Floor f ON r.Floor_ID = f.Floor_ID
+                    LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                    WHERE rtl.Admission_ID = :aid
+                    ORDER BY rtl.Transfer_ID DESC
+                    LIMIT 1";
+        $stayStmt = $conn->prepare($staySql);
+        $stayStmt->execute([':aid' => $admissionId]);
+        $data['Accommodation'] = $stayStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $docSql = "SELECT 
+                    ad.Admission_Doctor_ID,
+                    CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                    dt.Type_Name AS Doctor_Type,
+                    (
+                        SELECT GROUP_CONCAT(s.Specialty_Name SEPARATOR ', ')
+                        FROM Doctor_Specialty ds
+                        INNER JOIN Enum_Specialty s ON ds.Specialty_ID = s.Specialty_ID
+                        WHERE ds.Doctor_ID = d.Doctor_ID
+                    ) AS Specialties
+                   FROM Admission_Doctor ad
+                   INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID
+                   INNER JOIN Enum_Doctor_Type dt ON d.Doctor_Type_ID = dt.Doctor_Type_ID
+                   WHERE ad.Admission_ID = :aid";
+        $docStmt = $conn->prepare($docSql);
+        $docStmt->execute([':aid' => $admissionId]);
+        $data['Attending_Doctors'] = $docStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $invSql = "SELECT 
+                    fi.Invoice_ID,
+                    CONCAT('INV-', LPAD(fi.Invoice_ID, 3, '0')) AS Invoice_Code,
+                    fi.Gross_Total,
+                    fi.Discount_Amount,
+                    fi.Discount_Summary,
+                    fi.Net_Amount_Due,
+                    COALESCE(fi.Amount_Paid, 0.00) AS Amount_Paid,
+                    GREATEST(0.00, fi.Net_Amount_Due - COALESCE(fi.Amount_Paid, 0.00)) AS Remaining_Balance,
+                    DATE_FORMAT(fi.Settlement_Date, '%Y-%m-%d %h:%i %p') AS Settlement_Date,
+                    CONCAT(u.First_Name, ' ', u.Last_Name) AS Cashier_Name,
+                    ur.Role_Name AS Cashier_Role
+                   FROM Final_Invoice fi
+                   INNER JOIN System_User u ON fi.Processed_By_User_ID = u.User_ID
+                   INNER JOIN Enum_User_Role ur ON u.Role_ID = ur.Role_ID
+                   WHERE fi.Admission_ID = :aid
+                   ORDER BY fi.Invoice_ID DESC
+                   LIMIT 1";
+        $invStmt = $conn->prepare($invSql);
+        $invStmt->execute([':aid' => $admissionId]);
+        $data['Invoice'] = $invStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        if ($data['Invoice']) {
+            $iid = $data['Invoice']['Invoice_ID'];
+            $paySql = "SELECT 
+                        ip.Payment_ID,
+                        ip.Receipt_Number,
+                        ip.Amount_Paid,
+                        DATE_FORMAT(ip.Payment_Date, '%Y-%m-%d %h:%i %p') AS Payment_Date,
+                    COALESCE(ip.Discount_Amount, 0.00) AS Discount_Amount,
+                    COALESCE(ip.Discount_Name, '') AS Discount_Name,
+                        pm.Method_Name AS Payment_Method
+                       FROM Invoice_Payment ip
+                       LEFT JOIN Enum_Payment_Method pm ON ip.Payment_Method_ID = pm.Payment_Method_ID
+                       WHERE ip.Invoice_ID = :iid
+                       ORDER BY ip.Payment_ID DESC
+                       LIMIT 1";
+            $payStmt = $conn->prepare($paySql);
+            $payStmt->execute([':iid' => $iid]);
+            $data['Latest_Payment'] = $payStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+            $pnSql = "SELECT 
+                        pn.Note_ID,
+                        ppt.Plan_Type_Name,
+                        pn.Installment_Months,
+                        pn.Monthly_Amount,
+                        DATE_FORMAT(pn.Next_Due_Date, '%Y-%m-%d') AS Next_Due_Date,
+                        pn.Guarantor_Name,
+                        pn.Status AS Promissory_Status
+                      FROM Promissory_Note pn
+                      INNER JOIN Enum_Promissory_Plan_Type ppt ON pn.Plan_Type_ID = ppt.Plan_Type_ID
+                      WHERE pn.Invoice_ID = :iid
+                      LIMIT 1";
+            $pnStmt = $conn->prepare($pnSql);
+            $pnStmt->execute([':iid' => $iid]);
+            $data['Promissory_Note'] = $pnStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } else {
+            $data['Latest_Payment'] = null;
+            $data['Promissory_Note'] = null;
+        }
+
+        $isDischarged = ($data['Admission_Status'] === 'Discharged');
+        $hasInvoice = !empty($data['Invoice']);
+        $remBal = $hasInvoice ? floatval($data['Invoice']['Remaining_Balance']) : 999999;
+        $hasActivePN = !empty($data['Promissory_Note']) && $data['Promissory_Note']['Promissory_Status'] === 'Active';
+        $isFinancialCleared = $hasInvoice && ($remBal <= 0 || $hasActivePN);
+
+        $data['Clearance_Summary'] = [
+            'Medical_Clearance' => true,
+            'Nursing_Clearance' => true,
+            'Financial_Clearance' => $isFinancialCleared,
+            'Overall_Cleared' => $isFinancialCleared
+        ];
+
+        return json_encode($data);
+    }
+
+    function getPendingBillingClearances($json = '{}')
+    {
+        include "connection.php";
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $search = trim($json['search'] ?? '');
+
+        $sql = "SELECT 
+                    a.Admission_ID,
+                    CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                    p.Patient_ID,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
+                    CONCAT(p.Last_Name, ', ', p.First_Name) AS Patient_Name,
+                    CONCAT(p.First_Name, ' ', p.Last_Name) AS Full_Name,
+                    a.Status,
+                    a.Chief_Complaint,
+                    a.Diagnosis,
+                    a.Discharge_Instructions,
+                    DATE_FORMAT(a.Admission_Date, '%Y-%m-%d %h:%i %p') AS Admission_Date,
+                    a.Medical_Discharge_Date,
+                    DATE_FORMAT(a.Medical_Discharge_Date, '%Y-%m-%d %h:%i %p') AS Formatted_Medical_Discharge_Date,
+                    (SELECT CONCAT('Dr. ', md_doc.First_Name, ' ', md_doc.Last_Name) FROM Doctor md_doc WHERE md_doc.Doctor_ID = a.Medical_Discharge_Doctor_ID) AS Medical_Discharge_Doctor_Name,
+                    (SELECT GROUP_CONCAT(CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) SEPARATOR ', ') FROM Admission_Doctor ad INNER JOIN Doctor d ON ad.Doctor_ID = d.Doctor_ID WHERE ad.Admission_ID = a.Admission_ID) AS Assigned_Doctors,
+                    COALESCE(rb.Bed_Code, (SELECT rb2.Bed_Code FROM Room_Transfer_Log rtl2 INNER JOIN Room_Bed rb2 ON rtl2.Bed_ID = rb2.Bed_ID WHERE rtl2.Admission_ID = a.Admission_ID ORDER BY rtl2.Transfer_ID DESC LIMIT 1)) AS Bed_Code,
+                    COALESCE(r.Room_Name, (SELECT r2.Room_Name FROM Room_Transfer_Log rtl2 INNER JOIN Room_Bed rb2 ON rtl2.Bed_ID = rb2.Bed_ID INNER JOIN Room r2 ON rb2.Room_ID = r2.Room_ID WHERE rtl2.Admission_ID = a.Admission_ID ORDER BY rtl2.Transfer_ID DESC LIMIT 1)) AS Room_Name,
+                    COALESCE(rt.Type_Name, (SELECT rt2.Type_Name FROM Room_Transfer_Log rtl2 INNER JOIN Room_Bed rb2 ON rtl2.Bed_ID = rb2.Bed_ID INNER JOIN Room r2 ON rb2.Room_ID = r2.Room_ID LEFT JOIN Enum_Room_Type rt2 ON r2.Room_Type_ID = rt2.Room_Type_ID WHERE rtl2.Admission_ID = a.Admission_ID ORDER BY rtl2.Transfer_ID DESC LIMIT 1)) AS Room_Type,
+                    (SELECT DATE_FORMAT(MAX(rtl_out.Date_Out), '%Y-%m-%d %h:%i %p') FROM Room_Transfer_Log rtl_out WHERE rtl_out.Admission_ID = a.Admission_ID) AS Formatted_Discharge_Date,
+                    COALESCE((SELECT SUM(bl.Total_Charge) FROM Billing_Ledger bl WHERE bl.Admission_ID = a.Admission_ID), 0.00) AS Posted_Ledger_Total,
+                    CASE 
+                        WHEN rtl.Transfer_ID IS NOT NULL AND a.Status = 'Admitted' 
+                        THEN GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate, 0.00)
+                        ELSE 0.00 
+                    END AS Active_Room_Fee,
+                    COALESCE((SELECT SUM(ip.Amount_Paid + COALESCE(ip.Discount_Amount, 0.00)) FROM Invoice_Payment ip WHERE ip.Admission_ID = a.Admission_ID AND (ip.Is_Advance = 1 OR ip.Invoice_ID IS NULL)), 0.00) AS Advance_Paid
+                FROM Admission a
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                LEFT JOIN Room_Transfer_Log rtl ON rtl.Admission_ID = a.Admission_ID AND rtl.Date_Out IS NULL
+                LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
+                WHERE fi.Invoice_ID IS NULL
+                  AND ((a.Status = 'Admitted' AND a.Medical_Discharge_Date IS NOT NULL) OR a.Status = 'Discharged')";
+
+        $params = [];
+        if (!empty($search)) {
+            $sql .= " AND (p.First_Name LIKE :s OR p.Last_Name LIKE :s OR a.Admission_ID = :said)";
+            $params[':s'] = "%{$search}%";
+            $params[':said'] = is_numeric($search) ? intval($search) : 0;
+        }
+
+        $sql .= " ORDER BY CASE WHEN a.Status = 'Admitted' AND a.Medical_Discharge_Date IS NOT NULL THEN 0 ELSE 1 END ASC, COALESCE(a.Medical_Discharge_Date, a.Admission_Date) DESC, a.Admission_ID DESC";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $posted = floatval($row['Posted_Ledger_Total'] ?? 0);
+            $activeRoom = floatval($row['Active_Room_Fee'] ?? 0);
+            $adv = floatval($row['Advance_Paid'] ?? 0);
+            $runningNet = round($posted + $activeRoom, 2);
+            $row['Running_Net_Charges'] = $runningNet;
+            $row['Advance_Paid'] = round($adv, 2);
+            $row['Estimated_Balance'] = round(max(0.00, $runningNet - $adv), 2);
+        }
+
+        return json_encode($rows);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -753,6 +1057,9 @@ switch ($operation) {
     case 'getInvoiceById':
         echo $invoice->getInvoiceById($json);
         break;
+    case 'getDischargeClearance':
+        echo $invoice->getDischargeClearance($json);
+        break;
     case 'getPaymentHistory':
         echo $invoice->getPaymentHistory($json);
         break;
@@ -765,8 +1072,14 @@ switch ($operation) {
     case 'getAdvancePayments':
         echo $invoice->getAdvancePayments($json);
         break;
+    case 'getFixedDiscounts':
+        echo $invoice->getFixedDiscounts();
+        break;
     case 'getPromissoryNotes':
         echo $invoice->getPromissoryNotes($json);
+        break;
+    case 'getPendingBillingClearances':
+        echo $invoice->getPendingBillingClearances($json);
         break;
 }
 

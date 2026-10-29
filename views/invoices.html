@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Invoices & Settled Accounts — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=20.0">
-    <link rel="stylesheet" href="../css/invoices.css?v=18.3">
+    <link rel="stylesheet" href="../css/common.css?v=21.0">
+    <link rel="stylesheet" href="../css/invoices.css?v=21.0">
 </head>
 <body>
 
@@ -23,6 +23,20 @@
             </div>
 
             <div class="content-body">
+                <div class="card clearance-queue-card mb-4" id="pendingClearanceCard">
+                    <div class="card-header card-header-flex">
+                        <div class="card-header-left-title">
+                            <h2 class="card-header-title-text">Pending Discharge Clearance &amp; Final SOA Queue</h2>
+                            <span id="pendingClearanceCountBadge" class="badge badge-secondary">0 Pending</span>
+                        </div>
+                        <span class="clearance-queue-subtitle">Doctor-cleared in-patients (May Go Home) &amp; discharged cases awaiting Billing Clearance or Final SOA</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" id="pending-clearance-div">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header card-header-flex">
                         <div class="card-header-left-title">
@@ -189,9 +203,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/sidebar.js?v=20.0"></script>
-    <script src="../js/common.js?v=20.0"></script>
-    <script src="../js/invoices.js?v=18.3"></script>
+    <script src="../js/sidebar.js?v=21.0"></script>
+    <script src="../js/common.js?v=21.0"></script>
+    <script src="../js/invoices.js?v=21.0"></script>
 </body>
 </html>
 

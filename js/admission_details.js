@@ -132,6 +132,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     currentUser = JSON.parse(userJson);
+    const curPerms = Array.isArray(currentUser.permissions) ? currentUser.permissions : [];
+    const isPureFinanceUser = ((currentUser.access_domain || '').toLowerCase() === 'finance') || (curPerms.length > 0 && !curPerms.includes('admissions.html') && curPerms.includes('invoices.html'));
+    if (isPureFinanceUser) {
+        const backBtn = document.querySelector('.chart-header-back-btn');
+        if (backBtn) {
+            backBtn.setAttribute('href', 'invoices.html');
+            backBtn.setAttribute('title', 'Back to Billing & Invoices');
+            backBtn.setAttribute('aria-label', 'Back to Billing & Invoices');
+        }
+    }
     const userDisplay = document.getElementById('user-display');
     if (userDisplay) {
         userDisplay.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role_name || 'Staff'})`;
@@ -161,7 +171,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (!idParam || isNaN(idParam)) {
         alert("Invalid or missing Admission ID.", () => {
-            window.location.href = "admissions.html";
+            window.location.href = isPureFinanceUser ? "invoices.html" : "admissions.html";
         });
         return;
     }
@@ -391,7 +401,8 @@ const initClinicalTabs = () => {
 
 
 
-    const hash = window.location.hash.replace('#', '');
+    const tabParam = new URLSearchParams(window.location.search).get('tab');
+    const hash = window.location.hash.replace('#', '') || tabParam || '';
     if (hash) {
         activateTab(hash);
     } else {
@@ -1832,25 +1843,31 @@ const loadAdmissionDetails = () => {
             const btnOpenReturnPharm = document.getElementById('btnOpenReturnModalPharmacy');
             const isAdmitted = admissionData.Status === 'Admitted';
 
-            if (btnOpenOrder) {
-                btnOpenOrder.disabled = !isAdmitted;
-                btnOpenOrder.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
-            }
-            if (btnOpenRound) {
-                btnOpenRound.disabled = !isAdmitted;
-                btnOpenRound.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
-            }
-            if (btnOpenTransfer) {
-                btnOpenTransfer.disabled = !isAdmitted;
-                btnOpenTransfer.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
-            }
-            if (btnOpenReturn) {
-                btnOpenReturn.disabled = !isAdmitted;
-                btnOpenReturn.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
-            }
-            if (btnOpenReturnPharm) {
-                btnOpenReturnPharm.disabled = !isAdmitted;
-                btnOpenReturnPharm.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+            if (isFinanceRole && !isAdminRole) {
+                [btnOpenOrder, btnOpenRound, btnOpenTransfer, btnOpenReturn, btnOpenReturnPharm, document.getElementById('btnOpenAssessmentModal'), document.getElementById('btnEditDiagnosis'), document.getElementById('btnOpenVoidModal')].forEach(el => {
+                    if (el) el.style.display = 'none';
+                });
+            } else {
+                if (btnOpenOrder) {
+                    btnOpenOrder.disabled = !isAdmitted;
+                    btnOpenOrder.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                }
+                if (btnOpenRound) {
+                    btnOpenRound.disabled = !isAdmitted;
+                    btnOpenRound.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                }
+                if (btnOpenTransfer) {
+                    btnOpenTransfer.disabled = !isAdmitted;
+                    btnOpenTransfer.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                }
+                if (btnOpenReturn) {
+                    btnOpenReturn.disabled = !isAdmitted;
+                    btnOpenReturn.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                }
+                if (btnOpenReturnPharm) {
+                    btnOpenReturnPharm.disabled = !isAdmitted;
+                    btnOpenReturnPharm.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
+                }
             }
             const btnOpenAdvPay = document.getElementById('btnOpenAdvancePaymentModal');
             const nurseAdvNotice = document.getElementById('nurseAdvNotice');

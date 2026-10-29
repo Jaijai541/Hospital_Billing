@@ -119,12 +119,18 @@ const renderRecentAdmissions = (admissions) => {
             ? `<div class="table-sub-text"><code>${a.Bed_Code}</code> &bull; ${a.Room_Name} (${a.Room_Type || 'Ward'})</div>` 
             : '<div class="table-sub-text text-muted">Unassigned Bed</div>';
 
-        const actionHref = hasClinicalAccess ? `admission_details.html?id=${a.Admission_ID}` : `invoices.html`;
-        const rowTitle = hasClinicalAccess ? `Click row to open clinical chart & ledger` : `Click row to view invoices`;
+        const isMedCleared = Boolean(a.Medical_Discharge_Date);
+        const actionHref = hasClinicalAccess
+            ? `admission_details.html?id=${a.Admission_ID}`
+            : `admission_details.html?id=${a.Admission_ID}${isMedCleared ? '#tab-settlement' : '#tab-ledger'}`;
+        const rowTitle = hasClinicalAccess
+            ? 'Click row to open clinical chart & ledger'
+            : (isMedCleared ? 'Medically cleared — click to process billing clearance & SOA' : 'Click row to view live billing ledger');
+        const medClearedPill = isMedCleared ? ' <span class="badge badge-success">✔ Medically Cleared</span>' : '';
 
         html += `<tr class="clickable-row" onclick="window.location.href='${actionHref}'" title="${rowTitle}">`;
         html += `<td>
-            <div class="table-primary-text font-bold">ADM-${String(a.Admission_ID).padStart(3, '0')}</div>
+            <div class="table-primary-text font-bold">ADM-${String(a.Admission_ID).padStart(3, '0')}${medClearedPill}</div>
             <div class="table-sub-text">${a.Admission_Date}</div>
         </td>`;
         html += `<td>
@@ -724,10 +730,11 @@ const updatePulseCards = (allAdmissions, allBeds, invoices, deptData, collData) 
     const invList = Array.isArray(invoices) ? invoices : [];
     const totalInvoiced = invList.reduce((sum, inv) => sum + parseFloat(inv.Net_Amount_Due || 0), 0);
     const totalAR = invList.reduce((sum, inv) => sum + parseFloat(inv.Remaining_Balance || 0), 0);
+    const medicallyCleared = activeAdmissions.filter(a => Boolean(a.Medical_Discharge_Date));
     const activePNs = invList.filter(inv => inv.Promissory_Note_ID && inv.Promissory_Status === 'Active' && parseFloat(inv.Remaining_Balance || 0) > 0);
     const overduePNs = activePNs.filter(inv => inv.Promissory_Next_Due_Date && inv.Promissory_Next_Due_Date < todayYmd);
     const openSoaCount = invList.filter(inv => parseFloat(inv.Remaining_Balance || 0) > 0).length;
-    const unbilledCount = dischargedUnbilled.length;
+    const unbilledCount = dischargedUnbilled.length + medicallyCleared.length;
 
     const elAR = document.getElementById('stat-total-ar');
     if (elAR) {
@@ -766,7 +773,7 @@ const updatePulseCards = (allAdmissions, allBeds, invoices, deptData, collData) 
     const elClearMeta = document.getElementById('pulse-clearance-meta');
     if (elClearMeta) {
         elClearMeta.textContent = unbilledCount > 0
-            ? `${unbilledCount} discharged awaiting SOA`
+            ? `${unbilledCount} case${unbilledCount === 1 ? '' : 's'} awaiting billing clearance / SOA`
             : `${activePNs.length} active promissory note${activePNs.length === 1 ? '' : 's'}`;
     }
 

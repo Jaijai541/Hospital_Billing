@@ -424,6 +424,29 @@ class AdmissionManager
                 $docName = $dStmt->fetchColumn() ?: $docName;
             }
 
+            $patStmt = $conn->prepare("SELECT CONCAT(p.First_Name, ' ', p.Last_Name) AS Full_Name, CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code FROM Admission a INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID WHERE a.Admission_ID = :aid");
+            $patStmt->execute([':aid' => $admissionId]);
+            $patInfo = $patStmt->fetch(PDO::FETCH_ASSOC);
+            $patFullName = $patInfo['Full_Name'] ?? 'In-Patient';
+            $admCode = $patInfo['Admission_Code'] ?? ('ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT));
+
+            $finRolesStmt = $conn->query("SELECT Role_ID FROM Enum_User_Role WHERE Access_Domain IN ('Finance', 'Hybrid')");
+            $finRoleIds = $finRolesStmt ? $finRolesStmt->fetchAll(PDO::FETCH_COLUMN) : [];
+            if (!empty($finRoleIds)) {
+                $notifStmt = $conn->prepare("INSERT INTO Clinical_Notification (Admission_ID, Request_ID, Sender_User_ID, Target_Role_ID, Target_Station_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At) VALUES (:aid, NULL, :sender, :rid, NULL, NULL, :title, :msg, 'Medical_Discharge_Ordered', 0, NOW())");
+                $notifTitle = "Medical Discharge Ordered: {$patFullName}";
+                $notifMsg = "{$docName} issued a May Go Home order for {$patFullName} ({$admCode}). Ready for Final Billing Clearance & SOA.";
+                foreach ($finRoleIds as $fRid) {
+                    $notifStmt->execute([
+                        ':aid' => $admissionId,
+                        ':sender' => $userId > 0 ? $userId : null,
+                        ':rid' => intval($fRid),
+                        ':title' => $notifTitle,
+                        ':msg' => $notifMsg
+                    ]);
+                }
+            }
+
             $conn->commit();
             return json_encode([
                 'success' => true,

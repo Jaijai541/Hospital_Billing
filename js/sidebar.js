@@ -269,9 +269,6 @@ const renderSidebar = () => {
     }
 
     const currentPath = window.location.pathname.split("/").pop() || "index.html";
-    const activePage = (currentPath === "admission_details.html") ? "admissions.html" : currentPath;
-
-    const isActive = (href) => (activePage === href ? ' class="active"' : "");
 
     const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const domain = (user.access_domain || "").toLowerCase();
@@ -310,14 +307,22 @@ const renderSidebar = () => {
         if (["departments.html", "staff.html", "audit_log.html", "archive.html"].includes(page)) {
             return hasAdminAccess;
         }
-        if (["admissions.html", "admission_details.html"].includes(page)) {
+        if (page === "admissions.html") {
             return hasClinicalAccess;
+        }
+        if (page === "admission_details.html") {
+            return hasClinicalAccess || hasFinanceAccess;
         }
         if (["discounts.html", "invoices.html", "promissory_notes.html", "reports.html"].includes(page)) {
             return hasFinanceAccess;
         }
         return true;
     };
+
+    const activePage = (currentPath === "admission_details.html")
+        ? (canAccess("admissions.html") ? "admissions.html" : "invoices.html")
+        : currentPath;
+    const isActive = (href) => (activePage === href ? ' class="active"' : "");
 
     const overviewPages = ["index.html"];
     const overviewHtml = `

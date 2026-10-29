@@ -218,3 +218,57 @@
 #histPaidInFullBadge {
     display: none;
 }
+
+
+.clearance-queue-card {
+    border: 1px solid #cbd5e1;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clearance-queue-card.has-pending {
+    border: 1.5px solid #0d9488;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.08);
+}
+
+.clearance-queue-card.has-pending > .card-header {
+    background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 100%);
+    border-bottom: 1px solid #ccfbf1;
+}
+
+.clearance-queue-subtitle {
+    font-size: 12.5px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.clearance-action-group {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.clearance-empty-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 13.5px;
+}
+
+.clearance-doc-note {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 2px 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 4px;
+    color: #166534;
+    font-size: 12px;
+}

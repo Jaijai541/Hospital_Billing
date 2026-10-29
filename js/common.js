@@ -72,8 +72,11 @@ const enforcePageRbacGuard = (user) => {
 
     let mappedPage = currentPage;
     if (currentPage === "admission_details.html") {
+        if (hasFinanceAccess && (!Array.isArray(perms) || perms.includes("invoices.html"))) {
+            return true;
+        }
         mappedPage = "admissions.html";
-    } else if (["partial_bill.html", "payment_receipt.html", "invoice_print.html"].includes(currentPage)) {
+    } else if (["partial_bill.html", "payment_receipt.html", "invoice_print.html", "discharge_clearance.html"].includes(currentPage)) {
         mappedPage = "invoices.html";
     }
 
@@ -121,9 +124,14 @@ const enforcePageRbacGuard = (user) => {
 
     const clinicalOnlyPages = [
         "admissions.html",
-        "admission_details.html",
         "department_orders.html"
     ];
+
+    if (currentPage === "admission_details.html" && !hasClinicalAccess && !hasFinanceAccess) {
+        sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your assigned role does not have permission to access this patient chart.");
+        window.location.replace("index.html");
+        return false;
+    }
 
     const financeOnlyPages = [
         "discounts.html",
@@ -224,13 +232,11 @@ const applyGlobalActionPermissions = () => {
         "#btnOpenAddStaffModal",
         "#btnOpenAddSpecialtyModal",
         "#btnOpenAddRoomTypeModal",
-        "#btnAddAdvVoucher",
         "#btnOpenOrderModal",
         "#btnOpenRoundModal",
         "#btnOpenTransferModal",
         "#btnOpenReturnModal",
         "#btnOpenReturnModalPharmacy",
-        "#btnOpenAdvancePaymentModal",
         "#btnNewPatient",
         "#btnNewRecord",
         "#btnSubmitSpecialty",
@@ -296,6 +302,19 @@ const applyGlobalActionPermissions = () => {
             });
         }
     }
+
+    const userCanAddPayment = canUserAddData("can_add_payment") || userCanAdd;
+    ["#btnOpenAdvancePaymentModal", "#btnAddAdvVoucher"].forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+            if (!userCanAddPayment) {
+                el.disabled = true;
+                el.setAttribute("title", "Access Restricted: Cashier / Billing payment permission is required.");
+                el.classList.add("btn-permission-disabled");
+            } else {
+                el.classList.remove("btn-permission-disabled");
+            }
+        });
+    });
 
     if (!userCanDelete) {
         const deleteSelectors = [
@@ -2846,12 +2865,13 @@ const showClinicalToastAlert = (n) => {
         document.body.appendChild(container);
     }
 
+    const isDischargeNotif = n.Notification_Type === "Medical_Discharge_Ordered";
     const toast = document.createElement("div");
     toast.className = "clinical-toast-card";
     toast.innerHTML = `
         <div class="clinical-toast-inner">
             <div class="clinical-toast-header">
-                <span class="clinical-toast-badge">Clinical Alert</span>
+                <span class="clinical-toast-badge">${isDischargeNotif ? "Billing Clearance Alert" : "Clinical Alert"}</span>
                 <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
             </div>
             <div class="clinical-toast-title">${n.Title || "Clinical Order Alert"}</div>
@@ -2860,8 +2880,8 @@ const showClinicalToastAlert = (n) => {
                 <span class="clinical-toast-time">${n.Formatted_Time || "Just now"}</span>
                 <div class="clinical-toast-footer-actions">
                     <button type="button" class="btn btn-secondary clinical-toast-btn btn-toast-disable">Disable Toasts</button>
-                    <button type="button" class="btn btn-outline clinical-toast-btn btn-toast-chart">Open Chart</button>
-                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-queue">Department Queue &rarr;</button>
+                    <button type="button" class="btn btn-outline clinical-toast-btn btn-toast-chart">${isDischargeNotif ? "Invoices Queue" : "Open Chart"}</button>
+                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-queue">${isDischargeNotif ? "Billing Clearance &rarr;" : "Department Queue &rarr;"}</button>
                 </div>
             </div>
         </div>
@@ -2872,14 +2892,18 @@ const showClinicalToastAlert = (n) => {
     if (btnChart) {
         btnChart.addEventListener("click", () => {
             toast.remove();
-            window.location.href = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders&request_id=${n.Request_ID || ''}`;
+            window.location.href = isDischargeNotif
+                ? "invoices.html"
+                : `admission_details.html?id=${n.Admission_ID}&sub=sub-orders&request_id=${n.Request_ID || ''}`;
         });
     }
     const btnQueue = toast.querySelector(".btn-toast-queue");
     if (btnQueue) {
         btnQueue.addEventListener("click", () => {
             toast.remove();
-            window.location.href = `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+            window.location.href = isDischargeNotif
+                ? `admission_details.html?id=${n.Admission_ID}#tab-settlement`
+                : `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
         });
     }
 
@@ -2988,10 +3012,14 @@ const fetchRealtimeNotifications = () => {
                 else if (n.Notification_Type === "Order_Prepared") typeBadge = '<span class="badge-process badge-process-prepared">Prepared (Ready)</span>';
                 else if (n.Notification_Type === "Order_Delivering") typeBadge = '<span class="badge-process badge-process-delivering">Out for Delivery</span>';
                 else if (n.Notification_Type === "Order_Administered") typeBadge = '<span class="badge-process badge-process-administered">Administered</span>';
+                else if (n.Notification_Type === "Medical_Discharge_Ordered") typeBadge = '<span class="badge badge-success">Medical Discharge</span>';
 
+                const isDischargeNotif = n.Notification_Type === "Medical_Discharge_Ordered";
                 const reqParam = n.Request_ID ? `&request_id=${n.Request_ID}` : '';
-                const chartLink = `admission_details.html?id=${n.Admission_ID}&sub=sub-orders${reqParam}`;
-                const queueLink = `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+                const chartLink = isDischargeNotif ? "invoices.html" : `admission_details.html?id=${n.Admission_ID}&sub=sub-orders${reqParam}`;
+                const queueLink = isDischargeNotif ? `admission_details.html?id=${n.Admission_ID}#tab-settlement` : `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+                const secondaryLabel = isDischargeNotif ? "Invoices Queue" : "Open Chart";
+                const primaryLabel = isDischargeNotif ? "Billing Clearance &rarr;" : "Department Queue &rarr;";
 
                 html += `
                     <div class="notif-item-card ${unreadClass}" id="notif-card-${n.Notification_ID}" data-notif-id="${n.Notification_ID}">
@@ -3003,8 +3031,8 @@ const fetchRealtimeNotifications = () => {
                         <div class="notif-item-footer">
                             <div>${typeBadge} • <span class="table-sub-text">Patient: <strong>${n.Patient_Name} (${n.Patient_Code})</strong></span></div>
                             <div class="notif-item-actions">
-                                <a href="${chartLink}" class="btn btn-sm btn-outline" onclick="handleNotifActionClick(event, ${n.Notification_ID}, '${chartLink}')">Open Chart</a>
-                                <a href="${queueLink}" class="btn btn-sm btn-primary" onclick="handleNotifActionClick(event, ${n.Notification_ID}, '${queueLink}')">Department Queue &rarr;</a>
+                                <a href="${chartLink}" class="btn btn-sm btn-outline" onclick="handleNotifActionClick(event, ${n.Notification_ID}, '${chartLink}')">${secondaryLabel}</a>
+                                <a href="${queueLink}" class="btn btn-sm btn-primary" onclick="handleNotifActionClick(event, ${n.Notification_ID}, '${queueLink}')">${primaryLabel}</a>
                             </div>
                         </div>
                     </div>

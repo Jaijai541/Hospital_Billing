@@ -2,8 +2,121 @@ const getApiUrl = "../api/GET";
 const postApiUrl = "../api/POST";
 
 let allInvoices = [];
+let pendingClearances = [];
 let currentPaymentInvoice = null;
 let paymentMethods = [];
+
+const renderPendingClearances = (items) => {
+    const container = document.getElementById('pending-clearance-div');
+    const card = document.getElementById('pendingClearanceCard');
+    const badge = document.getElementById('pendingClearanceCountBadge');
+    if (!container) return;
+
+    const totalPending = Array.isArray(pendingClearances) ? pendingClearances.length : 0;
+    if (card) {
+        card.classList.toggle('has-pending', totalPending > 0);
+    }
+    if (badge) {
+        badge.textContent = totalPending > 0 ? `${totalPending} Awaiting Action` : '0 Pending';
+        badge.className = totalPending > 0 ? 'badge badge-success' : 'badge badge-secondary';
+    }
+
+    if (!items || items.length === 0) {
+        const msg = totalPending === 0
+            ? 'No patients are currently awaiting Final Billing Clearance or Statement of Account generation. When an Attending Physician issues a May Go Home order, the patient appears here immediately.'
+            : 'No pending discharge clearances match your current search keyword.';
+        container.innerHTML = `<div class="clearance-empty-banner"><span>${msg}</span></div>`;
+        return;
+    }
+
+    let html = '<table class="data-table"><thead><tr>';
+    html += '<th>Case &amp; Patient</th>';
+    html += '<th>Medical Clearance &amp; Diagnosis</th>';
+    html += '<th class="text-right">Running Charges &amp; Deposits</th>';
+    html += '<th>Discharge Stage</th>';
+    html += '<th class="text-right">Billing Action</th>';
+    html += '</tr></thead><tbody>';
+
+    items.forEach(c => {
+        const isStillAdmitted = c.Status === 'Admitted';
+        const runningCharges = parseFloat(c.Running_Net_Charges || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+        const advPaid = parseFloat(c.Advance_Paid || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+        const estBalVal = parseFloat(c.Estimated_Balance || 0);
+        const estBal = estBalVal.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+        const roomMeta = c.Bed_Code
+            ? `${c.Room_Name || 'Room'} (${c.Room_Type || 'Ward'}) • Bed <strong>${c.Bed_Code}</strong>`
+            : 'Bed Released';
+
+        const docText = c.Medical_Discharge_Date
+            ? `<span class="clearance-doc-note">✔ Cleared by <strong>${c.Medical_Discharge_Doctor_Name || 'Attending Doctor'}</strong> • ${c.Formatted_Medical_Discharge_Date || ''}</span>`
+            : `<span class="table-sub-text">Attending: ${c.Assigned_Doctors || 'Hospital Physician'}</span>`;
+
+        const dxText = c.Diagnosis
+            ? `<span class="table-sub-text">Dx: <strong>${c.Diagnosis}</strong></span>`
+            : '<span class="table-sub-text text-muted">Dx: Pending</span>';
+
+        const instText = c.Discharge_Instructions
+            ? `<span class="table-sub-text">Instructions: ${c.Discharge_Instructions}</span>`
+            : '';
+
+        const stageHtml = isStillAdmitted
+            ? '<span class="badge badge-success table-status-pill">✔ MEDICALLY CLEARED</span><span class="table-sub-text">Step 2: Needs Bed Release &amp; Billing Clearance</span>'
+            : `<span class="badge badge-warning table-status-pill">BED RELEASED — READY FOR SOA</span><span class="table-sub-text">${c.Formatted_Discharge_Date ? 'Released: ' + c.Formatted_Discharge_Date : 'Awaiting Final SOA &amp; Settlement'}</span>`;
+
+        const primaryActionBtn = isStillAdmitted
+            ? `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-warning">Process Billing Clearance &rarr;</a>`
+            : `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-primary">Finalize &amp; Issue SOA &rarr;</a>`;
+
+        html += '<tr>';
+        html += `<td><span class="table-primary-text text-primary">${c.Admission_Code}</span><span class="table-primary-text">${c.Patient_Name} <small class="text-muted">(${c.Patient_Code})</small></span><span class="table-sub-text">${roomMeta}</span></td>`;
+        html += `<td>${docText}${dxText}${instText}</td>`;
+        html += `<td class="text-right"><span class="table-amount-prominent text-primary">₱${runningCharges}</span><span class="table-sub-text">Deposits: ₱${advPaid} • Est. Due: <strong class="${estBalVal > 0 ? 'text-danger' : 'text-success'}">₱${estBal}</strong></span></td>`;
+        html += `<td>${stageHtml}</td>`;
+        html += `<td class="text-right"><div class="clearance-action-group"><a href="admission_details.html?id=${c.Admission_ID}#tab-ledger" class="btn btn-sm btn-outline">Live Ledger</a>${primaryActionBtn}</div></td>`;
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+};
+
+const filterAndRenderPendingClearances = () => {
+    const searchEl = document.getElementById('search_input');
+    const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+
+    const filtered = pendingClearances.filter(c => {
+        if (!query) return true;
+        return (c.Patient_Name && c.Patient_Name.toLowerCase().includes(query)) ||
+            (c.Full_Name && c.Full_Name.toLowerCase().includes(query)) ||
+            (c.Patient_Code && c.Patient_Code.toLowerCase().includes(query)) ||
+            (c.Admission_Code && c.Admission_Code.toLowerCase().includes(query)) ||
+            (c.Medical_Discharge_Doctor_Name && c.Medical_Discharge_Doctor_Name.toLowerCase().includes(query)) ||
+            (c.Bed_Code && c.Bed_Code.toLowerCase().includes(query));
+    });
+
+    renderPendingClearances(filtered);
+};
+
+const loadPendingClearances = () => {
+    const formData = new FormData();
+    formData.append('operation', 'getPendingBillingClearances');
+
+    axios.post(`${getApiUrl}/invoices.php`, formData)
+        .then(response => {
+            pendingClearances = Array.isArray(response.data) ? response.data : [];
+            filterAndRenderPendingClearances();
+        })
+        .catch(() => {
+            pendingClearances = [];
+            filterAndRenderPendingClearances();
+        });
+};
+
+const refreshAllBillingData = () => {
+    loadPendingClearances();
+    loadInvoices();
+};
 
 const loadPaymentMethods = () => {
     const formData = new FormData();
@@ -512,9 +625,12 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('search_input').addEventListener('input', filterAndRenderInvoices);
+    document.getElementById('search_input').addEventListener('input', () => {
+        filterAndRenderPendingClearances();
+        filterAndRenderInvoices();
+    });
     document.getElementById('status_filter')?.addEventListener('change', filterAndRenderInvoices);
-    initRefreshBtn("btnRefreshInvoices", loadInvoices);
+    initRefreshBtn("btnRefreshInvoices", refreshAllBillingData);
 
     document.getElementById('btnClosePaymentModal')?.addEventListener('click', () => closeModal('recordPaymentModal'));
     document.getElementById('btnCancelPayment')?.addEventListener('click', () => closeModal('recordPaymentModal'));
@@ -546,6 +662,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     loadPaymentMethods();
+    loadPendingClearances();
     loadInvoices();
 });
 

@@ -2067,7 +2067,8 @@ const initInputValidationGuards = () => {
         const personNameRegex = /(first_name|last_name|middle_name|patient_name|doctor_name|staff_name|staff_first_name|staff_last_name|emergency_contact_name|emergency_name|guarantor_name)/i;
         const phoneRegex = /(contact_number|phone|mobile|emergency_contact_number|staff_contact_number|guarantor_contact)/i;
         const integerRegex = /(capacity|order_qty|return_qty|days|installments|months)/i;
-        const amountRegex = /(amount|fee|price|rate|tender|tendered|deposit|balance|cost|voucher|val)/i;
+        const amountRegex = /(amount|fee|price|rate|tender|tendered|deposit|balance|cost|voucher_val|voucher_amount|_val\b)/i;
+        const textFieldRegex = /(name|notes|desc|description|title|label|reason|remarks|particulars|code|_text)/i;
 
         const inputs = root.querySelectorAll ? root.querySelectorAll("input") : [];
         inputs.forEach(input => {
@@ -2083,8 +2084,9 @@ const initInputValidationGuards = () => {
 
             const isPersonName = personNameRegex.test(inputId) || personNameRegex.test(inputName);
             const isPhone = phoneRegex.test(inputId) || phoneRegex.test(inputName);
-            const isInteger = integerRegex.test(inputId) || integerRegex.test(inputName);
-            const isAmount = (input.type === "number" || amountRegex.test(inputId) || amountRegex.test(inputName)) && !isPhone && !isInteger;
+            const isTextField = input.type === "text" && (textFieldRegex.test(inputId) || textFieldRegex.test(inputName));
+            const isInteger = !isTextField && (integerRegex.test(inputId) || integerRegex.test(inputName));
+            const isAmount = (input.type === "number" || (!isTextField && (amountRegex.test(inputId) || amountRegex.test(inputName)))) && !isPhone && !isInteger;
 
             if (isPersonName) {
                 input.dataset.validationGuarded = "true";

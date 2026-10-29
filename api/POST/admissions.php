@@ -931,40 +931,57 @@ class AdmissionManager
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+require_once __DIR__ . '/../ws_notify.php';
+
+$operation = "";
+$json = "{}";
+if (($_SERVER['REQUEST_METHOD'] ?? '') == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
-} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} else if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
     $operation = $_POST['operation'] ?? "";
     $json = $_POST['json'] ?? "{}";
 }
 
 $admission = new AdmissionManager();
+$wsOut = "";
 switch ($operation) {
     case 'admitPatient':
-        echo $admission->admitPatient($json);
+        $wsOut = $admission->admitPatient($json);
         break;
     case 'transferBed':
-        echo $admission->transferBed($json);
+        $wsOut = $admission->transferBed($json);
         break;
     case 'orderBedTransfer':
-        echo $admission->orderBedTransfer($json);
+        $wsOut = $admission->orderBedTransfer($json);
         break;
     case 'cancelBedTransferOrder':
-        echo $admission->cancelBedTransferOrder($json);
+        $wsOut = $admission->cancelBedTransferOrder($json);
         break;
     case 'dischargePatient':
-        echo $admission->dischargePatient($json);
+        $wsOut = $admission->dischargePatient($json);
         break;
     case 'orderMedicalDischarge':
-        echo $admission->orderMedicalDischarge($json);
+        $wsOut = $admission->orderMedicalDischarge($json);
         break;
     case 'revokeMedicalDischarge':
-        echo $admission->revokeMedicalDischarge($json);
+        $wsOut = $admission->revokeMedicalDischarge($json);
         break;
     case 'updateDiagnosis':
     case 'updateClinicalAssessment':
-        echo $admission->updateDiagnosis($json);
+        $wsOut = $admission->updateDiagnosis($json);
         break;
+}
+
+if ($wsOut !== "") {
+    echo $wsOut;
+    $wsRes = json_decode($wsOut, true);
+    if (is_array($wsRes) && !empty($wsRes['success'])) {
+        $wsReq = is_array($json) ? $json : (json_decode($json, true) ?: []);
+        $wsAdmId = intval($wsReq['admission_id'] ?? $wsRes['admission_id'] ?? 0);
+        broadcastWebSocketEvent('admissions', $operation, [
+            'admission_id' => $wsAdmId
+        ]);
+    }
 }
 ?>

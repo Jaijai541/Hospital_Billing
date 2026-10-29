@@ -64,7 +64,17 @@ const initAuthEvents = () => {
 
     const btnExit = document.getElementById("btnExitPortal");
     if (btnExit) {
-        btnExit.addEventListener("click", handlePortalLogout);
+        btnExit.addEventListener("click", () => handlePortalLogout(false));
+    }
+
+    const btnPortalWs = document.getElementById("portal-ws-pill");
+    if (btnPortalWs) {
+        btnPortalWs.addEventListener("click", () => {
+            if (activeAdmissionId && activePasscode) {
+                loadPortalData(activeAdmissionId, activePasscode);
+                bootAndConnectPortalWs(true);
+            }
+        });
     }
 };
 
@@ -150,7 +160,8 @@ const handlePortalLogin = async () => {
     }
 };
 
-const handlePortalLogout = () => {
+const handlePortalLogout = (preserveError = false) => {
+    closePortalWebSocket();
     sessionStorage.removeItem("patient_portal_auth");
     activeAdmissionId = null;
     activePasscode = null;
@@ -162,10 +173,12 @@ const handlePortalLogout = () => {
 
     document.getElementById("portal_identifier").value = "";
     document.getElementById("portal_passcode").value = "";
-    const errAlert = document.getElementById("auth-error-alert");
-    if (errAlert) {
-        errAlert.classList.remove("visible");
-        errAlert.textContent = "";
+    if (!preserveError) {
+        const errAlert = document.getElementById("auth-error-alert");
+        if (errAlert) {
+            errAlert.classList.remove("visible");
+            errAlert.textContent = "";
+        }
     }
 };
 
@@ -195,9 +208,10 @@ const loadPortalData = async (aid, pass) => {
             document.getElementById("auth-section").classList.add("hidden-element");
             document.getElementById("dashboard-section").classList.remove("hidden-element");
             document.getElementById("btnExitPortal").classList.remove("hidden-element");
+            ensurePortalRealtimeSync();
         } else {
             showError(data.error || "Failed to load statement details.");
-            handlePortalLogout();
+            handlePortalLogout(true);
         }
     } catch (err) {
         showError("Network error loading patient bill.");
@@ -949,6 +963,240 @@ const triggerPortalPrint = (tabKey) => {
         renderPrintSheet(cachedPortalData, currentPortalTab);
     }
     window.print();
+};
+
+let portalWsSocket = null;
+let portalWsConnected = false;
+let portalWsConnecting = false;
+let portalWsReconnectTimer = null;
+let portalWsReconnectDelay = 3000;
+let portalWsFallbackTimer = null;
+let portalWsHeartbeatTimer = null;
+let portalWsRefreshDebounce = null;
+
+const updatePortalWsBadge = (state, labelText) => {
+    const pill = document.getElementById("portal-ws-pill");
+    const txt = document.getElementById("portal-ws-text");
+    if (!pill || !txt) return;
+    pill.classList.remove("portal-ws-live", "portal-ws-connecting", "portal-ws-fallback");
+    if (state === "live") {
+        pill.classList.add("portal-ws-live");
+        txt.textContent = labelText || "Live Updates";
+    } else if (state === "connecting") {
+        pill.classList.add("portal-ws-connecting");
+        txt.textContent = labelText || "Syncing...";
+    } else {
+        pill.classList.add("portal-ws-fallback");
+        txt.textContent = labelText || "Auto-Sync";
+    }
+};
+
+const queryPortalLoopbackSafe = async () => {
+    if (!navigator.permissions || typeof navigator.permissions.query !== "function") {
+        return "prompt";
+    }
+    try {
+        const status = await navigator.permissions.query({ name: "loopback-network" });
+        return status.state;
+    } catch (e) {
+        return "prompt";
+    }
+};
+
+const buildPortalWsCandidates = async (allowUserGestureLoopback = false) => {
+    const isHttps = window.location.protocol === "https:";
+    const proxyProto = isHttps ? "wss:" : "ws:";
+    const proxyUrl = `${proxyProto}//${window.location.host}/Hospital_Billing/ws`;
+
+    if (isHttps) {
+        const list = [proxyUrl];
+        const permState = await queryPortalLoopbackSafe();
+        if (permState === "granted" || allowUserGestureLoopback) {
+            list.push("ws://127.0.0.1:8085");
+        }
+        return list;
+    }
+
+    const directUrl = `ws://${window.location.hostname || "localhost"}:8085`;
+    const preferred = sessionStorage.getItem("hospital_ws_preferred_mode") || "";
+    if (preferred === "direct") {
+        return [directUrl, proxyUrl];
+    }
+    return [proxyUrl, directUrl];
+};
+
+const closePortalWebSocket = () => {
+    if (portalWsReconnectTimer) {
+        clearTimeout(portalWsReconnectTimer);
+        portalWsReconnectTimer = null;
+    }
+    if (portalWsRefreshDebounce) {
+        clearTimeout(portalWsRefreshDebounce);
+        portalWsRefreshDebounce = null;
+    }
+    if (portalWsFallbackTimer) {
+        clearInterval(portalWsFallbackTimer);
+        portalWsFallbackTimer = null;
+    }
+    if (portalWsHeartbeatTimer) {
+        clearInterval(portalWsHeartbeatTimer);
+        portalWsHeartbeatTimer = null;
+    }
+    if (portalWsSocket) {
+        const oldSock = portalWsSocket;
+        portalWsSocket = null;
+        try { oldSock.close(); } catch (e) {}
+    }
+    portalWsConnected = false;
+    portalWsConnecting = false;
+};
+
+const schedulePortalWsReconnect = () => {
+    if (!activeAdmissionId || !activePasscode || portalWsReconnectTimer) return;
+    const waitMs = portalWsReconnectDelay;
+    portalWsReconnectDelay = Math.min(15000, Math.round(portalWsReconnectDelay * 1.8));
+    portalWsReconnectTimer = setTimeout(() => {
+        portalWsReconnectTimer = null;
+        bootAndConnectPortalWs(false);
+    }, waitMs);
+};
+
+const connectPortalWsCandidateAt = (candidates, index) => {
+    if (!activeAdmissionId || !activePasscode) return;
+    if (index >= candidates.length) {
+        portalWsConnecting = false;
+        portalWsConnected = false;
+        updatePortalWsBadge("fallback", "Auto-Sync");
+        schedulePortalWsReconnect();
+        return;
+    }
+
+    const url = candidates[index];
+    let openedOnce = false;
+    let sock = null;
+
+    try {
+        sock = new WebSocket(url);
+    } catch (e) {
+        connectPortalWsCandidateAt(candidates, index + 1);
+        return;
+    }
+
+    const guardTimer = setTimeout(() => {
+        if (!openedOnce && sock && sock.readyState !== WebSocket.OPEN) {
+            try { sock.close(); } catch (e) {}
+        }
+    }, 3500);
+
+    sock.addEventListener("open", () => {
+        openedOnce = true;
+        clearTimeout(guardTimer);
+        portalWsSocket = sock;
+        portalWsConnected = true;
+        portalWsConnecting = false;
+        portalWsReconnectDelay = 3000;
+        if (window.location.protocol === "http:") {
+            sessionStorage.setItem("hospital_ws_preferred_mode", url.includes(":8085") ? "direct" : "proxy");
+        }
+        updatePortalWsBadge("live", "Live Updates");
+        try {
+            sock.send(JSON.stringify({
+                type: "subscribe",
+                admission_id: parseInt(activeAdmissionId || 0, 10)
+            }));
+        } catch (e) {}
+    });
+
+    sock.addEventListener("message", (evt) => {
+        if (!evt || typeof evt.data !== "string" || !activeAdmissionId || !activePasscode) return;
+        try {
+            const parsed = JSON.parse(evt.data);
+            if (parsed && parsed.type === "realtime_event") {
+                const evtAdmId = parseInt(parsed.admission_id || 0, 10);
+                if (!evtAdmId || evtAdmId === parseInt(activeAdmissionId, 10)) {
+                    if (portalWsRefreshDebounce) clearTimeout(portalWsRefreshDebounce);
+                    portalWsRefreshDebounce = setTimeout(() => {
+                        portalWsRefreshDebounce = null;
+                        if (activeAdmissionId && activePasscode) {
+                            loadPortalData(activeAdmissionId, activePasscode);
+                        }
+                    }, 250);
+                }
+            }
+        } catch (e) {}
+    });
+
+    sock.addEventListener("error", () => {});
+
+    sock.addEventListener("close", () => {
+        clearTimeout(guardTimer);
+        if (!openedOnce) {
+            connectPortalWsCandidateAt(candidates, index + 1);
+            return;
+        }
+        if (portalWsSocket === sock) {
+            portalWsSocket = null;
+        }
+        portalWsConnected = false;
+        portalWsConnecting = false;
+        if (activeAdmissionId && activePasscode) {
+            updatePortalWsBadge("fallback", "Auto-Sync");
+            schedulePortalWsReconnect();
+        }
+    });
+};
+
+const bootAndConnectPortalWs = async (fromUserGesture = false) => {
+    if (!activeAdmissionId || !activePasscode) return;
+    if (typeof WebSocket === "undefined") {
+        updatePortalWsBadge("fallback", "Auto-Sync");
+        return;
+    }
+    if (portalWsConnected && portalWsSocket && portalWsSocket.readyState === WebSocket.OPEN) {
+        updatePortalWsBadge("live", "Live Updates");
+        return;
+    }
+    if (portalWsConnecting && !fromUserGesture) return;
+
+    if (portalWsReconnectTimer) {
+        clearTimeout(portalWsReconnectTimer);
+        portalWsReconnectTimer = null;
+    }
+    if (portalWsSocket) {
+        const prev = portalWsSocket;
+        portalWsSocket = null;
+        try { prev.close(); } catch (e) {}
+    }
+
+    portalWsConnecting = true;
+    updatePortalWsBadge("connecting", "Syncing...");
+
+    try {
+        await axios.get("../api/GET/ws_boot.php", { timeout: 2500 });
+    } catch (e) {}
+
+    const candidates = await buildPortalWsCandidates(fromUserGesture);
+    connectPortalWsCandidateAt(candidates, 0);
+};
+
+const ensurePortalRealtimeSync = () => {
+    bootAndConnectPortalWs(false);
+    if (!portalWsFallbackTimer) {
+        portalWsFallbackTimer = setInterval(() => {
+            if (!portalWsConnected && activeAdmissionId && activePasscode) {
+                loadPortalData(activeAdmissionId, activePasscode);
+            }
+        }, 20000);
+    }
+    if (!portalWsHeartbeatTimer) {
+        portalWsHeartbeatTimer = setInterval(() => {
+            if (portalWsConnected && portalWsSocket && portalWsSocket.readyState === WebSocket.OPEN) {
+                try {
+                    portalWsSocket.send(JSON.stringify({ type: "ping" }));
+                } catch (e) {}
+            }
+        }, 25000);
+    }
 };
 
 window.triggerPortalPrint = triggerPortalPrint;

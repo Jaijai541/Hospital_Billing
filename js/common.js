@@ -2732,6 +2732,62 @@ const ensureClinicalNotificationsModal = () => {
                 color: #475569;
                 border: 1px solid #e2e8f0;
             }
+            .notif-header-title-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .ws-status-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.01em;
+                border: 1px solid #cbd5e1;
+                background: #f8fafc;
+                color: #475569;
+                cursor: pointer;
+                transition: all 0.18s ease;
+            }
+            .ws-status-pill:hover {
+                filter: brightness(0.97);
+            }
+            .ws-status-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #94a3b8;
+                flex-shrink: 0;
+            }
+            .ws-status-live {
+                background: #ecfdf5;
+                border-color: #a7f3d0;
+                color: #065f46;
+            }
+            .ws-status-live .ws-status-dot {
+                background: #10b981;
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            }
+            .ws-status-connecting {
+                background: #fffbeb;
+                border-color: #fde68a;
+                color: #92400e;
+            }
+            .ws-status-connecting .ws-status-dot {
+                background: #f59e0b;
+            }
+            .ws-status-fallback {
+                background: #f1f5f9;
+                border-color: #cbd5e1;
+                color: #475569;
+            }
+            .ws-status-fallback .ws-status-dot {
+                background: #64748b;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -2744,7 +2800,13 @@ const ensureClinicalNotificationsModal = () => {
         <div class="modal-container notif-modal-container">
             <div class="modal-header">
                 <div>
-                    <h3>Real-Time Clinical Alerts</h3>
+                    <div class="notif-header-title-row">
+                        <h3>Real-Time Clinical Alerts</h3>
+                        <button type="button" id="ws-connection-pill" class="ws-status-pill ws-status-connecting" title="Click to reconnect real-time WebSocket stream">
+                            <span class="ws-status-dot"></span>
+                            <span id="ws-connection-text">Connecting...</span>
+                        </button>
+                    </div>
                     <div class="table-sub-text">Live clinical notifications and order alerts</div>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseClinicalNotifModal" aria-label="Close modal">&times;</button>
@@ -2767,6 +2829,13 @@ const ensureClinicalNotificationsModal = () => {
     if (closeBtn) closeBtn.addEventListener("click", () => closeModal("clinicalNotifModal"));
     const closeFooter = document.getElementById("btnCloseNotifFooter");
     if (closeFooter) closeFooter.addEventListener("click", () => closeModal("clinicalNotifModal"));
+    const wsPillBtn = document.getElementById("ws-connection-pill");
+    if (wsPillBtn && !wsPillBtn.dataset.wired) {
+        wsPillBtn.dataset.wired = "true";
+        wsPillBtn.addEventListener("click", () => {
+            bootAndConnectHospitalWs(true);
+        });
+    }
 
 
 
@@ -3753,6 +3822,323 @@ window.fetchDepartmentOrdersQueue = fetchDepartmentOrdersQueue;
 window.setupQueueStationSelect = setupQueueStationSelect;
 window.updateToastToggleButton = updateToastToggleButton;
 
+let hospitalWsSocket = null;
+let hospitalWsConnected = false;
+let hospitalWsConnecting = false;
+let hospitalWsReconnectTimer = null;
+let hospitalWsReconnectDelay = 3000;
+let hospitalWsFallbackTimer = null;
+let hospitalWsHeartbeatTimer = null;
+let hospitalWsVisibilityWired = false;
+let pendingRealtimeTopics = new Set();
+let pendingRealtimeAdmissions = new Set();
+let pendingRealtimeWildcard = false;
+let realtimeFlushTimer = null;
+
+const updateHospitalWsBadge = (state, labelText) => {
+    const pill = document.getElementById("ws-connection-pill");
+    const txt = document.getElementById("ws-connection-text");
+    if (!pill || !txt) return;
+    pill.classList.remove("ws-status-live", "ws-status-connecting", "ws-status-fallback");
+    if (state === "live") {
+        pill.classList.add("ws-status-live");
+        txt.textContent = labelText || "Live Push Active";
+    } else if (state === "connecting") {
+        pill.classList.add("ws-status-connecting");
+        txt.textContent = labelText || "Connecting...";
+    } else {
+        pill.classList.add("ws-status-fallback");
+        txt.textContent = labelText || "Auto-Sync Mode";
+    }
+};
+
+const queryLoopbackPermissionSafe = async () => {
+    if (!navigator.permissions || typeof navigator.permissions.query !== "function") {
+        return "prompt";
+    }
+    try {
+        const status = await navigator.permissions.query({ name: "loopback-network" });
+        return status.state;
+    } catch (e) {
+        return "prompt";
+    }
+};
+
+const buildHospitalWsCandidates = async (allowUserGestureLoopback = false) => {
+    const isHttps = window.location.protocol === "https:";
+    const proxyProto = isHttps ? "wss:" : "ws:";
+    const proxyUrl = `${proxyProto}//${window.location.host}/Hospital_Billing/ws`;
+
+    if (isHttps) {
+        const list = [proxyUrl];
+        const permState = await queryLoopbackPermissionSafe();
+        if (permState === "granted" || allowUserGestureLoopback) {
+            list.push("ws://127.0.0.1:8085");
+        }
+        return list;
+    }
+
+    const directUrl = `ws://${window.location.hostname || "localhost"}:8085`;
+    const preferred = sessionStorage.getItem("hospital_ws_preferred_mode") || "";
+    if (preferred === "direct") {
+        return [directUrl, proxyUrl];
+    }
+    return [proxyUrl, directUrl];
+};
+
+const sendHospitalWsSubscription = () => {
+    if (!hospitalWsSocket || hospitalWsSocket.readyState !== WebSocket.OPEN) return;
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const userStationId = user.station_id || user.Station_ID || user.doctor_station_id || 0;
+    const assignedStationIds = user.assigned_station_ids || (userStationId ? [userStationId] : []);
+    const currentAdmId = (typeof admissionId !== "undefined" && admissionId)
+        ? parseInt(admissionId, 10)
+        : parseInt(new URLSearchParams(window.location.search).get("id") || "0", 10);
+
+    try {
+        hospitalWsSocket.send(JSON.stringify({
+            type: "subscribe",
+            user_id: parseInt(user.user_id || user.User_ID || 0, 10),
+            role_id: parseInt(user.role_id || 0, 10),
+            station_ids: assignedStationIds,
+            admission_id: currentAdmId || 0
+        }));
+    } catch (e) {}
+};
+
+const flushRealtimeServerEvents = () => {
+    const topics = new Set(pendingRealtimeTopics);
+    const admIds = new Set(pendingRealtimeAdmissions);
+    const isWildcard = pendingRealtimeWildcard;
+
+    pendingRealtimeTopics.clear();
+    pendingRealtimeAdmissions.clear();
+    pendingRealtimeWildcard = false;
+    realtimeFlushTimer = null;
+
+    fetchRealtimeNotifications();
+
+    const notifModal = document.getElementById("clinicalNotifModal");
+    if (notifModal && notifModal.style.display === "flex" && document.getElementById("notif-dept-queue-tbody")) {
+        if (typeof fetchDepartmentOrdersQueue === "function") {
+            fetchDepartmentOrdersQueue();
+        }
+    }
+
+    try {
+        window.dispatchEvent(new CustomEvent("hospital:realtime", {
+            detail: { topics: [...topics], admission_ids: [...admIds] }
+        }));
+    } catch (e) {}
+
+    const activeChartId = (typeof admissionId !== "undefined" && admissionId) ? parseInt(admissionId, 10) : 0;
+    if (activeChartId > 0) {
+        const matchesChart = isWildcard || admIds.size === 0 || admIds.has(activeChartId);
+        const settlementEl = document.getElementById("settlement-container");
+        const isTypingInSettlement = Boolean(
+            settlementEl &&
+            document.activeElement &&
+            settlementEl.contains(document.activeElement) &&
+            /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)
+        );
+
+        if (matchesChart) {
+            if (topics.has("admissions")) {
+                if (typeof loadAdmissionDetails === "function") loadAdmissionDetails();
+                if (typeof loadTransfers === "function") loadTransfers();
+                if (typeof loadBedHistory === "function") loadBedHistory();
+                if (typeof loadAvailableBeds === "function") loadAvailableBeds();
+                if (typeof loadLedger === "function") loadLedger();
+                if (!isTypingInSettlement && typeof loadLedgerSummary === "function") loadLedgerSummary();
+            }
+            if (topics.has("clinical_orders")) {
+                if (typeof loadOrders === "function") loadOrders();
+                if (typeof loadRounds === "function") loadRounds();
+                if (typeof loadLedger === "function") loadLedger();
+                if (!isTypingInSettlement && typeof loadLedgerSummary === "function") loadLedgerSummary();
+                if (typeof loadDispensedMedicines === "function") loadDispensedMedicines();
+            }
+            if (topics.has("invoices") || topics.has("ledger")) {
+                if (typeof loadAdmissionDetails === "function") loadAdmissionDetails();
+                if (typeof loadLedger === "function") loadLedger();
+                if (!isTypingInSettlement && typeof loadLedgerSummary === "function") loadLedgerSummary();
+                if (!isTypingInSettlement && typeof loadAdvancePayments === "function") loadAdvancePayments();
+                if (typeof loadDispensedMedicines === "function") loadDispensedMedicines();
+            }
+        } else if (topics.has("admissions")) {
+            if (typeof loadAvailableBeds === "function") loadAvailableBeds();
+        }
+    }
+
+    if (typeof loadDepartmentOrders === "function" && (topics.has("clinical_orders") || topics.has("admissions"))) {
+        loadDepartmentOrders();
+    }
+
+    if (typeof loadPendingClearances === "function") {
+        loadPendingClearances();
+    }
+    if (typeof loadInvoices === "function") {
+        loadInvoices();
+    }
+
+    if (typeof loadAdmissions === "function" && (topics.has("admissions") || topics.has("invoices"))) {
+        loadAdmissions();
+        if (typeof loadBeds === "function") loadBeds();
+        if (typeof loadPatients === "function") loadPatients();
+    }
+
+    if (typeof displayRoomsAndBeds === "function" && (topics.has("admissions") || topics.has("rooms") || topics.has("invoices"))) {
+        displayRoomsAndBeds();
+    }
+
+    if (typeof displayPatients === "function" && (topics.has("admissions") || topics.has("invoices") || topics.has("patients"))) {
+        displayPatients();
+    }
+
+    if (typeof loadDashboardMetrics === "function") {
+        loadDashboardMetrics();
+    }
+
+    if (typeof loadPromissoryNotes === "function" && (topics.has("invoices") || topics.has("admissions"))) {
+        loadPromissoryNotes();
+    }
+};
+
+const queueRealtimeServerEvent = (msg) => {
+    if (!msg) return;
+    if (msg.topic) {
+        pendingRealtimeTopics.add(String(msg.topic));
+    }
+    const targetAdm = parseInt(msg.admission_id || 0, 10);
+    if (targetAdm > 0) {
+        pendingRealtimeAdmissions.add(targetAdm);
+    } else {
+        pendingRealtimeWildcard = true;
+    }
+    if (realtimeFlushTimer) {
+        clearTimeout(realtimeFlushTimer);
+    }
+    realtimeFlushTimer = setTimeout(flushRealtimeServerEvents, 220);
+};
+
+const scheduleHospitalWsReconnect = () => {
+    if (hospitalWsReconnectTimer) return;
+    const waitMs = hospitalWsReconnectDelay;
+    hospitalWsReconnectDelay = Math.min(15000, Math.round(hospitalWsReconnectDelay * 1.8));
+    hospitalWsReconnectTimer = setTimeout(() => {
+        hospitalWsReconnectTimer = null;
+        bootAndConnectHospitalWs(false);
+    }, waitMs);
+};
+
+const connectHospitalWsCandidateAt = (candidates, index) => {
+    if (index >= candidates.length) {
+        hospitalWsConnecting = false;
+        hospitalWsConnected = false;
+        updateHospitalWsBadge("fallback", "Auto-Sync Mode");
+        scheduleHospitalWsReconnect();
+        return;
+    }
+
+    const url = candidates[index];
+    let openedOnce = false;
+    let sock = null;
+
+    try {
+        sock = new WebSocket(url);
+    } catch (e) {
+        connectHospitalWsCandidateAt(candidates, index + 1);
+        return;
+    }
+
+    const connectGuardTimer = setTimeout(() => {
+        if (!openedOnce && sock && sock.readyState !== WebSocket.OPEN) {
+            try { sock.close(); } catch (e) {}
+        }
+    }, 3500);
+
+    sock.addEventListener("open", () => {
+        openedOnce = true;
+        clearTimeout(connectGuardTimer);
+        hospitalWsSocket = sock;
+        hospitalWsConnected = true;
+        hospitalWsConnecting = false;
+        hospitalWsReconnectDelay = 3000;
+        if (window.location.protocol === "http:") {
+            sessionStorage.setItem("hospital_ws_preferred_mode", url.includes(":8085") ? "direct" : "proxy");
+        }
+        updateHospitalWsBadge("live", "Live Push Active");
+        sendHospitalWsSubscription();
+    });
+
+    sock.addEventListener("message", (evt) => {
+        if (!evt || typeof evt.data !== "string") return;
+        try {
+            const parsed = JSON.parse(evt.data);
+            if (parsed && parsed.type === "realtime_event") {
+                queueRealtimeServerEvent(parsed);
+            }
+        } catch (e) {}
+    });
+
+    sock.addEventListener("error", () => {});
+
+    sock.addEventListener("close", () => {
+        clearTimeout(connectGuardTimer);
+        if (!openedOnce) {
+            connectHospitalWsCandidateAt(candidates, index + 1);
+            return;
+        }
+        if (hospitalWsSocket === sock) {
+            hospitalWsSocket = null;
+        }
+        hospitalWsConnected = false;
+        hospitalWsConnecting = false;
+        updateHospitalWsBadge("fallback", "Auto-Sync Mode");
+        scheduleHospitalWsReconnect();
+    });
+};
+
+const bootAndConnectHospitalWs = async (fromUserGesture = false) => {
+    if (typeof WebSocket === "undefined") {
+        updateHospitalWsBadge("fallback", "Auto-Sync Mode");
+        return;
+    }
+    const user = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    if (!user || !user.role_id) return;
+    if (/(invoice_print|partial_bill|payment_receipt|discharge_clearance)\.html$/i.test(window.location.pathname)) {
+        return;
+    }
+    if (hospitalWsConnected && hospitalWsSocket && hospitalWsSocket.readyState === WebSocket.OPEN) {
+        if (fromUserGesture) {
+            sendHospitalWsSubscription();
+            fetchRealtimeNotifications();
+        }
+        updateHospitalWsBadge("live", "Live Push Active");
+        return;
+    }
+    if (hospitalWsConnecting && !fromUserGesture) return;
+
+    if (hospitalWsReconnectTimer) {
+        clearTimeout(hospitalWsReconnectTimer);
+        hospitalWsReconnectTimer = null;
+    }
+    if (hospitalWsSocket) {
+        try { hospitalWsSocket.close(); } catch (e) {}
+        hospitalWsSocket = null;
+    }
+
+    hospitalWsConnecting = true;
+    updateHospitalWsBadge("connecting", "Connecting...");
+
+    try {
+        await axios.get("../api/GET/ws_boot.php", { timeout: 2500 });
+    } catch (e) {}
+
+    const candidates = await buildHospitalWsCandidates(fromUserGesture);
+    connectHospitalWsCandidateAt(candidates, 0);
+};
+
 const initClinicalNotificationsSystem = () => {
     ensureClinicalNotificationsModal();
     const btnSidebarNotif = document.getElementById("btn-sidebar-notif");
@@ -3765,7 +4151,38 @@ const initClinicalNotificationsSystem = () => {
         });
     }
     fetchRealtimeNotifications();
-    setInterval(fetchRealtimeNotifications, 15000);
+    bootAndConnectHospitalWs(false);
+
+    if (!hospitalWsFallbackTimer) {
+        hospitalWsFallbackTimer = setInterval(() => {
+            if (!hospitalWsConnected) {
+                fetchRealtimeNotifications();
+            }
+        }, 15000);
+    }
+
+    if (!hospitalWsHeartbeatTimer) {
+        hospitalWsHeartbeatTimer = setInterval(() => {
+            if (hospitalWsConnected && hospitalWsSocket && hospitalWsSocket.readyState === WebSocket.OPEN) {
+                try {
+                    hospitalWsSocket.send(JSON.stringify({ type: "ping" }));
+                } catch (e) {}
+            }
+        }, 25000);
+    }
+
+    if (!hospitalWsVisibilityWired) {
+        hospitalWsVisibilityWired = true;
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                fetchRealtimeNotifications();
+                if (!hospitalWsConnected) {
+                    bootAndConnectHospitalWs(false);
+                }
+            }
+        });
+    }
 };
 
 window.initClinicalNotificationsSystem = initClinicalNotificationsSystem;
+window.bootAndConnectHospitalWs = bootAndConnectHospitalWs;

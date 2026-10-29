@@ -1804,44 +1804,44 @@ class InvoiceManager
 
 
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+require_once __DIR__ . '/../ws_notify.php';
 
+$operation = "";
+$json = "{}";
+if (($_SERVER['REQUEST_METHOD'] ?? '') == 'GET') {
     $operation = $_GET['operation'] ?? "";
-
     $json = $_GET['json'] ?? "{}";
-
-} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
+} else if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
     $operation = $_POST['operation'] ?? "";
-
     $json = $_POST['json'] ?? "{}";
-
 }
 
-
-
 $invoice = new InvoiceManager();
-
+$wsOut = "";
 switch ($operation) {
-
     case 'settleInvoice':
-
-        echo $invoice->settleInvoice($json);
-
+        $wsOut = $invoice->settleInvoice($json);
         break;
-
     case 'recordPayment':
-
-        echo $invoice->recordPayment($json);
-
+        $wsOut = $invoice->recordPayment($json);
         break;
-
     case 'recordAdvancePayment':
-
-        echo $invoice->recordAdvancePayment($json);
-
+        $wsOut = $invoice->recordAdvancePayment($json);
         break;
+}
 
+if ($wsOut !== "") {
+    echo $wsOut;
+    $wsRes = json_decode($wsOut, true);
+    if (is_array($wsRes) && !empty($wsRes['success'])) {
+        $wsReq = is_array($json) ? $json : (json_decode($json, true) ?: []);
+        $wsAdmId = intval($wsReq['admission_id'] ?? $wsRes['admission_id'] ?? 0);
+        $wsInvId = intval($wsReq['invoice_id'] ?? $wsRes['invoice_id'] ?? 0);
+        broadcastWebSocketEvent('invoices', $operation, [
+            'admission_id' => $wsAdmId,
+            'invoice_id' => $wsInvId
+        ]);
+    }
 }
 
 ?>

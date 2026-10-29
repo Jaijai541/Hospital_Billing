@@ -203,6 +203,71 @@ body.portal-body {
     color: var(--portal-text-muted);
 }
 
+.portal-status-pills-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.portal-ws-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid #cbd5e1;
+    background-color: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.portal-ws-pill:hover {
+    filter: brightness(0.97);
+}
+
+.portal-ws-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.portal-ws-live {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.portal-ws-live .portal-ws-dot {
+    background-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+}
+
+.portal-ws-connecting {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.portal-ws-connecting .portal-ws-dot {
+    background-color: #f59e0b;
+}
+
+.portal-ws-fallback {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
+.portal-ws-fallback .portal-ws-dot {
+    background-color: #64748b;
+}
+
 .portal-status-pill {
     display: inline-block;
     padding: 3px 10px;

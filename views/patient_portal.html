@@ -6,7 +6,7 @@
     <title>Patient &amp; Family Billing Portal — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/invoice_print.css?v=19.4">
     <link rel="stylesheet" href="../css/partial_bill.css?v=19.4">
-    <link rel="stylesheet" href="../css/patient_portal.css?v=19.4">
+    <link rel="stylesheet" href="../css/patient_portal.css?v=19.5">
 </head>
 <body class="portal-body">
 
@@ -67,7 +67,11 @@
                             <span id="pt-demographics">Male, 0 yrs old</span>
                         </div>
                     </div>
-                    <div>
+                    <div class="portal-status-pills-wrap">
+                        <button type="button" id="portal-ws-pill" class="portal-ws-pill portal-ws-connecting no-print" title="Click to resync live billing updates">
+                            <span class="portal-ws-dot"></span>
+                            <span id="portal-ws-text">Syncing...</span>
+                        </button>
                         <span id="pt-status-pill" class="portal-status-pill status-admitted">Admitted</span>
                     </div>
                 </div>
@@ -467,6 +471,6 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="../js/patient_portal.js?v=19.3"></script>
+    <script src="../js/patient_portal.js?v=19.4"></script>
 </body>
 </html>

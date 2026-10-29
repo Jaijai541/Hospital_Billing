@@ -78,18 +78,34 @@ class LedgerManager
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+require_once __DIR__ . '/../ws_notify.php';
+
+$operation = "";
+$json = "{}";
+if (($_SERVER['REQUEST_METHOD'] ?? '') == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
-} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} else if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
     $operation = $_POST['operation'] ?? "";
     $json = $_POST['json'] ?? "{}";
 }
 
 $ledger = new LedgerManager();
+$wsOut = "";
 switch ($operation) {
     case 'returnMedicine':
-        echo $ledger->returnMedicine($json);
+        $wsOut = $ledger->returnMedicine($json);
         break;
+}
+
+if ($wsOut !== "") {
+    echo $wsOut;
+    $wsRes = json_decode($wsOut, true);
+    if (is_array($wsRes) && !empty($wsRes['success'])) {
+        $wsReq = is_array($json) ? $json : (json_decode($json, true) ?: []);
+        broadcastWebSocketEvent('ledger', $operation, [
+            'admission_id' => intval($wsReq['admission_id'] ?? 0)
+        ]);
+    }
 }
 ?>

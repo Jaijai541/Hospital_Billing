@@ -884,45 +884,72 @@ class ClinicalOrderManager
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+require_once __DIR__ . '/../ws_notify.php';
+
+$operation = "";
+$json = "{}";
+if (($_SERVER['REQUEST_METHOD'] ?? '') == 'GET') {
     $operation = $_GET['operation'] ?? "";
     $json = $_GET['json'] ?? "{}";
-} else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} else if (($_SERVER['REQUEST_METHOD'] ?? '') == 'POST') {
     $operation = $_POST['operation'] ?? "";
     $json = $_POST['json'] ?? "{}";
 }
 
 $clinical = new ClinicalOrderManager();
+$wsOut = "";
 switch ($operation) {
     case 'createDoctorOrder':
-        echo $clinical->createDoctorOrder($json);
+        $wsOut = $clinical->createDoctorOrder($json);
         break;
     case 'startPreparingOrder':
-        echo $clinical->startPreparingOrder($json);
+        $wsOut = $clinical->startPreparingOrder($json);
         break;
     case 'markOrderPrepared':
-        echo $clinical->markOrderPrepared($json);
+        $wsOut = $clinical->markOrderPrepared($json);
         break;
     case 'prepareOrder':
-        echo $clinical->prepareOrder($json);
+        $wsOut = $clinical->prepareOrder($json);
         break;
     case 'reassignOrderNurse':
-        echo $clinical->reassignOrderNurse($json);
+        $wsOut = $clinical->reassignOrderNurse($json);
         break;
     case 'receiveOrderForDelivery':
-        echo $clinical->receiveOrderForDelivery($json);
+        $wsOut = $clinical->receiveOrderForDelivery($json);
         break;
     case 'administerOrder':
-        echo $clinical->administerOrder($json);
+        $wsOut = $clinical->administerOrder($json);
         break;
     case 'cancelOrder':
-        echo $clinical->cancelOrder($json);
+        $wsOut = $clinical->cancelOrder($json);
         break;
     case 'logDoctorRound':
-        echo $clinical->logDoctorRound($json);
+        $wsOut = $clinical->logDoctorRound($json);
         break;
     case 'markNotificationRead':
-        echo $clinical->markNotificationRead($json);
+        $wsOut = $clinical->markNotificationRead($json);
         break;
+}
+
+if ($wsOut !== "") {
+    echo $wsOut;
+    $wsRes = json_decode($wsOut, true);
+    if (is_array($wsRes) && !empty($wsRes['success']) && $operation !== 'markNotificationRead') {
+        $wsReq = is_array($json) ? $json : (json_decode($json, true) ?: []);
+        $wsAdmId = intval($wsReq['admission_id'] ?? 0);
+        $wsReqId = intval($wsReq['request_id'] ?? $wsRes['request_id'] ?? 0);
+        if ($wsAdmId === 0 && $wsReqId > 0) {
+            include "connection.php";
+            if (isset($conn)) {
+                $admLookup = $conn->prepare("SELECT Admission_ID FROM Doctor_Order_Request WHERE Request_ID = :rid LIMIT 1");
+                $admLookup->execute([':rid' => $wsReqId]);
+                $wsAdmId = intval($admLookup->fetchColumn() ?: 0);
+            }
+        }
+        broadcastWebSocketEvent('clinical_orders', $operation, [
+            'admission_id' => $wsAdmId,
+            'request_id' => $wsReqId
+        ]);
+    }
 }
 ?>

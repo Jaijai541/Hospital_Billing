@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Invoices & Settled Accounts — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=21.0">
-    <link rel="stylesheet" href="../css/invoices.css?v=21.0">
+    <link rel="stylesheet" href="../css/invoices.css?v=21.2">
 </head>
 <body>
 
@@ -18,54 +18,88 @@
             <div class="topbar">
                 <div class="topbar-title">
                     <h1>Billing Invoices & Settlement Accounts</h1>
-                    <span class="subtitle">Finalized Statements of Account (SOA), Statutory Discounts & Cashier Settlements</span>
+                    <span class="subtitle">Discharge Billing Clearances, Finalized Statements of Account (SOA) &amp; Cashier Settlements</span>
                 </div>
             </div>
 
             <div class="content-body">
-                <div class="card clearance-queue-card mb-4" id="pendingClearanceCard">
-                    <div class="card-header card-header-flex">
-                        <div class="card-header-left-title">
-                            <h2 class="card-header-title-text">Pending Discharge Clearance &amp; Final SOA Queue</h2>
-                            <span id="pendingClearanceCountBadge" class="badge badge-secondary">0 Pending</span>
+                <div class="invoices-tab-bar" role="tablist" aria-label="Billing Clearances and Settled Invoices">
+                    <button type="button" id="tabBtnPendingClearance" class="invoices-tab-btn active" data-inv-tab="pending-clearance" role="tab" aria-selected="true" aria-controls="pane-pending-clearance" tabindex="0">
+                        <span>Pending Discharge Clearance &amp; Final SOA Queue</span>
+                        <span id="tabBadgePendingClearance" class="badge badge-secondary invoices-tab-badge">0 Pending</span>
+                    </button>
+                    <button type="button" id="tabBtnSettledInvoices" class="invoices-tab-btn" data-inv-tab="settled-invoices" role="tab" aria-selected="false" aria-controls="pane-settled-invoices" tabindex="-1">
+                        <span>Billing Invoices &amp; Settlement Directory</span>
+                        <span id="tabBadgeSettledInvoices" class="badge badge-info invoices-tab-badge">0 Invoices</span>
+                    </button>
+                </div>
+
+                <div id="pane-pending-clearance" class="invoices-tab-pane" role="tabpanel" aria-labelledby="tabBtnPendingClearance">
+                    <div class="card clearance-queue-card" id="pendingClearanceCard">
+                        <div class="card-header card-header-flex">
+                            <div class="card-header-left-title">
+                                <h2 class="card-header-title-text">Pending Discharge Clearance &amp; Final SOA Queue</h2>
+                                <button type="button" id="btnRefreshClearances" class="btn-refresh" aria-label="Refresh pending discharge clearance queue" title="Refresh">
+                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
+                                <span id="pendingClearanceCountBadge" class="badge badge-secondary">0 Pending</span>
+                            </div>
+                            <span class="clearance-queue-subtitle">Doctor-cleared in-patients (May Go Home) &amp; discharged cases awaiting Billing Clearance or Final SOA</span>
                         </div>
-                        <span class="clearance-queue-subtitle">Doctor-cleared in-patients (May Go Home) &amp; discharged cases awaiting Billing Clearance or Final SOA</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive" id="pending-clearance-div">
+                        <div class="card-body">
+                            <div class="filter-bar" id="clearance-filter-bar">
+                                <div class="form-group filter-capsule-search">
+                                    <label class="form-label" for="clearance_search_input">Search Queue</label>
+                                    <input type="text" id="clearance_search_input" class="form-control" placeholder="Search patient name, PAT-###, admission code, bed or doctor...">
+                                </div>
+
+                                <div class="form-group filter-capsule-select">
+                                    <label class="form-label" for="clearance_stage_filter">Discharge Stage</label>
+                                    <select id="clearance_stage_filter" class="form-control">
+                                        <option value="all">All Pending Stages</option>
+                                        <option value="medically_cleared">Medically Cleared (Needs Billing Clearance)</option>
+                                        <option value="discharged">Bed Released (Ready for Final SOA)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive" id="pending-clearance-div">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header card-header-flex">
-                        <div class="card-header-left-title">
-                            <h2 class="card-header-title-text">In-Patient Billing Invoices &amp; Settlement Directory</h2>
-                            <button type="button" id="btnRefreshInvoices" class="btn-refresh" title="Refresh">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="filter-bar">
-                            <div class="form-group filter-capsule-search">
-                                <label class="form-label" for="search_input">Search Invoices</label>
-                                <input type="text" id="search_input" class="form-control" placeholder="Search patient name, invoice #, admission code or cashier...">
-                            </div>
-
-                            <div class="form-group filter-capsule-select">
-                                <label class="form-label" for="status_filter">Payment Status</label>
-                                <select id="status_filter" class="form-control">
-                                    <option value="all">All Payment Statuses</option>
-                                    <option value="paid">Paid in Full</option>
-                                    <option value="partial">Partially Paid</option>
-                                    <option value="pn">Promissory Note Active</option>
-                                    <option value="unpaid">Pending / Unpaid</option>
-                                </select>
+                <div id="pane-settled-invoices" class="invoices-tab-pane invoices-pane-hidden" role="tabpanel" aria-labelledby="tabBtnSettledInvoices" hidden>
+                    <div class="card">
+                        <div class="card-header card-header-flex">
+                            <div class="card-header-left-title">
+                                <h2 class="card-header-title-text">In-Patient Billing Invoices &amp; Settlement Directory</h2>
+                                <button type="button" id="btnRefreshInvoices" class="btn-refresh" aria-label="Refresh finalized billing invoices" title="Refresh">
+                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
                             </div>
                         </div>
+                        <div class="card-body">
+                            <div class="filter-bar" id="invoices-filter-bar">
+                                <div class="form-group filter-capsule-search">
+                                    <label class="form-label" for="search_input">Search Invoices</label>
+                                    <input type="text" id="search_input" class="form-control" placeholder="Search patient name, invoice #, admission code or cashier...">
+                                </div>
 
-                        <div class="table-responsive" id="table-div">
+                                <div class="form-group filter-capsule-select">
+                                    <label class="form-label" for="status_filter">Payment Status</label>
+                                    <select id="status_filter" class="form-control">
+                                        <option value="all">All Payment Statuses</option>
+                                        <option value="paid">Paid in Full</option>
+                                        <option value="partial">Partially Paid</option>
+                                        <option value="pn">Promissory Note Active</option>
+                                        <option value="unpaid">Pending / Unpaid</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive" id="table-div">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,7 +239,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=21.0"></script>
     <script src="../js/common.js?v=21.1"></script>
-    <script src="../js/invoices.js?v=21.0"></script>
+    <script src="../js/invoices.js?v=21.2"></script>
 </body>
 </html>
 

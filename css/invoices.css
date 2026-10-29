@@ -26,6 +26,69 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.invoices-tab-bar {
+    display: flex;
+    gap: 8px;
+    background-color: #f1f5f9;
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.invoices-tab-btn {
+    flex: 1 1 0;
+    border: none;
+    background: transparent;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.invoices-tab-btn:hover {
+    color: #0f172a;
+    background-color: rgba(255, 255, 255, 0.55);
+}
+
+.invoices-tab-btn.active {
+    background-color: #ffffff;
+    color: var(--primary, #0284c7);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.invoices-tab-btn:focus-visible {
+    outline: 2px solid var(--primary, #0284c7);
+    outline-offset: -2px;
+}
+
+.invoices-tab-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.invoices-pane-hidden {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .invoices-tab-bar {
+        flex-direction: column;
+    }
 }
 
 .card-header-left-title {

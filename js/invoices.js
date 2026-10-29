@@ -5,14 +5,103 @@ let allInvoices = [];
 let pendingClearances = [];
 let currentPaymentInvoice = null;
 let paymentMethods = [];
+let activeInvoicesTab = 'pending-clearance';
+
+const switchInvoicesTab = (tabKey, focusTab = false) => {
+    const normalized = tabKey === 'settled-invoices' ? 'settled-invoices' : 'pending-clearance';
+    activeInvoicesTab = normalized;
+
+    const tabBtns = document.querySelectorAll('.invoices-tab-btn');
+    const clearancePane = document.getElementById('pane-pending-clearance');
+    const invoicesPane = document.getElementById('pane-settled-invoices');
+    const showClearance = normalized === 'pending-clearance';
+    const showInvoices = normalized === 'settled-invoices';
+
+    tabBtns.forEach(btn => {
+        const isTarget = btn.getAttribute('data-inv-tab') === normalized;
+        btn.classList.toggle('active', isTarget);
+        btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+        btn.setAttribute('tabindex', isTarget ? '0' : '-1');
+        if (focusTab && isTarget) {
+            btn.focus();
+        }
+    });
+
+    if (clearancePane) {
+        clearancePane.classList.toggle('invoices-pane-hidden', !showClearance);
+        clearancePane.hidden = !showClearance;
+    }
+
+    if (invoicesPane) {
+        invoicesPane.classList.toggle('invoices-pane-hidden', !showInvoices);
+        invoicesPane.hidden = !showInvoices;
+    }
+
+    if (window.history && typeof window.history.replaceState === 'function') {
+        const nextUrl = showInvoices
+            ? `${window.location.pathname}${window.location.search}#settled-invoices`
+            : `${window.location.pathname}${window.location.search}`;
+        window.history.replaceState(null, '', nextUrl);
+    }
+};
+
+window.switchInvoicesTab = switchInvoicesTab;
+
+const initInvoicesTabs = () => {
+    const tabBtns = Array.from(document.querySelectorAll('.invoices-tab-btn'));
+    const tabBar = document.querySelector('.invoices-tab-bar');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-inv-tab');
+            switchInvoicesTab(targetTab, false);
+        });
+    });
+
+    if (tabBar && tabBtns.length > 0) {
+        tabBar.addEventListener('keydown', (e) => {
+            const currentIndex = tabBtns.findIndex(b => b.getAttribute('data-inv-tab') === activeInvoicesTab);
+            if (currentIndex === -1) return;
+
+            let nextIndex = -1;
+            if (e.key === 'ArrowRight') {
+                nextIndex = (currentIndex + 1) % tabBtns.length;
+            } else if (e.key === 'ArrowLeft') {
+                nextIndex = (currentIndex - 1 + tabBtns.length) % tabBtns.length;
+            } else if (e.key === 'Home') {
+                nextIndex = 0;
+            } else if (e.key === 'End') {
+                nextIndex = tabBtns.length - 1;
+            }
+
+            if (nextIndex !== -1) {
+                e.preventDefault();
+                const nextKey = tabBtns[nextIndex].getAttribute('data-inv-tab');
+                switchInvoicesTab(nextKey, true);
+            }
+        });
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const urlTab = params.get('tab');
+    const hash = (window.location.hash || '').replace('#', '');
+    if (urlTab === 'settled-invoices' || hash === 'settled-invoices') {
+        switchInvoicesTab('settled-invoices', false);
+    } else {
+        switchInvoicesTab('pending-clearance', false);
+    }
+};
 
 const renderPendingClearances = (items) => {
     const container = document.getElementById('pending-clearance-div');
     const card = document.getElementById('pendingClearanceCard');
     const badge = document.getElementById('pendingClearanceCountBadge');
+    const tabBadge = document.getElementById('tabBadgePendingClearance');
     if (!container) return;
 
     const totalPending = Array.isArray(pendingClearances) ? pendingClearances.length : 0;
+    const shownCount = Array.isArray(items) ? items.length : 0;
+
     if (card) {
         card.classList.toggle('has-pending', totalPending > 0);
     }
@@ -20,20 +109,41 @@ const renderPendingClearances = (items) => {
         badge.textContent = totalPending > 0 ? `${totalPending} Awaiting Action` : '0 Pending';
         badge.className = totalPending > 0 ? 'badge badge-success' : 'badge badge-secondary';
     }
+    if (tabBadge) {
+        tabBadge.textContent = `${totalPending} Pending`;
+        tabBadge.className = totalPending > 0
+            ? 'badge badge-success invoices-tab-badge'
+            : 'badge badge-secondary invoices-tab-badge';
+    }
+
+    const clrFilterBar = document.getElementById('clearance-filter-bar');
+    let clrCountEl = document.getElementById('clearance_results_count');
+    if (!clrCountEl && clrFilterBar) {
+        clrCountEl = document.createElement('div');
+        clrCountEl.id = 'clearance_results_count';
+        clrCountEl.className = 'filter-results-count';
+        clrFilterBar.appendChild(clrCountEl);
+    }
+    if (clrCountEl) {
+        const unitLabel = shownCount === 1 ? 'case' : 'cases';
+        clrCountEl.innerHTML = totalPending !== shownCount
+            ? `<span class="badge badge-info">Showing ${shownCount} of ${totalPending} cases</span>`
+            : `<span class="badge badge-info">${shownCount} ${unitLabel}</span>`;
+    }
 
     if (!items || items.length === 0) {
         const msg = totalPending === 0
             ? 'No patients are currently awaiting Final Billing Clearance or Statement of Account generation. When an Attending Physician issues a May Go Home order, the patient appears here immediately.'
-            : 'No pending discharge clearances match your current search keyword.';
+            : 'No pending discharge clearances match your current search or stage filter.';
         container.innerHTML = `<div class="clearance-empty-banner"><span>${msg}</span></div>`;
         return;
     }
 
     let html = '<table class="data-table"><thead><tr>';
-    html += '<th>Case &amp; Patient</th>';
-    html += '<th>Medical Clearance &amp; Diagnosis</th>';
-    html += '<th class="text-right">Running Charges &amp; Deposits</th>';
-    html += '<th>Discharge Stage</th>';
+    html += renderSortableTh("Case & Patient", "Admission_ID");
+    html += renderSortableTh("Medical Clearance & Diagnosis", "Medical_Discharge_Date");
+    html += renderSortableTh("Running Charges & Deposits", "Running_Net_Charges");
+    html += renderSortableTh("Discharge Stage", "Status");
     html += '<th class="text-right">Billing Action</th>';
     html += '</tr></thead><tbody>';
 
@@ -68,11 +178,15 @@ const renderPendingClearances = (items) => {
             ? `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-warning">Process Billing Clearance &rarr;</a>`
             : `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-primary">Finalize &amp; Issue SOA &rarr;</a>`;
 
+        const rawNetCharges = parseFloat(c.Running_Net_Charges || 0);
+        const sortDateVal = c.Medical_Discharge_Date || c.Discharge_Date || '';
+        const sortStageVal = isStillAdmitted ? '1-Medically Cleared' : '2-Bed Released';
+
         html += '<tr>';
-        html += `<td><span class="table-primary-text text-primary">${c.Admission_Code}</span><span class="table-primary-text">${c.Patient_Name} <small class="text-muted">(${c.Patient_Code})</small></span><span class="table-sub-text">${roomMeta}</span></td>`;
-        html += `<td>${docText}${dxText}${instText}</td>`;
-        html += `<td class="text-right"><span class="table-amount-prominent text-primary">₱${runningCharges}</span><span class="table-sub-text">Deposits: ₱${advPaid} • Est. Due: <strong class="${estBalVal > 0 ? 'text-danger' : 'text-success'}">₱${estBal}</strong></span></td>`;
-        html += `<td>${stageHtml}</td>`;
+        html += `<td data-sort-value="${c.Admission_ID}"><span class="table-primary-text text-primary">${c.Admission_Code}</span><span class="table-primary-text">${c.Patient_Name} <small class="text-muted">(${c.Patient_Code})</small></span><span class="table-sub-text">${roomMeta}</span></td>`;
+        html += `<td data-sort-value="${sortDateVal}">${docText}${dxText}${instText}</td>`;
+        html += `<td class="text-right" data-sort-value="${rawNetCharges}"><span class="table-amount-prominent text-primary">₱${runningCharges}</span><span class="table-sub-text">Deposits: ₱${advPaid} • Est. Due: <strong class="${estBalVal > 0 ? 'text-danger' : 'text-success'}">₱${estBal}</strong></span></td>`;
+        html += `<td data-sort-value="${sortStageVal}">${stageHtml}</td>`;
         html += `<td class="text-right"><div class="clearance-action-group"><a href="admission_details.html?id=${c.Admission_ID}#tab-ledger" class="btn btn-sm btn-outline">Live Ledger</a>${primaryActionBtn}</div></td>`;
         html += '</tr>';
     });
@@ -82,17 +196,25 @@ const renderPendingClearances = (items) => {
 };
 
 const filterAndRenderPendingClearances = () => {
-    const searchEl = document.getElementById('search_input');
+    const searchEl = document.getElementById('clearance_search_input');
     const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+    const stageEl = document.getElementById('clearance_stage_filter');
+    const stageFilter = stageEl ? stageEl.value : 'all';
 
     const filtered = pendingClearances.filter(c => {
+        if (stageFilter === 'medically_cleared' && c.Status !== 'Admitted') return false;
+        if (stageFilter === 'discharged' && c.Status !== 'Discharged') return false;
+
         if (!query) return true;
         return (c.Patient_Name && c.Patient_Name.toLowerCase().includes(query)) ||
             (c.Full_Name && c.Full_Name.toLowerCase().includes(query)) ||
             (c.Patient_Code && c.Patient_Code.toLowerCase().includes(query)) ||
             (c.Admission_Code && c.Admission_Code.toLowerCase().includes(query)) ||
             (c.Medical_Discharge_Doctor_Name && c.Medical_Discharge_Doctor_Name.toLowerCase().includes(query)) ||
-            (c.Bed_Code && c.Bed_Code.toLowerCase().includes(query));
+            (c.Assigned_Doctors && c.Assigned_Doctors.toLowerCase().includes(query)) ||
+            (c.Bed_Code && c.Bed_Code.toLowerCase().includes(query)) ||
+            (c.Room_Name && c.Room_Name.toLowerCase().includes(query)) ||
+            (c.Diagnosis && c.Diagnosis.toLowerCase().includes(query));
     });
 
     renderPendingClearances(filtered);
@@ -149,9 +271,23 @@ const openPaymentMethodPicker = () => {
 
 const renderInvoicesTable = (invoices) => {
     const tableDiv = document.getElementById('table-div');
+    const total = (typeof allInvoices !== "undefined" && Array.isArray(allInvoices)) ? allInvoices.length : (invoices ? invoices.length : 0);
+
+    const tabInvBadge = document.getElementById('tabBadgeSettledInvoices');
+    if (tabInvBadge) {
+        tabInvBadge.textContent = `${total} ${total === 1 ? 'Invoice' : 'Invoices'}`;
+    }
+
+    const invFilterBar = document.getElementById('invoices-filter-bar');
+    let invCountEl = document.getElementById('filter_results_count');
+    if (!invCountEl && invFilterBar) {
+        invCountEl = document.createElement('div');
+        invCountEl.id = 'filter_results_count';
+        invCountEl.className = 'filter-results-count';
+        invFilterBar.appendChild(invCountEl);
+    }
 
     if (typeof updateFilterCount === "function") {
-        const total = (typeof allInvoices !== "undefined" && Array.isArray(allInvoices)) ? allInvoices.length : (invoices ? invoices.length : 0);
         updateFilterCount(invoices ? invoices.length : 0, total, "invoices");
     }
 
@@ -625,10 +761,13 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('search_input').addEventListener('input', () => {
-        filterAndRenderPendingClearances();
-        filterAndRenderInvoices();
-    });
+    initInvoicesTabs();
+
+    document.getElementById('clearance_search_input')?.addEventListener('input', filterAndRenderPendingClearances);
+    document.getElementById('clearance_stage_filter')?.addEventListener('change', filterAndRenderPendingClearances);
+    initRefreshBtn("btnRefreshClearances", refreshAllBillingData);
+
+    document.getElementById('search_input')?.addEventListener('input', filterAndRenderInvoices);
     document.getElementById('status_filter')?.addEventListener('change', filterAndRenderInvoices);
     initRefreshBtn("btnRefreshInvoices", refreshAllBillingData);
 

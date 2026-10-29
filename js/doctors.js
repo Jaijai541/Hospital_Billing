@@ -732,6 +732,24 @@ const openViewDoctorModal = async (doctorId) => {
             const countElem = document.getElementById("view_doc_patients_count");
             const emptyElem = document.getElementById("view_doc_patients_empty");
             const tbody = document.getElementById("view_doc_patients_tbody");
+            const hintElem = document.getElementById("view_doc_patients_hint");
+
+            const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const curPerms = Array.isArray(curUser.permissions) ? curUser.permissions : [];
+            const isAdmin = (curUser.access_domain || '').toLowerCase() === 'admin' || parseInt(curUser.role_id, 10) === 1 || (curUser.role_name || '').toLowerCase() === 'admin';
+            const isDocUser = Boolean(curUser.doctor_id) || (curUser.role_name || '').toLowerCase() === 'doctor';
+            const hasAdmissionPerm = isAdmin || curPerms.includes("admissions.html") || curPerms.includes("admission_details.html");
+            const isOwnDoctorProfile = isDocUser && parseInt(curUser.doctor_id, 10) === parseInt(doc.Doctor_ID, 10);
+
+            if (hintElem) {
+                if (!hasAdmissionPerm) {
+                    hintElem.textContent = "(Patient chart access restricted by your role)";
+                } else if (isDocUser && !isAdmin && !isOwnDoctorProfile) {
+                    hintElem.textContent = "(Patient chart access restricted to attending physicians)";
+                } else {
+                    hintElem.textContent = "(Click any row to open patient chart)";
+                }
+            }
 
             if (countElem) {
                 countElem.textContent = `${assigned.length} Assigned (${activeCount} Active)`;
@@ -745,9 +763,6 @@ const openViewDoctorModal = async (doctorId) => {
                     if (emptyElem) emptyElem.style.display = "none";
                     assigned.forEach(p => {
                         const tr = document.createElement("tr");
-                        tr.className = "clickable-row";
-                        tr.title = `Click to open clinical chart & ledger for ${p.First_Name} ${p.Last_Name} (${p.Admission_Code || 'ADM-' + String(p.Admission_ID).padStart(3, '0')})`;
-
                         const isAdmitted = (p.Admission_Status === "Admitted");
                         const statusBadge = isAdmitted
                             ? '<span class="badge badge-success">Admitted</span>'
@@ -763,6 +778,38 @@ const openViewDoctorModal = async (doctorId) => {
                         const diagnosis = p.Diagnosis || p.Chief_Complaint || "N/A";
                         const admDate = p.Formatted_Admission_Date || "N/A";
 
+                        let canOpenChart = true;
+                        let restrictReason = "";
+
+                        if (!hasAdmissionPerm) {
+                            canOpenChart = false;
+                            restrictReason = "Your assigned role does not have permission to access clinical inpatient charts.";
+                        } else if (isDocUser && !isAdmin) {
+                            if (!isOwnDoctorProfile) {
+                                canOpenChart = false;
+                                restrictReason = "Confidentiality Protocol: You are not assigned as an attending physician for this in-patient.";
+                            }
+                        }
+
+                        if (canOpenChart) {
+                            tr.className = "clickable-row";
+                            tr.title = `Click to open clinical chart for ${p.First_Name} ${p.Last_Name} (${admCode})`;
+                            tr.addEventListener("click", () => {
+                                window.location.href = `admission_details.html?id=${p.Admission_ID}`;
+                            });
+                        } else {
+                            tr.className = "restricted-row";
+                            tr.style.cursor = "not-allowed";
+                            tr.title = `Access Restricted: ${restrictReason}`;
+                            tr.addEventListener("click", () => {
+                                if (typeof showPopupAlert === "function") {
+                                    showPopupAlert(`Access Restricted: ${restrictReason}`, "warning");
+                                } else {
+                                    alert(`Access Restricted: ${restrictReason}`);
+                                }
+                            });
+                        }
+
                         tr.innerHTML = `
                             <td>
                                 <div class="table-primary-text text-primary">${patName}</div>
@@ -775,10 +822,6 @@ const openViewDoctorModal = async (doctorId) => {
                             </td>
                             <td>${statusBadge}</td>
                         `;
-
-                        tr.addEventListener("click", () => {
-                            window.location.href = `admission_details.html?id=${p.Admission_ID}`;
-                        });
 
                         tbody.appendChild(tr);
                     });

@@ -179,6 +179,27 @@ class AdmissionManager
             return json_encode(['error' => 'Admission ID is required.']);
         }
 
+        $userId = intval($json['user_id'] ?? 0);
+        $doctorId = intval($json['doctor_id'] ?? 0);
+        $roleId = intval($json['role_id'] ?? 0);
+
+        if ($userId > 0 && empty($doctorId)) {
+            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
+            $docStmt->execute([':uid' => $userId]);
+            $foundDoc = $docStmt->fetchColumn();
+            if ($foundDoc) {
+                $doctorId = intval($foundDoc);
+            }
+        }
+
+        if ($doctorId > 0 && $roleId !== 1) {
+            $checkDoc = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
+            $checkDoc->execute([':aid' => $id, ':did' => $doctorId]);
+            if (intval($checkDoc->fetchColumn()) === 0) {
+                return json_encode(['error' => 'Access Restricted: Confidentiality Protocol: You are not assigned as an attending physician for this in-patient.']);
+            }
+        }
+
         $sql = "SELECT 
                     a.Admission_ID,
                     CASE WHEN a.Status IN ('Discharged', 'Billed') THEN NULL ELSE COALESCE(a.Access_Passcode, CONCAT('ADM-', LPAD(a.Admission_ID, 4, '0'))) END AS Access_Passcode,

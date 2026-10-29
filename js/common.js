@@ -71,8 +71,12 @@ const enforcePageRbacGuard = (user) => {
     }
 
     let mappedPage = currentPage;
+    const currentHash = (window.location.hash || "").toLowerCase();
+    const currentTabParam = (new URLSearchParams(window.location.search).get("tab") || "").toLowerCase();
+    const isSettlementTarget = currentHash.includes("tab-settlement") || currentHash.includes("tab-ledger") || currentTabParam === "tab-settlement" || currentTabParam === "tab-ledger" || currentTabParam === "4" || currentTabParam === "5";
+
     if (currentPage === "admission_details.html") {
-        if (hasFinanceAccess && (!Array.isArray(perms) || perms.includes("invoices.html"))) {
+        if (hasFinanceAccess && isSettlementTarget && (!Array.isArray(perms) || perms.includes("invoices.html"))) {
             return true;
         }
         mappedPage = "admissions.html";
@@ -127,9 +131,9 @@ const enforcePageRbacGuard = (user) => {
         "department_orders.html"
     ];
 
-    if (currentPage === "admission_details.html" && !hasClinicalAccess && !hasFinanceAccess) {
-        sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your assigned role does not have permission to access this patient chart.");
-        window.location.replace("index.html");
+    if (currentPage === "admission_details.html" && !hasClinicalAccess && !(hasFinanceAccess && isSettlementTarget)) {
+        sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your assigned role does not have permission to access patient clinical admission charts.");
+        window.location.replace(hasFinanceAccess ? "invoices.html" : "index.html");
         return false;
     }
 

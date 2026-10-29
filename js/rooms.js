@@ -1412,11 +1412,31 @@ const renderFilteredRoomHistory = () => {
                     <td>${days} day(s)</td>
                     <td><strong>${fee}</strong></td>
                 `;
-                tr.addEventListener("click", () => {
-                    if (h.Admission_ID) {
-                        window.location.href = `admission_details.html?id=${h.Admission_ID}`;
-                    }
-                });
+                const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+                const curPerms = Array.isArray(curUser.permissions) ? curUser.permissions : [];
+                const isAdmin = (curUser.access_domain || '').toLowerCase() === 'admin' || parseInt(curUser.role_id, 10) === 1 || (curUser.role_name || '').toLowerCase() === 'admin';
+                const hasAdmissionPerm = isAdmin || curPerms.includes("admissions.html") || curPerms.includes("admission_details.html");
+
+                if (hasAdmissionPerm) {
+                    tr.className = "clickable-row";
+                    tr.title = `Click to open clinical chart for ${h.Admission_Code}`;
+                    tr.addEventListener("click", () => {
+                        if (h.Admission_ID) {
+                            window.location.href = `admission_details.html?id=${h.Admission_ID}`;
+                        }
+                    });
+                } else {
+                    tr.className = "restricted-row";
+                    tr.style.cursor = "not-allowed";
+                    tr.title = "Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.";
+                    tr.addEventListener("click", () => {
+                        if (typeof showPopupAlert === "function") {
+                            showPopupAlert("Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.", "warning");
+                        } else {
+                            alert("Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.");
+                        }
+                    });
+                }
                 histTbody.appendChild(tr);
             });
         }
@@ -1713,18 +1733,36 @@ const renderBedOccupancyData = (data) => {
                     <span class="badge badge-warning bed-occupant-badge">Active Occupant</span>
                 </div>
             `;
-            const goToOccupantChart = () => {
-                if (occ.Admission_ID) {
-                    window.location.href = `admission_details.html?id=${occ.Admission_ID}`;
-                }
-            };
-            occupantCard.onclick = goToOccupantChart;
-            occupantCard.onkeydown = (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    goToOccupantChart();
-                }
-            };
+            const curUserOcc = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const curPermsOcc = Array.isArray(curUserOcc.permissions) ? curUserOcc.permissions : [];
+            const isAdminOcc = (curUserOcc.access_domain || '').toLowerCase() === 'admin' || parseInt(curUserOcc.role_id, 10) === 1 || (curUserOcc.role_name || '').toLowerCase() === 'admin';
+            const hasAdmissionPermOcc = isAdminOcc || curPermsOcc.includes("admissions.html") || curPermsOcc.includes("admission_details.html");
+
+            if (hasAdmissionPermOcc) {
+                const goToOccupantChart = () => {
+                    if (occ.Admission_ID) {
+                        window.location.href = `admission_details.html?id=${occ.Admission_ID}`;
+                    }
+                };
+                occupantCard.onclick = goToOccupantChart;
+                occupantCard.onkeydown = (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        goToOccupantChart();
+                    }
+                };
+            } else {
+                occupantCard.className = "bed-current-occupant-card";
+                occupantCard.title = "Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.";
+                occupantCard.onclick = () => {
+                    if (typeof showPopupAlert === "function") {
+                        showPopupAlert("Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.", "warning");
+                    } else {
+                        alert("Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.");
+                    }
+                };
+                occupantCard.onkeydown = null;
+            }
         } else {
             occupantCard.className = "bed-current-occupant-card is-clickable is-vacant-clickable";
             occupantCard.setAttribute("role", "button");
@@ -1829,11 +1867,31 @@ const renderFilteredBedHistory = () => {
                     <td><strong>${fee}</strong></td>
                     <td>${h.Diagnosis || h.Chief_Complaint || 'N/A'}</td>
                 `;
-                tr.addEventListener("click", () => {
-                    if (h.Admission_ID) {
-                        window.location.href = `admission_details.html?id=${h.Admission_ID}`;
-                    }
-                });
+                const curUserHist = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+                const curPermsHist = Array.isArray(curUserHist.permissions) ? curUserHist.permissions : [];
+                const isAdminHist = (curUserHist.access_domain || '').toLowerCase() === 'admin' || parseInt(curUserHist.role_id, 10) === 1 || (curUserHist.role_name || '').toLowerCase() === 'admin';
+                const hasAdmissionPermHist = isAdminHist || curPermsHist.includes("admissions.html") || curPermsHist.includes("admission_details.html");
+
+                if (hasAdmissionPermHist) {
+                    tr.className = "clickable-row";
+                    tr.title = `Click to open clinical chart for ${h.Admission_Code}`;
+                    tr.addEventListener("click", () => {
+                        if (h.Admission_ID) {
+                            window.location.href = `admission_details.html?id=${h.Admission_ID}`;
+                        }
+                    });
+                } else {
+                    tr.className = "restricted-row";
+                    tr.style.cursor = "not-allowed";
+                    tr.title = "Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.";
+                    tr.addEventListener("click", () => {
+                        if (typeof showPopupAlert === "function") {
+                            showPopupAlert("Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.", "warning");
+                        } else {
+                            alert("Access Restricted: Your assigned role does not have permission to access clinical inpatient charts.");
+                        }
+                    });
+                }
                 historyTbody.appendChild(tr);
             });
         }

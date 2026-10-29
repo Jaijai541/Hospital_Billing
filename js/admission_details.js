@@ -182,7 +182,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
     currentUser = JSON.parse(userJson);
     const curPerms = Array.isArray(currentUser.permissions) ? currentUser.permissions : [];
+    const isAdmin = (currentUser.access_domain || '').toLowerCase() === 'admin' || parseInt(currentUser.role_id, 10) === 1 || (currentUser.role_name || '').toLowerCase() === 'admin';
+    const hasAdmissionPerm = isAdmin || curPerms.includes('admissions.html') || curPerms.includes('admission_details.html');
     const isPureFinanceUser = ((currentUser.access_domain || '').toLowerCase() === 'finance') || (curPerms.length > 0 && !curPerms.includes('admissions.html') && curPerms.includes('invoices.html'));
+
+    const pageHash = (window.location.hash || '').toLowerCase();
+    const pageTabParam = (new URLSearchParams(window.location.search).get('tab') || '').toLowerCase();
+    const isSettlementOrLedger = pageHash.includes('tab-settlement') || pageHash.includes('tab-ledger') || pageTabParam === 'tab-settlement' || pageTabParam === 'tab-ledger' || pageTabParam === '4' || pageTabParam === '5';
+
+    if (!hasAdmissionPerm && (!isPureFinanceUser || !isSettlementOrLedger)) {
+        sessionStorage.setItem('rbac_denied_msg', 'Access Denied: Your assigned role does not have permission to access patient clinical admission charts.');
+        window.location.replace('invoices.html');
+        return;
+    }
+
     if (isPureFinanceUser) {
         const backBtn = document.querySelector('.chart-header-back-btn');
         if (backBtn) {
@@ -190,6 +203,10 @@ window.addEventListener('DOMContentLoaded', () => {
             backBtn.setAttribute('title', 'Back to Billing & Invoices');
             backBtn.setAttribute('aria-label', 'Back to Billing & Invoices');
         }
+        const tabSummaryBtn = document.querySelector('button[data-tab="tab-summary"]');
+        const tabClinicalBtn = document.querySelector('button[data-tab="tab-clinical"]');
+        if (tabSummaryBtn) tabSummaryBtn.style.display = 'none';
+        if (tabClinicalBtn) tabClinicalBtn.style.display = 'none';
     }
     const userDisplay = document.getElementById('user-display');
     if (userDisplay) {
@@ -461,9 +478,17 @@ const initClinicalTabs = () => {
     const tabParam = new URLSearchParams(window.location.search).get('tab');
     const hash = window.location.hash.replace('#', '') || tabParam || '';
     if (hash) {
-        activateTab(hash);
+        if (isPureFinanceUser && (hash === 'tab-summary' || hash === 'tab-clinical')) {
+            activateTab('tab-settlement');
+        } else {
+            activateTab(hash);
+        }
     } else {
-        activateTab('tab-summary');
+        if (isPureFinanceUser) {
+            activateTab('tab-settlement');
+        } else {
+            activateTab('tab-summary');
+        }
     }
 };
 
@@ -1658,26 +1683,52 @@ const saveDiagnosis = () => {
 const loadAdmissionDetails = () => {
     console.log("admission_details.js: Fetching admission profile for ID:", admissionId);
 
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    const isAdminRole = Boolean(curUser && (parseInt(curUser.role_id, 10) === 1 || parseInt(curUser.is_higher_up, 10) === 1 || (curUser.access_domain || '').toLowerCase() === 'admin'));
+
     const formData = new FormData();
     formData.append('operation', 'getAdmissionById');
-    formData.append('json', JSON.stringify({ id: admissionId }));
+    formData.append('json', JSON.stringify({
+        id: admissionId,
+        user_id: curUser.user_id,
+        doctor_id: curUser.doctor_id,
+        role_id: curUser.role_id
+    }));
 
     axios.post(`${getApiUrl}/admissions.php`, formData)
         .then(response => {
             console.log("admission_details.js: Admission profile received:", response.data);
             if (response.data.error) {
-                alert("Error: " + response.data.error, () => {
-                    window.location.href = "admissions.html";
-                });
+                if (typeof showPopupAlert === "function") {
+                    showPopupAlert(response.data.error, "warning", () => {
+                        window.location.href = isPureFinanceUser ? "invoices.html" : "admissions.html";
+                    });
+                } else {
+                    alert("Error: " + response.data.error, () => {
+                        window.location.href = isPureFinanceUser ? "invoices.html" : "admissions.html";
+                    });
+                }
                 return;
             }
 
             admissionData = response.data;
             assignedDoctors = admissionData.Assigned_Doctors || [];
 
-            const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
             const isDoctorRole = (curUser.role_name && curUser.role_name.toLowerCase() === 'doctor') || Boolean(curUser.doctor_id);
             const isAssignedDoctor = !isDoctorRole || assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(curUser.doctor_id, 10));
+
+            if (isDoctorRole && !isAdminRole && !isAssignedDoctor) {
+                if (typeof showPopupAlert === "function") {
+                    showPopupAlert("Access Restricted: Confidentiality Protocol: You are not assigned as an attending physician for this in-patient.", "warning", () => {
+                        window.location.replace("admissions.html");
+                    });
+                } else {
+                    alert("Access Restricted: Confidentiality Protocol: You are not assigned as an attending physician for this in-patient.", () => {
+                        window.location.replace("admissions.html");
+                    });
+                }
+                return;
+            }
 
             const noticeBanner = document.getElementById("doctor-access-notice-banner");
             if (isDoctorRole && !isAssignedDoctor) {

@@ -1462,6 +1462,15 @@ textarea.form-control {
     background-color: #e0f2fe !important;
 }
 
+.restricted-row {
+    cursor: not-allowed;
+    transition: opacity 0.15s ease;
+}
+
+.restricted-row:hover td {
+    background-color: #f8fafc !important;
+}
+
 .badge {
     display: inline-flex;
     align-items: center;

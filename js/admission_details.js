@@ -637,7 +637,16 @@ const initClinicalModals = () => {
     if (btnCloseHist) btnCloseHist.addEventListener('click', () => closeModal('patientHistoryModal'));
     if (btnCloseHistFooter) btnCloseHistFooter.addEventListener('click', () => closeModal('patientHistoryModal'));
 
-    [orderModal, roundModal, transferModal, returnModal, advanceModal, historyModal].forEach(m => {
+    const docDischargeModal = document.getElementById('doctorDischargeModal');
+    const btnCloseDocDis = document.getElementById('btnCloseDoctorDischargeModal');
+    const btnCancelDocDis = document.getElementById('btnCancelDoctorDischargeModal');
+    const btnConfirmDocDis = document.getElementById('btnConfirmDoctorDischargeOrder');
+
+    if (btnCloseDocDis) btnCloseDocDis.addEventListener('click', () => closeModal('doctorDischargeModal'));
+    if (btnCancelDocDis) btnCancelDocDis.addEventListener('click', () => closeModal('doctorDischargeModal'));
+    if (btnConfirmDocDis) btnConfirmDocDis.addEventListener('click', submitDoctorDischargeOrder);
+
+    [orderModal, roundModal, transferModal, returnModal, advanceModal, historyModal, docDischargeModal].forEach(m => {
         if (m) {
             m.addEventListener('click', (e) => {
                 if (e.target === m) closeModal(m.id);
@@ -658,6 +667,7 @@ const initClinicalModals = () => {
             if (returnModal && returnModal.style.display === 'flex') closeModal('returnModal');
             if (advanceModal && advanceModal.style.display === 'flex') closeModal('advancePaymentModal');
             if (historyModal && historyModal.style.display === 'flex') closeModal('patientHistoryModal');
+            if (docDischargeModal && docDischargeModal.style.display === 'flex') closeModal('doctorDischargeModal');
         }
     });
 };
@@ -1314,6 +1324,58 @@ const wireLookupPickers = () => {
     };
     if (btnBrowseAdminister) btnBrowseAdminister.addEventListener('click', handleOpenAdministerPersonnelPicker);
     if (administerPersonnelText) administerPersonnelText.addEventListener('click', handleOpenAdministerPersonnelPicker);
+
+    const btnBrowseDocDis = document.getElementById('btnBrowseDocDischargeDoctor');
+    const docDisNameInput = document.getElementById('doc_discharge_doctor_name');
+    const handleOpenDocDischargePicker = () => {
+        const isDoctorRole = Boolean(currentUser && ((currentUser.role_name || '').toLowerCase().includes('doctor') || currentUser.doctor_id));
+        const isAdminRole = Boolean(currentUser && (parseInt(currentUser.role_id, 10) === 1 || parseInt(currentUser.is_higher_up, 10) === 1 || (currentUser.access_domain || '').toLowerCase() === 'admin'));
+        if (isDoctorRole && !isAdminRole) return;
+
+        const docList = assignedDoctors || [];
+        const docTypes = [...new Set(docList.map(d => d.Doctor_Type).filter(Boolean))];
+        openLookupPicker({
+            title: 'Select Ordering Attending Physician',
+            placeholder: 'Search attending physician name, classification, or specialty...',
+            columns: ['Physician Name', 'Type / Classification', 'Department / Specialty'],
+            items: docList,
+            filterOptions: [
+                { label: 'All Classifications', value: 'all' },
+                ...docTypes.map(t => ({ label: t, value: t }))
+            ],
+            categoryFilterFn: (d, val) => d.Doctor_Type === val,
+            sortOptions: [
+                { label: 'Default Order', value: 'default' },
+                { label: 'Name (A to Z)', value: 'name_asc' },
+                { label: 'Name (Z to A)', value: 'name_desc' }
+            ],
+            sortFn: (list, val) => {
+                const arr = [...list];
+                if (val === 'name_asc') {
+                    arr.sort((a, b) => (a.Doctor_Name || '').localeCompare(b.Doctor_Name || ''));
+                } else if (val === 'name_desc') {
+                    arr.sort((a, b) => (b.Doctor_Name || '').localeCompare(a.Doctor_Name || ''));
+                }
+                return arr;
+            },
+            filterFn: (d, q) => {
+                const str = `${d.Doctor_Name || ''} ${d.Doctor_Type || ''} ${d.Specialties || ''} ${d.Doctor_Code || ''}`.toLowerCase();
+                return str.includes(q);
+            },
+            renderRowFn: (d) => `
+                <td><strong>${d.Doctor_Name}</strong></td>
+                <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
+                <td>${d.Specialties || 'Attending Physician'}</td>
+            `,
+            getItemName: (d) => `${d.Doctor_Name} (${d.Doctor_Type})`,
+            onSelect: (d) => {
+                document.getElementById('doc_discharge_doctor_id').value = d.Doctor_ID;
+                document.getElementById('doc_discharge_doctor_name').value = `${d.Doctor_Name} (${d.Doctor_Type})`;
+            }
+        });
+    };
+    if (btnBrowseDocDis) btnBrowseDocDis.addEventListener('click', handleOpenDocDischargePicker);
+    if (docDisNameInput) docDisNameInput.addEventListener('click', handleOpenDocDischargePicker);
 };
 
 const initDiagnosisModal = () => {
@@ -1590,6 +1652,9 @@ const loadAdmissionDetails = () => {
 
             const remBal = parseFloat(admissionData.Remaining_Balance !== undefined && admissionData.Remaining_Balance !== null ? admissionData.Remaining_Balance : 0);
             let statusDisplay = `<span class="badge badge-primary" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600;">Admitted</span>`;
+            if (admissionData.Status === 'Admitted' && admissionData.Medical_Discharge_Date) {
+                statusDisplay += ` <span class="badge badge-success" style="margin-left: 6px; font-weight: 600;">✔ Medically Cleared</span>`;
+            }
             if (admissionData.Status === 'Discharged') {
                 statusDisplay = `<span class="badge badge-warning" style="font-weight: 600;">Discharged</span>`;
             } else if (admissionData.Status === 'Billed') {
@@ -1620,6 +1685,11 @@ const loadAdmissionDetails = () => {
                         badgeSettlement.style.color = '#166534';
                         badgeSettlement.textContent = 'Settled';
                     }
+                } else if (admissionData.Medical_Discharge_Date) {
+                    badgeSettlement.className = 'tab-count-badge';
+                    badgeSettlement.style.background = '#dcfce7';
+                    badgeSettlement.style.color = '#166534';
+                    badgeSettlement.textContent = 'Medically Cleared';
                 } else {
                     badgeSettlement.className = 'tab-count-badge';
                     badgeSettlement.style.background = '#e0f2fe';
@@ -1804,6 +1874,8 @@ const loadAdmissionDetails = () => {
             if (btnSubRound) btnSubRound.disabled = !isAdmitted;
             if (btnSubTransfer) btnSubTransfer.disabled = !isAdmitted;
             if (btnSubReturn) btnSubReturn.disabled = !isAdmitted;
+
+            renderSettlementSection();
         })
         .catch(err => {
             console.error("admission_details.js: Error loading admission details:", err);
@@ -1928,6 +2000,11 @@ const openDoctorDischargeModal = (isEdit = false) => {
         btnBrowse.style.display = (isDoctorRole && !isAdminRole) ? 'none' : 'inline-block';
     }
 
+    const btnConfirm = document.getElementById('btnConfirmDoctorDischargeOrder');
+    if (btnConfirm) {
+        btnConfirm.textContent = isEdit ? '✔ Update Medical Discharge Order' : '✔ Issue Medical Discharge Order';
+    }
+
     openModal('doctorDischargeModal');
 };
 
@@ -2006,6 +2083,9 @@ const revokeDoctorDischargeOrder = () => {
             });
     });
 };
+
+window.openDoctorDischargeModal = openDoctorDischargeModal;
+window.revokeDoctorDischargeOrder = revokeDoctorDischargeOrder;
 
 const populateAssignedDoctorDropdowns = () => {
     filterOrderDoctors();

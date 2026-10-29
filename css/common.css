@@ -2461,14 +2461,6 @@ textarea.form-control {
     margin-top: 3px;
 }
 
-.table-disc-pill {
-    font-size: 11px;
-    max-width: 220px;
-    white-space: normal;
-    display: inline-block;
-    text-align: left;
-    margin-top: 2px;
-}
 
 .table-pn-badge {
     background-color: #e0e7ff;

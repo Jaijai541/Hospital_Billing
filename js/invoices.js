@@ -318,9 +318,9 @@ const renderInvoicesTable = (invoices) => {
         let discBadge = '<span class="text-muted table-sub-text">No discounts applied</span>';
         if (inv.Discount_Summary) {
             const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
-            discBadge = discItems.map(item => `<span class="badge badge-info table-disc-pill">${item}</span>`).join('');
+            discBadge = `<span class="table-sub-text">${discItems.join(' • ')}</span>`;
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            discBadge = `<span class="badge badge-info table-disc-pill">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
+            discBadge = `<span class="table-sub-text">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
         }
 
         let statusBadge = '';
@@ -514,9 +514,9 @@ const openPaymentHistoryModal = (invoiceId) => {
     if (elDiscSumm) {
         if (inv.Discount_Summary) {
             const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
-            elDiscSumm.innerHTML = discItems.map(item => `<span class="badge badge-info table-disc-pill">${item}</span>`).join(' ');
+            elDiscSumm.textContent = discItems.join(', ');
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            elDiscSumm.innerHTML = `<span class="badge badge-info table-disc-pill">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>`;
+            elDiscSumm.textContent = `${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
         } else {
             elDiscSumm.textContent = 'None';
         }
@@ -603,7 +603,7 @@ const openPaymentHistoryModal = (invoiceId) => {
                             <span class="table-sub-text">${p.Payment_Date}</span>
                         </td>
                         <td>
-                            <span class="badge badge-info table-disc-pill">${p.Payment_Method || 'Cash'}</span>
+                            <span class="table-primary-text font-bold">${p.Payment_Method || 'Cash'}</span>
                             <span class="table-sub-text">Cashier: <strong>${p.Cashier_Name}</strong></span>
                         </td>
                         <td>

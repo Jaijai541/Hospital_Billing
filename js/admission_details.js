@@ -4060,7 +4060,7 @@ const renderLedgerTable = (ledger) => {
 
         html += `<tr class="${rowClass}">`;
         html += `<td>${ledgerIdDisplay}<span class="table-sub-text">${row.Station_Name} • ${row.Timestamp}</span></td>`;
-        html += `<td><span class="table-primary-text">${row.Description}</span><span class="table-sub-text"><span class="badge badge-info table-disc-pill">${row.Category}</span></span></td>`;
+        html += `<td><span class="table-primary-text">${row.Description}</span><span class="table-sub-text">${row.Category}</span></td>`;
         html += `<td class="text-right"><span class="table-primary-text">${row.Quantity} ${parseFloat(row.Quantity) > 1 ? 'units' : 'unit'}</span><span class="table-sub-text">₱${unitPrice} each</span></td>`;
         html += `<td class="text-right"><span class="table-amount-prominent ${isReturn ? 'text-success' : ''}">${isReturn ? '-' : ''}₱${Math.abs(parseFloat(row.Total_Charge)).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span></td>`;
         html += `<td>${typeBadge}</td>`;

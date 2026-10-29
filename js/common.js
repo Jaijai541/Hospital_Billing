@@ -3864,13 +3864,19 @@ const queryLoopbackPermissionSafe = async () => {
     }
 };
 
-const buildHospitalWsCandidates = async (allowUserGestureLoopback = false) => {
+const buildHospitalWsCandidates = async (allowUserGestureLoopback = false, proxyReady = false, daemonRunning = true) => {
+    if (!daemonRunning) {
+        return [];
+    }
     const isHttps = window.location.protocol === "https:";
     const proxyProto = isHttps ? "wss:" : "ws:";
     const proxyUrl = `${proxyProto}//${window.location.host}/Hospital_Billing/ws`;
 
     if (isHttps) {
-        const list = [proxyUrl];
+        const list = [];
+        if (proxyReady) {
+            list.push(proxyUrl);
+        }
         const permState = await queryLoopbackPermissionSafe();
         if (permState === "granted" || allowUserGestureLoopback) {
             list.push("ws://127.0.0.1:8085");
@@ -3879,11 +3885,10 @@ const buildHospitalWsCandidates = async (allowUserGestureLoopback = false) => {
     }
 
     const directUrl = `ws://${window.location.hostname || "localhost"}:8085`;
-    const preferred = sessionStorage.getItem("hospital_ws_preferred_mode") || "";
-    if (preferred === "direct") {
+    if (proxyReady) {
         return [directUrl, proxyUrl];
     }
-    return [proxyUrl, directUrl];
+    return [directUrl];
 };
 
 const sendHospitalWsSubscription = () => {
@@ -3943,28 +3948,27 @@ const flushRealtimeServerEvents = () => {
         );
 
         if (matchesChart) {
-            if (topics.has("admissions")) {
-                if (typeof loadAdmissionDetails === "function") loadAdmissionDetails();
+            const needDetails = topics.has("admissions") || topics.has("invoices") || topics.has("ledger");
+            const needTransfers = topics.has("admissions");
+            const needOrders = topics.has("clinical_orders");
+            const needLedger = topics.has("admissions") || topics.has("clinical_orders") || topics.has("invoices") || topics.has("ledger");
+            const needMeds = topics.has("clinical_orders") || topics.has("invoices") || topics.has("ledger");
+
+            if (needDetails && typeof loadAdmissionDetails === "function") loadAdmissionDetails();
+            if (needTransfers) {
                 if (typeof loadTransfers === "function") loadTransfers();
                 if (typeof loadBedHistory === "function") loadBedHistory();
                 if (typeof loadAvailableBeds === "function") loadAvailableBeds();
-                if (typeof loadLedger === "function") loadLedger();
-                if (!isTypingInSettlement && typeof loadLedgerSummary === "function") loadLedgerSummary();
             }
-            if (topics.has("clinical_orders")) {
+            if (needOrders) {
                 if (typeof loadOrders === "function") loadOrders();
                 if (typeof loadRounds === "function") loadRounds();
+            }
+            if (needLedger) {
                 if (typeof loadLedger === "function") loadLedger();
                 if (!isTypingInSettlement && typeof loadLedgerSummary === "function") loadLedgerSummary();
-                if (typeof loadDispensedMedicines === "function") loadDispensedMedicines();
             }
-            if (topics.has("invoices") || topics.has("ledger")) {
-                if (typeof loadAdmissionDetails === "function") loadAdmissionDetails();
-                if (typeof loadLedger === "function") loadLedger();
-                if (!isTypingInSettlement && typeof loadLedgerSummary === "function") loadLedgerSummary();
-                if (!isTypingInSettlement && typeof loadAdvancePayments === "function") loadAdvancePayments();
-                if (typeof loadDispensedMedicines === "function") loadDispensedMedicines();
-            }
+            if (needMeds && typeof loadDispensedMedicines === "function") loadDispensedMedicines();
         } else if (topics.has("admissions")) {
             if (typeof loadAvailableBeds === "function") loadAvailableBeds();
         }
@@ -4131,11 +4135,28 @@ const bootAndConnectHospitalWs = async (fromUserGesture = false) => {
     hospitalWsConnecting = true;
     updateHospitalWsBadge("connecting", "Connecting...");
 
+    let proxyReady = false;
+    let daemonRunning = true;
     try {
-        await axios.get("../api/GET/ws_boot.php", { timeout: 2500 });
-    } catch (e) {}
+        const bootRes = await axios.get("../api/GET/ws_boot.php", { timeout: 2500 });
+        if (bootRes && bootRes.data) {
+            proxyReady = Boolean(bootRes.data.proxy_ready);
+            daemonRunning = Boolean(bootRes.data.running);
+        }
+    } catch (e) {
+        daemonRunning = false;
+    }
 
-    const candidates = await buildHospitalWsCandidates(fromUserGesture);
+    const candidates = await buildHospitalWsCandidates(fromUserGesture, proxyReady, daemonRunning);
+    if (candidates.length === 0) {
+        hospitalWsConnecting = false;
+        hospitalWsConnected = false;
+        updateHospitalWsBadge("fallback", "Auto-Sync Mode");
+        if (daemonRunning === false) {
+            scheduleHospitalWsReconnect();
+        }
+        return;
+    }
     connectHospitalWsCandidateAt(candidates, 0);
 };
 

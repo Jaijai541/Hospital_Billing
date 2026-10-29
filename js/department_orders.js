@@ -1121,4 +1121,4 @@ window.selectNurseItem = selectNurseItem;
 window.handleReceiveOrderForDelivery = handleReceiveOrderForDelivery;
 window.handleAdministerOrderFromQueue = handleAdministerOrderFromQueue;
 
-window.openDepartmentStationPicker = openDepartmentStationPicker;
+window.openDepartmentStationPicker = openStationWindow;

@@ -1003,13 +1003,19 @@ const queryPortalLoopbackSafe = async () => {
     }
 };
 
-const buildPortalWsCandidates = async (allowUserGestureLoopback = false) => {
+const buildPortalWsCandidates = async (allowUserGestureLoopback = false, proxyReady = false, daemonRunning = true) => {
+    if (!daemonRunning) {
+        return [];
+    }
     const isHttps = window.location.protocol === "https:";
     const proxyProto = isHttps ? "wss:" : "ws:";
     const proxyUrl = `${proxyProto}//${window.location.host}/Hospital_Billing/ws`;
 
     if (isHttps) {
-        const list = [proxyUrl];
+        const list = [];
+        if (proxyReady) {
+            list.push(proxyUrl);
+        }
         const permState = await queryPortalLoopbackSafe();
         if (permState === "granted" || allowUserGestureLoopback) {
             list.push("ws://127.0.0.1:8085");
@@ -1018,11 +1024,10 @@ const buildPortalWsCandidates = async (allowUserGestureLoopback = false) => {
     }
 
     const directUrl = `ws://${window.location.hostname || "localhost"}:8085`;
-    const preferred = sessionStorage.getItem("hospital_ws_preferred_mode") || "";
-    if (preferred === "direct") {
+    if (proxyReady) {
         return [directUrl, proxyUrl];
     }
-    return [proxyUrl, directUrl];
+    return [directUrl];
 };
 
 const closePortalWebSocket = () => {
@@ -1171,11 +1176,28 @@ const bootAndConnectPortalWs = async (fromUserGesture = false) => {
     portalWsConnecting = true;
     updatePortalWsBadge("connecting", "Syncing...");
 
+    let proxyReady = false;
+    let daemonRunning = true;
     try {
-        await axios.get("../api/GET/ws_boot.php", { timeout: 2500 });
-    } catch (e) {}
+        const bootRes = await axios.get("../api/GET/ws_boot.php", { timeout: 2500 });
+        if (bootRes && bootRes.data) {
+            proxyReady = Boolean(bootRes.data.proxy_ready);
+            daemonRunning = Boolean(bootRes.data.running);
+        }
+    } catch (e) {
+        daemonRunning = false;
+    }
 
-    const candidates = await buildPortalWsCandidates(fromUserGesture);
+    const candidates = await buildPortalWsCandidates(fromUserGesture, proxyReady, daemonRunning);
+    if (candidates.length === 0) {
+        portalWsConnecting = false;
+        portalWsConnected = false;
+        updatePortalWsBadge("fallback", "Auto-Sync");
+        if (daemonRunning === false) {
+            schedulePortalWsReconnect();
+        }
+        return;
+    }
     connectPortalWsCandidateAt(candidates, 0);
 };
 

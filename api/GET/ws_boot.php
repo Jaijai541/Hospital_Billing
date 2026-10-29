@@ -3,13 +3,18 @@ header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 
 $port = 8085;
+$proxyReady = function_exists('apache_get_modules')
+    ? in_array('mod_proxy_wstunnel', apache_get_modules(), true)
+    : false;
+
 $probe = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.12);
 if ($probe) {
     @fclose($probe);
     echo json_encode([
         'running' => true,
         'started' => false,
-        'port' => $port
+        'port' => $port,
+        'proxy_ready' => $proxyReady
     ]);
     exit;
 }
@@ -51,6 +56,7 @@ for ($i = 0; $i < 5; $i++) {
 echo json_encode([
     'running' => $running,
     'started' => $running,
-    'port' => $port
+    'port' => $port,
+    'proxy_ready' => $proxyReady
 ]);
 ?>

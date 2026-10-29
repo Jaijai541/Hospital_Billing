@@ -483,13 +483,14 @@ class AdmissionManager
             }
 
             $adminOverride = !empty($json['admin_override']) && $isSystemAdmin;
-            $isSameTier = (intval($currentStay['Room_Type_ID'] ?? 0) === intval($targetBed['Room_Type_ID'] ?? 0));
+            $isTargetHighTier = (intval($targetBed['Room_Type_ID'] ?? 0) === 4 || stripos($targetBed['Room_Type'] ?? '', 'ICU') !== false || stripos($targetBed['Room_Type'] ?? '', 'Intensive Care') !== false);
+            $isCurrentHighTier = (intval($currentStay['Room_Type_ID'] ?? 0) === 4 || stripos($currentStay['Room_Type'] ?? '', 'ICU') !== false || stripos($currentStay['Room_Type'] ?? '', 'Intensive Care') !== false);
 
             if (!$pendingOrder && !$adminOverride) {
-                if (!$isSameTier) {
+                if ($isTargetHighTier && !$isCurrentHighTier) {
                     $conn->rollBack();
                     return json_encode([
-                        'error' => "Doctor Transfer Order Required: Moving patient across room tiers (from {$currentStay['Room_Type']} to {$targetBed['Room_Type']}) requires an Attending Physician's Bed Transfer Order. Nurse Station direct transfers are permitted for same-tier room moves only."
+                        'error' => "Doctor Transfer Order Required: Transferring a patient into high-tier accommodation ({$targetBed['Room_Type']}) requires an Attending Physician's Bed Transfer Order. Nurse Station staff may directly transfer between regular rooms or step down from ICU to Ward/Private."
                     ]);
                 }
             }
@@ -595,8 +596,10 @@ class AdmissionManager
                         ':aid' => $admissionId,
                         ':sender' => $userId > 0 ? $userId : null,
                         ':tuid' => $assignedDoc['User_ID'],
-                        ':title' => "Lateral Bed Transfer: {$patFullName}",
-                        ':msg' => "{$staffDisplayName} completed a direct lateral transfer of {$patFullName} ({$admCode}) from Bed {$currentStay['Bed_Code']} to Bed {$targetBed['Bed_Code']} ({$targetBed['Room_Name']} - {$targetBed['Room_Type']})."
+                        ':title' => ($isCurrentHighTier && !$isTargetHighTier) ? "ICU Step-Down Transfer: {$patFullName}" : "Direct Bed Transfer: {$patFullName}",
+                        ':msg' => ($isCurrentHighTier && !$isTargetHighTier)
+                            ? "{$staffDisplayName} transferred {$patFullName} ({$admCode}) from {$currentStay['Room_Type']} (Bed {$currentStay['Bed_Code']}) to {$targetBed['Room_Type']} (Bed {$targetBed['Bed_Code']}) via Nurse Station de-escalation/step-down."
+                            : "{$staffDisplayName} completed a direct bed transfer of {$patFullName} ({$admCode}) from Bed {$currentStay['Bed_Code']} to Bed {$targetBed['Bed_Code']} ({$targetBed['Room_Name']} - {$targetBed['Room_Type']})."
                     ]);
                 }
             }

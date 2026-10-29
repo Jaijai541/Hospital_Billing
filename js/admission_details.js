@@ -115,6 +115,12 @@ const escapeTransferHtml = (str) => {
         .replace(/'/g, '&#39;');
 };
 
+const isHighTierRoom = (roomTypeId, roomTypeName) => {
+    const id = parseInt(roomTypeId || 0, 10);
+    const name = String(roomTypeName || '').toLowerCase();
+    return id === 4 || name.includes('icu') || name.includes('intensive care');
+};
+
 const getTransferRoleFlags = () => {
     const u = currentUser || JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
     const roleId = parseInt(u.role_id, 10) || 0;
@@ -1124,7 +1130,8 @@ const wireLookupPickers = () => {
             const flags = getTransferRoleFlags();
             const currentRoomType = admissionData ? (admissionData.Room_Type || '') : '';
             const currentRoomTypeId = admissionData ? parseInt(admissionData.Room_Type_ID || 0, 10) : 0;
-            const isLateralDirect = (!pendingOrd && !flags.isSystemAdmin);
+            const isCurrentHighTier = isHighTierRoom(currentRoomTypeId, currentRoomType);
+            const isDirectNurseTransfer = (!pendingOrd && !flags.isSystemAdmin);
 
             let displayBeds = bedList;
             let pickerTitle = 'Select Target Vacant Bed';
@@ -1134,29 +1141,25 @@ const wireLookupPickers = () => {
             ];
             let preferredType = 'all';
 
-            if (isLateralDirect) {
-                pickerTitle = `Select Target Vacant Bed (Same Tier: ${currentRoomType || 'Lateral Move'})`;
-                displayBeds = bedList.filter(b => {
-                    if (currentRoomTypeId > 0 && b.Room_Type_ID) {
-                        return parseInt(b.Room_Type_ID, 10) === currentRoomTypeId;
-                    }
-                    return (b.Room_Type || '').toLowerCase() === currentRoomType.toLowerCase();
-                });
+            if (isDirectNurseTransfer && !isCurrentHighTier) {
+                pickerTitle = 'Select Target Vacant Bed (Direct Transfer)';
+                displayBeds = bedList.filter(b => !isHighTierRoom(b.Room_Type_ID, b.Room_Type));
+                const permittedTypes = [...new Set(displayBeds.map(b => b.Room_Type).filter(Boolean))];
+                filterOpts = [
+                    { label: 'All Permitted Rooms (Non-ICU)', value: 'all' },
+                    ...permittedTypes.map(t => ({ label: t, value: t }))
+                ];
                 if (displayBeds.length === 0) {
-                    showPopupAlert(`No vacant beds are currently available in the patient's current room tier (${currentRoomType || 'Same Tier'}). Transfers across room tiers require an Attending Physician's Bed Transfer Order.`, 'warning');
+                    showPopupAlert("No vacant beds are currently available for direct transfer. Escalation into Intensive Care Unit (ICU) requires an Attending Physician's Bed Transfer Order.", 'warning');
                     return;
                 }
-                filterOpts = [
-                    { label: currentRoomType || 'Same Tier Only', value: currentRoomType || 'all' }
-                ];
-                preferredType = currentRoomType || 'all';
             } else if (pendingOrd && parseInt(pendingOrd.Target_Room_Type_ID || 0, 10) > 0 && bedTypes.includes(pendingOrd.Target_Room_Type_Name)) {
                 preferredType = pendingOrd.Target_Room_Type_Name;
             }
 
             openLookupPicker({
                 title: pickerTitle,
-                placeholder: isLateralDirect ? `Search vacant ${currentRoomType} beds by room or code...` : 'Search vacant bed by room, code, or type...',
+                placeholder: 'Search vacant bed by room, code, or type...',
                 columns: ['Bed Code', 'Room Name', 'Room Type', 'Daily Rate'],
                 items: displayBeds,
                 defaultFilterValue: preferredType,
@@ -3403,7 +3406,7 @@ const renderTransfersTable = (transfers) => {
             const reasonLine = t.Transfer_Reason ? `<div>Reason: <em>${escapeTransferHtml(t.Transfer_Reason)}</em></div>` : '';
             provenanceHtml = `<div class="transfer-provenance-meta"><strong>${ordCode}</strong> • Ordered by <strong>${ordDoc}</strong>${execStaff}${reasonLine}</div>`;
         } else if (index > 0) {
-            provenanceHtml = `<div class="transfer-provenance-meta"><strong>DIRECT LATERAL MOVE</strong> • Nurse Station Same-Tier Relocation</div>`;
+            provenanceHtml = `<div class="transfer-provenance-meta"><strong>DIRECT NURSE TRANSFER</strong> • Nurse Station Room Relocation</div>`;
         }
 
         html += '<tr>';
@@ -3531,8 +3534,8 @@ const renderPendingTransferOrderState = () => {
         } else {
             btnExecTransfer.disabled = false;
             btnExecTransfer.className = 'btn btn-primary btn-sm';
-            btnExecTransfer.textContent = '+ Lateral Bed Move';
-            btnExecTransfer.title = 'Nurse Station Direct Transfer: Transfer patient to another vacant bed within the same room tier.';
+            btnExecTransfer.textContent = '+ Transfer Bed';
+            btnExecTransfer.title = 'Nurse Station Direct Transfer: Transfer patient between available rooms. Escalation into Intensive Care Unit (ICU) requires an Attending Physician\'s Bed Transfer Order.';
         }
     }
 
@@ -3542,7 +3545,7 @@ const renderPendingTransferOrderState = () => {
                 ? 'Execute Transfer Order &rarr;'
                 : 'Pending Transfer Order &rarr;';
         } else if (flags.canExecuteTransfer && isAdmitted) {
-            btnJumpTransfers.innerHTML = 'Lateral Bed Move &rarr;';
+            btnJumpTransfers.innerHTML = 'Transfer Bed &rarr;';
         } else if (flags.canOrderTransfer && !flags.isSystemAdmin) {
             btnJumpTransfers.innerHTML = 'Order Bed Transfer &rarr;';
         } else if (flags.isPureFinance || (flags.isDoctorUser && !flags.isAssignedDoc)) {
@@ -3794,8 +3797,9 @@ const openExecuteTransferModal = () => {
     }
 
     const pendingOrd = admissionData ? admissionData.Pending_Transfer_Order : null;
-    const currentRoomType = admissionData ? (admissionData.Room_Type || 'Current Room Tier') : 'Current Room Tier';
+    const currentRoomType = admissionData ? (admissionData.Room_Type || 'Current Room') : 'Current Room';
     const currentRoomTypeId = admissionData ? parseInt(admissionData.Room_Type_ID || 0, 10) : 0;
+    const isCurrentHighTier = isHighTierRoom(currentRoomTypeId, currentRoomType);
 
     const summaryEl = document.getElementById('transfer_modal_order_summary');
     const helpEl = document.getElementById('transfer_bed_help');
@@ -3831,15 +3835,20 @@ const openExecuteTransferModal = () => {
                 helpEl.textContent = 'Select any available vacant bed in the hospital.';
             }
         } else {
-            if (modalTitleEl) modalTitleEl.innerHTML = 'Direct Lateral Bed Move (Nurse Station) <span class="info-tip" tabindex="0" data-tooltip="Nurse Station direct transfer within the same room tier. Inter-tier room moves (e.g. Ward to ICU) require an Attending Physician\'s Bed Transfer Order." aria-label="Transfer instructions">i</span>';
-            if (modalSubtitleEl) modalSubtitleEl.textContent = 'Same-Tier In-Ward Relocation & Bed Stay Posting';
+            if (modalTitleEl) modalTitleEl.innerHTML = 'Direct Bed Transfer (Nurse Station) <span class="info-tip" tabindex="0" data-tooltip="Nurse Station direct transfer between rooms. Escalation into Intensive Care Unit (ICU) requires an Attending Physician\'s Bed Transfer Order." aria-label="Transfer instructions">i</span>';
+            if (modalSubtitleEl) modalSubtitleEl.textContent = 'Room Accommodation Transfer & Bed Stay Posting';
+            const protocolNote = isCurrentHighTier
+                ? 'You may transfer this patient to another vacant ICU bed or step down to any available Ward, Semi-Private, or Private room directly.'
+                : 'You may transfer this patient to any available Ward, Semi-Private, or Private room directly. Escalation into high-tier accommodation (<strong>Intensive Care Unit / ICU</strong>) requires an Attending Physician\'s Bed Transfer Order.';
             summaryEl.innerHTML = `
                 <div class="banner-notice banner-notice-info transfer-order-protocol-note">
-                    <strong>Nurse Station Direct Transfer (Same Room Tier):</strong> You may transfer this patient to another vacant bed within the current accommodation tier (<strong>${escapeTransferHtml(currentRoomType)}</strong>). Transfers across room tiers (e.g., Ward to ICU or Private) require an Attending Physician's Bed Transfer Order.
+                    <strong>Nurse Station Direct Bed Transfer:</strong> ${protocolNote}
                 </div>
             `;
             if (helpEl) {
-                helpEl.textContent = `Direct nurse transfers are restricted to the patient's current room tier: ${currentRoomType}.`;
+                helpEl.textContent = isCurrentHighTier
+                    ? 'Select any available step-down bed (Ward/Private) or vacant ICU bed.'
+                    : 'Select any available vacant room. Escalation into ICU requires an Attending Physician\'s Bed Transfer Order.';
             }
         }
     }
@@ -3866,17 +3875,13 @@ const submitBedTransfer = () => {
     const pendingOrd = admissionData ? admissionData.Pending_Transfer_Order : null;
     const currentRoomType = admissionData ? (admissionData.Room_Type || '') : '';
     const currentRoomTypeId = admissionData ? parseInt(admissionData.Room_Type_ID || 0, 10) : 0;
+    const isCurrentHighTier = isHighTierRoom(currentRoomTypeId, currentRoomType);
 
     if (!pendingOrd && !flags.isSystemAdmin) {
         if (selectedTransferBedObj) {
-            const targetTypeId = parseInt(selectedTransferBedObj.Room_Type_ID || 0, 10);
-            const targetTypeName = selectedTransferBedObj.Room_Type || '';
-            const mismatch = (currentRoomTypeId > 0 && targetTypeId > 0)
-                ? (targetTypeId !== currentRoomTypeId)
-                : (targetTypeName.toLowerCase() !== currentRoomType.toLowerCase());
-
-            if (mismatch) {
-                showPopupAlert(`Doctor Transfer Order Required: Moving patient across room tiers (from ${currentRoomType} to ${targetTypeName}) requires an Attending Physician's Bed Transfer Order. Nurse Station direct transfers are permitted for same-tier room moves only.`, 'warning');
+            const isTargetHighTier = isHighTierRoom(selectedTransferBedObj.Room_Type_ID, selectedTransferBedObj.Room_Type);
+            if (isTargetHighTier && !isCurrentHighTier) {
+                showPopupAlert(`Doctor Transfer Order Required: Transferring a patient into high-tier accommodation (${selectedTransferBedObj.Room_Type}) requires an Attending Physician's Bed Transfer Order. Nurse Station staff may directly transfer between regular rooms or step down from ICU to Ward/Private.`, 'warning');
                 return;
             }
         }
@@ -3884,7 +3889,12 @@ const submitBedTransfer = () => {
 
     let confirmMsg = "Are you sure you want to transfer this patient to the selected bed?\n\nThis will automatically calculate the prior bed stay, post the room fee to the Live Billing Ledger, free the old bed, and occupy the new bed.";
     if (!pendingOrd && !flags.isSystemAdmin && selectedTransferBedObj) {
-        confirmMsg = `Confirm direct lateral bed transfer to Bed ${selectedTransferBedObj.Bed_Code} (${selectedTransferBedObj.Room_Name} - ${selectedTransferBedObj.Room_Type})?\n\nThis will calculate prior stay charges, post room fee to the Live Billing Ledger, and relocate the patient within the same room tier.`;
+        const isTargetHighTier = isHighTierRoom(selectedTransferBedObj.Room_Type_ID, selectedTransferBedObj.Room_Type);
+        if (isCurrentHighTier && !isTargetHighTier) {
+            confirmMsg = `Confirm ICU Step-Down Transfer to Bed ${selectedTransferBedObj.Bed_Code} (${selectedTransferBedObj.Room_Name} - ${selectedTransferBedObj.Room_Type})?\n\nThis will calculate prior ICU stay charges, post room fee to the Live Billing Ledger, and transfer the patient to general accommodation.`;
+        } else {
+            confirmMsg = `Confirm direct bed transfer to Bed ${selectedTransferBedObj.Bed_Code} (${selectedTransferBedObj.Room_Name} - ${selectedTransferBedObj.Room_Type})?\n\nThis will calculate prior stay charges, post room fee to the Live Billing Ledger, and assign the new bed.`;
+        }
     }
     if (pendingOrd && parseInt(pendingOrd.Target_Room_Type_ID || 0, 10) > 0 && selectedTransferBedObj) {
         if (parseInt(selectedTransferBedObj.Room_Type_ID || 0, 10) !== parseInt(pendingOrd.Target_Room_Type_ID, 10)) {

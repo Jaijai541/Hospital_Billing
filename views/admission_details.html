@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=20.8">
-    <link rel="stylesheet" href="../css/admission_details.css?v=21.3">
+    <link rel="stylesheet" href="../css/admission_details.css?v=21.4">
 </head>
 <body>
 
@@ -311,7 +311,7 @@
                     <div class="sub-panel" id="sub-stays" style="display: none;">
                         <div class="card mb-4">
                             <div class="card-header stays-card-header">
-                                <h2>Board &amp; Lodging / Bed Stays &amp; Transfers <span class="info-tip" tabindex="0" data-tooltip="Attending physicians issue a Bed Transfer Order when changing room tiers. Nurse Station can directly execute same-tier lateral bed transfers or fulfill pending physician transfer orders, automatically posting prior stay charges to the ledger." aria-label="Bed stay information">i</span></h2>
+                                <h2>Board &amp; Lodging / Bed Stays &amp; Transfers <span class="info-tip" tabindex="0" data-tooltip="Attending physicians issue a Bed Transfer Order when escalating care into the Intensive Care Unit (ICU). Nurse Station can directly transfer patients between regular rooms (Ward, Semi-Private, Private) or step down from ICU, automatically posting prior stay charges to the ledger." aria-label="Bed stay information">i</span></h2>
                                 <div class="stays-header-actions">
                                     <button type="button" class="btn btn-primary btn-sm" id="btnOpenTransferOrderModal" style="display: none;">+ Order Bed Transfer</button>
                                     <button type="button" class="btn btn-primary btn-sm" id="btnOpenTransferModal" style="display: none;">Execute Bed Transfer</button>
@@ -600,7 +600,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <div>
-                    <h3 class="modal-title-tight">Execute Patient Bed Transfer <span class="info-tip" tabindex="0" data-tooltip="Execute Doctor-ordered bed transfer or Nurse Station same-tier lateral transfer. Prior bed occupancy charges are automatically calculated and posted to the Live Billing Ledger." aria-label="Transfer instructions">i</span></h3>
+                    <h3 class="modal-title-tight">Execute Patient Bed Transfer <span class="info-tip" tabindex="0" data-tooltip="Execute Doctor-ordered bed transfer or Nurse Station direct room transfer. Escalation into ICU requires an Attending Physician's Bed Transfer Order." aria-label="Transfer instructions">i</span></h3>
                     <div class="table-sub-text">Nurse Station Bed Assignment &amp; Room Stay Posting</div>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseTransferModal" aria-label="Close transfer modal">&times;</button>
@@ -974,7 +974,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=21.0"></script>
     <script src="../js/common.js?v=21.4"></script>
-    <script src="../js/admission_details.js?v=21.3"></script>
+    <script src="../js/admission_details.js?v=21.4"></script>
 </body>
 </html>
 

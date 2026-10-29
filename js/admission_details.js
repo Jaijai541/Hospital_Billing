@@ -102,7 +102,50 @@ const updateOrderDeptCard = (item) => {
     if (routeDesc) routeDesc.textContent = routeText;
 };
 let availableBedsList = [];
+let roomTypesList = [];
+let selectedTransferBedObj = null;
 let dispensedMedicinesList = [];
+
+const escapeTransferHtml = (str) => {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
+const getTransferRoleFlags = () => {
+    const u = currentUser || JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
+    const roleId = parseInt(u.role_id, 10) || 0;
+    const roleName = (u.role_name || '').toLowerCase().trim();
+    const domain = (u.access_domain || '').toLowerCase().trim();
+    const isSystemAdmin = (roleId === 1 || roleName === 'admin');
+    const isDoctorUser = !isSystemAdmin && (roleName.includes('doctor') || roleName.includes('physician') || Boolean(u.doctor_id));
+    const isAssignedDoc = isDoctorUser && (assignedDoctors || []).some(d => parseInt(d.Doctor_ID, 10) === parseInt(u.doctor_id, 10));
+    const isPureFinance = !isSystemAdmin && (domain === 'finance' || roleName.includes('billing') || roleName.includes('cashier'));
+    const isNurseStationStaff = !isSystemAdmin && !isDoctorUser && !isPureFinance;
+    return {
+        isSystemAdmin,
+        isDoctorUser,
+        isAssignedDoc,
+        isPureFinance,
+        isNurseStationStaff,
+        canOrderTransfer: isSystemAdmin || isAssignedDoc,
+        canExecuteTransfer: isSystemAdmin || isNurseStationStaff
+    };
+};
+
+const setRoleButtonVisibility = (btn, visible, displayStyle = 'inline-flex') => {
+    if (!btn) return;
+    if (visible) {
+        delete btn.dataset.roleHidden;
+        btn.style.display = displayStyle;
+    } else {
+        btn.dataset.roleHidden = 'true';
+        btn.style.display = 'none';
+    }
+};
 let currentUser = null;
 let discountList = [];
 let paymentMethodsList = [];
@@ -204,6 +247,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadRounds();
     loadTransfers();
     loadAvailableBeds();
+    loadRoomTypesForTransferOrder();
     loadLedger();
     loadLedgerSummary();
     loadDispensedMedicines();
@@ -401,6 +445,13 @@ const initClinicalTabs = () => {
 
 
 
+    window.addEventListener('hashchange', () => {
+        const nextHash = window.location.hash.replace('#', '');
+        if (nextHash) {
+            activateTab(nextHash);
+        }
+    });
+
     const tabParam = new URLSearchParams(window.location.search).get('tab');
     const hash = window.location.hash.replace('#', '') || tabParam || '';
     if (hash) {
@@ -559,21 +610,25 @@ const initClinicalModals = () => {
     const transferModal = document.getElementById('transferModal');
 
     if (btnOpenTransfer) {
-        btnOpenTransfer.addEventListener('click', () => {
-            if (admissionData && admissionData.Status !== 'Admitted') {
-                alert("Cannot transfer bed: Patient is already discharged or billed.");
-                return;
-            }
-            const transBedId = document.getElementById('transfer_bed_id');
-            const transBedName = document.getElementById('transfer_bed_name');
-            if (transBedId) transBedId.value = '';
-            if (transBedName) transBedName.value = '';
-            loadAvailableBeds();
-            openModal('transferModal');
-        });
+        btnOpenTransfer.addEventListener('click', () => openExecuteTransferModal());
     }
     if (btnCloseTransfer) btnCloseTransfer.addEventListener('click', () => closeModal('transferModal'));
     if (btnCancelTransfer) btnCancelTransfer.addEventListener('click', () => closeModal('transferModal'));
+
+    const transferOrderModal = document.getElementById('transferOrderModal');
+    const btnOpenTransferOrder = document.getElementById('btnOpenTransferOrderModal');
+    const btnCloseTransferOrder = document.getElementById('btnCloseTransferOrderModal');
+    const btnCancelTransferOrder = document.getElementById('btnCancelTransferOrderModal');
+    const transferOrderForm = document.getElementById('transferOrderForm');
+
+    if (btnOpenTransferOrder) {
+        btnOpenTransferOrder.addEventListener('click', () => openTransferOrderModal());
+    }
+    if (btnCloseTransferOrder) btnCloseTransferOrder.addEventListener('click', () => closeModal('transferOrderModal'));
+    if (btnCancelTransferOrder) btnCancelTransferOrder.addEventListener('click', () => closeModal('transferOrderModal'));
+    if (transferOrderForm) {
+        transferOrderForm.addEventListener('submit', submitTransferOrder);
+    }
 
     const btnOpenReturn = document.getElementById('btnOpenReturnModal');
     const btnOpenReturnPharm = document.getElementById('btnOpenReturnModalPharmacy');
@@ -657,7 +712,7 @@ const initClinicalModals = () => {
     if (btnCancelDocDis) btnCancelDocDis.addEventListener('click', () => closeModal('doctorDischargeModal'));
     if (btnConfirmDocDis) btnConfirmDocDis.addEventListener('click', submitDoctorDischargeOrder);
 
-    [orderModal, roundModal, transferModal, returnModal, advanceModal, historyModal, docDischargeModal].forEach(m => {
+    [orderModal, roundModal, transferModal, transferOrderModal, returnModal, advanceModal, historyModal, docDischargeModal].forEach(m => {
         if (m) {
             m.addEventListener('click', (e) => {
                 if (e.target === m) closeModal(m.id);
@@ -675,6 +730,7 @@ const initClinicalModals = () => {
             if (orderModal && orderModal.style.display === 'flex') closeModal('orderModal');
             if (roundModal && roundModal.style.display === 'flex') closeModal('roundModal');
             if (transferModal && transferModal.style.display === 'flex') closeModal('transferModal');
+            if (transferOrderModal && transferOrderModal.style.display === 'flex') closeModal('transferOrderModal');
             if (returnModal && returnModal.style.display === 'flex') closeModal('returnModal');
             if (advanceModal && advanceModal.style.display === 'flex') closeModal('advancePaymentModal');
             if (historyModal && historyModal.style.display === 'flex') closeModal('patientHistoryModal');
@@ -697,7 +753,7 @@ const openLookupPicker = (config) => {
         if (config.filterOptions && config.filterOptions.length > 0) {
             filterSelect.style.display = 'block';
             filterSelect.innerHTML = config.filterOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
-            filterSelect.value = config.filterOptions[0].value;
+            filterSelect.value = config.defaultFilterValue || config.filterOptions[0].value;
         } else {
             filterSelect.style.display = 'none';
         }
@@ -1064,11 +1120,16 @@ const wireLookupPickers = () => {
         const showBedPicker = () => {
             const bedList = availableBedsList || [];
             const bedTypes = [...new Set(bedList.map(b => b.Room_Type).filter(Boolean))];
+            const pendingOrd = admissionData ? admissionData.Pending_Transfer_Order : null;
+            const preferredType = (pendingOrd && parseInt(pendingOrd.Target_Room_Type_ID || 0, 10) > 0 && bedTypes.includes(pendingOrd.Target_Room_Type_Name))
+                ? pendingOrd.Target_Room_Type_Name
+                : 'all';
             openLookupPicker({
                 title: 'Select Target Vacant Bed',
                 placeholder: 'Search vacant bed by room, code, or type...',
                 columns: ['Bed Code', 'Room Name', 'Room Type', 'Daily Rate'],
                 items: bedList,
+                defaultFilterValue: preferredType,
                 filterOptions: [
                     { label: 'All Room Types', value: 'all' },
                     ...bedTypes.map(t => ({ label: t, value: t }))
@@ -1120,6 +1181,7 @@ const wireLookupPickers = () => {
                 `,
                 getItemName: (b) => `Bed ${b.Bed_Code} (${b.Room_Name} - ${b.Room_Type})`,
                 onSelect: (b) => {
+                    selectedTransferBedObj = b;
                     document.getElementById('transfer_bed_id').value = b.Bed_ID;
                     document.getElementById('transfer_bed_name').value = `${b.Bed_Code} (${b.Room_Name} - ${b.Room_Type}) — ₱${parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day`;
                 }
@@ -1387,6 +1449,57 @@ const wireLookupPickers = () => {
     };
     if (btnBrowseDocDis) btnBrowseDocDis.addEventListener('click', handleOpenDocDischargePicker);
     if (docDisNameInput) docDisNameInput.addEventListener('click', handleOpenDocDischargePicker);
+
+    const btnBrowseTransferOrderDoc = document.getElementById('btnBrowseTransferOrderDoctor');
+    const transferOrderDocNameInput = document.getElementById('transfer_order_doctor_name');
+    const handleOpenTransferOrderDocPicker = () => {
+        const flags = getTransferRoleFlags();
+        if (flags.isDoctorUser && !flags.isSystemAdmin) return;
+
+        const docList = assignedDoctors || [];
+        const docTypes = [...new Set(docList.map(d => d.Doctor_Type).filter(Boolean))];
+        openLookupPicker({
+            title: 'Select Ordering Attending Physician',
+            placeholder: 'Search attending physician name, classification, or specialty...',
+            columns: ['Physician Name', 'Type / Classification', 'Department / Specialty'],
+            items: docList,
+            filterOptions: [
+                { label: 'All Classifications', value: 'all' },
+                ...docTypes.map(t => ({ label: t, value: t }))
+            ],
+            categoryFilterFn: (d, val) => d.Doctor_Type === val,
+            sortOptions: [
+                { label: 'Default Order', value: 'default' },
+                { label: 'Name (A to Z)', value: 'name_asc' },
+                { label: 'Name (Z to A)', value: 'name_desc' }
+            ],
+            sortFn: (list, val) => {
+                const arr = [...list];
+                if (val === 'name_asc') {
+                    arr.sort((a, b) => (a.Doctor_Name || '').localeCompare(b.Doctor_Name || ''));
+                } else if (val === 'name_desc') {
+                    arr.sort((a, b) => (b.Doctor_Name || '').localeCompare(a.Doctor_Name || ''));
+                }
+                return arr;
+            },
+            filterFn: (d, q) => {
+                const str = `${d.Doctor_Name || ''} ${d.Doctor_Type || ''} ${d.Specialties || ''} ${d.Doctor_Code || ''}`.toLowerCase();
+                return str.includes(q);
+            },
+            renderRowFn: (d) => `
+                <td><strong>${d.Doctor_Name}</strong></td>
+                <td><span class="badge badge-info">${d.Doctor_Type}</span></td>
+                <td>${d.Specialties || 'Attending Physician'}</td>
+            `,
+            getItemName: (d) => `${d.Doctor_Name} (${d.Doctor_Type})`,
+            onSelect: (d) => {
+                document.getElementById('transfer_order_doctor_id').value = d.Doctor_ID;
+                document.getElementById('transfer_order_doctor_name').value = `${d.Doctor_Name} (${d.Doctor_Type})`;
+            }
+        });
+    };
+    if (btnBrowseTransferOrderDoc) btnBrowseTransferOrderDoc.addEventListener('click', handleOpenTransferOrderDocPicker);
+    if (transferOrderDocNameInput) transferOrderDocNameInput.addEventListener('click', handleOpenTransferOrderDocPicker);
 };
 
 const initDiagnosisModal = () => {
@@ -1551,16 +1664,17 @@ const loadAdmissionDetails = () => {
                 }
                 const btnOrder = document.getElementById("btnOpenOrderModal");
                 const btnRound = document.getElementById("btnOpenRoundModal");
+                const btnTransferOrder = document.getElementById("btnOpenTransferOrderModal");
                 const btnTransfer = document.getElementById("btnOpenTransferModal");
                 const btnDischarge = document.getElementById("btnChartDischarge");
                 const btnVoid = document.getElementById("btnOpenVoidModal");
                 const btnAssess = document.getElementById("btnOpenAssessmentModal");
-                if (btnOrder) btnOrder.style.display = "none";
-                if (btnRound) btnRound.style.display = "none";
-                if (btnTransfer) btnTransfer.style.display = "none";
-                if (btnDischarge) btnDischarge.style.display = "none";
-                if (btnVoid) btnVoid.style.display = "none";
-                if (btnAssess) btnAssess.style.display = "none";
+                [btnOrder, btnRound, btnTransferOrder, btnTransfer, btnDischarge, btnVoid, btnAssess].forEach(el => {
+                    if (el) {
+                        el.dataset.roleHidden = "true";
+                        el.style.display = "none";
+                    }
+                });
             } else if (noticeBanner) {
                 noticeBanner.classList.add("dept-tab-pane-hidden");
             }
@@ -1844,8 +1958,11 @@ const loadAdmissionDetails = () => {
             const isAdmitted = admissionData.Status === 'Admitted';
 
             if (isFinanceRole && !isAdminRole) {
-                [btnOpenOrder, btnOpenRound, btnOpenTransfer, btnOpenReturn, btnOpenReturnPharm, document.getElementById('btnOpenAssessmentModal'), document.getElementById('btnEditDiagnosis'), document.getElementById('btnOpenVoidModal')].forEach(el => {
-                    if (el) el.style.display = 'none';
+                [btnOpenOrder, btnOpenRound, document.getElementById('btnOpenTransferOrderModal'), btnOpenTransfer, btnOpenReturn, btnOpenReturnPharm, document.getElementById('btnOpenAssessmentModal'), document.getElementById('btnEditDiagnosis'), document.getElementById('btnOpenVoidModal')].forEach(el => {
+                    if (el) {
+                        el.dataset.roleHidden = 'true';
+                        el.style.display = 'none';
+                    }
                 });
             } else {
                 if (btnOpenOrder) {
@@ -1856,10 +1973,6 @@ const loadAdmissionDetails = () => {
                     btnOpenRound.disabled = !isAdmitted;
                     btnOpenRound.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
                 }
-                if (btnOpenTransfer) {
-                    btnOpenTransfer.disabled = !isAdmitted;
-                    btnOpenTransfer.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
-                }
                 if (btnOpenReturn) {
                     btnOpenReturn.disabled = !isAdmitted;
                     btnOpenReturn.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
@@ -1869,6 +1982,8 @@ const loadAdmissionDetails = () => {
                     btnOpenReturnPharm.title = isAdmitted ? '' : 'Disabled: Patient is already discharged or billed.';
                 }
             }
+
+            renderPendingTransferOrderState();
             const btnOpenAdvPay = document.getElementById('btnOpenAdvancePaymentModal');
             const nurseAdvNotice = document.getElementById('nurseAdvNotice');
             if (btnOpenAdvPay) {
@@ -3253,8 +3368,17 @@ const renderTransfersTable = (transfers) => {
             ? `${t.Total_Days || t.Calculated_Days || 1} day(s) (Active)`
             : `${t.Total_Days} day(s)`;
 
+        let provenanceHtml = '';
+        if (t.Transfer_Order_ID) {
+            const ordCode = escapeTransferHtml(t.Transfer_Order_Code || ('TRF-ORD-' + String(t.Transfer_Order_ID).padStart(3, '0')));
+            const ordDoc = escapeTransferHtml(t.Ordered_By_Doctor_Name || 'Attending Physician');
+            const execStaff = t.Fulfilled_By_Staff_Name ? ` • Executed by <strong>${escapeTransferHtml(t.Fulfilled_By_Staff_Name)}</strong>` : '';
+            const reasonLine = t.Transfer_Reason ? `<div>Reason: <em>${escapeTransferHtml(t.Transfer_Reason)}</em></div>` : '';
+            provenanceHtml = `<div class="transfer-provenance-meta"><strong>${ordCode}</strong> • Ordered by <strong>${ordDoc}</strong>${execStaff}${reasonLine}</div>`;
+        }
+
         html += '<tr>';
-        html += `<td><span class="table-primary-text"><strong>${t.Bed_Code}</strong> (${t.Room_Name})</span><span class="table-sub-text">STAY-${String(t.Transfer_ID).padStart(3, '0')} • ${t.Room_Type} • ₱${rate}/day</span></td>`;
+        html += `<td><span class="table-primary-text"><strong>${t.Bed_Code}</strong> (${t.Room_Name})</span><span class="table-sub-text">STAY-${String(t.Transfer_ID).padStart(3, '0')} • ${t.Room_Type} • ₱${rate}/day</span>${provenanceHtml}</td>`;
         html += `<td><span class="table-primary-text">In: ${t.Date_In}</span><span class="table-sub-text">Out: ${t.Date_Out || 'Currently In Bed'}</span></td>`;
         html += `<td class="text-right"><span class="table-amount-prominent">${fee}</span><span class="table-sub-text">${daysText}</span></td>`;
         html += `<td>${stayBadge}</td>`;
@@ -3314,20 +3438,396 @@ const filterAvailableBeds = () => {
     });
 }
 
-const submitBedTransfer = () => {
-    console.log("admission_details.js: Submitting bed transfer...");
+const loadRoomTypesForTransferOrder = () => {
+    const formData = new FormData();
+    formData.append('operation', 'getRoomTypes');
+    axios.post(`${getApiUrl}/admissions.php`, formData)
+        .then(res => {
+            roomTypesList = Array.isArray(res.data) ? res.data : [];
+            populateTransferOrderRoomTypes();
+        })
+        .catch(() => {});
+};
 
-    const newBedId = document.getElementById('transfer_bed_id').value;
+const populateTransferOrderRoomTypes = () => {
+    const sel = document.getElementById('transfer_order_room_type_id');
+    if (!sel) return;
+    const prevVal = sel.value || '0';
+    let html = '<option value="0">Any Available Room Classification (Nurse Station Triage)</option>';
+    (roomTypesList || []).forEach(rt => {
+        const rate = parseFloat(rt.Daily_Rate || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+        html += `<option value="${rt.Room_Type_ID}">${escapeTransferHtml(rt.Type_Name)} (Standard Rate: ₱${rate}/day)</option>`;
+    });
+    sel.innerHTML = html;
+    sel.value = prevVal;
+    if (!sel.value) sel.value = '0';
+};
 
-    if (!newBedId) {
-        alert("Please select a target vacant bed.");
+const renderPendingTransferOrderState = () => {
+    const flags = getTransferRoleFlags();
+    const isAdmitted = Boolean(admissionData && admissionData.Status === 'Admitted');
+    const pendingOrd = (admissionData && admissionData.Pending_Transfer_Order) ? admissionData.Pending_Transfer_Order : null;
+
+    const btnOrderTransfer = document.getElementById('btnOpenTransferOrderModal');
+    const btnExecTransfer = document.getElementById('btnOpenTransferModal');
+    const btnJumpTransfers = document.getElementById('btnJumpToBedTransfers');
+    const bannerWrap = document.getElementById('pending-transfer-order-banner-wrap');
+
+    setRoleButtonVisibility(btnOrderTransfer, flags.canOrderTransfer);
+    if (btnOrderTransfer && flags.canOrderTransfer) {
+        btnOrderTransfer.disabled = !isAdmitted;
+        btnOrderTransfer.textContent = pendingOrd ? '✎ Update Transfer Order' : '+ Order Bed Transfer';
+        btnOrderTransfer.title = isAdmitted
+            ? (pendingOrd ? 'Update the active Doctor Bed Transfer Order' : 'Issue a Doctor Bed Transfer Order to Nurse Station')
+            : 'Disabled: Patient is already discharged or billed.';
+    }
+
+    setRoleButtonVisibility(btnExecTransfer, flags.canExecuteTransfer);
+    if (btnExecTransfer && flags.canExecuteTransfer) {
+        if (!isAdmitted) {
+            btnExecTransfer.disabled = true;
+            btnExecTransfer.className = 'btn btn-secondary btn-sm';
+            btnExecTransfer.textContent = 'Execute Bed Transfer';
+            btnExecTransfer.title = 'Disabled: Patient is already discharged or billed.';
+        } else if (pendingOrd) {
+            btnExecTransfer.disabled = false;
+            btnExecTransfer.className = 'btn btn-success btn-sm';
+            btnExecTransfer.textContent = '✔ Execute Ordered Bed Transfer';
+            btnExecTransfer.title = 'Select a vacant bed and fulfill the pending Doctor Bed Transfer Order.';
+        } else if (flags.isSystemAdmin) {
+            btnExecTransfer.disabled = false;
+            btnExecTransfer.className = 'btn btn-primary btn-sm';
+            btnExecTransfer.textContent = '+ Execute Bed Transfer (Admin)';
+            btnExecTransfer.title = 'System Administrator override available when no Doctor Transfer Order is pending.';
+        } else {
+            btnExecTransfer.disabled = true;
+            btnExecTransfer.className = 'btn btn-secondary btn-sm';
+            btnExecTransfer.textContent = 'Awaiting Doctor Transfer Order';
+            btnExecTransfer.title = 'Clinical Protocol: An attending physician must first issue a Bed Transfer Order before Nurse Station can transfer the patient bed.';
+        }
+    }
+
+    if (btnJumpTransfers) {
+        if (pendingOrd && isAdmitted) {
+            btnJumpTransfers.innerHTML = flags.canExecuteTransfer
+                ? 'Execute Transfer Order &rarr;'
+                : 'Pending Transfer Order &rarr;';
+        } else if (flags.canOrderTransfer && !flags.isSystemAdmin) {
+            btnJumpTransfers.innerHTML = 'Order Bed Transfer &rarr;';
+        } else if (flags.isPureFinance || (flags.isDoctorUser && !flags.isAssignedDoc)) {
+            btnJumpTransfers.innerHTML = 'View Bed Stays &rarr;';
+        } else {
+            btnJumpTransfers.innerHTML = 'Bed Stays &amp; Transfers &rarr;';
+        }
+    }
+
+    if (!bannerWrap) return;
+
+    if (isAdmitted && pendingOrd) {
+        const curBedLabel = admissionData.Bed_Code
+            ? `Bed ${escapeTransferHtml(admissionData.Bed_Code)} (${escapeTransferHtml(admissionData.Room_Name || 'Ward')} • ${escapeTransferHtml(admissionData.Room_Type || '')})`
+            : 'Active Inpatient Bed';
+
+        let actionButtonsHtml = '';
+        if (flags.canExecuteTransfer) {
+            actionButtonsHtml += '<button type="button" class="btn btn-success btn-sm" id="btnBannerExecuteTransfer">✔ Select Vacant Bed &amp; Execute Transfer &rarr;</button>';
+        }
+        if (flags.canOrderTransfer) {
+            actionButtonsHtml += '<button type="button" class="btn btn-outline btn-sm" id="btnBannerEditTransferOrder">✎ Update Order</button>';
+            actionButtonsHtml += '<button type="button" class="btn btn-danger btn-sm" id="btnBannerCancelTransferOrder">&times; Cancel Order</button>';
+        }
+
+        bannerWrap.innerHTML = `
+            <div class="transfer-order-banner" role="region" aria-label="Pending Doctor Bed Transfer Order">
+                <div class="transfer-order-banner-top">
+                    <div class="transfer-order-banner-heading">
+                        <span class="transfer-order-code-pill">PENDING TRANSFER ORDER • ${escapeTransferHtml(pendingOrd.Order_Code)}</span>
+                        <span class="transfer-order-banner-title">Dispatched to Nurse Station (Head Nurse, Nurses &amp; Ward Clerks)</span>
+                    </div>
+                    <span class="table-sub-text">Ordered: ${escapeTransferHtml(pendingOrd.Ordered_At || 'Just now')}</span>
+                </div>
+                <div class="transfer-order-meta-grid">
+                    <div class="transfer-order-meta-item">
+                        <strong>Ordering Physician</strong>
+                        ${escapeTransferHtml(pendingOrd.Doctor_Name || 'Attending Physician')}
+                    </div>
+                    <div class="transfer-order-meta-item">
+                        <strong>Current Bed</strong>
+                        ${curBedLabel}
+                    </div>
+                    <div class="transfer-order-meta-item">
+                        <strong>Target Room Classification</strong>
+                        ${escapeTransferHtml(pendingOrd.Target_Room_Type_Name || 'Any Available Classification')}
+                    </div>
+                </div>
+                <div class="transfer-order-reason-box">
+                    <strong>Clinical Reason &amp; Instructions:</strong> ${escapeTransferHtml(pendingOrd.Clinical_Reason || '')}
+                </div>
+                ${actionButtonsHtml ? `<div class="transfer-order-banner-actions">${actionButtonsHtml}</div>` : ''}
+            </div>
+        `;
+
+        const btnExec = document.getElementById('btnBannerExecuteTransfer');
+        if (btnExec) btnExec.addEventListener('click', () => openExecuteTransferModal());
+        const btnEdit = document.getElementById('btnBannerEditTransferOrder');
+        if (btnEdit) btnEdit.addEventListener('click', () => openTransferOrderModal());
+        const btnCancel = document.getElementById('btnBannerCancelTransferOrder');
+        if (btnCancel) btnCancel.addEventListener('click', () => cancelPendingTransferOrder());
+    } else if (isAdmitted && !pendingOrd && flags.isNurseStationStaff) {
+        bannerWrap.innerHTML = `
+            <div class="transfer-order-banner transfer-order-banner-idle">
+                <div class="table-sub-text">
+                    <strong>Nurse Station Bed Transfer Protocol:</strong> No active Doctor Bed Transfer Order is currently pending for this patient. When an attending physician issues a Bed Transfer Order, Nurse Station receives a real-time alert first to assign a vacant bed and execute the transfer.
+                </div>
+            </div>
+        `;
+    } else {
+        bannerWrap.innerHTML = '';
+    }
+};
+
+const openTransferOrderModal = () => {
+    if (!admissionData || admissionData.Status !== 'Admitted') {
+        showPopupAlert('Cannot issue a Bed Transfer Order: Patient is already discharged or billed.', 'warning');
         return;
     }
 
-    showPopupConfirm("Are you sure you want to transfer this patient to the selected bed?\n\nThis will automatically calculate the prior bed stay, post the room fee to the Live Billing Ledger, free the old bed, and occupy the new bed.", () => {
+    const flags = getTransferRoleFlags();
+    if (!flags.canOrderTransfer) {
+        showPopupAlert('Clinical Protocol: Only an assigned attending physician (or System Administrator) can issue a Doctor Bed Transfer Order.', 'warning');
+        return;
+    }
+
+    populateTransferOrderRoomTypes();
+
+    const pendingOrd = admissionData.Pending_Transfer_Order || null;
+    const curBedEl = document.getElementById('transfer_order_current_bed_text');
+    if (curBedEl) {
+        const curRate = admissionData.Daily_Rate ? `₱${parseFloat(admissionData.Daily_Rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day` : 'N/A';
+        curBedEl.textContent = admissionData.Bed_Code
+            ? `Bed ${admissionData.Bed_Code} — ${admissionData.Room_Name || 'Ward'} (${admissionData.Room_Type || 'Room'} • ${curRate})`
+            : 'No active bed stay found';
+    }
+
+    const docIdInput = document.getElementById('transfer_order_doctor_id');
+    const docNameInput = document.getElementById('transfer_order_doctor_name');
+    const btnBrowseDoc = document.getElementById('btnBrowseTransferOrderDoctor');
+
+    let selectedDocId = 0;
+    let selectedDocName = '';
+
+    if (flags.isDoctorUser && currentUser && currentUser.doctor_id) {
+        selectedDocId = parseInt(currentUser.doctor_id, 10);
+        const matched = (assignedDoctors || []).find(d => parseInt(d.Doctor_ID, 10) === selectedDocId);
+        selectedDocName = matched ? `${matched.Doctor_Name} (${matched.Doctor_Type})` : (currentUser.full_name || 'Attending Physician');
+    } else if (pendingOrd && pendingOrd.Doctor_ID) {
+        selectedDocId = parseInt(pendingOrd.Doctor_ID, 10);
+        const matched = (assignedDoctors || []).find(d => parseInt(d.Doctor_ID, 10) === selectedDocId);
+        selectedDocName = matched ? `${matched.Doctor_Name} (${matched.Doctor_Type})` : (pendingOrd.Doctor_Name || 'Attending Physician');
+    } else if (assignedDoctors && assignedDoctors.length > 0) {
+        selectedDocId = parseInt(assignedDoctors[0].Doctor_ID, 10);
+        selectedDocName = `${assignedDoctors[0].Doctor_Name} (${assignedDoctors[0].Doctor_Type})`;
+    }
+
+    if (docIdInput) docIdInput.value = selectedDocId || '';
+    if (docNameInput) docNameInput.value = selectedDocName || '';
+    if (btnBrowseDoc) {
+        btnBrowseDoc.style.display = (flags.isDoctorUser && !flags.isSystemAdmin) ? 'none' : 'inline-block';
+    }
+
+    const roomTypeSelect = document.getElementById('transfer_order_room_type_id');
+    if (roomTypeSelect) {
+        roomTypeSelect.value = (pendingOrd && pendingOrd.Target_Room_Type_ID) ? String(pendingOrd.Target_Room_Type_ID) : '0';
+        if (!roomTypeSelect.value) roomTypeSelect.value = '0';
+    }
+
+    const reasonInput = document.getElementById('transfer_order_reason');
+    if (reasonInput) {
+        reasonInput.value = pendingOrd ? (pendingOrd.Clinical_Reason || '') : '';
+    }
+
+    const modalTitle = document.getElementById('transferOrderModalTitle');
+    if (modalTitle) {
+        modalTitle.textContent = pendingOrd ? "Update Doctor's Bed Transfer Order" : "Doctor's Bed Transfer Order";
+    }
+    const btnConfirm = document.getElementById('btnConfirmTransferOrder');
+    if (btnConfirm) {
+        btnConfirm.textContent = pendingOrd ? '✔ Update Bed Transfer Order' : '✔ Issue Bed Transfer Order';
+    }
+
+    openModal('transferOrderModal');
+    setTimeout(() => {
+        if (reasonInput) reasonInput.focus();
+    }, 80);
+};
+
+const submitTransferOrder = (e) => {
+    if (e) e.preventDefault();
+
+    const docId = parseInt(document.getElementById('transfer_order_doctor_id')?.value || '0', 10);
+    const targetRoomTypeId = parseInt(document.getElementById('transfer_order_room_type_id')?.value || '0', 10);
+    const reasonEl = document.getElementById('transfer_order_reason');
+    const clinicalReason = (reasonEl?.value || '').trim();
+
+    if (!docId) {
+        showToast('Please select the ordering attending physician.', 'warning');
+        return;
+    }
+    if (!clinicalReason) {
+        showToast('Please enter the clinical reason and instructions for the bed transfer order.', 'warning');
+        if (reasonEl) reasonEl.focus();
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('operation', 'orderBedTransfer');
+    fd.append('json', JSON.stringify({
+        admission_id: admissionId,
+        user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 0) : 0,
+        doctor_id: docId,
+        target_room_type_id: targetRoomTypeId,
+        clinical_reason: clinicalReason
+    }));
+
+    axios.post(`${postApiUrl}/admissions.php`, fd)
+        .then(res => {
+            let data = res.data;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (err) {}
+            }
+            if (data && data.success) {
+                closeModal('transferOrderModal');
+                showToast(data.message, 'success');
+                loadAdmissionDetails();
+                loadTransfers();
+                if (typeof fetchRealtimeNotifications === 'function') fetchRealtimeNotifications();
+            } else {
+                showPopupAlert((data && data.error) ? data.error : 'Failed to issue bed transfer order.', 'warning');
+            }
+        })
+        .catch(() => {
+            showPopupAlert('Network error while issuing bed transfer order.', 'danger');
+        });
+};
+
+const cancelPendingTransferOrder = () => {
+    const pendingOrd = admissionData ? admissionData.Pending_Transfer_Order : null;
+    const ordLabel = pendingOrd && pendingOrd.Order_Code ? pendingOrd.Order_Code : 'Pending Transfer Order';
+
+    showPopupConfirm(`Cancel ${ordLabel}?\n\nNurse Station will no longer execute a bed move for this order unless a new Bed Transfer Order is issued.`, () => {
+        const fd = new FormData();
+        fd.append('operation', 'cancelBedTransferOrder');
+        fd.append('json', JSON.stringify({
+            admission_id: admissionId,
+            user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 0) : 0
+        }));
+
+        axios.post(`${postApiUrl}/admissions.php`, fd)
+            .then(res => {
+                let data = res.data;
+                if (typeof data === 'string') {
+                    try { data = JSON.parse(data); } catch (err) {}
+                }
+                if (data && data.success) {
+                    showToast(data.message, 'success');
+                    loadAdmissionDetails();
+                    loadTransfers();
+                } else {
+                    showPopupAlert((data && data.error) ? data.error : 'Failed to cancel bed transfer order.', 'warning');
+                }
+            })
+            .catch(() => {
+                showPopupAlert('Network error cancelling bed transfer order.', 'danger');
+            });
+    }, null, {
+        title: 'Cancel Bed Transfer Order',
+        confirmText: 'Cancel Order',
+        type: 'warning'
+    });
+};
+
+const openExecuteTransferModal = () => {
+    if (admissionData && admissionData.Status !== 'Admitted') {
+        showPopupAlert('Cannot transfer bed: Patient is already discharged or billed.', 'warning');
+        return;
+    }
+
+    const flags = getTransferRoleFlags();
+    if (!flags.canExecuteTransfer) {
+        if (flags.canOrderTransfer) {
+            showPopupAlert('Clinical Protocol: Attending physicians issue a Bed Transfer Order, and Nurse Station staff (Head Nurse, Nurses & Ward Clerks) select the vacant bed and execute the transfer.', 'info');
+            return;
+        }
+        showPopupAlert('Access Restricted: Only Nurse Station staff (Head Nurse, Nurses & Ward Clerks) or a System Administrator can execute patient bed transfers.', 'warning');
+        return;
+    }
+
+    const pendingOrd = admissionData ? admissionData.Pending_Transfer_Order : null;
+    if (!pendingOrd && !flags.isSystemAdmin) {
+        showPopupAlert("Doctor Transfer Order Required: An attending physician must first issue a Bed Transfer Order before Nurse Station staff can move this patient's bed.", 'warning');
+        return;
+    }
+
+    const summaryEl = document.getElementById('transfer_modal_order_summary');
+    if (summaryEl) {
+        if (pendingOrd) {
+            summaryEl.innerHTML = `
+                <div class="transfer-order-banner">
+                    <div class="transfer-order-banner-heading">
+                        <span class="transfer-order-code-pill">${escapeTransferHtml(pendingOrd.Order_Code)}</span>
+                        <span class="transfer-order-banner-title">Ordered by ${escapeTransferHtml(pendingOrd.Doctor_Name || 'Attending Physician')}</span>
+                    </div>
+                    <div class="table-sub-text"><strong>Target Room Classification:</strong> ${escapeTransferHtml(pendingOrd.Target_Room_Type_Name || 'Any Available Classification')}</div>
+                    <div class="transfer-order-reason-box"><strong>Reason &amp; Instructions:</strong> ${escapeTransferHtml(pendingOrd.Clinical_Reason || '')}</div>
+                </div>
+            `;
+        } else {
+            summaryEl.innerHTML = `
+                <div class="banner-notice banner-notice-warning transfer-order-protocol-note">
+                    <strong>System Administrator Override:</strong> No active Doctor Bed Transfer Order is pending for this admission. Proceeding will execute an administrative bed transfer override.
+                </div>
+            `;
+        }
+    }
+
+    selectedTransferBedObj = null;
+    const transBedId = document.getElementById('transfer_bed_id');
+    const transBedName = document.getElementById('transfer_bed_name');
+    if (transBedId) transBedId.value = '';
+    if (transBedName) transBedName.value = '';
+
+    loadAvailableBeds();
+    openModal('transferModal');
+};
+
+const submitBedTransfer = () => {
+    const newBedId = document.getElementById('transfer_bed_id').value;
+
+    if (!newBedId) {
+        showPopupAlert('Please select a target vacant bed.', 'warning');
+        return;
+    }
+
+    const flags = getTransferRoleFlags();
+    const pendingOrd = admissionData ? admissionData.Pending_Transfer_Order : null;
+    if (!pendingOrd && !flags.isSystemAdmin) {
+        showPopupAlert("Doctor Transfer Order Required: An attending physician must first issue a Bed Transfer Order before Nurse Station staff can move this patient's bed.", 'warning');
+        return;
+    }
+
+    let confirmMsg = "Are you sure you want to transfer this patient to the selected bed?\n\nThis will automatically calculate the prior bed stay, post the room fee to the Live Billing Ledger, free the old bed, and occupy the new bed.";
+    if (pendingOrd && parseInt(pendingOrd.Target_Room_Type_ID || 0, 10) > 0 && selectedTransferBedObj) {
+        if (parseInt(selectedTransferBedObj.Room_Type_ID || 0, 10) !== parseInt(pendingOrd.Target_Room_Type_ID, 10)) {
+            confirmMsg += `\n\nRoom Classification Note: ${pendingOrd.Doctor_Name || 'The ordering physician'} requested "${pendingOrd.Target_Room_Type_Name}", while the selected bed is in "${selectedTransferBedObj.Room_Type}". Proceed with this accommodation substitution?`;
+        }
+    }
+
+    showPopupConfirm(confirmMsg, () => {
         const payload = {
             admission_id: admissionId,
-            new_bed_id: newBedId
+            new_bed_id: newBedId,
+            user_id: currentUser ? (currentUser.user_id || currentUser.User_ID || 0) : 0,
+            admin_override: (!pendingOrd && flags.isSystemAdmin) ? 1 : 0
         };
 
         const formData = new FormData();
@@ -3336,10 +3836,13 @@ const submitBedTransfer = () => {
 
         axios.post(`${postApiUrl}/admissions.php`, formData)
             .then(response => {
-                console.log("admission_details.js: Bed transfer response:", response.data);
-                if (response.data.success) {
-                    alert(response.data.message);
+                let resData = response.data;
+                if (typeof resData === 'string') {
+                    try { resData = JSON.parse(resData); } catch (e) {}
+                }
+                if (resData && resData.success) {
                     closeModal('transferModal');
+                    showToast(resData.message, 'success');
                     if (document.getElementById('transfer_bed_search')) {
                         document.getElementById('transfer_bed_search').value = '';
                     }
@@ -3348,18 +3851,18 @@ const submitBedTransfer = () => {
                     loadAvailableBeds();
                     loadLedger();
                     loadLedgerSummary();
+                    if (typeof fetchRealtimeNotifications === 'function') fetchRealtimeNotifications();
                 } else {
-                    alert("Transfer Error: " + (response.data.error || "Failed to transfer bed."));
+                    showPopupAlert('Transfer Error: ' + ((resData && resData.error) || 'Failed to transfer bed.'), 'warning');
                 }
             })
-            .catch(err => {
-                console.error("admission_details.js: Error transferring bed:", err);
-                alert("Network error transferring bed.");
+            .catch(() => {
+                showPopupAlert('Network error transferring bed.', 'danger');
             });
     }, null, {
-        title: "Confirm Bed Transfer",
-        confirmText: "Transfer Bed",
-        type: "warning"
+        title: 'Confirm Bed Transfer',
+        confirmText: 'Execute Bed Transfer',
+        type: 'warning'
     });
 };
 

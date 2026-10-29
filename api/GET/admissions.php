@@ -4,6 +4,27 @@ header("Access-Control-Allow-Origin: *");
 
 class AdmissionManager
 {
+    private function ensureBedTransferOrderTable($conn)
+    {
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS Bed_Transfer_Order (
+                Transfer_Order_ID INT(11) NOT NULL AUTO_INCREMENT,
+                Admission_ID INT(11) NOT NULL,
+                Doctor_ID INT(11) NOT NULL,
+                Ordered_By_User_ID INT(11) DEFAULT NULL,
+                Target_Room_Type_ID INT(11) DEFAULT NULL,
+                Clinical_Reason TEXT NOT NULL,
+                Status ENUM('Pending', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Pending',
+                Fulfilled_By_User_ID INT(11) DEFAULT NULL,
+                Fulfilled_Transfer_ID INT(11) DEFAULT NULL,
+                Created_At DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                Fulfilled_At DATETIME DEFAULT NULL,
+                PRIMARY KEY (Transfer_Order_ID),
+                KEY idx_bto_admission (Admission_ID, Status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+    }
+
     function getAllAdmissions($json = '{}')
     {
         include "connection.php";
@@ -288,6 +309,30 @@ class AdmissionManager
         $admission['is_assigned_doctor'] = $isAssignedDoctor;
         $admission['requesting_doctor_id'] = $doctorId;
 
+        $this->ensureBedTransferOrderTable($conn);
+        $btoStmt = $conn->prepare("
+            SELECT 
+                bto.Transfer_Order_ID,
+                CONCAT('TRF-ORD-', LPAD(bto.Transfer_Order_ID, 3, '0')) AS Order_Code,
+                bto.Admission_ID,
+                bto.Doctor_ID,
+                CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                bto.Target_Room_Type_ID,
+                COALESCE(rt.Type_Name, 'Any Available Classification') AS Target_Room_Type_Name,
+                rt.Daily_Rate AS Target_Daily_Rate,
+                bto.Clinical_Reason,
+                bto.Status,
+                DATE_FORMAT(bto.Created_At, '%Y-%m-%d %h:%i %p') AS Ordered_At
+            FROM Bed_Transfer_Order bto
+            LEFT JOIN Doctor d ON bto.Doctor_ID = d.Doctor_ID
+            LEFT JOIN Enum_Room_Type rt ON bto.Target_Room_Type_ID = rt.Room_Type_ID
+            WHERE bto.Admission_ID = :aid AND bto.Status = 'Pending'
+            ORDER BY bto.Transfer_Order_ID DESC
+            LIMIT 1
+        ");
+        $btoStmt->execute([':aid' => $id]);
+        $admission['Pending_Transfer_Order'] = $btoStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
         return json_encode($admission);
     }
 
@@ -385,9 +430,60 @@ class AdmissionManager
         return json_encode($doctors);
     }
 
+    function getRoomTypes()
+    {
+        include "connection.php";
+
+        $stmt = $conn->prepare("
+            SELECT Room_Type_ID, Type_Name, Daily_Rate
+            FROM Enum_Room_Type
+            ORDER BY Daily_Rate ASC, Type_Name ASC
+        ");
+        $stmt->execute();
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    function getBedTransferOrders($json = '{}')
+    {
+        include "connection.php";
+        $this->ensureBedTransferOrderTable($conn);
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+        if (empty($admissionId)) {
+            return json_encode([]);
+        }
+
+        $stmt = $conn->prepare("
+            SELECT 
+                bto.Transfer_Order_ID,
+                CONCAT('TRF-ORD-', LPAD(bto.Transfer_Order_ID, 3, '0')) AS Order_Code,
+                bto.Admission_ID,
+                bto.Doctor_ID,
+                CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
+                bto.Target_Room_Type_ID,
+                COALESCE(rt.Type_Name, 'Any Available Classification') AS Target_Room_Type_Name,
+                bto.Clinical_Reason,
+                bto.Status,
+                bto.Fulfilled_Transfer_ID,
+                CONCAT(u.First_Name, ' ', u.Last_Name) AS Fulfilled_By_Staff_Name,
+                DATE_FORMAT(bto.Created_At, '%Y-%m-%d %h:%i %p') AS Ordered_At,
+                DATE_FORMAT(bto.Fulfilled_At, '%Y-%m-%d %h:%i %p') AS Fulfilled_At
+            FROM Bed_Transfer_Order bto
+            LEFT JOIN Doctor d ON bto.Doctor_ID = d.Doctor_ID
+            LEFT JOIN Enum_Room_Type rt ON bto.Target_Room_Type_ID = rt.Room_Type_ID
+            LEFT JOIN System_User u ON bto.Fulfilled_By_User_ID = u.User_ID
+            WHERE bto.Admission_ID = :aid
+            ORDER BY bto.Transfer_Order_ID DESC
+        ");
+        $stmt->execute([':aid' => $admissionId]);
+        return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     function getBedTransfers($json = '{}')
     {
         include "connection.php";
+        $this->ensureBedTransferOrderTable($conn);
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -411,11 +507,19 @@ class AdmissionManager
                     GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) AS Calculated_Days,
                     GREATEST(1, DATEDIFF(NOW(), rtl.Date_In)) * COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate, 0.00) AS Calculated_Room_Fee,
                     (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current,
-                    (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current_Stay
+                    (CASE WHEN rtl.Date_Out IS NULL THEN 1 ELSE 0 END) AS Is_Current_Stay,
+                    bto.Transfer_Order_ID,
+                    CASE WHEN bto.Transfer_Order_ID IS NOT NULL THEN CONCAT('TRF-ORD-', LPAD(bto.Transfer_Order_ID, 3, '0')) ELSE NULL END AS Transfer_Order_Code,
+                    CASE WHEN bto_doc.Doctor_ID IS NOT NULL THEN CONCAT('Dr. ', bto_doc.First_Name, ' ', bto_doc.Last_Name) ELSE NULL END AS Ordered_By_Doctor_Name,
+                    CASE WHEN bto_usr.User_ID IS NOT NULL THEN CONCAT(bto_usr.First_Name, ' ', bto_usr.Last_Name) ELSE NULL END AS Fulfilled_By_Staff_Name,
+                    bto.Clinical_Reason AS Transfer_Reason
                 FROM Room_Transfer_Log rtl
                 INNER JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
                 INNER JOIN Room r ON rb.Room_ID = r.Room_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                LEFT JOIN Bed_Transfer_Order bto ON bto.Fulfilled_Transfer_ID = rtl.Transfer_ID
+                LEFT JOIN Doctor bto_doc ON bto.Doctor_ID = bto_doc.Doctor_ID
+                LEFT JOIN System_User bto_usr ON bto.Fulfilled_By_User_ID = bto_usr.User_ID
                 WHERE rtl.Admission_ID = :aid
                 ORDER BY rtl.Transfer_ID ASC";
 
@@ -568,6 +672,12 @@ switch ($operation) {
         break;
     case 'getBedTransfers':
         echo $admission->getBedTransfers($json);
+        break;
+    case 'getBedTransferOrders':
+        echo $admission->getBedTransferOrders($json);
+        break;
+    case 'getRoomTypes':
+        echo $admission->getRoomTypes();
         break;
 }
 ?>

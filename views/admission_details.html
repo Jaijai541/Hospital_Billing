@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Patient Chart & Billing Hub — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=20.7">
-    <link rel="stylesheet" href="../css/admission_details.css?v=20.8">
+    <link rel="stylesheet" href="../css/admission_details.css?v=21.2">
 </head>
 <body>
 
@@ -310,12 +310,16 @@
 
                     <div class="sub-panel" id="sub-stays" style="display: none;">
                         <div class="card mb-4">
-                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <h2>Board & Lodging / Bed Stays & Transfers <span class="info-tip" tabindex="0" data-tooltip="Track patient bed occupancy and room upgrades. When transferred, prior room stay duration and rates are calculated and posted to the ledger." aria-label="Bed stay information">i</span></h2>
-                                <button type="button" class="btn btn-primary btn-sm" id="btnOpenTransferModal">+ Transfer Patient Bed</button>
+                            <div class="card-header stays-card-header">
+                                <h2>Board &amp; Lodging / Bed Stays &amp; Transfers <span class="info-tip" tabindex="0" data-tooltip="Attending physicians issue a Bed Transfer Order first. Nurse Station (Head Nurse, Nurses &amp; Ward Clerks) receives the order, selects a vacant bed, and executes the transfer while automatically posting prior stay charges to the ledger." aria-label="Bed stay information">i</span></h2>
+                                <div class="stays-header-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnOpenTransferOrderModal" style="display: none;">+ Order Bed Transfer</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnOpenTransferModal" style="display: none;">Execute Bed Transfer</button>
+                                </div>
                             </div>
                             <div class="card-body">
-                                <h3 style="font-size: 1.05rem; margin-bottom: 10px;">Bed Occupancy & Transfer History</h3>
+                                <div id="pending-transfer-order-banner-wrap"></div>
+                                <h3 class="stays-section-subtitle">Bed Occupancy &amp; Transfer History</h3>
                                 <div class="table-responsive" id="transfers-table-div">
                                 </div>
                             </div>
@@ -595,24 +599,29 @@
     <div class="modal-overlay" id="transferModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Transfer Patient Bed <span class="info-tip" tabindex="0" data-tooltip="Transfer patient to another vacant bed. Prior bed occupancy charges will be calculated and posted to the ledger automatically." aria-label="Transfer instructions">i</span></h3>
-                <button type="button" class="modal-close" id="btnCloseTransferModal">&times;</button>
+                <div>
+                    <h3 class="modal-title-tight">Execute Patient Bed Transfer <span class="info-tip" tabindex="0" data-tooltip="Nurse Station fulfillment of Doctor's Bed Transfer Order. Prior bed occupancy charges are automatically calculated and posted to the Live Billing Ledger." aria-label="Transfer instructions">i</span></h3>
+                    <div class="table-sub-text">Nurse Station Bed Assignment &amp; Room Stay Posting</div>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseTransferModal" aria-label="Close transfer modal">&times;</button>
             </div>
             <div class="modal-body" id="transfer-form-container">
+                <div id="transfer_modal_order_summary" class="transfer-modal-order-summary"></div>
                 <div class="form-grid">
                     <div class="form-group span-2">
-                        <label class="form-label" for="transfer_bed_name">Select Target Vacant Bed *</label>
+                        <label class="form-label" for="transfer_bed_name">Select Target Vacant Bed <span class="text-danger">*</span></label>
                         <div class="input-lookup-group">
-                            <input type="hidden" id="transfer_bed_id">
-                            <input type="text" id="transfer_bed_name" class="form-control form-control-lookup" placeholder="Click Select to choose target bed..." readonly>
+                            <input type="hidden" id="transfer_bed_id" name="new_bed_id">
+                            <input type="text" id="transfer_bed_name" name="new_bed_display" class="form-control form-control-lookup" placeholder="Click Select to choose vacant bed..." aria-describedby="transfer_bed_help" readonly>
                             <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseTransferBed">Select</button>
                         </div>
+                        <small id="transfer_bed_help" class="form-text text-muted transfer-field-hint">Vacant beds matching the physician's ordered room classification are prioritized automatically.</small>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btnCancelTransfer">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btnTransferBed">Transfer Bed & Post Stay Charge</button>
+                <button type="button" class="btn btn-primary" id="btnTransferBed">Execute Transfer &amp; Post Stay Charge</button>
             </div>
         </div>
     </div>
@@ -911,10 +920,61 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="transferOrderModal" style="display: none;">
+        <div class="modal-container transfer-order-modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title-tight" id="transferOrderModalTitle">Doctor's Bed Transfer Order</h3>
+                    <div class="table-sub-text">Clinical Accommodation Transfer Order &rarr; Dispatched to Nurse Station</div>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseTransferOrderModal" aria-label="Close bed transfer order modal">&times;</button>
+            </div>
+            <form id="transferOrderForm" method="post" action="../api/POST/admissions.php" novalidate>
+                <div class="modal-body transfer-order-modal-body">
+                    <div class="banner-notice banner-notice-info transfer-order-protocol-note">
+                        <strong>Clinical Transfer Protocol:</strong> Attending physicians issue a Bed Transfer Order specifying the target room classification and clinical indication. <strong>Nurse Station (Head Nurse, Nurses &amp; Ward Clerks)</strong> receives this alert first, assigns an available vacant bed, and executes the transfer.
+                    </div>
+
+                    <div class="transfer-current-stay-box" id="transfer_order_current_bed_box">
+                        <span class="transfer-current-stay-label">Current Bed &amp; Accommodation</span>
+                        <span class="transfer-current-stay-value" id="transfer_order_current_bed_text">--</span>
+                    </div>
+
+                    <div class="form-group transfer-order-form-group">
+                        <label class="form-label" for="transfer_order_doctor_name">Ordering Attending Physician <span class="text-danger">*</span></label>
+                        <div class="input-lookup-group">
+                            <input type="hidden" id="transfer_order_doctor_id" name="doctor_id">
+                            <input type="text" id="transfer_order_doctor_name" name="doctor_display" class="form-control form-control-lookup" placeholder="Select Attending Physician..." readonly required>
+                            <button type="button" class="btn btn-secondary btn-nowrap" id="btnBrowseTransferOrderDoctor">Select</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group transfer-order-form-group">
+                        <label class="form-label" for="transfer_order_room_type_id">Target Room Classification <span class="text-danger">*</span></label>
+                        <select id="transfer_order_room_type_id" name="target_room_type_id" class="form-select" aria-describedby="transfer_order_room_type_help">
+                            <option value="0">Any Available Room Classification (Nurse Station Triage)</option>
+                        </select>
+                        <small id="transfer_order_room_type_help" class="form-text text-muted transfer-field-hint">Select a specific accommodation tier (e.g., ICU, Private Room, Ward) or allow Nurse Station triage across any vacant bed.</small>
+                    </div>
+
+                    <div class="form-group transfer-order-form-group">
+                        <label class="form-label" for="transfer_order_reason">Clinical Reason &amp; Transfer Instructions <span class="text-danger">*</span></label>
+                        <textarea id="transfer_order_reason" name="clinical_reason" class="form-control" rows="3" required aria-describedby="transfer_order_reason_help" placeholder="e.g. Step-down from ICU to Private Room following hemodynamic stabilization; continue telemetry monitoring..."></textarea>
+                        <small id="transfer_order_reason_help" class="form-text text-muted transfer-field-hint">Shown immediately to Head Nurse, Bedside Nurses, and Ward Clerks when selecting the target bed.</small>
+                    </div>
+                </div>
+                <div class="modal-footer transfer-order-modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelTransferOrderModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnConfirmTransferOrder">Issue Bed Transfer Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=21.0"></script>
-    <script src="../js/common.js?v=21.1"></script>
-    <script src="../js/admission_details.js?v=21.0"></script>
+    <script src="../js/common.js?v=21.2"></script>
+    <script src="../js/admission_details.js?v=21.2"></script>
 </body>
 </html>
 

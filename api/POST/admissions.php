@@ -4,6 +4,27 @@ header("Access-Control-Allow-Origin: *");
 
 class AdmissionManager
 {
+    private function ensureBedTransferOrderTable($conn)
+    {
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS Bed_Transfer_Order (
+                Transfer_Order_ID INT(11) NOT NULL AUTO_INCREMENT,
+                Admission_ID INT(11) NOT NULL,
+                Doctor_ID INT(11) NOT NULL,
+                Ordered_By_User_ID INT(11) DEFAULT NULL,
+                Target_Room_Type_ID INT(11) DEFAULT NULL,
+                Clinical_Reason TEXT NOT NULL,
+                Status ENUM('Pending', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Pending',
+                Fulfilled_By_User_ID INT(11) DEFAULT NULL,
+                Fulfilled_Transfer_ID INT(11) DEFAULT NULL,
+                Created_At DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                Fulfilled_At DATETIME DEFAULT NULL,
+                PRIMARY KEY (Transfer_Order_ID),
+                KEY idx_bto_admission (Admission_ID, Status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+    }
+
     function admitPatient($json = '{}')
     {
         include "connection.php";
@@ -93,39 +114,343 @@ class AdmissionManager
         }
     }
 
-    function transferBed($json = '{}')
+    function orderBedTransfer($json = '{}')
     {
         include "connection.php";
+        $this->ensureBedTransferOrderTable($conn);
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
         $userId = intval($json['user_id'] ?? 0);
         $doctorId = intval($json['doctor_id'] ?? 0);
-        if ($userId > 0 && empty($doctorId)) {
-            $docStmt = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1 LIMIT 1");
-            $docStmt->execute([':uid' => $userId]);
-            $foundDoc = $docStmt->fetchColumn();
-            if ($foundDoc) {
-                $doctorId = intval($foundDoc);
+        $targetRoomTypeId = intval($json['target_room_type_id'] ?? 0);
+        $clinicalReason = trim($json['clinical_reason'] ?? '');
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+        if ($clinicalReason === '') {
+            return json_encode(['error' => 'Please enter the clinical reason or instructions for the bed transfer order.']);
+        }
+
+        $isCallerAdmin = false;
+        if ($userId > 0) {
+            $uStmt = $conn->prepare("
+                SELECT u.Role_ID, r.Role_Name, d.Doctor_ID
+                FROM System_User u
+                INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                LEFT JOIN Doctor d ON d.User_ID = u.User_ID AND d.Is_Active = 1
+                WHERE u.User_ID = :uid
+                LIMIT 1
+            ");
+            $uStmt->execute([':uid' => $userId]);
+            $uRow = $uStmt->fetch(PDO::FETCH_ASSOC);
+            if ($uRow) {
+                $isCallerAdmin = (intval($uRow['Role_ID']) === 1 || strtolower(trim($uRow['Role_Name'] ?? '')) === 'admin');
+                $linkedDocId = intval($uRow['Doctor_ID'] ?? 0);
+                if (!$isCallerAdmin && $linkedDocId <= 0) {
+                    return json_encode(['error' => 'Clinical Protocol: Only an assigned attending physician (or System Administrator) can issue a Doctor Bed Transfer Order.']);
+                }
+                if (empty($doctorId) && $linkedDocId > 0) {
+                    $doctorId = $linkedDocId;
+                }
             }
         }
+
         if ($doctorId > 0) {
             $chkAssigned = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
             $chkAssigned->execute([':aid' => $admissionId, ':did' => $doctorId]);
             if (intval($chkAssigned->fetchColumn()) === 0) {
                 return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
             }
+        } else if ($isCallerAdmin) {
+            $firstDoc = $conn->prepare("SELECT Doctor_ID FROM Admission_Doctor WHERE Admission_ID = :aid ORDER BY Admission_Doctor_ID ASC LIMIT 1");
+            $firstDoc->execute([':aid' => $admissionId]);
+            $doctorId = intval($firstDoc->fetchColumn() ?: 0);
+            if (!$doctorId) {
+                return json_encode(['error' => 'Please select the attending physician ordering the bed transfer.']);
+            }
+        } else {
+            return json_encode(['error' => 'Please select the attending physician ordering the bed transfer.']);
         }
+
+        try {
+            $conn->beginTransaction();
+
+            $admCheck = $conn->prepare("
+                SELECT a.Status, CONCAT(p.First_Name, ' ', p.Last_Name) AS Full_Name,
+                       CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
+                       rb.Bed_Code, r.Room_Name
+                FROM Admission a
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                LEFT JOIN Room_Transfer_Log rtl ON rtl.Admission_ID = a.Admission_ID AND rtl.Date_Out IS NULL
+                LEFT JOIN Room_Bed rb ON rtl.Bed_ID = rb.Bed_ID
+                LEFT JOIN Room r ON rb.Room_ID = r.Room_ID
+                WHERE a.Admission_ID = :aid
+            ");
+            $admCheck->execute([':aid' => $admissionId]);
+            $admRow = $admCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$admRow) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Admission record not found.']);
+            }
+            if ($admRow['Status'] !== 'Admitted') {
+                $conn->rollBack();
+                return json_encode(['error' => 'Cannot issue bed transfer order: Patient is already discharged or billed.']);
+            }
+
+            $targetTypeLabel = 'Any Available Room Classification';
+            if ($targetRoomTypeId > 0) {
+                $rtStmt = $conn->prepare("SELECT Type_Name FROM Enum_Room_Type WHERE Room_Type_ID = :rtid");
+                $rtStmt->execute([':rtid' => $targetRoomTypeId]);
+                $foundType = $rtStmt->fetchColumn();
+                if ($foundType) {
+                    $targetTypeLabel = $foundType;
+                } else {
+                    $targetRoomTypeId = 0;
+                }
+            }
+
+            $existingStmt = $conn->prepare("SELECT Transfer_Order_ID FROM Bed_Transfer_Order WHERE Admission_ID = :aid AND Status = 'Pending' ORDER BY Transfer_Order_ID DESC LIMIT 1");
+            $existingStmt->execute([':aid' => $admissionId]);
+            $existingId = intval($existingStmt->fetchColumn() ?: 0);
+
+            if ($existingId > 0) {
+                $updOrd = $conn->prepare("
+                    UPDATE Bed_Transfer_Order
+                    SET Doctor_ID = :did,
+                        Ordered_By_User_ID = :uid,
+                        Target_Room_Type_ID = :rtid,
+                        Clinical_Reason = :reason,
+                        Created_At = NOW()
+                    WHERE Transfer_Order_ID = :oid
+                ");
+                $updOrd->execute([
+                    ':did' => $doctorId,
+                    ':uid' => $userId > 0 ? $userId : null,
+                    ':rtid' => $targetRoomTypeId > 0 ? $targetRoomTypeId : null,
+                    ':reason' => $clinicalReason,
+                    ':oid' => $existingId
+                ]);
+                $orderId = $existingId;
+            } else {
+                $insOrd = $conn->prepare("
+                    INSERT INTO Bed_Transfer_Order
+                        (Admission_ID, Doctor_ID, Ordered_By_User_ID, Target_Room_Type_ID, Clinical_Reason, Status, Created_At)
+                    VALUES
+                        (:aid, :did, :uid, :rtid, :reason, 'Pending', NOW())
+                ");
+                $insOrd->execute([
+                    ':aid' => $admissionId,
+                    ':did' => $doctorId,
+                    ':uid' => $userId > 0 ? $userId : null,
+                    ':rtid' => $targetRoomTypeId > 0 ? $targetRoomTypeId : null,
+                    ':reason' => $clinicalReason
+                ]);
+                $orderId = intval($conn->lastInsertId());
+            }
+
+            $docName = 'Attending Physician';
+            $dStmt = $conn->prepare("SELECT CONCAT('Dr. ', First_Name, ' ', Last_Name) FROM Doctor WHERE Doctor_ID = :did");
+            $dStmt->execute([':did' => $doctorId]);
+            $docName = $dStmt->fetchColumn() ?: $docName;
+
+            $patFullName = $admRow['Full_Name'] ?? 'In-Patient';
+            $admCode = $admRow['Admission_Code'] ?? ('ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT));
+            $fromBedStr = !empty($admRow['Bed_Code']) ? " from Bed {$admRow['Bed_Code']} ({$admRow['Room_Name']})" : "";
+            $ordCode = 'TRF-ORD-' . str_pad($orderId, 3, '0', STR_PAD_LEFT);
+
+            $nurseRolesStmt = $conn->query("
+                SELECT Role_ID
+                FROM Enum_User_Role
+                WHERE Role_ID != 1
+                  AND (
+                      (Access_Domain IN ('Clinical', 'Hybrid') AND Role_Name NOT LIKE '%Doctor%' AND Role_Name NOT LIKE '%Physician%')
+                      OR Role_Name LIKE '%Nurse%'
+                      OR Role_Name LIKE '%Ward Clerk%'
+                  )
+            ");
+            $nurseRoleIds = $nurseRolesStmt ? $nurseRolesStmt->fetchAll(PDO::FETCH_COLUMN) : [];
+
+            if (!empty($nurseRoleIds)) {
+                $notifStmt = $conn->prepare("
+                    INSERT INTO Clinical_Notification
+                        (Admission_ID, Request_ID, Sender_User_ID, Target_Role_ID, Target_Station_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                    VALUES
+                        (:aid, NULL, :sender, :rid, NULL, NULL, :title, :msg, 'Bed_Transfer_Ordered', 0, NOW())
+                ");
+                $notifTitle = "Bed Transfer Order ({$ordCode}): {$patFullName}";
+                $notifMsg = "{$docName} ordered a bed transfer for {$patFullName} ({$admCode}){$fromBedStr} to {$targetTypeLabel}. Reason: {$clinicalReason}";
+                foreach ($nurseRoleIds as $nRid) {
+                    $notifStmt->execute([
+                        ':aid' => $admissionId,
+                        ':sender' => $userId > 0 ? $userId : null,
+                        ':rid' => intval($nRid),
+                        ':title' => $notifTitle,
+                        ':msg' => $notifMsg
+                    ]);
+                }
+            }
+
+            $conn->commit();
+            return json_encode([
+                'success' => true,
+                'order_id' => $orderId,
+                'message' => "Bed Transfer Order ({$ordCode}) issued by {$docName} and dispatched to Nurse Station (Head Nurse, Nurses & Ward Clerks) for bed assignment."
+            ]);
+        } catch (Exception $e) {
+            $conn->rollBack();
+            return json_encode(['error' => 'Failed to issue bed transfer order: ' . $e->getMessage()]);
+        }
+    }
+
+    function cancelBedTransferOrder($json = '{}')
+    {
+        include "connection.php";
+        $this->ensureBedTransferOrderTable($conn);
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
+
+        if (empty($admissionId)) {
+            return json_encode(['error' => 'Admission ID is required.']);
+        }
+
+        if ($userId > 0) {
+            $uStmt = $conn->prepare("
+                SELECT u.Role_ID, r.Role_Name, d.Doctor_ID
+                FROM System_User u
+                INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                LEFT JOIN Doctor d ON d.User_ID = u.User_ID AND d.Is_Active = 1
+                WHERE u.User_ID = :uid
+                LIMIT 1
+            ");
+            $uStmt->execute([':uid' => $userId]);
+            $uRow = $uStmt->fetch(PDO::FETCH_ASSOC);
+            if ($uRow) {
+                $isAdmin = intval($uRow['Role_ID']) === 1 || strtolower($uRow['Role_Name'] ?? '') === 'admin';
+                $docId = intval($uRow['Doctor_ID'] ?? 0);
+                if (!$isAdmin) {
+                    if ($docId <= 0) {
+                        return json_encode(['error' => 'Only the attending physician or System Administrator can cancel a Doctor Bed Transfer Order.']);
+                    }
+                    $chkAssigned = $conn->prepare("SELECT COUNT(*) FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did");
+                    $chkAssigned->execute([':aid' => $admissionId, ':did' => $docId]);
+                    if (intval($chkAssigned->fetchColumn()) === 0) {
+                        return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
+                    }
+                }
+            }
+        }
+
+        try {
+            $upd = $conn->prepare("UPDATE Bed_Transfer_Order SET Status = 'Cancelled' WHERE Admission_ID = :aid AND Status = 'Pending'");
+            $upd->execute([':aid' => $admissionId]);
+            if ($upd->rowCount() === 0) {
+                return json_encode(['error' => 'No active pending bed transfer order found to cancel.']);
+            }
+            return json_encode([
+                'success' => true,
+                'message' => 'Pending Doctor Bed Transfer Order has been cancelled.'
+            ]);
+        } catch (Exception $e) {
+            return json_encode(['error' => 'Failed to cancel transfer order: ' . $e->getMessage()]);
+        }
+    }
+
+    function transferBed($json = '{}')
+    {
+        include "connection.php";
+        $this->ensureBedTransferOrderTable($conn);
+
+        $json = is_array($json) ? $json : json_decode($json, true);
+        $admissionId = intval($json['admission_id'] ?? 0);
+        $userId = intval($json['user_id'] ?? 0);
         $newBedId = intval($json['new_bed_id'] ?? 0);
 
         if (empty($admissionId) || empty($newBedId)) {
             return json_encode(['error' => 'Admission ID and Target Bed are required.']);
         }
 
+        $isSystemAdmin = false;
+        $staffDisplayName = 'Nurse Station Staff';
+
+        if ($userId > 0) {
+            $callerStmt = $conn->prepare("
+                SELECT u.User_ID, CONCAT(u.First_Name, ' ', u.Last_Name) AS Staff_Name,
+                       u.Role_ID, r.Role_Name, r.Access_Domain,
+                       d.Doctor_ID
+                FROM System_User u
+                INNER JOIN Enum_User_Role r ON u.Role_ID = r.Role_ID
+                LEFT JOIN Doctor d ON d.User_ID = u.User_ID AND d.Is_Active = 1
+                WHERE u.User_ID = :uid
+                LIMIT 1
+            ");
+            $callerStmt->execute([':uid' => $userId]);
+            $caller = $callerStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($caller) {
+                $roleId = intval($caller['Role_ID'] ?? 0);
+                $roleName = strtolower(trim($caller['Role_Name'] ?? ''));
+                $domain = strtolower(trim($caller['Access_Domain'] ?? ''));
+                $docId = intval($caller['Doctor_ID'] ?? 0);
+                $isSystemAdmin = ($roleId === 1 || $roleName === 'admin');
+                $staffDisplayName = trim($caller['Staff_Name'] ?? '') ?: 'Nurse Station Staff';
+
+                if (!$isSystemAdmin) {
+                    if ($docId > 0 || strpos($roleName, 'doctor') !== false || strpos($roleName, 'physician') !== false) {
+                        return json_encode(['error' => 'Clinical Protocol: Attending physicians issue a Bed Transfer Order, and Nurse Station staff (Head Nurse, Nurses & Ward Clerks) select the vacant bed and execute the transfer.']);
+                    }
+                    if ($domain === 'finance') {
+                        return json_encode(['error' => 'Separation of Duties: Finance staff cannot transfer patient beds.']);
+                    }
+                }
+            }
+        }
+
         try {
             $conn->beginTransaction();
 
-            $targetBedStmt = $conn->prepare("SELECT Is_Available FROM Room_Bed WHERE Bed_ID = :bid");
+            $admStatusStmt = $conn->prepare("
+                SELECT a.Status, CONCAT(p.First_Name, ' ', p.Last_Name) AS Full_Name,
+                       CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code
+                FROM Admission a
+                INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
+                WHERE a.Admission_ID = :aid
+            ");
+            $admStatusStmt->execute([':aid' => $admissionId]);
+            $admRow = $admStatusStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$admRow || $admRow['Status'] !== 'Admitted') {
+                $conn->rollBack();
+                return json_encode(['error' => 'Cannot transfer bed: Patient admission is no longer active.']);
+            }
+
+            $pendingStmt = $conn->prepare("
+                SELECT bto.Transfer_Order_ID, bto.Doctor_ID, bto.Ordered_By_User_ID, d.User_ID AS Doctor_User_ID
+                FROM Bed_Transfer_Order bto
+                LEFT JOIN Doctor d ON bto.Doctor_ID = d.Doctor_ID
+                WHERE bto.Admission_ID = :aid AND bto.Status = 'Pending'
+                ORDER BY bto.Transfer_Order_ID DESC
+                LIMIT 1
+            ");
+            $pendingStmt->execute([':aid' => $admissionId]);
+            $pendingOrder = $pendingStmt->fetch(PDO::FETCH_ASSOC);
+
+            $adminOverride = !empty($json['admin_override']) && $isSystemAdmin;
+            if (!$pendingOrder && !$adminOverride) {
+                $conn->rollBack();
+                return json_encode(['error' => "Doctor Transfer Order Required: An attending physician must first issue a Bed Transfer Order before Nurse Station staff can move this patient's bed."]);
+            }
+
+            $targetBedStmt = $conn->prepare("
+                SELECT rb.Is_Available, rb.Bed_Code, r.Room_Name, rt.Type_Name AS Room_Type
+                FROM Room_Bed rb
+                INNER JOIN Room r ON rb.Room_ID = r.Room_ID
+                INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
+                WHERE rb.Bed_ID = :bid
+            ");
             $targetBedStmt->execute([':bid' => $newBedId]);
             $targetBed = $targetBedStmt->fetch(PDO::FETCH_ASSOC);
             if (!$targetBed || !$targetBed['Is_Available']) {
@@ -201,14 +526,50 @@ class AdmissionManager
                 ':aid' => $admissionId,
                 ':bid' => $newBedId
             ]);
+            $newTransferId = intval($conn->lastInsertId());
 
             $occupyBedStmt = $conn->prepare("UPDATE Room_Bed SET Is_Available = 0 WHERE Bed_ID = :bid");
             $occupyBedStmt->execute([':bid' => $newBedId]);
 
+            if ($pendingOrder) {
+                $fulfillStmt = $conn->prepare("
+                    UPDATE Bed_Transfer_Order
+                    SET Status = 'Completed',
+                        Fulfilled_By_User_ID = :uid,
+                        Fulfilled_Transfer_ID = :tid,
+                        Fulfilled_At = NOW()
+                    WHERE Transfer_Order_ID = :oid
+                ");
+                $fulfillStmt->execute([
+                    ':uid' => $userId > 0 ? $userId : null,
+                    ':tid' => $newTransferId,
+                    ':oid' => $pendingOrder['Transfer_Order_ID']
+                ]);
+
+                $targetDocUserId = intval($pendingOrder['Doctor_User_ID'] ?: ($pendingOrder['Ordered_By_User_ID'] ?? 0));
+                if ($targetDocUserId > 0 && $targetDocUserId !== $userId) {
+                    $patFullName = $admRow['Full_Name'] ?? 'In-Patient';
+                    $admCode = $admRow['Admission_Code'] ?? ('ADM-' . str_pad($admissionId, 3, '0', STR_PAD_LEFT));
+                    $docNotifStmt = $conn->prepare("
+                        INSERT INTO Clinical_Notification
+                            (Admission_ID, Request_ID, Sender_User_ID, Target_Role_ID, Target_Station_ID, Target_User_ID, Title, Message, Notification_Type, Is_Read, Created_At)
+                        VALUES
+                            (:aid, NULL, :sender, NULL, NULL, :tuid, :title, :msg, 'Bed_Transfer_Completed', 0, NOW())
+                    ");
+                    $docNotifStmt->execute([
+                        ':aid' => $admissionId,
+                        ':sender' => $userId > 0 ? $userId : null,
+                        ':tuid' => $targetDocUserId,
+                        ':title' => "Bed Transfer Completed: {$patFullName}",
+                        ':msg' => "{$staffDisplayName} transferred {$patFullName} ({$admCode}) into Bed {$targetBed['Bed_Code']} ({$targetBed['Room_Name']} - {$targetBed['Room_Type']})."
+                    ]);
+                }
+            }
+
             $conn->commit();
             return json_encode([
                 'success' => true,
-                'message' => "Bed transfer completed. Board & lodging charge of ₱" . number_format($totalRoomFee, 2) . " posted for {$totalDays} day(s) in previous bed ({$currentStay['Bed_Code']})."
+                'message' => "Bed transfer completed to Bed {$targetBed['Bed_Code']} ({$targetBed['Room_Name']}). Board & lodging charge of ₱" . number_format($totalRoomFee, 2) . " posted for {$totalDays} day(s) in previous bed ({$currentStay['Bed_Code']})."
             ]);
 
         } catch (Exception $e) {
@@ -325,6 +686,10 @@ class AdmissionManager
                 $freeBed = $conn->prepare("UPDATE Room_Bed SET Is_Available = 1 WHERE Bed_ID = :bid");
                 $freeBed->execute([':bid' => $currentStay['Bed_ID']]);
             }
+
+            $this->ensureBedTransferOrderTable($conn);
+            $cancelPendingTransfer = $conn->prepare("UPDATE Bed_Transfer_Order SET Status = 'Cancelled' WHERE Admission_ID = :aid AND Status = 'Pending'");
+            $cancelPendingTransfer->execute([':aid' => $admissionId]);
 
             $admStmt = $conn->prepare("UPDATE Admission SET Status = 'Discharged', Access_Passcode = NULL WHERE Admission_ID = :aid");
             $admStmt->execute([':aid' => $admissionId]);
@@ -581,6 +946,12 @@ switch ($operation) {
         break;
     case 'transferBed':
         echo $admission->transferBed($json);
+        break;
+    case 'orderBedTransfer':
+        echo $admission->orderBedTransfer($json);
+        break;
+    case 'cancelBedTransferOrder':
+        echo $admission->cancelBedTransferOrder($json);
         break;
     case 'dischargePatient':
         echo $admission->dischargePatient($json);

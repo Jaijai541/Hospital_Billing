@@ -234,6 +234,7 @@ const applyGlobalActionPermissions = () => {
         "#btnOpenAddRoomTypeModal",
         "#btnOpenOrderModal",
         "#btnOpenRoundModal",
+        "#btnOpenTransferOrderModal",
         "#btnOpenTransferModal",
         "#btnOpenReturnModal",
         "#btnOpenReturnModalPharmacy",
@@ -254,6 +255,7 @@ const applyGlobalActionPermissions = () => {
     if (!userCanAdd) {
         addSelectors.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
+                if (el.dataset.roleHidden === "true") return;
                 el.disabled = true;
                 el.setAttribute("title", "Access Restricted: Your assigned user role does not have authorization to add records in this module.");
                 el.classList.add("btn-permission-disabled");
@@ -279,9 +281,12 @@ const applyGlobalActionPermissions = () => {
     } else {
         addSelectors.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
-                el.disabled = false;
-                el.removeAttribute("title");
-                el.classList.remove("btn-permission-disabled");
+                if (el.dataset.roleHidden === "true") return;
+                if (el.classList.contains("btn-permission-disabled")) {
+                    el.disabled = false;
+                    el.removeAttribute("title");
+                    el.classList.remove("btn-permission-disabled");
+                }
                 if (el.style.display === "none") {
                     el.style.display = "";
                 }
@@ -2853,6 +2858,41 @@ const playClinicalChime = () => {
     } catch (e) {}
 };
 
+const navigateNotificationTarget = (targetHref, notifId) => {
+    const parsedId = parseInt(notifId, 10);
+    if (parsedId > 0) {
+        const fd = new FormData();
+        fd.append("operation", "markNotificationRead");
+        fd.append("json", JSON.stringify({ notification_id: parsedId }));
+        axios.post("../api/POST/clinical_orders.php", fd).then(() => {
+            fetchRealtimeNotifications();
+        }).catch(() => {});
+    }
+    const notifModal = document.getElementById("clinicalNotifModal");
+    if (notifModal && notifModal.style.display === "flex") {
+        closeModal("clinicalNotifModal");
+    }
+    try {
+        const resolved = new URL(targetHref, window.location.href);
+        if (resolved.pathname === window.location.pathname && resolved.search === window.location.search && resolved.hash) {
+            window.location.hash = resolved.hash;
+            if (typeof window.switchClinicalTab === "function") {
+                window.switchClinicalTab(resolved.hash.replace("#", ""));
+            }
+            if (typeof loadAdmissionDetails === "function") {
+                loadAdmissionDetails();
+            }
+            return;
+        }
+    } catch (e) {}
+    window.location.href = targetHref;
+};
+
+window.handleNotifActionClick = (event, notifId, targetHref) => {
+    if (event) event.preventDefault();
+    navigateNotificationTarget(targetHref, notifId);
+};
+
 const showClinicalToastAlert = (n) => {
     if (localStorage.getItem("clinical_toasts_disabled") === "true") return;
     const notifId = parseInt(n?.Notification_ID, 10);
@@ -2868,12 +2908,44 @@ const showClinicalToastAlert = (n) => {
     }
 
     const isDischargeNotif = n.Notification_Type === "Medical_Discharge_Ordered";
+    const isTransferOrderNotif = n.Notification_Type === "Bed_Transfer_Ordered";
+    const isTransferDoneNotif = n.Notification_Type === "Bed_Transfer_Completed";
+    const toastBadgeLabel = isDischargeNotif
+        ? "Billing Clearance Alert"
+        : isTransferOrderNotif
+            ? "Bed Transfer Order"
+            : isTransferDoneNotif
+                ? "Bed Transfer Completed"
+                : "Clinical Alert";
+    const secondaryBtnLabel = isDischargeNotif
+        ? "Invoices Queue"
+        : (isTransferOrderNotif || isTransferDoneNotif)
+            ? "Patient Chart"
+            : "Open Chart";
+    const primaryBtnLabel = isDischargeNotif
+        ? "Billing Clearance &rarr;"
+        : isTransferOrderNotif
+            ? "Execute Bed Transfer &rarr;"
+            : isTransferDoneNotif
+                ? "View Bed Stays &rarr;"
+                : "Department Queue &rarr;";
+    const chartTargetHref = isDischargeNotif
+        ? "invoices.html"
+        : (isTransferOrderNotif || isTransferDoneNotif)
+            ? `admission_details.html?id=${n.Admission_ID}`
+            : `admission_details.html?id=${n.Admission_ID}&sub=sub-orders&request_id=${n.Request_ID || ''}`;
+    const queueTargetHref = isDischargeNotif
+        ? `admission_details.html?id=${n.Admission_ID}#tab-settlement`
+        : (isTransferOrderNotif || isTransferDoneNotif)
+            ? `admission_details.html?id=${n.Admission_ID}#tab-stays`
+            : `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+
     const toast = document.createElement("div");
     toast.className = "clinical-toast-card";
     toast.innerHTML = `
         <div class="clinical-toast-inner">
             <div class="clinical-toast-header">
-                <span class="clinical-toast-badge">${isDischargeNotif ? "Billing Clearance Alert" : "Clinical Alert"}</span>
+                <span class="clinical-toast-badge">${toastBadgeLabel}</span>
                 <button type="button" class="clinical-toast-close" aria-label="Close notification">&times;</button>
             </div>
             <div class="clinical-toast-title">${n.Title || "Clinical Order Alert"}</div>
@@ -2882,8 +2954,8 @@ const showClinicalToastAlert = (n) => {
                 <span class="clinical-toast-time">${n.Formatted_Time || "Just now"}</span>
                 <div class="clinical-toast-footer-actions">
                     <button type="button" class="btn btn-secondary clinical-toast-btn btn-toast-disable">Disable Toasts</button>
-                    <button type="button" class="btn btn-outline clinical-toast-btn btn-toast-chart">${isDischargeNotif ? "Invoices Queue" : "Open Chart"}</button>
-                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-queue">${isDischargeNotif ? "Billing Clearance &rarr;" : "Department Queue &rarr;"}</button>
+                    <button type="button" class="btn btn-outline clinical-toast-btn btn-toast-chart">${secondaryBtnLabel}</button>
+                    <button type="button" class="btn btn-primary clinical-toast-btn btn-toast-queue">${primaryBtnLabel}</button>
                 </div>
             </div>
         </div>
@@ -2894,18 +2966,14 @@ const showClinicalToastAlert = (n) => {
     if (btnChart) {
         btnChart.addEventListener("click", () => {
             toast.remove();
-            window.location.href = isDischargeNotif
-                ? "invoices.html"
-                : `admission_details.html?id=${n.Admission_ID}&sub=sub-orders&request_id=${n.Request_ID || ''}`;
+            navigateNotificationTarget(chartTargetHref, notifId);
         });
     }
     const btnQueue = toast.querySelector(".btn-toast-queue");
     if (btnQueue) {
         btnQueue.addEventListener("click", () => {
             toast.remove();
-            window.location.href = isDischargeNotif
-                ? `admission_details.html?id=${n.Admission_ID}#tab-settlement`
-                : `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+            navigateNotificationTarget(queueTargetHref, notifId);
         });
     }
 
@@ -3015,13 +3083,35 @@ const fetchRealtimeNotifications = () => {
                 else if (n.Notification_Type === "Order_Delivering") typeBadge = '<span class="badge-process badge-process-delivering">Out for Delivery</span>';
                 else if (n.Notification_Type === "Order_Administered") typeBadge = '<span class="badge-process badge-process-administered">Administered</span>';
                 else if (n.Notification_Type === "Medical_Discharge_Ordered") typeBadge = '<span class="badge badge-success">Medical Discharge</span>';
+                else if (n.Notification_Type === "Bed_Transfer_Ordered") typeBadge = '<span class="badge badge-warning">Bed Transfer Order</span>';
+                else if (n.Notification_Type === "Bed_Transfer_Completed") typeBadge = '<span class="badge badge-success">Transfer Completed</span>';
 
                 const isDischargeNotif = n.Notification_Type === "Medical_Discharge_Ordered";
+                const isTransferOrderNotif = n.Notification_Type === "Bed_Transfer_Ordered";
+                const isTransferDoneNotif = n.Notification_Type === "Bed_Transfer_Completed";
                 const reqParam = n.Request_ID ? `&request_id=${n.Request_ID}` : '';
-                const chartLink = isDischargeNotif ? "invoices.html" : `admission_details.html?id=${n.Admission_ID}&sub=sub-orders${reqParam}`;
-                const queueLink = isDischargeNotif ? `admission_details.html?id=${n.Admission_ID}#tab-settlement` : `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
-                const secondaryLabel = isDischargeNotif ? "Invoices Queue" : "Open Chart";
-                const primaryLabel = isDischargeNotif ? "Billing Clearance &rarr;" : "Department Queue &rarr;";
+                const chartLink = isDischargeNotif
+                    ? "invoices.html"
+                    : (isTransferOrderNotif || isTransferDoneNotif)
+                        ? `admission_details.html?id=${n.Admission_ID}`
+                        : `admission_details.html?id=${n.Admission_ID}&sub=sub-orders${reqParam}`;
+                const queueLink = isDischargeNotif
+                    ? `admission_details.html?id=${n.Admission_ID}#tab-settlement`
+                    : (isTransferOrderNotif || isTransferDoneNotif)
+                        ? `admission_details.html?id=${n.Admission_ID}#tab-stays`
+                        : `department_orders.html?station_id=${n.Target_Station_ID || ''}&request_id=${n.Request_ID || ''}`;
+                const secondaryLabel = isDischargeNotif
+                    ? "Invoices Queue"
+                    : (isTransferOrderNotif || isTransferDoneNotif)
+                        ? "Patient Chart"
+                        : "Open Chart";
+                const primaryLabel = isDischargeNotif
+                    ? "Billing Clearance &rarr;"
+                    : isTransferOrderNotif
+                        ? "Execute Bed Transfer &rarr;"
+                        : isTransferDoneNotif
+                            ? "View Bed Stays &rarr;"
+                            : "Department Queue &rarr;";
 
                 html += `
                     <div class="notif-item-card ${unreadClass}" id="notif-card-${n.Notification_ID}" data-notif-id="${n.Notification_ID}">

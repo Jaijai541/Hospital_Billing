@@ -40,40 +40,52 @@ const renderTrackingStepper = (o) => {
     const isScan = (o.Category_Type === 'Equipment Scan' || o.Category_Type === 'Service');
     const stage = getOrderProcessStage(o.Status);
 
+    if (stage === 'cancelled') {
+        const isAdmDischarged = (o.Admission_Status === 'Discharged' || o.Admission_Status === 'Billed');
+        if (isAdmDischarged) {
+            return '<span class="badge badge-process badge-process-cancelled-settled" title="Cancelled upon discharge; excluded from billing">Cancelled • Bill Settled</span>';
+        }
+        return '<span class="badge badge-process badge-process-cancelled">Order Cancelled</span>';
+    }
+
     const step1Title = 'Requested';
     const step2Title = isScan ? 'Calibrating' : 'Preparing';
     const step3Title = 'Ready';
     const step4Title = isScan ? 'Escorting' : 'Delivering';
     const step5Title = isScan ? 'Scanned' : 'Administered';
 
-    let s1State = 'is-complete';
-    let s2State = '';
-    let s3State = '';
-    let s4State = '';
-    let s5State = '';
+    let activeStepNum = 1;
+    let seg1Class = 'is-complete';
+    let seg2Class = '';
+    let seg3Class = '';
+    let seg4Class = '';
+    let seg5Class = '';
 
     if (stage === 'requested') {
-        s1State = 'is-active step-requested';
+        activeStepNum = 1;
+        seg1Class = 'is-active step-requested';
     } else if (stage === 'preparing') {
-        s1State = 'is-complete';
-        s2State = 'is-active step-preparing';
+        activeStepNum = 2;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-active step-preparing';
     } else if (stage === 'prepared') {
-        s1State = 'is-complete';
-        s2State = 'is-complete';
-        s3State = 'is-active step-prepared';
+        activeStepNum = 3;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-complete';
+        seg3Class = 'is-active step-prepared';
     } else if (stage === 'delivering') {
-        s1State = 'is-complete';
-        s2State = 'is-complete';
-        s3State = 'is-complete';
-        s4State = 'is-active step-delivering';
+        activeStepNum = 4;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-complete';
+        seg3Class = 'is-complete';
+        seg4Class = 'is-active step-delivering';
     } else if (stage === 'administered') {
-        s1State = 'is-complete';
-        s2State = 'is-complete';
-        s3State = 'is-complete';
-        s4State = 'is-complete';
-        s5State = 'is-complete step-administered is-active';
-    } else if (stage === 'cancelled') {
-        return '<span class="badge badge-process badge-process-cancelled">Order Cancelled</span>';
+        activeStepNum = 5;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-complete';
+        seg3Class = 'is-complete';
+        seg4Class = 'is-complete';
+        seg5Class = 'is-complete step-administered is-active';
     }
 
     let badgeClass = 'badge-process-requested';
@@ -94,41 +106,29 @@ const renderTrackingStepper = (o) => {
 
     let trackerMeta = '';
     if (stage === 'requested') {
-        trackerMeta = `Awaiting ${o.Target_Station_Name || 'Department'} to start preparation`;
+        trackerMeta = `Awaiting ${o.Target_Station_Name || 'Department'} to start`;
     } else if (stage === 'preparing') {
-        trackerMeta = `${o.Prepared_By_Name ? o.Prepared_By_Name : 'Staff'} preparing in ${o.Target_Station_Name || 'Department'}`;
+        trackerMeta = `${o.Prepared_By_Name ? o.Prepared_By_Name : 'Staff'} preparing in ${o.Target_Station_Name || 'Dept'}`;
     } else if (stage === 'prepared') {
-        trackerMeta = o.Assigned_Nurse_Name ? `Assigned to Nurse: <strong>${o.Assigned_Nurse_Name}</strong>` : 'Ready for nurse pickup';
+        trackerMeta = o.Assigned_Nurse_Name ? `Assigned: <strong>${o.Assigned_Nurse_Name}</strong>` : 'Ready for nurse pickup';
     } else if (stage === 'delivering') {
-        trackerMeta = isScan ? `Nurse ${o.Assigned_Nurse_Name || ''} escorting patient to ${o.Target_Station_Name || 'Suite'}` : `Nurse ${o.Assigned_Nurse_Name || ''} en route to patient`;
+        trackerMeta = isScan ? `Nurse ${o.Assigned_Nurse_Name || ''} escorting` : `Nurse ${o.Assigned_Nurse_Name || ''} en route`;
     } else if (stage === 'administered') {
-        trackerMeta = `Completed & Charged to Ledger by ${o.Administered_By_Name || 'Clinical Staff'}`;
+        trackerMeta = `Completed by ${o.Administered_By_Name || 'Clinical Staff'}`;
     }
 
     return `
         <div class="order-tracking-cell">
-            <div><span class="badge-process ${badgeClass}">${badgeText}</span></div>
-            <div class="tracking-stepper">
-                <div class="tracking-step ${s1State}">
-                    <div class="tracking-node" title="Doctor Order Placed">1</div>
-                    <div class="tracking-label">${step1Title}</div>
-                </div>
-                <div class="tracking-step ${s2State}">
-                    <div class="tracking-node" title="Department Prepares Item / Scan Room">2</div>
-                    <div class="tracking-label">${step2Title}</div>
-                </div>
-                <div class="tracking-step ${s3State}">
-                    <div class="tracking-node" title="Ready / Active Nurse Assigned">3</div>
-                    <div class="tracking-label">${step3Title}</div>
-                </div>
-                <div class="tracking-step ${s4State}">
-                    <div class="tracking-node" title="Nurse Picked Up / Patient In Transit">4</div>
-                    <div class="tracking-label">${step4Title}</div>
-                </div>
-                <div class="tracking-step ${s5State}">
-                    <div class="tracking-node" title="Delivered & Administered">5</div>
-                    <div class="tracking-label">${step5Title}</div>
-                </div>
+            <div class="tracking-status-row">
+                <span class="badge-process ${badgeClass}">${badgeText}</span>
+                <span class="tracking-step-counter">Step ${activeStepNum}/5</span>
+            </div>
+            <div class="micro-stepper-bar" role="progressbar" aria-valuenow="${activeStepNum}" aria-valuemin="1" aria-valuemax="5" title="Stage: ${badgeText}">
+                <div class="micro-step-segment ${seg1Class}" title="1. ${step1Title}"></div>
+                <div class="micro-step-segment ${seg2Class}" title="2. ${step2Title}"></div>
+                <div class="micro-step-segment ${seg3Class}" title="3. ${step3Title}"></div>
+                <div class="micro-step-segment ${seg4Class}" title="4. ${step4Title}"></div>
+                <div class="micro-step-segment ${seg5Class}" title="5. ${step5Title}"></div>
             </div>
             <div class="tracking-meta-desc">${trackerMeta}</div>
         </div>
@@ -617,7 +617,7 @@ const updateStationButtonDisplay = (isHigherUp) => {
     if (!labelEl || !badgeEl) return;
 
     if (cachedAllStations.length > 0 && selectedStationIds.length === cachedAllStations.length) {
-        labelEl.innerHTML = `<span>🌟 All Stations</span>`;
+        labelEl.innerHTML = `<span>All Stations</span>`;
         badgeEl.textContent = `${cachedAllStations.length} Stations`;
         badgeEl.className = "badge badge-primary";
         if (textInput) textInput.value = "All Stations";
@@ -625,12 +625,12 @@ const updateStationButtonDisplay = (isHigherUp) => {
         const found = cachedAllStations.find(s => parseInt(s.Station_ID, 10) === selectedStationIds[0]);
         const name = found ? found.Station_Name : "Station";
         const icon = found ? getStationIcon(found.Station_Name, found.Code_Prefix) : "🏥";
-        labelEl.innerHTML = `<span>${icon} ${name}</span>`;
+        labelEl.innerHTML = `<span>${name}</span>`;
         badgeEl.textContent = "1 Station";
         badgeEl.className = "badge badge-info";
         if (textInput) textInput.value = name;
     } else {
-        labelEl.innerHTML = `<span>🏥 Multiple Stations</span>`;
+        labelEl.innerHTML = `<span>Multiple Stations</span>`;
         badgeEl.textContent = `${selectedStationIds.length} Stations`;
         badgeEl.className = "badge badge-info";
         if (textInput) textInput.value = `${selectedStationIds.length} Stations Selected`;
@@ -645,13 +645,13 @@ const updateStationChips = (isHigherUp) => {
     list.innerHTML = "";
 
     if (cachedAllStations.length > 0 && selectedStationIds.length === cachedAllStations.length) {
-        container.style.display = "flex";
-        list.innerHTML = `<span class="category-chip" style="background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8;">🌟 All ${cachedAllStations.length} Stations</span>`;
+        container.classList.remove("dept-tab-pane-hidden");
+        list.innerHTML = `<span class="category-chip chip-all-stations">All ${cachedAllStations.length} Stations</span>`;
         return;
     }
 
     if (selectedStationIds.length > 1) {
-        container.style.display = "flex";
+        container.classList.remove("dept-tab-pane-hidden");
         selectedStationIds.forEach(stId => {
             const st = cachedAllStations.find(s => parseInt(s.Station_ID, 10) === stId);
             if (!st) return;
@@ -674,7 +674,7 @@ const updateStationChips = (isHigherUp) => {
         return;
     }
 
-    container.style.display = "none";
+    container.classList.add("dept-tab-pane-hidden");
 };
 
 const removeStationFromView = (stId) => {

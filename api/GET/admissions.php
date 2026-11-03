@@ -359,7 +359,7 @@ class AdmissionManager
         return json_encode($admission);
     }
 
-    function getAvailableBeds()
+    function getAvailableBeds($json = '{}')
     {
         include "connection.php";
 
@@ -370,14 +370,20 @@ class AdmissionManager
                     r.Room_Name,
                     rt.Room_Type_ID,
                     rt.Type_Name AS Room_Type,
-                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
+                    COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
+                    b.Is_Available,
+                    curr_adm.Admission_ID AS Occupied_Admission_ID,
+                    CONCAT(p.First_Name, ' ', p.Last_Name) AS Occupied_Patient_Name,
+                    CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Occupied_Patient_Code
                 FROM Room_Bed b
                 INNER JOIN Room r ON b.Room_ID = r.Room_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
-                WHERE b.Is_Available = 1 
-                  AND b.Is_Active = 1 
+                LEFT JOIN Room_Transfer_Log rtl ON b.Bed_ID = rtl.Bed_ID AND rtl.Date_Out IS NULL
+                LEFT JOIN Admission curr_adm ON rtl.Admission_ID = curr_adm.Admission_ID AND curr_adm.Status = 'Admitted'
+                LEFT JOIN Patient p ON curr_adm.Patient_ID = p.Patient_ID
+                WHERE b.Is_Active = 1 
                   AND r.Is_Active = 1
-                ORDER BY r.Room_Name ASC, b.Bed_Code ASC";
+                ORDER BY b.Is_Available DESC, r.Room_Name ASC, b.Bed_Code ASC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -685,7 +691,7 @@ switch ($operation) {
         echo $admission->getPatientAdmissionHistory($json);
         break;
     case 'getAvailableBeds':
-        echo $admission->getAvailableBeds();
+        echo $admission->getAvailableBeds($json);
         break;
     case 'getActivePatients':
         echo $admission->getActivePatients();

@@ -11,12 +11,14 @@ class RoomMaster
         $json = json_decode($json, true);
         $capacity = max(1, intval($json['capacity'] ?? 1));
         $roomName = trim($json['room_name']);
+        $floorId = max(1, intval($json['floor_id'] ?? 1));
         $dailyRate = isset($json['daily_rate']) && $json['daily_rate'] !== '' ? floatval($json['daily_rate']) : null;
 
-        $sql = "INSERT INTO Room (Room_Name, Room_Type_ID, Capacity, Custom_Daily_Rate, Is_Active) 
-                VALUES (:name, :type_id, :capacity, :custom_rate, 1)";
+        $sql = "INSERT INTO Room (Room_Name, Floor_ID, Room_Type_ID, Capacity, Custom_Daily_Rate, Is_Active) 
+                VALUES (:name, :floor_id, :type_id, :capacity, :custom_rate, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $roomName);
+        $stmt->bindParam(":floor_id", $floorId);
         $stmt->bindParam(":type_id", $json['room_type_id']);
         $stmt->bindParam(":capacity", $capacity);
         $stmt->bindParam(":custom_rate", $dailyRate);
@@ -60,15 +62,18 @@ class RoomMaster
         include "connection.php";
 
         $json = json_decode($json, true);
+        $floorId = max(1, intval($json['floor_id'] ?? 1));
         $dailyRate = isset($json['daily_rate']) && $json['daily_rate'] !== '' ? floatval($json['daily_rate']) : null;
 
         $sql = "UPDATE Room 
                 SET Room_Name         = :name, 
+                    Floor_ID          = :floor_id,
                     Room_Type_ID      = :type_id, 
                     Custom_Daily_Rate = :custom_rate 
                 WHERE Room_ID         = :id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":name", $json['room_name']);
+        $stmt->bindParam(":floor_id", $floorId);
         $stmt->bindParam(":type_id", $json['room_type_id']);
         $stmt->bindParam(":custom_rate", $dailyRate);
         $stmt->bindParam(":id", $json['room_id']);

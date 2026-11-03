@@ -5,6 +5,8 @@ let allAdmissions = [];
 let availableBeds = [];
 let activePatients = [];
 let activeDoctors = [];
+let initialCatalogItems = [];
+let initialCharges = [];
 
 const openChart = (admissionId) => {
     console.log("admissions.js: Navigating to admission chart ID:", admissionId);
@@ -107,6 +109,7 @@ const loadDoctors = async () => {
         const response = await axios.post(`${getApiUrl}/admissions.php`, formData);
         if (response.data) {
             activeDoctors = response.data;
+            if (typeof updateDoctorsText === 'function') updateDoctorsText();
         }
     } catch (err) {
         console.error("admissions.js: Error fetching active doctors:", err);
@@ -148,6 +151,7 @@ const openBedPicker = async () => {
     const classifications = [...new Set(availableBeds.map(b => b.Room_Type).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
     const sortOptions = [
+        { value: "avail_first", label: "Available First" },
         { value: "classification_asc", label: "Classification (A–Z)" },
         { value: "classification_desc", label: "Classification (Z–A)" },
         { value: "rate_asc", label: "Rate (Low to High)" },
@@ -158,13 +162,17 @@ const openBedPicker = async () => {
     ];
 
     const filterOptions = [
-        { value: "all", label: "All Classifications" },
+        { value: "all", label: "All Beds (Available & Occupied)" },
+        { value: "available_only", label: "Available Beds Only" },
+        { value: "occupied_only", label: "Occupied Beds Only" },
         ...classifications.map(c => ({ value: `type_${c}`, label: c })),
         { value: "selected", label: "Selected Bed" }
     ];
 
     const customFilter = (item, filterVal, selectedId) => {
         if (filterVal === "all") return true;
+        if (filterVal === "available_only") return item.isAvailable === true;
+        if (filterVal === "occupied_only") return item.isAvailable === false;
         if (filterVal === "selected") return String(item.id) === String(selectedId);
         if (filterVal.startsWith("type_")) {
             const targetType = filterVal.replace("type_", "");
@@ -175,7 +183,16 @@ const openBedPicker = async () => {
 
     const customSort = (list, sortVal, selectedId) => {
         const arr = [...list];
-        if (sortVal === "classification_asc") {
+        if (sortVal === "avail_first") {
+            arr.sort((a, b) => {
+                const aAvail = a.isAvailable ? 1 : 0;
+                const bAvail = b.isAvailable ? 1 : 0;
+                if (aAvail !== bAvail) return bAvail - aAvail;
+                const comp = (a.classification || "").localeCompare(b.classification || "");
+                if (comp !== 0) return comp;
+                return (a.bedCode || "").localeCompare(b.bedCode || "", undefined, { numeric: true, sensitivity: "base" });
+            });
+        } else if (sortVal === "classification_asc") {
             arr.sort((a, b) => {
                 const comp = (a.classification || "").localeCompare(b.classification || "");
                 if (comp !== 0) return comp;
@@ -218,20 +235,28 @@ const openBedPicker = async () => {
 
     openGenericLookupPicker({
         title: "Assign Vacant Bed",
-        items: availableBeds.map(b => ({
-            id: b.Bed_ID,
-            text: `Bed ${b.Bed_Code} — ${b.Room_Name}`,
-            subtext: `Classification: ${b.Room_Type} | Board & Lodging: ₱${parseFloat(b.Daily_Rate || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`,
-            classification: b.Room_Type,
-            bedCode: b.Bed_Code,
-            roomName: b.Room_Name,
-            dailyRate: parseFloat(b.Daily_Rate || 0),
-            badge: b.Room_Type,
-            badgeClass: "badge-info"
-        })),
+        items: availableBeds.map(b => {
+            const isAvail = (parseInt(b.Is_Available, 10) === 1 && !b.Occupied_Admission_ID);
+            const occupiedInfo = !isAvail 
+                ? (b.Occupied_Patient_Name ? ` | Occupied by: ${b.Occupied_Patient_Name} (${b.Occupied_Patient_Code || ''})` : " | Currently Occupied") 
+                : "";
+            return {
+                id: b.Bed_ID,
+                text: `Bed ${b.Bed_Code} — ${b.Room_Name}`,
+                subtext: `Classification: ${b.Room_Type} | Board & Lodging: ₱${parseFloat(b.Daily_Rate || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day${occupiedInfo}`,
+                classification: b.Room_Type,
+                bedCode: b.Bed_Code,
+                roomName: b.Room_Name,
+                dailyRate: parseFloat(b.Daily_Rate || 0),
+                isAvailable: isAvail,
+                disabled: !isAvail,
+                badge: isAvail ? "Available" : "Occupied",
+                badgeClass: isAvail ? "badge-success" : "badge-danger"
+            };
+        }),
         sortOptions: sortOptions,
         filterOptions: filterOptions,
-        defaultSort: "classification_asc",
+        defaultSort: "avail_first",
         defaultFilter: "all",
         customSort: customSort,
         customFilter: customFilter,
@@ -256,9 +281,18 @@ const updateDoctorsText = () => {
         txt.value = "";
         return;
     }
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const names = selectedDoctorIds.map(id => {
         const d = activeDoctors.find(doc => String(doc.Doctor_ID) === String(id));
-        return d ? d.Full_Name : `Doctor #${id}`;
+        if (d) {
+            const isMe = curUser && curUser.doctor_id && String(d.Doctor_ID) === String(curUser.doctor_id);
+            return isMe ? `${d.Full_Name} (You)` : d.Full_Name;
+        }
+        if (curUser && curUser.doctor_id && String(curUser.doctor_id) === String(id)) {
+            const docName = curUser.Full_Name || `Dr. ${curUser.First_Name} ${curUser.Last_Name}`;
+            return `${docName} (You)`;
+        }
+        return `Doctor #${id}`;
     });
     txt.value = names.join("; ");
 };
@@ -300,6 +334,10 @@ const closeDoctorPicker = () => {
 };
 
 const confirmDoctorPicker = () => {
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    if (curUser && curUser.doctor_id && !tempSelectedDoctorIds.includes(String(curUser.doctor_id))) {
+        tempSelectedDoctorIds.unshift(String(curUser.doctor_id));
+    }
     selectedDoctorIds = [...tempSelectedDoctorIds];
     updateDoctorsText();
     closeDoctorPicker();
@@ -436,12 +474,19 @@ const renderDoctorPickerRows = () => {
             const station = d.Station_Name ? `<span class="badge badge-info" style="font-size: 11px; padding: 2px 6px;">${d.Station_Name}</span>` : "";
             const typeBadge = `<span class="badge ${d.Doctor_Type === 'Attending' ? 'badge-primary' : 'badge-secondary'}" style="font-size: 11px; padding: 2px 6px;">${d.Doctor_Type}</span>`;
 
+            const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+            const isMe = curUser && curUser.doctor_id && String(d.Doctor_ID) === String(curUser.doctor_id);
+            const meBadge = isMe ? `<span class="badge badge-success" style="font-size: 11px; padding: 2px 6px;">You (Admitting Physician)</span>` : "";
+
             row.innerHTML = `
                 <td style="text-align: center;">
                     <input type="checkbox" class="doctor-picker-cb" value="${docId}" ${isSelected ? "checked" : ""} style="cursor: pointer; pointer-events: none;">
                 </td>
                 <td>
-                    <div style="font-weight: 600; color: var(--text-main);">${d.Full_Name}</div>
+                    <div style="font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                        <span>${d.Full_Name}</span>
+                        ${meBadge}
+                    </div>
                     <div style="display: flex; gap: 6px; align-items: center; margin-top: 2px;">
                         ${typeBadge}
                         ${station}
@@ -668,6 +713,199 @@ const loadAdmissions = () => {
         });
 };
 
+
+const loadInitialCatalogItems = () => {
+    const formData = new FormData();
+    formData.append('operation', 'getCatalogList');
+
+    return axios.post(`${getApiUrl}/clinical_orders.php`, formData)
+        .then(response => {
+            initialCatalogItems = Array.isArray(response.data) ? response.data : [];
+        })
+        .catch(() => {
+            initialCatalogItems = [];
+        });
+};
+
+const openInitialChargePicker = async () => {
+    if (!initialCatalogItems || initialCatalogItems.length === 0) {
+        await loadInitialCatalogItems();
+    }
+
+    const catSelect = document.getElementById("initial_charge_category");
+    const activeCategory = catSelect ? catSelect.value : "all";
+
+    const distinctCategories = Array.from(new Set(initialCatalogItems.map(i => i.Category_Type).filter(Boolean)));
+    const filterOptions = [
+        { value: "all", label: "All Categories" },
+        ...distinctCategories.map(c => ({ value: `cat_${c}`, label: c })),
+        { value: "selected", label: "Selected Item" }
+    ];
+
+    const customFilter = (item, filterVal, selectedId) => {
+        if (filterVal === "all") return true;
+        if (filterVal === "selected") return String(item.id) === String(selectedId);
+        if (filterVal.startsWith("cat_")) {
+            const targetCat = filterVal.replace("cat_", "");
+            return item.category === targetCat;
+        }
+        return true;
+    };
+
+    const items = initialCatalogItems.map(item => {
+        const cat = item.Category_Type || 'Service';
+        let badgeClass = 'badge-primary';
+        if (cat === 'Equipment Scan') badgeClass = 'badge-info';
+        else if (cat === 'Medicine') badgeClass = 'badge-warning';
+
+        return {
+            id: item.Catalog_ID,
+            text: item.Item_Name,
+            category: cat,
+            subtext: `₱${parseFloat(item.Unit_Price || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})} • Station: ${item.Station_Name || cat}`,
+            classification: `${item.Item_Code} (${cat})`,
+            badge: cat,
+            badgeClass: badgeClass
+        };
+    });
+
+    const defaultFilterVal = (activeCategory && activeCategory !== "all") ? `cat_${activeCategory}` : "all";
+
+    openGenericLookupPicker({
+        title: "Select Initial Service or Triage Charge",
+        items: items,
+        filterOptions: filterOptions,
+        defaultFilter: defaultFilterVal,
+        customFilter: customFilter,
+        selectedId: document.getElementById("initial_charge_catalog_id").value,
+        onSelect: (item) => {
+            const found = initialCatalogItems.find(i => parseInt(i.Catalog_ID, 10) === parseInt(item.id, 10));
+            const price = found ? parseFloat(found.Unit_Price || 0) : 0;
+            document.getElementById("initial_charge_catalog_id").value = item.id;
+            const textEl = document.getElementById("initial_charge_catalog_text");
+            if (textEl) textEl.value = `[${item.category}] ${item.text} (${item.classification.split(' ')[0]}) — ₱${price.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            if (catSelect && item.category) {
+                catSelect.value = item.category;
+            }
+        }
+    });
+};
+
+const addInitialCharge = () => {
+    const idInput = document.getElementById('initial_charge_catalog_id');
+    const textInput = document.getElementById('initial_charge_catalog_text');
+    const qtyInput = document.getElementById('initial_charge_qty');
+
+    if (!idInput || !idInput.value) {
+        openInitialChargePicker();
+        return;
+    }
+
+    const catalogId = parseInt(idInput.value, 10);
+    const qty = parseFloat(qtyInput ? qtyInput.value : 1) || 1;
+    if (qty <= 0) {
+        if (typeof showToast === 'function') {
+            showToast('Quantity must be at least 1.', 'warning');
+        } else {
+            alert('Quantity must be at least 1.');
+        }
+        return;
+    }
+
+    const item = initialCatalogItems.find(i => parseInt(i.Catalog_ID, 10) === catalogId);
+    if (!item) return;
+
+    const existing = initialCharges.find(c => c.catalog_id === catalogId);
+    if (existing) {
+        existing.quantity += qty;
+        existing.total_charge = Math.round(existing.quantity * existing.unit_price * 100) / 100;
+    } else {
+        const unitPrice = parseFloat(item.Unit_Price || 0);
+        initialCharges.push({
+            catalog_id: catalogId,
+            item_code: item.Item_Code,
+            item_name: item.Item_Name,
+            category_type: item.Category_Type,
+            station_id: item.Station_ID,
+            station_name: item.Station_Name,
+            quantity: qty,
+            unit_price: unitPrice,
+            total_charge: Math.round(qty * unitPrice * 100) / 100
+        });
+    }
+
+    idInput.value = '';
+    if (textInput) textInput.value = '';
+    if (qtyInput) qtyInput.value = '1';
+    renderInitialChargesTable();
+};
+
+const removeInitialCharge = (catalogId) => {
+    initialCharges = initialCharges.filter(c => c.catalog_id !== catalogId);
+    renderInitialChargesTable();
+};
+window.removeInitialCharge = removeInitialCharge;
+
+const renderInitialChargesTable = () => {
+    const emptyEl = document.getElementById('initial_charges_empty');
+    const tableEl = document.getElementById('initial_charges_table');
+    const tbodyEl = document.getElementById('initial_charges_tbody');
+    const totalEl = document.getElementById('initial_charges_total_display');
+    const badgeEl = document.getElementById('initial_charges_badge');
+
+    if (!emptyEl || !tableEl || !tbodyEl) return;
+
+    if (initialCharges.length === 0) {
+        emptyEl.classList.remove('initial-charges-table-hidden');
+        tableEl.classList.add('initial-charges-table-hidden');
+        if (badgeEl) {
+            badgeEl.textContent = '0 Items';
+            badgeEl.className = 'badge badge-secondary';
+        }
+        if (totalEl) totalEl.textContent = '₱0.00';
+        tbodyEl.innerHTML = '';
+        return;
+    }
+
+    emptyEl.classList.add('initial-charges-table-hidden');
+    tableEl.classList.remove('initial-charges-table-hidden');
+    if (badgeEl) {
+        badgeEl.textContent = `${initialCharges.length} ${initialCharges.length === 1 ? 'Item' : 'Items'}`;
+        badgeEl.className = 'badge badge-success';
+    }
+
+    let sum = 0;
+    let rowsHtml = '';
+    initialCharges.forEach(c => {
+        sum += c.total_charge;
+        let badgeClass = 'badge-primary';
+        if (c.category_type === 'Equipment Scan') badgeClass = 'badge-info';
+        else if (c.category_type === 'Medicine') badgeClass = 'badge-warning';
+
+        rowsHtml += `<tr>
+            <td>
+                <span class="initial-charge-item-title">${c.item_name}</span>
+                <span class="initial-charge-item-sub font-mono">${c.item_code}</span>
+            </td>
+            <td>
+                <span class="badge ${badgeClass}">${c.category_type}</span>
+                <span class="initial-charge-item-sub">${c.station_name || ''}</span>
+            </td>
+            <td class="text-right"><strong>${c.quantity}</strong></td>
+            <td class="text-right">₱${c.unit_price.toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+            <td class="text-right"><strong class="text-primary">₱${c.total_charge.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
+            <td class="text-center">
+                <button type="button" class="btn-remove-initial-charge" onclick="removeInitialCharge(${c.catalog_id})" title="Remove charge">✕ Remove</button>
+            </td>
+        </tr>`;
+    });
+
+    tbodyEl.innerHTML = rowsHtml;
+    if (totalEl) {
+        totalEl.textContent = `₱${sum.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+    }
+};
+
 const resetForm = () => {
     document.getElementById("patient_id").value = "";
     document.getElementById("patient_id_text").value = "";
@@ -675,10 +913,27 @@ const resetForm = () => {
     if (document.getElementById('diagnosis')) document.getElementById('diagnosis').value = '';
     document.getElementById("bed_id").value = "";
     document.getElementById("bed_id_text").value = "";
-    selectedDoctorIds = [];
-    tempSelectedDoctorIds = [];
-    const docTxt = document.getElementById("selected_doctors_text");
-    if (docTxt) docTxt.value = "";
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
+    if (curUser && curUser.doctor_id) {
+        selectedDoctorIds = [String(curUser.doctor_id)];
+        tempSelectedDoctorIds = [String(curUser.doctor_id)];
+        updateDoctorsText();
+    } else {
+        selectedDoctorIds = [];
+        tempSelectedDoctorIds = [];
+        const docTxt = document.getElementById("selected_doctors_text");
+        if (docTxt) docTxt.value = "";
+    }
+    initialCharges = [];
+    renderInitialChargesTable();
+    const initCatId = document.getElementById('initial_charge_catalog_id');
+    if (initCatId) initCatId.value = '';
+    const initCatTxt = document.getElementById('initial_charge_catalog_text');
+    if (initCatTxt) initCatTxt.value = '';
+    const initQty = document.getElementById('initial_charge_qty');
+    if (initQty) initQty.value = '1';
+    const initCatFilter = document.getElementById('initial_charge_category');
+    if (initCatFilter) initCatFilter.value = 'all';
 };
 
 const submitAdmission = () => {
@@ -709,12 +964,15 @@ const submitAdmission = () => {
         return;
     }
 
+    const curUser = JSON.parse(sessionStorage.getItem("hospital_user") || "{}");
     const payload = {
         patient_id: patientId,
         chief_complaint: chiefComplaint,
         diagnosis: diagnosis,
         bed_id: bedId,
-        doctor_ids: selectedDoctorIds
+        doctor_ids: selectedDoctorIds,
+        submitting_doctor_id: curUser && curUser.doctor_id ? parseInt(curUser.doctor_id, 10) : 0,
+        initial_charges: initialCharges
     };
 
     console.log("admissions.js: Submitting payload:", payload);
@@ -788,6 +1046,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     initModalControls("formModal", "btnOpenAddModal", "btnCloseModal", "btnCancel", resetForm);
     document.getElementById('btnSubmitAdmit').addEventListener('click', submitAdmission);
+    const btnAddCharge = document.getElementById('btnAddInitialCharge');
+    if (btnAddCharge) btnAddCharge.addEventListener('click', addInitialCharge);
+    loadInitialCatalogItems();
     initRefreshBtn("btnRefreshAdmissions", async () => {
         await loadBeds();
         await loadPatients();
@@ -818,6 +1079,27 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (bedInput) bedInput.addEventListener("click", openBedPicker);
     const btnBrowseBed = document.getElementById("btnBrowse_bed_id");
     if (btnBrowseBed) btnBrowseBed.addEventListener("click", openBedPicker);
+
+    const chargeInput = document.getElementById("initial_charge_catalog_text");
+    if (chargeInput) chargeInput.addEventListener("click", openInitialChargePicker);
+    const btnBrowseCharge = document.getElementById("btnBrowse_initial_charge");
+    if (btnBrowseCharge) btnBrowseCharge.addEventListener("click", openInitialChargePicker);
+
+    const initialCatSelect = document.getElementById('initial_charge_category');
+    if (initialCatSelect) {
+        initialCatSelect.addEventListener('change', () => {
+            const currentCat = initialCatSelect.value;
+            const idInput = document.getElementById('initial_charge_catalog_id');
+            if (idInput && idInput.value && currentCat !== 'all') {
+                const curItem = initialCatalogItems.find(i => parseInt(i.Catalog_ID, 10) === parseInt(idInput.value, 10));
+                if (curItem && curItem.Category_Type !== currentCat) {
+                    idInput.value = '';
+                    const textEl = document.getElementById('initial_charge_catalog_text');
+                    if (textEl) textEl.value = '';
+                }
+            }
+        });
+    }
 
     const docInput = document.getElementById("selected_doctors_text");
     if (docInput) docInput.addEventListener("click", openDoctorPicker);

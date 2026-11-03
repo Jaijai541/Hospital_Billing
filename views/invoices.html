@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Invoices & Settled Accounts — Hospital Billing System</title>
-    <link rel="stylesheet" href="../css/common.css?v=21.0">
-    <link rel="stylesheet" href="../css/invoices.css?v=21.2">
+    <link rel="stylesheet" href="../css/common.css?v=21.6">
+    <link rel="stylesheet" href="../css/invoices.css?v=21.6">
 </head>
 <body>
 
@@ -56,7 +56,8 @@
                                 <div class="form-group filter-capsule-select">
                                     <label class="form-label" for="clearance_stage_filter">Discharge Stage</label>
                                     <select id="clearance_stage_filter" class="form-control">
-                                        <option value="all">All Pending Stages</option>
+                                        <option value="all">All In-Patients &amp; Clearances</option>
+                                        <option value="active_stay">Active In-Patients (Advance Deposits)</option>
                                         <option value="medically_cleared">Medically Cleared (Needs Billing Clearance)</option>
                                         <option value="discharged">Bed Released (Ready for Final SOA)</option>
                                     </select>
@@ -238,8 +239,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=21.0"></script>
-    <script src="../js/common.js?v=21.5"></script>
-    <script src="../js/invoices.js?v=21.3"></script>
+    <script src="../js/common.js?v=21.6"></script>
+    <script src="../js/invoices.js?v=21.6"></script>
 </body>
 </html>
 

@@ -73,10 +73,13 @@ const enforcePageRbacGuard = (user) => {
     let mappedPage = currentPage;
     const currentHash = (window.location.hash || "").toLowerCase();
     const currentTabParam = (new URLSearchParams(window.location.search).get("tab") || "").toLowerCase();
-    const isSettlementTarget = currentHash.includes("tab-settlement") || currentHash.includes("tab-ledger") || currentTabParam === "tab-settlement" || currentTabParam === "tab-ledger" || currentTabParam === "4" || currentTabParam === "5";
+    const isSettlementTarget = currentHash.includes("tab-settlement") || currentHash.includes("tab-ledger") || currentHash.includes("tab-advances") || currentHash.includes("open-advance") || currentTabParam === "tab-settlement" || currentTabParam === "tab-ledger" || currentTabParam === "tab-advances" || currentTabParam === "4" || currentTabParam === "5";
 
     if (currentPage === "admission_details.html") {
-        if (hasFinanceAccess && isSettlementTarget && (!Array.isArray(perms) || perms.includes("invoices.html"))) {
+        if (hasFinanceAccess && (!Array.isArray(perms) || perms.includes("invoices.html"))) {
+            if (!isSettlementTarget) {
+                window.location.hash = "#tab-settlement";
+            }
             return true;
         }
         mappedPage = "admissions.html";
@@ -131,9 +134,9 @@ const enforcePageRbacGuard = (user) => {
         "department_orders.html"
     ];
 
-    if (currentPage === "admission_details.html" && !hasClinicalAccess && !(hasFinanceAccess && isSettlementTarget)) {
+    if (currentPage === "admission_details.html" && !hasClinicalAccess && !hasFinanceAccess) {
         sessionStorage.setItem("rbac_denied_msg", "Access Denied: Your assigned role does not have permission to access patient clinical admission charts.");
-        window.location.replace(hasFinanceAccess ? "invoices.html" : "index.html");
+        window.location.replace("index.html");
         return false;
     }
 
@@ -947,6 +950,10 @@ const showToast = (message, type = null, title = null, callback = null, duration
         callback = type;
         type = null;
     }
+    if (callback === null && typeof title === "function") {
+        callback = title;
+        title = null;
+    }
 
     const strMsg = String(message || "");
 
@@ -1074,6 +1081,13 @@ const showToast = (message, type = null, title = null, callback = null, duration
 };
 
 const showPopupAlert = (message, type = null, title = null, callback = null) => {
+    if (typeof type === "function") {
+        callback = type;
+        type = null;
+    } else if (typeof title === "function") {
+        callback = title;
+        title = null;
+    }
     return showToast(message, type, title, callback);
 };
 
@@ -2593,7 +2607,6 @@ const ensureClinicalNotificationsModal = () => {
                 display: flex;
                 flex-direction: column;
                 gap: 6px;
-                min-width: 280px;
             }
             .tracking-stepper {
                 display: flex;

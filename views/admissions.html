@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>In-Patient Admissions — Hospital Billing System</title>
     <link rel="stylesheet" href="../css/common.css?v=20.0">
-    <link rel="stylesheet" href="../css/admissions.css?v=18.3">
+    <link rel="stylesheet" href="../css/admissions.css?v=21.2">
 </head>
 <body>
 
@@ -63,6 +63,64 @@
                                 <div class="input-lookup-group">
                                     <input type="text" id="selected_doctors_text" class="form-control" placeholder="Click to select physician(s)..." readonly>
                                     <button type="button" id="btnBrowseDoctors" class="btn btn-outline btn-lookup">Select</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group span-2" id="initial_charges_section">
+                                <div class="initial-charges-header">
+                                    <div>
+                                        <label class="form-label" for="initial_charge_catalog_id">Initial Admitting &amp; Triage Charges (Optional)</label>
+                                        <span class="initial-charges-subtitle">Intake services, vital checking, or ER triage charges to post immediately to the patient's billing ledger upon admission</span>
+                                    </div>
+                                    <span id="initial_charges_badge" class="badge badge-secondary">0 Items</span>
+                                </div>
+
+                                <div class="initial-charges-input-row">
+                                    <div class="initial-charge-category-wrap">
+                                        <select id="initial_charge_category" class="form-control" title="Filter items by category">
+                                            <option value="all">All Categories</option>
+                                            <option value="Service" selected>Service / Triage</option>
+                                            <option value="Equipment Scan">Equipment Scan</option>
+                                            <option value="Medicine">Medicine</option>
+                                        </select>
+                                    </div>
+                                    <div class="initial-charge-select-wrap">
+                                        <div class="input-lookup-group">
+                                            <input type="hidden" id="initial_charge_catalog_id">
+                                            <input type="text" id="initial_charge_catalog_text" class="form-control" placeholder="Click to select service or triage charge..." readonly>
+                                            <button type="button" id="btnBrowse_initial_charge" class="btn btn-outline btn-lookup">Select</button>
+                                        </div>
+                                    </div>
+                                    <div class="initial-charge-qty-wrap">
+                                        <input type="number" id="initial_charge_qty" class="form-control" min="1" max="99" value="1" placeholder="Qty" title="Quantity">
+                                    </div>
+                                    <button type="button" id="btnAddInitialCharge" class="btn btn-outline btn-add-charge">+ Add Charge</button>
+                                </div>
+
+                                <div id="initial_charges_container" class="initial-charges-list-wrap">
+                                    <div class="initial-charges-empty" id="initial_charges_empty">
+                                        No initial charges added. These charges will be posted to the patient's billing ledger upon admission.
+                                    </div>
+                                    <table class="initial-charges-table initial-charges-table-hidden" id="initial_charges_table">
+                                        <thead>
+                                            <tr>
+                                                <th>Charge Item</th>
+                                                <th>Category &amp; Station</th>
+                                                <th class="text-right">Qty</th>
+                                                <th class="text-right">Unit Price</th>
+                                                <th class="text-right">Total</th>
+                                                <th class="text-center">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="initial_charges_tbody"></tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4" class="text-right"><strong>Total Initial Ledger Charges:</strong></td>
+                                                <td class="text-right initial-charge-total-val" id="initial_charges_total_display">₱0.00</td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -160,7 +218,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=20.0"></script>
     <script src="../js/common.js?v=21.4"></script>
-    <script src="../js/admissions.js?v=20.8"></script>
+    <script src="../js/admissions.js?v=21.3"></script>
 </body>
 </html>
 

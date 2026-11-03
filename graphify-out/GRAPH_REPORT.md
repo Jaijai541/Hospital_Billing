@@ -1,17 +1,17 @@
-# Graph Report - Hospital_Billing  (2026-10-14)
+# Graph Report - Hospital_Billing  (2026-10-18)
 
 ## Corpus Check
-- 75 files · ~102,315 words
+- 76 files · ~118,754 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 21 file(s) not represented in the graph (top: .css 19, (none) 2)
+- Unclassified: 22 file(s) not represented in the graph (top: .css 19, (none) 2, .exe 1)
 
 ## Summary
-- 594 nodes · 849 edges · 71 communities (23 shown, 48 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.85)
+- 669 nodes · 991 edges · 72 communities (25 shown, 47 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 113 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8df2103d`
+- Built from commit: `7b8a15c3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -75,18 +75,19 @@
 - UserManager
 - reports.js
 - ReportManager
+- Step-by-Step Script & Storyboard
 
 ## God Nodes (most connected - your core abstractions)
-1. `InvoiceManager` - 12 edges
-2. `renderSettlementSection()` - 10 edges
-3. `loadLedgerSummary()` - 9 edges
-4. `AdmissionManager` - 8 edges
-5. `ReportManager` - 8 edges
-6. `RoomMaster` - 8 edges
-7. `initClinicalModals()` - 8 edges
-8. `loadLedger()` - 8 edges
-9. `renderInvoice()` - 8 edges
-10. `renderPartialBill()` - 8 edges
+1. `initArchiveEvents()` - 14 edges
+2. `InvoiceManager` - 13 edges
+3. `loadArchivedRecords()` - 12 edges
+4. `initStaffEvents()` - 12 edges
+5. `renderSettlementSection()` - 11 edges
+6. `UserManager` - 10 edges
+7. `loadLedgerSummary()` - 9 edges
+8. `AdmissionManager` - 8 edges
+9. `ReportManager` - 8 edges
+10. `RoomMaster` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Critical Rules Summary` --references--> `openGenericLookupPicker()`  [INFERRED]
@@ -97,31 +98,31 @@
 ## Import Cycles
 - None detected.
 
-## Communities (71 total, 48 thin omitted)
+## Communities (72 total, 47 thin omitted)
 
 ### Community 0 - "admission_details.js"
 Cohesion: 0.06
-Nodes (62): assignedDoctors, availableBedsList, catalogItems, closeLookupPicker(), customVouchersList, dischargePatientFromChart(), discountList, dispensedMedicinesList (+54 more)
+Nodes (66): assignedDoctors, availableBedsList, catalogItems, closeLookupPicker(), closeVoidAdmissionModal(), customVouchersList, dischargePatientFromChart(), discountList (+58 more)
 
 ### Community 1 - "doctors.js"
-Cohesion: 0.11
-Nodes (33): allDoctors, allDoctorTypes, allSpecialties, allStations, cancelEditSpecialty(), closeSpecialtyModal(), closeSpecialtyPicker(), closeViewDoctorModal() (+25 more)
+Cohesion: 0.10
+Nodes (34): allDoctors, allDoctorTypes, allSpecialties, allStations, cancelEditSpecialty(), closeSpecialtyModal(), closeSpecialtyPicker(), closeViewDoctorModal() (+26 more)
 
 ### Community 2 - "admissions.js"
 Cohesion: 0.13
 Nodes (26): activeDoctors, activePatients, allAdmissions, availableBeds, closeDoctorPicker(), confirmDoctorPicker(), currentFilteredDoctors, dischargePatient() (+18 more)
 
 ### Community 3 - "rooms.js"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (26): allBeds, allRooms, cancelEditRoomType(), closeRoomTypeModal(), closeViewRoomModal(), displayBedsTable(), displayRoomsAndBeds(), displayRoomsGrid() (+18 more)
 
 ### Community 4 - "common.js"
-Cohesion: 0.08
+Cohesion: 0.07
 Nodes (27): Agent Guidelines & Project Instructions, Critical Rules Summary, closeModal(), closeSelfChangePasswordModal(), enforcePageRbacGuard(), genericLookupPickerState, handleUserLogout(), initAppSession() (+19 more)
 
 ### Community 5 - "patients.js"
-Cohesion: 0.22
-Nodes (10): allBloodTypes, allGenders, allPatients, displayPatients(), displayPatientsTable(), filterAndSortPatients(), loadPatientForEdit(), populatePatientForm() (+2 more)
+Cohesion: 0.19
+Nodes (11): allBloodTypes, allGenders, allPatients, displayPatients(), displayPatientsTable(), filterAndSortPatients(), loadPatientForEdit(), openDuplicateModal() (+3 more)
 
 ### Community 6 - "invoices.js"
 Cohesion: 0.22
@@ -160,8 +161,8 @@ Cohesion: 0.56
 Nodes (8): categorizeLedgerItems(), formatMoney(), loadPartialBill(), renderAdvancePayments(), renderDoctorFees(), renderHospitalCharges(), renderPartialBill(), renderSummaryBox()
 
 ### Community 18 - "archive.js"
-Cohesion: 0.57
-Nodes (6): currentArchivedRecords, displayArchiveTable(), filterArchivedRecords(), hardDeleteRecord(), loadArchivedRecords(), restoreRecord()
+Cohesion: 0.15
+Nodes (32): allArchivedRecords, applyCategoryWindowSelection(), ARCHIVE_CATEGORIES, batchHardDeleteRecords(), batchRestoreRecords(), categoryCounts, clearAllModalCategories(), clearAllSelections() (+24 more)
 
 ### Community 19 - "audit_log.js"
 Cohesion: 0.48
@@ -179,33 +180,45 @@ Nodes (4): formatCurrency(), getUrlParam(), loadReceiptData(), renderReceipt()
 Cohesion: 0.70
 Nodes (4): loadDashboardMetrics(), renderRecentAdmissions(), updateBedGauge(), updateFinancialHealth()
 
+### Community 53 - "sidebar.js"
+Cohesion: 0.43
+Nodes (7): getSectionStateClass(), initSidebarSectionDropdowns(), initSidebarUserMenu(), renderNavSection(), renderSectionChevron(), renderSidebar(), sectionIcons
+
 ### Community 65 - "promissory_notes.js"
 Cohesion: 0.22
 Nodes (15): allPaymentMethods, allPromissoryNotes, closeHistoryModal(), closePaymentModal(), filterAndRenderPromissoryNotes(), initEvents(), loadPromissoryNotes(), openPaymentHistoryModal() (+7 more)
 
 ### Community 66 - "staff.js"
-Cohesion: 0.18
-Nodes (19): allStaff, archiveStaff(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadRoles(), loadStaff(), loadStations() (+11 more)
+Cohesion: 0.16
+Nodes (26): allStaff, archiveStaff(), cancelEditRole(), closeManageRolesModal(), filterAndRenderStaff(), getRoleBadge(), initStaffEvents(), loadRoles() (+18 more)
 
 ### Community 69 - "reports.js"
-Cohesion: 0.22
+Cohesion: 0.23
 Nodes (21): exportToCsv(), exportToExcel(), fetchReportData(), formatDateYMD(), formatPesos(), initReports(), loadFilterLookups(), lookupData (+13 more)
 
+### Community 71 - "Step-by-Step Script & Storyboard"
+Cohesion: 0.11
+Nodes (18): [0:00 – 0:45] Introduction & System Overview, [0:45 – 3:00] Part 1: Masterfiles (Full CRUD Demonstration & Maintenance), 1. Complete CRUD Demonstration (`views/catalogs.html` or `views/patients.html`), 1. Official Statement of Account & Official Receipt, 1. Patient Admission Transaction (`views/admissions.html`), 2. Clinical Charging & Bedside Rounds (`views/admission_details.html`), 2. Financial & Analytical Reports Hub (`views/reports.html`), 2. Key Masterfile Highlights (+10 more)
+
 ## Knowledge Gaps
-- **60 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+55 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 239 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **48 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **81 isolated node(s):** `apiClient`, `customerSelect`, `productSelect`, `qtyInput`, `priceDisplay` (+76 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 271 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **47 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Are the 11 inferred relationships involving `initArchiveEvents()` (e.g. with `applyCategoryWindowSelection()` and `batchHardDeleteRecords()`) actually correct?**
+  _`initArchiveEvents()` has 11 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 11 inferred relationships involving `initStaffEvents()` (e.g. with `cancelEditRole()` and `closeManageRolesModal()`) actually correct?**
+  _`initStaffEvents()` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `apiClient`, `customerSelect`, `productSelect` to the rest of the system?**
-  _60 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _81 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `admission_details.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.06346153846153846 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.057971014492753624 - nodes in this community are weakly interconnected._
 - **Should `doctors.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.11051693404634581 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10317460317460317 - nodes in this community are weakly interconnected._
 - **Should `admissions.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.12535612535612536 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1282051282051282 - nodes in this community are weakly interconnected._
 - **Should `common.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.0761904761904762 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07112375533428165 - nodes in this community are weakly interconnected._

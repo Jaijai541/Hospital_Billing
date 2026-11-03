@@ -8,17 +8,19 @@ class RoomMaster
     {
         include "connection.php";
 
-        $sql = "SELECT r.Room_ID, r.Room_Name, r.Room_Type_ID, r.Capacity, r.Custom_Daily_Rate, r.Is_Active,
+        $sql = "SELECT r.Room_ID, r.Room_Name, r.Floor_ID, r.Room_Type_ID, r.Capacity, r.Custom_Daily_Rate, r.Is_Active,
+                       f.Floor_Number, f.Floor_Name, f.Building_Wing,
                        rt.Type_Name, rt.Code_Prefix, 
                        COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                        COUNT(b.Bed_ID) AS Total_Beds,
                        COALESCE(SUM(CASE WHEN b.Is_Available = 1 THEN 1 ELSE 0 END), 0) AS Vacant_Beds,
                        COALESCE(SUM(CASE WHEN b.Is_Available = 0 THEN 1 ELSE 0 END), 0) AS Occupied_Beds
                 FROM Room r 
+                LEFT JOIN Enum_Floor f ON r.Floor_ID = f.Floor_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
                 LEFT JOIN Room_Bed b ON r.Room_ID = b.Room_ID AND b.Is_Active = 1 
                 GROUP BY r.Room_ID 
-                ORDER BY r.Is_Active DESC, r.Room_Name ASC";
+                ORDER BY r.Is_Active DESC, f.Floor_Number ASC, r.Room_Name ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -31,7 +33,7 @@ class RoomMaster
         include "connection.php";
 
         $sql = "SELECT b.Bed_ID, b.Room_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
-                       r.Room_Name, rt.Type_Name, 
+                       r.Room_Name, r.Floor_ID, f.Floor_Number, f.Floor_Name, f.Building_Wing, rt.Type_Name, 
                        COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate,
                        p.First_Name, p.Last_Name,
                        CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
@@ -39,11 +41,24 @@ class RoomMaster
                        a.Admission_ID
                 FROM Room_Bed b 
                 INNER JOIN Room r ON b.Room_ID = r.Room_ID 
+                LEFT JOIN Enum_Floor f ON r.Floor_ID = f.Floor_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
                 LEFT JOIN Room_Transfer_Log rtl ON b.Bed_ID = rtl.Bed_ID AND rtl.Date_Out IS NULL
                 LEFT JOIN Admission a ON rtl.Admission_ID = a.Admission_ID AND a.Status = 'Admitted'
                 LEFT JOIN Patient p ON a.Patient_ID = p.Patient_ID
-                ORDER BY b.Is_Active DESC, r.Room_Name ASC, b.Bed_Code ASC";
+                ORDER BY b.Is_Active DESC, f.Floor_Number ASC, r.Room_Name ASC, b.Bed_Code ASC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode($rs);
+    }
+
+    function getAllFloors()
+    {
+        include "connection.php";
+
+        $sql = "SELECT * FROM Enum_Floor WHERE Is_Active = 1 ORDER BY Floor_Number ASC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -69,10 +84,12 @@ class RoomMaster
 
         $json = json_decode($json, true);
         $sql = "SELECT r.*, 
+                       f.Floor_Number, f.Floor_Name, f.Building_Wing,
                        COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate, 
                        rt.Daily_Rate AS Default_Daily_Rate, 
                        rt.Type_Name 
                 FROM Room r 
+                LEFT JOIN Enum_Floor f ON r.Floor_ID = f.Floor_ID
                 INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID 
                 WHERE r.Room_ID = :id";
         $stmt = $conn->prepare($sql);
@@ -82,6 +99,7 @@ class RoomMaster
 
         if ($rs) {
             $bedsSql = "SELECT b.Bed_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
+                               a.Admission_ID,
                                p.First_Name, p.Last_Name,
                                CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
                                CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
@@ -111,8 +129,7 @@ class RoomMaster
                         INNER JOIN Admission a ON rtl.Admission_ID = a.Admission_ID
                         INNER JOIN Patient p ON a.Patient_ID = p.Patient_ID
                         WHERE b.Room_ID = :id AND rtl.Date_Out IS NOT NULL
-                        ORDER BY rtl.Date_Out DESC
-                        LIMIT 20";
+                        ORDER BY rtl.Date_Out DESC";
             $histStmt = $conn->prepare($histSql);
             $histStmt->bindParam(":id", $json['room_id']);
             $histStmt->execute();
@@ -130,10 +147,11 @@ class RoomMaster
         $bedId = $json['bed_id'] ?? 0;
 
         $bedSql = "SELECT b.Bed_ID, b.Bed_Code, b.Is_Available, b.Is_Active,
-                          r.Room_ID, r.Room_Name, rt.Type_Name,
+                          r.Room_ID, r.Room_Name, r.Floor_ID, f.Floor_Number, f.Floor_Name, f.Building_Wing, rt.Type_Name,
                           COALESCE(r.Custom_Daily_Rate, rt.Daily_Rate) AS Daily_Rate
                    FROM Room_Bed b
                    INNER JOIN Room r ON b.Room_ID = r.Room_ID
+                   LEFT JOIN Enum_Floor f ON r.Floor_ID = f.Floor_ID
                    INNER JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
                    WHERE b.Bed_ID = :bed_id";
         $stmt = $conn->prepare($bedSql);
@@ -206,6 +224,9 @@ switch ($operation) {
         break;
     case "getAllRoomTypes":
         echo $room->getAllRoomTypes();
+        break;
+    case "getAllFloors":
+        echo $room->getAllFloors();
         break;
     case "getRoomById":
         echo $room->getRoomById($json);

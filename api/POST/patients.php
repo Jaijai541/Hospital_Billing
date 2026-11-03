@@ -100,6 +100,36 @@ class PatientMaster
                     "message" => "Cannot archive patient: This patient is currently admitted in the hospital. Please discharge and finalize their admission before archiving."
                 ]);
             }
+
+            $pnStmt = $conn->prepare("
+                SELECT COUNT(*) AS total 
+                FROM Promissory_Note pn
+                INNER JOIN Admission a ON pn.Admission_ID = a.Admission_ID
+                WHERE a.Patient_ID = :id AND pn.Status IN ('Active', 'Overdue')
+            ");
+            $pnStmt->execute([':id' => $patientId]);
+            $pn = $pnStmt->fetch(PDO::FETCH_ASSOC);
+            if ($pn && intval($pn['total']) > 0) {
+                return json_encode([
+                    "status" => 0,
+                    "message" => "Cannot archive patient: This patient has an active or overdue Promissory Note with an outstanding balance. Please settle their promissory note before archiving."
+                ]);
+            }
+
+            $invStmt = $conn->prepare("
+                SELECT COUNT(*) AS total 
+                FROM Final_Invoice fi
+                INNER JOIN Admission a ON fi.Admission_ID = a.Admission_ID
+                WHERE a.Patient_ID = :id AND (fi.Net_Amount_Due - fi.Amount_Paid) > 0.01
+            ");
+            $invStmt->execute([':id' => $patientId]);
+            $inv = $invStmt->fetch(PDO::FETCH_ASSOC);
+            if ($inv && intval($inv['total']) > 0) {
+                return json_encode([
+                    "status" => 0,
+                    "message" => "Cannot archive patient: This patient has an unsettled billing invoice with an outstanding balance. Please collect payment or formalize a promissory note before archiving."
+                ]);
+            }
         }
 
         $sql = "UPDATE Patient 

@@ -35,6 +35,14 @@ class AdmissionManager
         $chiefComplaint = trim($json['chief_complaint'] ?? '');
         $diagnosis = trim($json['diagnosis'] ?? '');
         $doctorIds = $json['doctor_ids'] ?? [];
+        $submittingDoctorId = intval($json['submitting_doctor_id'] ?? $json['doctor_id'] ?? 0);
+        if ($submittingDoctorId > 0 && is_array($doctorIds)) {
+            $existingDocInts = array_map('intval', $doctorIds);
+            if (!in_array($submittingDoctorId, $existingDocInts)) {
+                $doctorIds[] = $submittingDoctorId;
+            }
+        }
+        $initialCharges = $json['initial_charges'] ?? [];
 
         if (empty($patientId) || empty($bedId) || empty($chiefComplaint)) {
             return json_encode(['error' => 'Patient, Bed, and Chief Complaint are required.']);
@@ -100,10 +108,50 @@ class AdmissionManager
                 }
             }
 
+            if (!empty($initialCharges) && is_array($initialCharges)) {
+                $catStmt = $conn->prepare("
+                    SELECT Catalog_ID, Item_Name, Category_Type, Station_ID, Unit_Price 
+                    FROM Charge_Catalogs 
+                    WHERE Catalog_ID = :cid AND Is_Active = 1
+                ");
+                $ledgerStmt = $conn->prepare("
+                    INSERT INTO Billing_Ledger (Admission_ID, Station_ID, Catalog_ID, Quantity, Unit_Price, Total_Charge, Transaction_Type, Timestamp)
+                    VALUES (:aid, :sid, :cid, :qty, :uprice, :total, 'Charge', NOW())
+                ");
+
+                foreach ($initialCharges as $charge) {
+                    $cid = intval($charge['catalog_id'] ?? 0);
+                    $qty = floatval($charge['quantity'] ?? 1);
+                    if ($cid <= 0 || $qty <= 0) {
+                        continue;
+                    }
+
+                    $catStmt->execute([':cid' => $cid]);
+                    $catItem = $catStmt->fetch(PDO::FETCH_ASSOC);
+                    if ($catItem) {
+                        $uPrice = floatval($catItem['Unit_Price']);
+                        $sId = !empty($catItem['Station_ID']) ? intval($catItem['Station_ID']) : 5;
+                        $totCharge = round($qty * $uPrice, 2);
+
+                        $ledgerStmt->execute([
+                            ':aid'    => $admissionId,
+                            ':sid'    => $sId,
+                            ':cid'    => $cid,
+                            ':qty'    => $qty,
+                            ':uprice' => $uPrice,
+                            ':total'  => $totCharge
+                        ]);
+                    }
+                }
+            }
+
             $conn->commit();
+            $successMsg = !empty($initialCharges)
+                ? 'Patient successfully admitted with bed allocation and initial intake charges posted to ledger.'
+                : 'Patient successfully admitted and assigned to bed.';
             return json_encode([
                 'success' => true,
-                'message' => 'Patient successfully admitted and assigned to bed.',
+                'message' => $successMsg,
                 'admission_id' => $admissionId,
                 'access_passcode' => $accessPasscode
             ]);
@@ -619,6 +667,7 @@ class AdmissionManager
     function dischargePatient($json = '{}')
     {
         include "connection.php";
+        $this->ensureBedTransferOrderTable($conn);
 
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionId = intval($json['admission_id'] ?? 0);
@@ -725,9 +774,11 @@ class AdmissionManager
                 $freeBed->execute([':bid' => $currentStay['Bed_ID']]);
             }
 
-            $this->ensureBedTransferOrderTable($conn);
             $cancelPendingTransfer = $conn->prepare("UPDATE Bed_Transfer_Order SET Status = 'Cancelled' WHERE Admission_ID = :aid AND Status = 'Pending'");
             $cancelPendingTransfer->execute([':aid' => $admissionId]);
+
+            $cancelUnadministeredOrders = $conn->prepare("UPDATE Doctor_Order_Request SET Status = 'Cancelled' WHERE Admission_Doctor_ID IN (SELECT Admission_Doctor_ID FROM Admission_Doctor WHERE Admission_ID = :aid) AND Status NOT IN ('Administered', 'Cancelled')");
+            $cancelUnadministeredOrders->execute([':aid' => $admissionId]);
 
             $admStmt = $conn->prepare("UPDATE Admission SET Status = 'Discharged', Access_Passcode = NULL WHERE Admission_ID = :aid");
             $admStmt->execute([':aid' => $admissionId]);
@@ -739,7 +790,9 @@ class AdmissionManager
             ]);
 
         } catch (Exception $e) {
-            $conn->rollBack();
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
             return json_encode(['error' => 'Discharge failed: ' . $e->getMessage()]);
         }
     }

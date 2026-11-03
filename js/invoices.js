@@ -139,7 +139,15 @@ const renderPendingClearances = (items) => {
         return;
     }
 
-    let html = '<table class="data-table"><thead><tr>';
+    let html = '<table class="data-table clearance-table" id="pending-clearance-table">';
+    html += '<colgroup>';
+    html += '<col class="col-clr-case">';
+    html += '<col class="col-clr-med">';
+    html += '<col class="col-clr-charges">';
+    html += '<col class="col-clr-stage">';
+    html += '<col class="col-clr-action">';
+    html += '</colgroup>';
+    html += '<thead><tr>';
     html += renderSortableTh("Case & Patient", "Admission_ID");
     html += renderSortableTh("Medical Clearance & Diagnosis", "Medical_Discharge_Date");
     html += renderSortableTh("Running Charges & Deposits", "Running_Net_Charges");
@@ -170,17 +178,30 @@ const renderPendingClearances = (items) => {
             ? `<span class="table-sub-text">Instructions: ${c.Discharge_Instructions}</span>`
             : '';
 
-        const stageHtml = isStillAdmitted
-            ? '<span class="badge badge-success table-status-pill">✔ MEDICALLY CLEARED</span><span class="table-sub-text">Step 2: Needs Bed Release &amp; Billing Clearance</span>'
-            : `<span class="badge badge-warning table-status-pill">BED RELEASED — READY FOR SOA</span><span class="table-sub-text">${c.Formatted_Discharge_Date ? 'Released: ' + c.Formatted_Discharge_Date : 'Awaiting Final SOA &amp; Settlement'}</span>`;
+        const isMedCleared = c.Status === 'Admitted' && Boolean(c.Medical_Discharge_Date);
+        const isDischarged = c.Status === 'Discharged';
+        const isActiveStay = c.Status === 'Admitted' && !c.Medical_Discharge_Date;
 
-        const primaryActionBtn = isStillAdmitted
-            ? `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-warning">Process Billing Clearance &rarr;</a>`
-            : `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-primary">Finalize &amp; Issue SOA &rarr;</a>`;
+        let stageHtml = '';
+        let primaryActionBtn = '';
+        let sortStageVal = '';
+
+        if (isMedCleared) {
+            stageHtml = '<span class="badge badge-success table-status-pill">✔ MEDICALLY CLEARED</span><span class="table-sub-text">Step 2: Needs Bed Release &amp; Billing Clearance</span>';
+            primaryActionBtn = `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-warning">Process Billing Clearance &rarr;</a>`;
+            sortStageVal = '1-Medically Cleared';
+        } else if (isDischarged) {
+            stageHtml = `<span class="badge badge-warning table-status-pill">BED RELEASED — READY FOR SOA</span><span class="table-sub-text">${c.Formatted_Discharge_Date ? 'Released: ' + c.Formatted_Discharge_Date : 'Awaiting Final SOA &amp; Settlement'}</span>`;
+            primaryActionBtn = `<a href="admission_details.html?id=${c.Admission_ID}#tab-settlement" class="btn btn-sm btn-primary">Finalize &amp; Issue SOA &rarr;</a>`;
+            sortStageVal = '2-Bed Released';
+        } else {
+            stageHtml = '<span class="badge badge-info table-status-pill">ACTIVE IN-PATIENT</span><span class="table-sub-text">In-Patient Stay • Open for Advance Deposits</span>';
+            primaryActionBtn = `<a href="admission_details.html?id=${c.Admission_ID}#tab-advances" class="btn btn-sm btn-primary">+ Record Advance Deposit</a>`;
+            sortStageVal = '3-Active Stay';
+        }
 
         const rawNetCharges = parseFloat(c.Running_Net_Charges || 0);
         const sortDateVal = c.Medical_Discharge_Date || c.Discharge_Date || '';
-        const sortStageVal = isStillAdmitted ? '1-Medically Cleared' : '2-Bed Released';
 
         html += '<tr>';
         html += `<td data-sort-value="${c.Admission_ID}"><span class="table-primary-text text-primary">${c.Admission_Code}</span><span class="table-primary-text">${c.Patient_Name} <small class="text-muted">(${c.Patient_Code})</small></span><span class="table-sub-text">${roomMeta}</span></td>`;
@@ -202,7 +223,8 @@ const filterAndRenderPendingClearances = () => {
     const stageFilter = stageEl ? stageEl.value : 'all';
 
     const filtered = pendingClearances.filter(c => {
-        if (stageFilter === 'medically_cleared' && c.Status !== 'Admitted') return false;
+        if (stageFilter === 'active_stay' && (c.Status !== 'Admitted' || Boolean(c.Medical_Discharge_Date))) return false;
+        if (stageFilter === 'medically_cleared' && (c.Status !== 'Admitted' || !c.Medical_Discharge_Date)) return false;
         if (stageFilter === 'discharged' && c.Status !== 'Discharged') return false;
 
         if (!query) return true;
@@ -298,29 +320,42 @@ const renderInvoicesTable = (invoices) => {
         return;
     }
 
-    let html = '<table class="data-table">';
+    let html = '<table class="data-table invoices-table" id="invoices-directory-table">';
+    html += '<colgroup>';
+    html += '<col class="col-inv-code">';
+    html += '<col class="col-inv-patient">';
+    html += '<col class="col-inv-gross">';
+    html += '<col class="col-inv-disc">';
+    html += '<col class="col-inv-net">';
+    html += '<col class="col-inv-status">';
+    html += '</colgroup>';
     html += '<thead><tr>';
     html += renderSortableTh("Invoice & Case", "Invoice_ID");
     html += renderSortableTh("Patient Demographic", "Patient_Name");
-    html += renderSortableTh("Gross & Discounts", "Gross_Total");
-    html += renderSortableTh("Net & Payments", "Net_Amount_Due");
-    html += renderSortableTh("Settlement Status & Balance", "Remaining_Balance");
+    html += renderSortableTh("Gross Charges", "Gross_Total", true);
+    html += renderSortableTh("Applied Discounts", "Discount_Amount");
+    html += renderSortableTh("Net & Payments", "Net_Amount_Due", true);
+    html += renderSortableTh("Status & Balance", "Remaining_Balance", true);
     html += '</tr></thead><tbody>';
 
     invoices.forEach(inv => {
-        const gross = parseFloat(inv.Gross_Total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const net = parseFloat(inv.Net_Amount_Due || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const paid = parseFloat(inv.Amount_Paid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
-        const balVal = parseFloat(inv.Remaining_Balance !== undefined && inv.Remaining_Balance !== null ? inv.Remaining_Balance : Math.max(0, parseFloat(inv.Net_Amount_Due || 0) - parseFloat(inv.Amount_Paid || 0)));
-        const bal = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const grossVal = parseFloat(inv.Gross_Total || 0);
+        const gross = grossVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const netVal = parseFloat(inv.Net_Amount_Due || 0);
+        const net = netVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
         const paidVal = parseFloat(inv.Amount_Paid || 0);
+        const paid = paidVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        const balVal = parseFloat(inv.Remaining_Balance !== undefined && inv.Remaining_Balance !== null ? inv.Remaining_Balance : Math.max(0, netVal - paidVal));
+        const bal = balVal.toLocaleString('en-PH', {minimumFractionDigits: 2});
 
-        let discBadge = '<span class="text-muted table-sub-text">No discounts applied</span>';
+        let discBadge = '<span class="table-disc-pill-none">No Discounts</span>';
+        let discSortVal = parseFloat(inv.Discount_Amount || 0);
         if (inv.Discount_Summary) {
             const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
-            discBadge = `<span class="table-sub-text">${discItems.join(' • ')}</span>`;
+            discBadge = `<div class="table-disc-wrap">${discItems.map(item => `<span class="table-disc-pill">${item}</span>`).join('')}</div>`;
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            discBadge = `<span class="table-sub-text">${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%)</span>`;
+            const pctStr = parseFloat(inv.Discount_Percentage || 0) > 0 ? ` (${parseFloat(inv.Discount_Percentage).toFixed(0)}%)` : '';
+            discBadge = `<div class="table-disc-wrap"><span class="table-disc-pill">${inv.Discount_Name}${pctStr}</span></div>`;
         }
 
         let statusBadge = '';
@@ -347,11 +382,12 @@ const renderInvoicesTable = (invoices) => {
             : `<span class="table-amount-prominent text-success">₱0.00</span>`;
 
         html += `<tr class="clickable-row" onclick="openPaymentHistoryModal(${inv.Invoice_ID})" title="Click row to view payment history, official receipts, SOA, or pay balance">`;
-        html += `<td><span class="table-primary-text text-primary">${inv.Invoice_Code}</span><span class="table-sub-text">Case: <strong>${inv.Admission_Code}</strong></span></td>`;
-        html += `<td><span class="table-primary-text">${inv.Patient_Name}</span><span class="table-sub-text">${inv.Patient_Code} • Billed: ${inv.Settlement_Date} (${inv.Cashier_Name})</span></td>`;
-        html += `<td><span class="table-primary-text">Gross: ₱${gross}</span>${discBadge}</td>`;
-        html += `<td class="text-right"><span class="table-amount-prominent text-primary">Net: ₱${net}</span><span class="table-sub-text">Paid: ₱${paid}</span></td>`;
-        html += `<td class="text-right">${statusBadge}<span class="table-sub-text">${balDisplay}</span></td>`;
+        html += `<td data-sort-value="${inv.Invoice_ID}"><span class="table-primary-text text-primary">${inv.Invoice_Code}</span><span class="table-sub-text">Case: <strong>${inv.Admission_Code}</strong></span></td>`;
+        html += `<td data-sort-value="${inv.Patient_Name}"><span class="table-primary-text" title="${inv.Patient_Name}">${inv.Patient_Name}</span><span class="table-sub-text">${inv.Patient_Code} • ${inv.Settlement_Date}</span><span class="table-sub-text text-muted">Cashier: ${inv.Cashier_Name}</span></td>`;
+        html += `<td class="text-right" data-sort-value="${grossVal}"><span class="table-amount-prominent text-dark">₱${gross}</span></td>`;
+        html += `<td data-sort-value="${discSortVal}">${discBadge}</td>`;
+        html += `<td class="text-right" data-sort-value="${netVal}"><span class="table-amount-prominent text-primary">Net: ₱${net}</span><span class="table-sub-text">Paid: ₱${paid}</span></td>`;
+        html += `<td class="text-right" data-sort-value="${balVal}">${statusBadge}<span class="table-sub-text">${balDisplay}</span></td>`;
         html += '</tr>';
     });
 
@@ -514,11 +550,13 @@ const openPaymentHistoryModal = (invoiceId) => {
     if (elDiscSumm) {
         if (inv.Discount_Summary) {
             const discItems = inv.Discount_Summary.split(/;\s*|<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
-            elDiscSumm.textContent = discItems.join(', ');
+            elDiscSumm.innerHTML = `<div class="table-disc-wrap">${discItems.map(item => `<span class="table-disc-pill">${item}</span>`).join('')}</div>`;
         } else if (inv.Discount_Name && inv.Discount_Name !== 'None') {
-            elDiscSumm.textContent = `${inv.Discount_Name} (${parseFloat(inv.Discount_Percentage || 0).toFixed(0)}%) - ₱${parseFloat(inv.Discount_Amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+            const pctStr = parseFloat(inv.Discount_Percentage || 0) > 0 ? ` (${parseFloat(inv.Discount_Percentage).toFixed(0)}%)` : '';
+            const amtStr = parseFloat(inv.Discount_Amount || 0) > 0 ? ` - ₱${parseFloat(inv.Discount_Amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '';
+            elDiscSumm.innerHTML = `<span class="table-disc-pill">${inv.Discount_Name}${pctStr}${amtStr}</span>`;
         } else {
-            elDiscSumm.textContent = 'None';
+            elDiscSumm.innerHTML = '<span class="table-disc-pill-none">None</span>';
         }
     }
 
@@ -603,7 +641,7 @@ const openPaymentHistoryModal = (invoiceId) => {
                             <span class="table-sub-text">${p.Payment_Date}</span>
                         </td>
                         <td>
-                            <span class="table-primary-text font-bold">${p.Payment_Method || 'Cash'}</span>
+                            <span class="table-method-pill">${p.Payment_Method || 'Cash'}</span>
                             <span class="table-sub-text">Cashier: <strong>${p.Cashier_Name}</strong></span>
                         </td>
                         <td>

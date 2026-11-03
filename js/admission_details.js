@@ -8,6 +8,7 @@ let assignedDoctors = [];
 let availableHealthcarePersonnel = [];
 let currentAdministeringOrder = null;
 let currentSelectedOrderCatalog = null;
+let activeComputeSettlementMath = null;
 
 const formatCleanStaffText = (staffList, docList) => {
     const raw = staffList || docList || '';
@@ -153,6 +154,7 @@ const setRoleButtonVisibility = (btn, visible, displayStyle = 'inline-flex') => 
     }
 };
 let currentUser = null;
+let isPureFinanceUser = false;
 let discountList = [];
 let paymentMethodsList = [];
 let promissoryPlanTypes = [];
@@ -184,13 +186,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const curPerms = Array.isArray(currentUser.permissions) ? currentUser.permissions : [];
     const isAdmin = (currentUser.access_domain || '').toLowerCase() === 'admin' || parseInt(currentUser.role_id, 10) === 1 || (currentUser.role_name || '').toLowerCase() === 'admin';
     const hasAdmissionPerm = isAdmin || curPerms.includes('admissions.html') || curPerms.includes('admission_details.html');
-    const isPureFinanceUser = ((currentUser.access_domain || '').toLowerCase() === 'finance') || (curPerms.length > 0 && !curPerms.includes('admissions.html') && curPerms.includes('invoices.html'));
+    isPureFinanceUser = Boolean(((currentUser.access_domain || '').toLowerCase() === 'finance') || (curPerms.length > 0 && !curPerms.includes('admissions.html') && curPerms.includes('invoices.html')));
 
     const pageHash = (window.location.hash || '').toLowerCase();
     const pageTabParam = (new URLSearchParams(window.location.search).get('tab') || '').toLowerCase();
-    const isSettlementOrLedger = pageHash.includes('tab-settlement') || pageHash.includes('tab-ledger') || pageTabParam === 'tab-settlement' || pageTabParam === 'tab-ledger' || pageTabParam === '4' || pageTabParam === '5';
+    const isSettlementOrLedger = pageHash.includes('tab-settlement') || pageHash.includes('tab-ledger') || pageHash.includes('tab-advances') || pageHash.includes('open-advance') || pageTabParam === 'tab-settlement' || pageTabParam === 'tab-ledger' || pageTabParam === 'tab-advances' || pageTabParam === '4' || pageTabParam === '5';
 
-    if (!hasAdmissionPerm && (!isPureFinanceUser || !isSettlementOrLedger)) {
+    if (isPureFinanceUser && !isSettlementOrLedger) {
+        window.location.hash = '#tab-settlement';
+    } else if (!hasAdmissionPerm && !isPureFinanceUser) {
         sessionStorage.setItem('rbac_denied_msg', 'Access Denied: Your assigned role does not have permission to access patient clinical admission charts.');
         window.location.replace('invoices.html');
         return;
@@ -478,7 +482,12 @@ const initClinicalTabs = () => {
     const tabParam = new URLSearchParams(window.location.search).get('tab');
     const hash = window.location.hash.replace('#', '') || tabParam || '';
     if (hash) {
-        if (isPureFinanceUser && (hash === 'tab-summary' || hash === 'tab-clinical')) {
+        if (hash === 'tab-advances' || hash === 'open-advance') {
+            activateTab('tab-settlement');
+            setTimeout(() => {
+                openAdvancePaymentModal();
+            }, 300);
+        } else if (isPureFinanceUser && (hash === 'tab-summary' || hash === 'tab-clinical')) {
             activateTab('tab-settlement');
         } else {
             activateTab(hash);
@@ -587,11 +596,30 @@ const initClinicalModals = () => {
             const orderCatId = document.getElementById('order_catalog_id');
             const orderCatName = document.getElementById('order_catalog_name');
             const orderQty = document.getElementById('order_qty');
-            if (orderDocId) orderDocId.value = '';
-            if (orderDocName) orderDocName.value = '';
             if (orderCatId) orderCatId.value = '';
             if (orderCatName) orderCatName.value = '';
             if (orderQty) orderQty.value = '1';
+
+            const user = JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
+            const myDocId = user.doctor_id ? parseInt(user.doctor_id, 10) : 0;
+            const myAssignedDoc = (assignedDoctors || []).find(d => parseInt(d.Doctor_ID, 10) === myDocId);
+            if (myAssignedDoc) {
+                if (orderDocId) orderDocId.value = myAssignedDoc.Admission_Doctor_ID;
+                if (orderDocName) orderDocName.value = `${myAssignedDoc.Doctor_Name} (${myAssignedDoc.Doctor_Type})`;
+            } else if (assignedDoctors && assignedDoctors.length > 0) {
+                if (orderDocId) orderDocId.value = assignedDoctors[0].Admission_Doctor_ID;
+                if (orderDocName) orderDocName.value = `${assignedDoctors[0].Doctor_Name} (${assignedDoctors[0].Doctor_Type})`;
+            } else {
+                if (orderDocId) orderDocId.value = '';
+                if (orderDocName) orderDocName.value = '';
+            }
+
+            const btnBrowseDoc = document.getElementById('btnBrowseOrderDoctor');
+            if (btnBrowseDoc) {
+                const isOnlyDoctor = Boolean(myAssignedDoc && parseInt(user.role_id, 10) !== 1);
+                btnBrowseDoc.style.display = isOnlyDoctor ? 'none' : 'inline-block';
+            }
+
             updateOrderDeptCard(null);
             openModal('orderModal');
         });
@@ -626,9 +654,30 @@ const initClinicalModals = () => {
             const roundDocId = document.getElementById('round_doctor_id');
             const roundDocName = document.getElementById('round_doctor_name');
             const roundFee = document.getElementById('round_fee');
-            if (roundDocId) roundDocId.value = '';
-            if (roundDocName) roundDocName.value = '';
-            if (roundFee) roundFee.value = '';
+
+            const user = JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
+            const myDocId = user.doctor_id ? parseInt(user.doctor_id, 10) : 0;
+            const myAssignedDoc = (assignedDoctors || []).find(d => parseInt(d.Doctor_ID, 10) === myDocId);
+            if (myAssignedDoc) {
+                if (roundDocId) roundDocId.value = myAssignedDoc.Admission_Doctor_ID;
+                if (roundDocName) roundDocName.value = `${myAssignedDoc.Doctor_Name} (${myAssignedDoc.Doctor_Type})`;
+                if (roundFee) roundFee.value = myAssignedDoc.Base_Round_Fee || '';
+            } else if (assignedDoctors && assignedDoctors.length > 0) {
+                if (roundDocId) roundDocId.value = assignedDoctors[0].Admission_Doctor_ID;
+                if (roundDocName) roundDocName.value = `${assignedDoctors[0].Doctor_Name} (${assignedDoctors[0].Doctor_Type})`;
+                if (roundFee) roundFee.value = assignedDoctors[0].Base_Round_Fee || '';
+            } else {
+                if (roundDocId) roundDocId.value = '';
+                if (roundDocName) roundDocName.value = '';
+                if (roundFee) roundFee.value = '';
+            }
+
+            const btnBrowseRoundDoc = document.getElementById('btnBrowseRoundDoctor');
+            if (btnBrowseRoundDoc) {
+                const isOnlyDoctor = Boolean(myAssignedDoc && parseInt(user.role_id, 10) !== 1);
+                btnBrowseRoundDoc.style.display = isOnlyDoctor ? 'none' : 'inline-block';
+            }
+
             openModal('roundModal');
         });
     }
@@ -879,7 +928,11 @@ const renderLookupPickerRows = () => {
     let html = '';
     filtered.forEach((item, index) => {
         const isSelected = (currentPickerSelectedItem === item);
-        const selClass = isSelected ? 'picker-row clickable-row selected-row' : 'picker-row clickable-row';
+        const isDisabled = currentPickerConfig.isItemDisabled ? currentPickerConfig.isItemDisabled(item) : false;
+        let selClass = 'picker-row';
+        if (isSelected) selClass += ' selected-row';
+        if (isDisabled) selClass += ' disabled-row disabled';
+        else selClass += ' clickable-row';
         html += `<tr class="${selClass}" data-index="${index}">${currentPickerConfig.renderRowFn(item)}</tr>`;
     });
     tbody.innerHTML = html;
@@ -890,6 +943,9 @@ const renderLookupPickerRows = () => {
         const item = filtered[idx];
 
         row.addEventListener('click', () => {
+            if (currentPickerConfig.isItemDisabled && currentPickerConfig.isItemDisabled(item)) {
+                return;
+            }
             rows.forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
             currentPickerSelectedItem = item;
@@ -898,6 +954,9 @@ const renderLookupPickerRows = () => {
         });
 
         row.addEventListener('dblclick', () => {
+            if (currentPickerConfig.isItemDisabled && currentPickerConfig.isItemDisabled(item)) {
+                return;
+            }
             currentPickerSelectedItem = item;
             if (currentPickerConfig.onSelect) {
                 currentPickerConfig.onSelect(item);
@@ -1159,23 +1218,27 @@ const wireLookupPickers = () => {
             const isDirectNurseTransfer = (!pendingOrd && !flags.isSystemAdmin);
 
             let displayBeds = bedList;
-            let pickerTitle = 'Select Target Vacant Bed';
+            let pickerTitle = 'Select Target Bed';
             let filterOpts = [
-                { label: 'All Room Types', value: 'all' },
+                { label: 'All Beds (Available & Occupied)', value: 'all' },
+                { label: 'Available Beds Only', value: 'available_only' },
+                { label: 'Occupied Beds Only', value: 'occupied_only' },
                 ...bedTypes.map(t => ({ label: t, value: t }))
             ];
             let preferredType = 'all';
 
             if (isDirectNurseTransfer && !isCurrentHighTier) {
-                pickerTitle = 'Select Target Vacant Bed (Direct Transfer)';
+                pickerTitle = 'Select Target Bed (Direct Transfer)';
                 displayBeds = bedList.filter(b => !isHighTierRoom(b.Room_Type_ID, b.Room_Type));
                 const permittedTypes = [...new Set(displayBeds.map(b => b.Room_Type).filter(Boolean))];
                 filterOpts = [
-                    { label: 'All Permitted Rooms (Non-ICU)', value: 'all' },
+                    { label: 'All Permitted Beds (Non-ICU)', value: 'all' },
+                    { label: 'Available Only (Non-ICU)', value: 'available_only' },
+                    { label: 'Occupied Only (Non-ICU)', value: 'occupied_only' },
                     ...permittedTypes.map(t => ({ label: t, value: t }))
                 ];
                 if (displayBeds.length === 0) {
-                    showPopupAlert("No vacant beds are currently available for direct transfer. Escalation into Intensive Care Unit (ICU) requires an Attending Physician's Bed Transfer Order.", 'warning');
+                    showPopupAlert("No beds are currently available for direct transfer. Escalation into Intensive Care Unit (ICU) requires an Attending Physician's Bed Transfer Order.", 'warning');
                     return;
                 }
             } else if (pendingOrd && parseInt(pendingOrd.Target_Room_Type_ID || 0, 10) > 0 && bedTypes.includes(pendingOrd.Target_Room_Type_Name)) {
@@ -1184,13 +1247,24 @@ const wireLookupPickers = () => {
 
             openLookupPicker({
                 title: pickerTitle,
-                placeholder: 'Search vacant bed by room, code, or type...',
-                columns: ['Bed Code', 'Room Name', 'Room Type', 'Daily Rate'],
+                placeholder: 'Search bed by room, code, occupant, or type...',
+                columns: ['Bed Code', 'Room Name', 'Room Type', 'Daily Rate', 'Status'],
                 items: displayBeds,
                 defaultFilterValue: preferredType,
                 filterOptions: filterOpts,
-                categoryFilterFn: (b, val) => b.Room_Type === val,
+                categoryFilterFn: (b, val) => {
+                    const isAvail = (parseInt(b.Is_Available, 10) === 1 && !b.Occupied_Admission_ID);
+                    if (val === 'all') return true;
+                    if (val === 'available_only') return isAvail;
+                    if (val === 'occupied_only') return !isAvail;
+                    return b.Room_Type === val;
+                },
+                isItemDisabled: (b) => {
+                    const isAvail = (parseInt(b.Is_Available, 10) === 1 && !b.Occupied_Admission_ID);
+                    return !isAvail;
+                },
                 sortOptions: [
+                    { label: 'Available First', value: 'avail_first' },
                     { label: 'Default Order', value: 'default' },
                     { label: 'Classification (A to Z)', value: 'type_asc' },
                     { label: 'Classification (Z to A)', value: 'type_desc' },
@@ -1201,7 +1275,16 @@ const wireLookupPickers = () => {
                 ],
                 sortFn: (list, val) => {
                     const arr = [...list];
-                    if (val === 'type_asc') {
+                    if (val === 'avail_first' || val === 'default') {
+                        arr.sort((a, b) => {
+                            const aAvail = (parseInt(a.Is_Available, 10) === 1 && !a.Occupied_Admission_ID) ? 1 : 0;
+                            const bAvail = (parseInt(b.Is_Available, 10) === 1 && !b.Occupied_Admission_ID) ? 1 : 0;
+                            if (aAvail !== bAvail) return bAvail - aAvail;
+                            const comp = (a.Room_Type || '').localeCompare(b.Room_Type || '');
+                            if (comp !== 0) return comp;
+                            return (a.Bed_Code || '').localeCompare(b.Bed_Code || '', undefined, { numeric: true, sensitivity: 'base' });
+                        });
+                    } else if (val === 'type_asc') {
                         arr.sort((a, b) => {
                             const comp = (a.Room_Type || '').localeCompare(b.Room_Type || '');
                             if (comp !== 0) return comp;
@@ -1225,17 +1308,29 @@ const wireLookupPickers = () => {
                     return arr;
                 },
                 filterFn: (b, q) => {
-                    const str = `${b.Bed_Code || ''} ${b.Room_Name || ''} ${b.Room_Type || ''}`.toLowerCase();
+                    const str = `${b.Bed_Code || ''} ${b.Room_Name || ''} ${b.Room_Type || ''} ${b.Occupied_Patient_Name || ''} ${b.Occupied_Patient_Code || ''}`.toLowerCase();
                     return str.includes(q);
                 },
-                renderRowFn: (b) => `
-                    <td><strong>${b.Bed_Code}</strong></td>
-                    <td>${b.Room_Name}</td>
-                    <td><span class="badge badge-secondary">${b.Room_Type}</span></td>
-                    <td><strong>₱${parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</strong></td>
-                `,
+                renderRowFn: (b) => {
+                    const isAvail = (parseInt(b.Is_Available, 10) === 1 && !b.Occupied_Admission_ID);
+                    const statusBadge = isAvail
+                        ? '<span class="badge badge-success">Available</span>'
+                        : `<span class="badge badge-danger">Occupied</span> <span class="table-sub-text text-danger d-block">${b.Occupied_Patient_Name ? `${b.Occupied_Patient_Name} (${b.Occupied_Patient_Code || ''})` : 'Occupied'}</span>`;
+                    return `
+                        <td><strong>${b.Bed_Code}</strong></td>
+                        <td>${b.Room_Name}</td>
+                        <td><span class="badge badge-secondary">${b.Room_Type}</span></td>
+                        <td><strong>₱${parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day</strong></td>
+                        <td>${statusBadge}</td>
+                    `;
+                },
                 getItemName: (b) => `Bed ${b.Bed_Code} (${b.Room_Name} - ${b.Room_Type})`,
                 onSelect: (b) => {
+                    const isAvail = (parseInt(b.Is_Available, 10) === 1 && !b.Occupied_Admission_ID);
+                    if (!isAvail) {
+                        showPopupAlert(`Bed ${b.Bed_Code} is currently occupied by ${b.Occupied_Patient_Name || 'another patient'}. Please choose a vacant bed.`, 'warning');
+                        return;
+                    }
                     selectedTransferBedObj = b;
                     document.getElementById('transfer_bed_id').value = b.Bed_ID;
                     document.getElementById('transfer_bed_name').value = `${b.Bed_Code} (${b.Room_Name} - ${b.Room_Type}) — ₱${parseFloat(b.Daily_Rate || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}/day`;
@@ -1713,9 +1808,13 @@ const loadAdmissionDetails = () => {
 
             admissionData = response.data;
             assignedDoctors = admissionData.Assigned_Doctors || [];
+            if (typeof renderFilteredOrders === 'function') renderFilteredOrders();
 
+            if (!curUser.doctor_id && admissionData.requesting_doctor_id) {
+                curUser.doctor_id = admissionData.requesting_doctor_id;
+            }
             const isDoctorRole = (curUser.role_name && curUser.role_name.toLowerCase() === 'doctor') || Boolean(curUser.doctor_id);
-            const isAssignedDoctor = !isDoctorRole || assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(curUser.doctor_id, 10));
+            const isAssignedDoctor = !isDoctorRole || Boolean(admissionData.is_assigned_doctor) || (Boolean(curUser.doctor_id) && assignedDoctors.some(d => parseInt(d.Doctor_ID, 10) === parseInt(curUser.doctor_id, 10)));
 
             if (isDoctorRole && !isAdminRole && !isAssignedDoctor) {
                 if (typeof showPopupAlert === "function") {
@@ -1933,7 +2032,6 @@ const loadAdmissionDetails = () => {
 
             populateAssignedDoctorDropdowns();
 
-            const isAdminRole = Boolean(currentUser && (parseInt(currentUser.role_id, 10) === 1 || parseInt(currentUser.is_higher_up, 10) === 1 || (currentUser.access_domain || '').toLowerCase() === 'admin'));
             const isFinanceRole = Boolean(currentUser && ((currentUser.access_domain || '').toLowerCase() === 'finance' || (currentUser.role_name || '').toLowerCase().includes('billing') || (currentUser.role_name || '').toLowerCase().includes('cashier')));
             const isNurseRole = Boolean(currentUser && !isDoctorRole && !isAdminRole && !isFinanceRole && (
                 (currentUser.role_name || '').toLowerCase().includes('nurse') ||
@@ -2444,9 +2542,9 @@ const handleOrderSearch = (val) => {
 
 const handleOrderProcessFilter = (stage) => {
     orderProcessFilter = stage;
-    const filterBtns = document.querySelectorAll('.process-filter-btn');
+    const filterBtns = document.querySelectorAll('.dept-stage-pill-btn');
     filterBtns.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.process === stage);
+        btn.classList.toggle('active', btn.dataset.stage === stage);
     });
     renderFilteredOrders();
 };
@@ -2456,44 +2554,67 @@ const handleOrderSort = (val) => {
     renderFilteredOrders();
 };
 
+const resetOrderFilters = () => {
+    orderSearchQuery = '';
+    orderProcessFilter = 'all';
+    orderSortBy = 'stage';
+    const sInput = document.getElementById('order_search_input');
+    if (sInput) sInput.value = '';
+    const sSelect = document.getElementById('sort_orders_by');
+    if (sSelect) sSelect.value = 'stage';
+    renderFilteredOrders();
+};
+
 const renderTrackingStepper = (o) => {
     const isScan = (o.Category_Type === 'Equipment Scan' || o.Category_Type === 'Service');
     const stage = getOrderProcessStage(o.Status);
 
-    const step1Title = 'Requested';
-    const step2Title = isScan ? 'Preparing Equipment' : 'Preparing';
-    const step3Title = isScan ? 'Equipment Ready' : 'Prepared';
-    const step4Title = isScan ? 'Escorting Patient' : 'Delivering';
-    const step5Title = isScan ? 'Scan Completed' : 'Administered';
+    if (stage === 'cancelled') {
+        const isSettledOrDischarged = (o.Admission_Status === 'Discharged' || o.Admission_Status === 'Billed' || Boolean(admissionData && (admissionData.Status === 'Discharged' || admissionData.Status === 'Billed')));
+        if (isSettledOrDischarged) {
+            return '<span class="badge badge-process badge-process-cancelled-settled" title="Cancelled upon patient discharge and excluded from final billing">Cancelled • Bill Settled</span>';
+        }
+        return '<span class="badge badge-process badge-process-cancelled">Order Cancelled</span>';
+    }
 
-    let s1State = 'is-complete';
-    let s2State = '';
-    let s3State = '';
-    let s4State = '';
-    let s5State = '';
+    const step1Title = 'Requested';
+    const step2Title = isScan ? 'Calibrating' : 'Preparing';
+    const step3Title = 'Ready';
+    const step4Title = isScan ? 'Escorting' : 'Delivering';
+    const step5Title = isScan ? 'Scanned' : 'Administered';
+
+    let activeStepNum = 1;
+    let seg1Class = 'is-complete';
+    let seg2Class = '';
+    let seg3Class = '';
+    let seg4Class = '';
+    let seg5Class = '';
 
     if (stage === 'requested') {
-        s1State = 'is-active step-requested';
+        activeStepNum = 1;
+        seg1Class = 'is-active step-requested';
     } else if (stage === 'preparing') {
-        s1State = 'is-complete';
-        s2State = 'is-active step-preparing';
+        activeStepNum = 2;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-active step-preparing';
     } else if (stage === 'prepared') {
-        s1State = 'is-complete';
-        s2State = 'is-complete';
-        s3State = 'is-active step-prepared';
+        activeStepNum = 3;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-complete';
+        seg3Class = 'is-active step-prepared';
     } else if (stage === 'delivering') {
-        s1State = 'is-complete';
-        s2State = 'is-complete';
-        s3State = 'is-complete';
-        s4State = 'is-active step-delivering';
+        activeStepNum = 4;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-complete';
+        seg3Class = 'is-complete';
+        seg4Class = 'is-active step-delivering';
     } else if (stage === 'administered') {
-        s1State = 'is-complete';
-        s2State = 'is-complete';
-        s3State = 'is-complete';
-        s4State = 'is-complete';
-        s5State = 'is-complete step-administered is-active';
-    } else if (stage === 'cancelled') {
-        return `<span class="badge badge-process badge-process-cancelled">Order Cancelled</span>`;
+        activeStepNum = 5;
+        seg1Class = 'is-complete';
+        seg2Class = 'is-complete';
+        seg3Class = 'is-complete';
+        seg4Class = 'is-complete';
+        seg5Class = 'is-complete step-administered is-active';
     }
 
     let badgeClass = 'badge-process-requested';
@@ -2503,52 +2624,40 @@ const renderTrackingStepper = (o) => {
         badgeText = isScan ? 'Preparing Equipment' : 'Department Preparing';
     } else if (stage === 'prepared') {
         badgeClass = 'badge-process-prepared';
-        badgeText = isScan ? 'Equipment Ready (Nurse Dispatched)' : 'Prepared (Ready for Pickup)';
+        badgeText = isScan ? 'Equipment Ready' : 'Prepared & Ready';
     } else if (stage === 'delivering') {
         badgeClass = 'badge-process-delivering';
-        badgeText = isScan ? 'Escorting Patient to Scan' : 'Out for Delivery';
+        badgeText = isScan ? 'Escorting Patient' : 'Out for Delivery';
     } else if (stage === 'administered') {
         badgeClass = 'badge-process-administered';
-        badgeText = isScan ? 'Scan Completed & Recorded' : 'Delivered & Administered';
+        badgeText = isScan ? 'Scan Completed' : 'Administered';
     }
 
     let trackerMeta = '';
     if (stage === 'requested') {
-        trackerMeta = `Awaiting ${o.Target_Station_Name || 'Department'} to begin prep`;
+        trackerMeta = `Awaiting ${o.Target_Station_Name || 'Department'} to start`;
     } else if (stage === 'preparing') {
-        trackerMeta = `${o.Prepared_By_Name ? o.Prepared_By_Name : 'Staff'} prepping in ${o.Target_Station_Name || 'Dept'}`;
+        trackerMeta = `${o.Prepared_By_Name ? o.Prepared_By_Name : 'Staff'} preparing in ${o.Target_Station_Name || 'Dept'}`;
     } else if (stage === 'prepared') {
-        trackerMeta = o.Assigned_Nurse_Name ? `Assigned to Nurse: <strong>${o.Assigned_Nurse_Name}</strong>` : 'Ready for nurse pickup';
+        trackerMeta = o.Assigned_Nurse_Name ? `Assigned: <strong>${o.Assigned_Nurse_Name}</strong>` : 'Ready for nurse pickup';
     } else if (stage === 'delivering') {
-        trackerMeta = isScan ? `Nurse ${o.Assigned_Nurse_Name || ''} escorting patient to ${o.Target_Station_Name || 'Station'}` : `Nurse ${o.Assigned_Nurse_Name || ''} in transit to patient`;
+        trackerMeta = isScan ? `Nurse ${o.Assigned_Nurse_Name || ''} escorting` : `Nurse ${o.Assigned_Nurse_Name || ''} en route`;
     } else if (stage === 'administered') {
-        trackerMeta = `Administered by: <strong>${o.Administered_By_Name || 'Nurse'}</strong>`;
+        trackerMeta = `Completed by ${o.Administered_By_Name || 'Clinical Staff'}`;
     }
 
     return `
         <div class="order-tracking-cell">
-            <div><span class="badge-process ${badgeClass}">${badgeText}</span></div>
-            <div class="tracking-stepper">
-                <div class="tracking-step ${s1State}">
-                    <div class="tracking-node" title="Doctor Order Placed">1</div>
-                    <div class="tracking-label">${step1Title}</div>
-                </div>
-                <div class="tracking-step ${s2State}">
-                    <div class="tracking-node" title="Department Prepares Item / Scan Room">2</div>
-                    <div class="tracking-label">${step2Title}</div>
-                </div>
-                <div class="tracking-step ${s3State}">
-                    <div class="tracking-node" title="Ready / Active Nurse Assigned">3</div>
-                    <div class="tracking-label">${step3Title}</div>
-                </div>
-                <div class="tracking-step ${s4State}">
-                    <div class="tracking-node" title="Nurse Picked Up / Patient In Transit">4</div>
-                    <div class="tracking-label">${step4Title}</div>
-                </div>
-                <div class="tracking-step ${s5State}">
-                    <div class="tracking-node" title="Delivered & Administered">5</div>
-                    <div class="tracking-label">${step5Title}</div>
-                </div>
+            <div class="tracking-status-row">
+                <span class="badge-process ${badgeClass}">${badgeText}</span>
+                <span class="tracking-step-counter">Step ${activeStepNum}/5</span>
+            </div>
+            <div class="micro-stepper-bar" role="progressbar" aria-valuenow="${activeStepNum}" aria-valuemin="1" aria-valuemax="5" title="Stage: ${badgeText}">
+                <div class="micro-step-segment ${seg1Class}" title="1. ${step1Title}"></div>
+                <div class="micro-step-segment ${seg2Class}" title="2. ${step2Title}"></div>
+                <div class="micro-step-segment ${seg3Class}" title="3. ${step3Title}"></div>
+                <div class="micro-step-segment ${seg4Class}" title="4. ${step4Title}"></div>
+                <div class="micro-step-segment ${seg5Class}" title="5. ${step5Title}"></div>
             </div>
             <div class="tracking-meta-desc">${trackerMeta}</div>
         </div>
@@ -2575,6 +2684,7 @@ const renderFilteredOrders = () => {
     const readyCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'prepared').length;
     const delivCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'delivering').length;
     const admCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'administered').length;
+    const cancelledCount = currentOrdersList.filter(o => getOrderProcessStage(o.Status) === 'cancelled').length;
 
     let filtered = [...currentOrdersList];
 
@@ -2635,64 +2745,75 @@ const renderFilteredOrders = () => {
         return b.Request_ID - a.Request_ID;
     });
 
-    let controlsHtml = `
-        <div class="orders-filter-container">
-            <div class="orders-filter-left">
-                <div class="orders-search-box">
-                    <span class="orders-search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    </span>
-                    <input type="text" class="orders-search-input" placeholder="Search orders, medicines, scans, doctor, nurse..." value="${orderSearchQuery}" oninput="handleOrderSearch(this.value)" autocomplete="off">
-                </div>
-                <div class="orders-filter-pills">
-                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'all' ? 'active' : ''}" data-process="all" onclick="handleOrderProcessFilter('all')">
-                        <span class="process-filter-dot dot-all"></span>All <span class="process-filter-count">${totalCount}</span>
-                    </button>
-                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'requested' ? 'active' : ''}" data-process="requested" onclick="handleOrderProcessFilter('requested')">
-                        <span class="process-filter-dot dot-requested"></span>Requesting <span class="process-filter-count">${reqCount}</span>
-                    </button>
-                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'preparing' ? 'active' : ''}" data-process="preparing" onclick="handleOrderProcessFilter('preparing')">
-                        <span class="process-filter-dot dot-preparing"></span>Preparing <span class="process-filter-count">${prepCount}</span>
-                    </button>
-                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'prepared' ? 'active' : ''}" data-process="prepared" onclick="handleOrderProcessFilter('prepared')">
-                        <span class="process-filter-dot dot-prepared"></span>Prepared <span class="process-filter-count">${readyCount}</span>
-                    </button>
-                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'delivering' ? 'active' : ''}" data-process="delivering" onclick="handleOrderProcessFilter('delivering')">
-                        <span class="process-filter-dot dot-delivering"></span>Delivering <span class="process-filter-count">${delivCount}</span>
-                    </button>
-                    <button type="button" class="process-filter-btn ${orderProcessFilter === 'administered' ? 'active' : ''}" data-process="administered" onclick="handleOrderProcessFilter('administered')">
-                        <span class="process-filter-dot dot-administered"></span>Administered <span class="process-filter-count">${admCount}</span>
-                    </button>
-                </div>
+    let stagePillsHtml = `
+        <div class="dept-stage-pills-bar" id="clinical-stage-pills">
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'all' ? 'active' : ''}" data-stage="all" onclick="handleOrderProcessFilter('all')">
+                <span>All Orders</span>
+                <span class="dept-stage-pill-count">${totalCount}</span>
+            </button>
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'requested' ? 'active' : ''}" data-stage="requested" onclick="handleOrderProcessFilter('requested')">
+                <span>Requested</span>
+                <span class="dept-stage-pill-count">${reqCount}</span>
+            </button>
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'preparing' ? 'active' : ''}" data-stage="preparing" onclick="handleOrderProcessFilter('preparing')">
+                <span>Preparing</span>
+                <span class="dept-stage-pill-count">${prepCount}</span>
+            </button>
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'prepared' ? 'active' : ''}" data-stage="prepared" onclick="handleOrderProcessFilter('prepared')">
+                <span>Prepared &amp; Ready</span>
+                <span class="dept-stage-pill-count">${readyCount}</span>
+            </button>
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'delivering' ? 'active' : ''}" data-stage="delivering" onclick="handleOrderProcessFilter('delivering')">
+                <span>Out for Delivery</span>
+                <span class="dept-stage-pill-count">${delivCount}</span>
+            </button>
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'administered' ? 'active' : ''}" data-stage="administered" onclick="handleOrderProcessFilter('administered')">
+                <span>Administered</span>
+                <span class="dept-stage-pill-count">${admCount}</span>
+            </button>
+            ${cancelledCount > 0 ? `
+            <button type="button" class="dept-stage-pill-btn ${orderProcessFilter === 'cancelled' ? 'active' : ''}" data-stage="cancelled" onclick="handleOrderProcessFilter('cancelled')">
+                <span>Cancelled</span>
+                <span class="dept-stage-pill-count">${cancelledCount}</span>
+            </button>
+            ` : ''}
+        </div>
+    `;
+
+    let filterBarHtml = `
+        <div class="filter-bar">
+            <div class="form-group filter-capsule-search">
+                <label class="form-label" for="order_search_input">Search Orders</label>
+                <input type="text" id="order_search_input" class="form-control" placeholder="Search order ID, medicine, scan, doctor, nurse, station..." value="${orderSearchQuery}" oninput="handleOrderSearch(this.value)" autocomplete="off">
             </div>
-            <div class="orders-filter-right">
-                <label for="orders_sort_select" class="form-label font-bold" style="font-size: 11.5px; margin: 0; display: inline-block;">Sort Process:</label>
-                <select id="orders_sort_select" class="orders-sort-select" onchange="handleOrderSort(this.value)">
-                    <option value="stage" ${orderSortBy === 'stage' ? 'selected' : ''}>Active Stages First</option>
-                    <option value="newest" ${orderSortBy === 'newest' ? 'selected' : ''}>Newest Order First</option>
-                    <option value="oldest" ${orderSortBy === 'oldest' ? 'selected' : ''}>Oldest Order First</option>
-                    <option value="item_asc" ${orderSortBy === 'item_asc' ? 'selected' : ''}>Item Name (A-Z)</option>
+
+            <div class="form-group filter-capsule-select">
+                <label class="form-label" for="sort_orders_by">Sort By</label>
+                <select id="sort_orders_by" class="form-select" onchange="handleOrderSort(this.value)">
+                    <option value="stage" ${orderSortBy === 'stage' ? 'selected' : ''}>Process Stage (Active First)</option>
+                    <option value="newest" ${orderSortBy === 'newest' ? 'selected' : ''}>Request Time (Newest First)</option>
+                    <option value="oldest" ${orderSortBy === 'oldest' ? 'selected' : ''}>Request Time (Oldest First)</option>
+                    <option value="item_asc" ${orderSortBy === 'item_asc' ? 'selected' : ''}>Prescribed Item (A-Z)</option>
                     <option value="amount_desc" ${orderSortBy === 'amount_desc' ? 'selected' : ''}>Highest Total Fee</option>
                 </select>
             </div>
+            <button type="button" class="btn btn-secondary btn-sm btn-filter-bar-reset" id="btnResetOrderFilters" onclick="resetOrderFilters()" title="Reset order filters">Reset</button>
         </div>
     `;
 
     if (filtered.length === 0) {
-        container.innerHTML = controlsHtml + '<p class="text-center text-muted" style="padding: 24px;"><em>No orders match the selected search or filter criteria.</em></p>';
+        container.innerHTML = stagePillsHtml + filterBarHtml + `
+            <div class="dept-orders-table-wrap">
+                <div class="dept-empty-card">
+                    <div class="dept-empty-title">No clinical orders found</div>
+                    <div class="dept-empty-text">No requests match the selected stage and filter criteria.</div>
+                </div>
+            </div>
+        `;
         return;
     }
 
-    let html = controlsHtml + '<table class="data-table">';
-    html += '<thead><tr>';
-    html += '<th>Order Ref &amp; Timestamps</th>';
-    html += '<th>Prescribed Item &amp; Doctor</th>';
-    html += '<th>Fulfilling Department &amp; Staff</th>';
-    html += '<th>Quantity &amp; Amount</th>';
-    html += '<th>Process &amp; Delivery Tracking</th>';
-    html += '<th class="text-center">Status &amp; Actions</th>';
-    html += '</tr></thead><tbody>';
-
+    let rowsHtml = '';
     filtered.forEach(o => {
         const unitPrice = parseFloat(o.Unit_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
         const total = parseFloat(o.Total_Price).toLocaleString('en-PH', {minimumFractionDigits: 2});
@@ -2741,33 +2862,92 @@ const renderFilteredOrders = () => {
         } else if (stage === 'administered') {
             actionHtml = `<span class="badge badge-success">Completed &amp; Administered</span>`;
         } else if (stage === 'cancelled') {
-            actionHtml = `<span class="badge badge-secondary">Cancelled</span>`;
+            const isSettledOrDischarged = (o.Admission_Status === 'Discharged' || o.Admission_Status === 'Billed' || Boolean(admissionData && (admissionData.Status === 'Discharged' || admissionData.Status === 'Billed')));
+            actionHtml = isSettledOrDischarged
+                ? `<span class="badge badge-process badge-process-cancelled-settled">Unbilled • Settled</span>`
+                : `<span class="badge badge-secondary">Cancelled</span>`;
         }
-
-        let timeDetails = `Req: ${o.Formatted_Request_Time || o.Request_Timestamp || '-'}`;
-        if (o.Formatted_Administered_Time || o.Administered_Timestamp) {
-            timeDetails += `<br>Adm: ${o.Formatted_Administered_Time || o.Administered_Timestamp}`;
-        } else if (o.Formatted_Delivering_Time || o.Delivering_Timestamp) {
-            timeDetails += `<br>Transit: ${o.Formatted_Delivering_Time || o.Delivering_Timestamp}`;
-        } else if (o.Formatted_Prepared_Time || o.Prepared_Timestamp) {
-            timeDetails += `<br>Prepped: ${o.Formatted_Prepared_Time || o.Prepared_Timestamp}`;
-        }
-
-        const dosageInfo = o.Dosage_Instructions ? `<div class="table-sub-text-dark">Instructions: <em>${o.Dosage_Instructions}</em></div>` : '';
 
         const isHighlight = highlightReqId === parseInt(o.Request_ID, 10);
-        html += `<tr class="${isHighlight ? 'order-row-highlight' : ''}" id="order-row-${o.Request_ID}">`;
-        html += `<td><span class="table-primary-text text-primary font-bold">ORD-${String(o.Request_ID).padStart(3, '0')}</span><span class="table-sub-text">${timeDetails}</span></td>`;
-        html += `<td><span class="table-primary-text"><strong>${o.Item_Code}</strong>: ${o.Item_Name}</span><span class="table-sub-text">${o.Doctor_Name} • ${getCategoryPill(o.Category_Type)}</span>${dosageInfo}</td>`;
-        html += `<td>${deptHandlingHtml}</td>`;
-        html += `<td class="text-right"><span class="table-amount-prominent">₱${total}</span><span class="table-sub-text">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</span></td>`;
-        html += `<td>${renderTrackingStepper(o)}</td>`;
-        html += `<td class="text-center"><div class="order-actions-wrap">${actionHtml}</div></td>`;
-        html += '</tr>';
+        rowsHtml += `<tr class="${isHighlight ? 'dept-order-row-highlight' : ''}" id="order-row-${o.Request_ID}">`;
+        rowsHtml += `
+            <td class="dept-order-id-cell">
+                <div class="dept-order-code">ORD-${String(o.Request_ID).padStart(3, '0')}</div>
+                <div class="dept-order-time">${o.Formatted_Request_Time || o.Request_Timestamp || ''}</div>
+            </td>
+        `;
+        rowsHtml += `
+            <td class="dept-doc-cell">
+                <div class="dept-doc-name">${o.Doctor_Name || 'Doctor'}</div>
+                <div class="dept-doc-station">${o.Target_Station_Name || 'General Station'}</div>
+            </td>
+        `;
+        rowsHtml += `
+            <td>${deptHandlingHtml}</td>
+        `;
+        rowsHtml += `
+            <td class="dept-item-cell">
+                <div class="dept-item-name">${o.Item_Name}</div>
+                <div class="dept-item-sub">${getCategoryPill(o.Category_Type)} <span class="font-bold">${o.Item_Code}</span></div>
+                ${o.Dosage_Instructions ? `<div class="dept-item-dosage">${o.Dosage_Instructions}</div>` : ''}
+            </td>
+        `;
+        if (stage === 'cancelled') {
+            rowsHtml += `
+                <td class="text-right">
+                    <div class="table-amount-prominent order-amount-cancelled">₱${total}</div>
+                    <span class="badge badge-not-billed">Not Charged</span>
+                    <div class="dept-item-sub">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</div>
+                </td>
+            `;
+        } else {
+            rowsHtml += `
+                <td class="text-right">
+                    <div class="table-amount-prominent">₱${total}</div>
+                    <div class="dept-item-sub">${parseFloat(o.Quantity)} ${parseFloat(o.Quantity) > 1 ? 'units' : 'unit'} × ₱${unitPrice}</div>
+                </td>
+            `;
+        }
+        rowsHtml += `
+            <td>${renderTrackingStepper(o)}</td>
+        `;
+        rowsHtml += `
+            <td class="dept-actions-cell">
+                <div class="dept-action-btn-group">${actionHtml}</div>
+            </td>
+        `;
+        rowsHtml += `</tr>`;
     });
 
-    html += '</tbody></table>';
-    container.innerHTML = html;
+    container.innerHTML = stagePillsHtml + filterBarHtml + `
+        <div class="dept-orders-table-wrap">
+            <table class="data-table" id="clinical-orders-table">
+                <colgroup>
+                    <col class="col-dept-order">
+                    <col class="col-dept-doc">
+                    <col class="col-dept-station">
+                    <col class="col-dept-item">
+                    <col class="col-dept-amount">
+                    <col class="col-dept-track">
+                    <col class="col-dept-action">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Order &amp; Time</th>
+                        <th>Prescribing Doctor</th>
+                        <th>Fulfilling Station</th>
+                        <th>Prescribed Item &amp; Dosage</th>
+                        <th class="text-right">Quantity &amp; Fee</th>
+                        <th>Fulfillment Tracking</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clinical-orders-tbody">
+                    ${rowsHtml}
+                </tbody>
+            </table>
+        </div>
+    `;
 
     if (highlightReqId > 0) {
         setTimeout(() => {
@@ -2780,11 +2960,19 @@ const renderFilteredOrders = () => {
 };
 
 const submitDoctorOrder = () => {
-    const doctorId = document.getElementById('order_doctor_id').value;
+    let doctorId = document.getElementById('order_doctor_id').value;
     const catalogId = document.getElementById('order_catalog_id').value;
     const qty = parseFloat(document.getElementById('order_qty').value);
     const dosage = document.getElementById('order_dosage')?.value.trim() || '';
     const user = JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
+
+    if (!doctorId && user.doctor_id) {
+        const myDoc = (assignedDoctors || []).find(d => parseInt(d.Doctor_ID, 10) === parseInt(user.doctor_id, 10));
+        if (myDoc) {
+            doctorId = myDoc.Admission_Doctor_ID;
+            document.getElementById('order_doctor_id').value = doctorId;
+        }
+    }
 
     if (!doctorId) {
         alert("Please select the prescribing physician.");
@@ -3360,9 +3548,11 @@ const submitDoctorRound = () => {
         return;
     }
 
+    const user = JSON.parse(sessionStorage.getItem('hospital_user') || '{}');
     const payload = {
         admission_doctor_id: doctorId,
-        charged_fee: parseFloat(fee)
+        charged_fee: parseFloat(fee),
+        user_id: user.user_id || user.User_ID
     };
 
     const formData = new FormData();
@@ -4335,8 +4525,10 @@ const openAdvancePaymentModal = () => {
         parseInt(currentUser.is_higher_up, 10) === 1 ||
         (currentUser.access_domain || '').toLowerCase() === 'admin' ||
         (currentUser.access_domain || '').toLowerCase() === 'finance' ||
+        (currentUser.role_name || '').toLowerCase().includes('finance') ||
         (currentUser.role_name || '').toLowerCase().includes('billing') ||
-        (currentUser.role_name || '').toLowerCase().includes('cashier')
+        (currentUser.role_name || '').toLowerCase().includes('cashier') ||
+        (currentUser.role_name || '').toLowerCase().includes('clerk')
     );
     if (!isFinanceOrAdmin) {
         showPopupAlert('Access Restricted: Advance payments and cash collections must be processed by Finance Staff or the Cashier.', 'warning');
@@ -4548,7 +4740,7 @@ const renderAdvancePaymentsHistory = (advList) => {
         });
     }
 
-    container.innerHTML = `
+    const tableHtml = `
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
@@ -4565,6 +4757,9 @@ const renderAdvancePaymentsHistory = (advList) => {
             </table>
         </div>
     `;
+    if (container) container.innerHTML = tableHtml;
+    const settlementDiv = document.getElementById('advance-payments-history-settlement');
+    if (settlementDiv) settlementDiv.innerHTML = tableHtml;
 };
 
 const openPatientAdmissionHistoryModal = () => {
@@ -4924,12 +5119,25 @@ const renderAdmittedDischargeGateCard = (advList) => {
 
             <div class="discharge-footer-ledger-hint">
                 <div class="discharge-footer-hint-text">
-                    <strong>Looking to record an advance payment or view interim partial bills?</strong>
-                    <p>Partial bills, running ledger breakdowns, and pre-discharge deposit receipts are managed in the Live Ledger tab.</p>
+                    <strong>Interim Patient Advance Deposits &amp; Official Receipts:</strong>
+                    <p>Advance deposits, assistance vouchers, and pre-discharge payments can be recorded at any time during patient admission. All deposits are automatically credited towards the final Statement of Account (SOA).</p>
                 </div>
-                <button type="button" class="btn btn-outline btn-sm btn-goto-ledger" onclick="switchClinicalTab('sub-ledger-advances')">
-                    Go to Live Ledger &amp; Advance Deposits &rarr;
-                </button>
+                <div class="settlement-active-actions">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openAdvancePaymentModal()">+ Record Advance Payment</button>
+                    <button type="button" class="btn btn-outline btn-sm btn-goto-ledger" onclick="switchClinicalTab('sub-ledger-advances')">
+                        View Receipts History &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <div class="settlement-advances-section">
+                <div class="settlement-advances-header">
+                    <h3 class="settlement-advances-title">Recorded Advance Payments &amp; Deposit Receipts</h3>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openAdvancePaymentModal()">+ Record Advance Payment</button>
+                </div>
+                <div class="card-body">
+                    <div id="advance-payments-history-settlement"></div>
+                </div>
             </div>
         </div>
     `;
@@ -5429,24 +5637,30 @@ const renderSettlementSection = () => {
 
     let discountCheckboxesHtml = '';
     discountList.forEach(d => {
-        const valText = `${parseFloat(d.Discount_Percentage || 0).toFixed(2)}%`;
-        const vatBadge = (d.Is_Vat_Exempt == 1) ? `<span class="badge badge-success" style="font-size: 11px; padding: 2px 7px;">12% VAT EXEMPT</span>` : '';
+        const isFixed = d.Discount_Type === 'Fixed' || (parseFloat(d.Fixed_Amount || 0) > 0 && parseFloat(d.Discount_Percentage || 0) === 0);
+        const dtype = isFixed ? 'Fixed' : 'Percentage';
+        const dpct = parseFloat(d.Discount_Percentage || 0);
+        const dfixed = parseFloat(d.Fixed_Amount || 0);
+        const valText = isFixed ? ('₱' + dfixed.toLocaleString('en-PH', {minimumFractionDigits: 2})) : (dpct.toFixed(2) + '%');
+        const vatBadge = (d.Is_Vat_Exempt == 1) ? '<span class="badge badge-success" style="font-size: 11px; padding: 2px 7px;">12% VAT EXEMPT</span>' : '';
         const dScope = d.Target_Scope || 'Total';
         let scopeBadge = '';
         if (dScope === 'Doctor') {
-            scopeBadge = `<span class="badge" style="background: #fdf2f8; color: #9d174d; font-size: 11px; padding: 2px 6px;">Doctor Fees Only</span>`;
+            scopeBadge = '<span class="badge" style="background: #fdf2f8; color: #9d174d; font-size: 11px; padding: 2px 6px;">Doctor Fees Only</span>';
         } else if (dScope === 'Room') {
-            scopeBadge = `<span class="badge" style="background: #eff6ff; color: #1e40af; font-size: 11px; padding: 2px 6px;">Room Only</span>`;
+            scopeBadge = '<span class="badge" style="background: #eff6ff; color: #1e40af; font-size: 11px; padding: 2px 6px;">Room &amp; Board Only</span>';
         } else if (dScope === 'Medicine') {
-            scopeBadge = `<span class="badge" style="background: #f0fdf4; color: #166534; font-size: 11px; padding: 2px 6px;">Pharmacy Only</span>`;
+            scopeBadge = '<span class="badge" style="background: #f0fdf4; color: #166534; font-size: 11px; padding: 2px 6px;">Pharmacy Only</span>';
         } else if (dScope === 'Laboratory') {
-            scopeBadge = `<span class="badge" style="background: #faf5ff; color: #6b21a8; font-size: 11px; padding: 2px 6px;">Diagnostics Only</span>`;
+            scopeBadge = '<span class="badge" style="background: #faf5ff; color: #6b21a8; font-size: 11px; padding: 2px 6px;">Diagnostics Only</span>';
+        } else {
+            scopeBadge = '<span class="badge" style="background: #f1f5f9; color: #334155; font-size: 11px; padding: 2px 6px;">Total Bill</span>';
         }
 
         discountCheckboxesHtml += `
             <label style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; user-select: none;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="Percentage" data-pct="${d.Discount_Percentage}" data-fixed="0.00" data-vat-exempt="${d.Is_Vat_Exempt}" data-scope="${dScope}" style="width: 17px; height: 17px; cursor: pointer;">
+                    <input type="checkbox" class="discount-checkbox" data-id="${d.Discount_ID}" data-name="${d.Discount_Name}" data-type="${dtype}" data-pct="${dpct}" data-fixed="${dfixed}" data-vat-exempt="${d.Is_Vat_Exempt}" data-scope="${dScope}" style="width: 17px; height: 17px; cursor: pointer;">
                     <span style="font-weight: 600; font-size: 13.5px; color: #1e293b;">${d.Discount_Name}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
@@ -5555,7 +5769,9 @@ const renderSettlementSection = () => {
                 <td align="right"><strong>₱<span id="settle-subtotal-after-fixed-display">${formattedGross}</span></strong></td>
             </tr>
             <tr>
-                <td>Less: Percentage Discount (<span id="settle-discount-pct-label">0.00%</span>):</td>
+                <td>Less: Discounts &amp; Subsidies Applied:
+                    <div id="settle-applied-discounts-list" style="margin-top: 4px; display: none;"></div>
+                </td>
                 <td align="right" style="color: #276749;"><strong>-<span id="settle-pct-discount-display">₱0.00</span></strong></td>
             </tr>
             <tr style="background-color: #f1f5f9;">
@@ -5731,6 +5947,11 @@ const renderSettlementSection = () => {
         let selectedBase = gross;
         let checkedCount = 0;
         let totalCount = 0;
+        let activeRoom = roomTotal;
+        let activeDoc = docTotal;
+        let activeMed = medTotal;
+        let activeLab = scanTotal + srvTotal;
+
         catCheckboxes.forEach(cb => {
             totalCount++;
             if (cb.checked) checkedCount++;
@@ -5738,11 +5959,17 @@ const renderSettlementSection = () => {
 
         if (checkedCount > 0 && checkedCount < totalCount) {
             selectedBase = 0;
+            const activeCats = [];
             catCheckboxes.forEach(cb => {
                 if (cb.checked) {
+                    activeCats.push(cb.dataset.cat);
                     selectedBase += parseFloat(cb.dataset.amount || 0);
                 }
             });
+            activeRoom = activeCats.includes('room') ? roomTotal : 0;
+            activeDoc = activeCats.includes('doctor') ? docTotal : 0;
+            activeMed = activeCats.includes('medicine') ? medTotal : 0;
+            activeLab = activeCats.includes('laboratory') ? (scanTotal + srvTotal) : 0;
         }
 
         const selectedDiscounts = [];
@@ -5751,7 +5978,7 @@ const renderSettlementSection = () => {
 
         checkedBoxes.forEach(cb => {
             const did = parseInt(cb.dataset.id, 10);
-            const dtype = cb.dataset.type;
+            const dtype = cb.dataset.type || 'Percentage';
             const dpct = parseFloat(cb.dataset.pct || 0);
             const dfixed = parseFloat(cb.dataset.fixed || 0);
             const dname = cb.dataset.name || '';
@@ -5778,42 +6005,145 @@ const renderSettlementSection = () => {
                 type: 'Fixed',
                 pct: 0,
                 fixed: cv.amount,
-                isVatExempt: false
+                isVatExempt: false,
+                scope: 'Total'
             });
         });
 
-        let running = selectedBase;
+        let availRoom = activeRoom;
+        let availDoc = activeDoc;
+        let availMed = activeMed;
+        let availLab = activeLab;
+        let availTotal = selectedBase;
+
+        const appliedItems = [];
         let totalFixedDeduction = 0;
 
         selectedDiscounts.filter(d => d.type === 'Fixed').forEach(fd => {
-            const ded = Math.min(running, fd.fixed);
-            running = Math.max(0, Math.round((running - ded) * 100) / 100);
-            totalFixedDeduction = Math.round((totalFixedDeduction + ded) * 100) / 100;
-        });
+            const scope = fd.scope || 'Total';
+            const val = parseFloat(fd.fixed || 0);
+            let maxDeduct = availTotal;
+            let tag = '';
 
-        const subtotalAfterFixed = running;
-
-        let totalPctRate = 0;
-        let pctDeduction = 0;
-        selectedDiscounts.filter(d => d.type === 'Percentage').forEach(pd => {
-            totalPctRate += pd.pct;
-            let base = subtotalAfterFixed;
-            if (pd.scope === 'Doctor') {
-                base = docTotal;
-            } else if (pd.scope === 'Room') {
-                base = roomTotal;
-            } else if (pd.scope === 'Medicine') {
-                base = medTotal;
-            } else if (pd.scope === 'Laboratory') {
-                base = scanTotal + srvTotal;
+            if (scope === 'Doctor') {
+                maxDeduct = availDoc;
+                tag = ' [Doctor PF Only]';
+            } else if (scope === 'Room') {
+                maxDeduct = availRoom;
+                tag = ' [Room Only]';
+            } else if (scope === 'Medicine') {
+                maxDeduct = availMed;
+                tag = ' [Pharmacy Only]';
+            } else if (scope === 'Laboratory') {
+                maxDeduct = availLab;
+                tag = ' [Diagnostics Only]';
             }
-            const ded = Math.round((base * (pd.pct / 100)) * 100) / 100;
-            pctDeduction = Math.round((pctDeduction + Math.min(running, ded)) * 100) / 100;
+
+            const ded = Math.min(maxDeduct, val);
+            if (ded > 0) {
+                if (scope === 'Doctor') availDoc -= ded;
+                else if (scope === 'Room') availRoom -= ded;
+                else if (scope === 'Medicine') availMed -= ded;
+                else if (scope === 'Laboratory') availLab -= ded;
+
+                availTotal = Math.max(0, Math.round((availTotal - ded) * 100) / 100);
+                totalFixedDeduction = Math.round((totalFixedDeduction + ded) * 100) / 100;
+
+                appliedItems.push({
+                    id: fd.id,
+                    name: (fd.name || 'Fixed Deduction') + tag,
+                    type: 'Fixed',
+                    value: val,
+                    deduction: ded,
+                    scope: scope
+                });
+            }
         });
 
-        pctDeduction = Math.min(subtotalAfterFixed, pctDeduction);
-        const netBeforeTax = Math.max(0, Math.round((subtotalAfterFixed - pctDeduction) * 100) / 100);
-        const totalDiscountDeduction = Math.round((totalFixedDeduction + pctDeduction) * 100) / 100;
+        const pctByScope = {
+            'Room': [],
+            'Doctor': [],
+            'Medicine': [],
+            'Laboratory': [],
+            'Total': []
+        };
+
+        selectedDiscounts.filter(d => d.type === 'Percentage').forEach(pd => {
+            const scope = pd.scope || 'Total';
+            if (pctByScope[scope]) {
+                pctByScope[scope].push(pd);
+            } else {
+                pctByScope['Total'].push(pd);
+            }
+        });
+
+        let totalPctDeduction = 0;
+
+        const processScopePct = (scope, availBase, scopeLabel) => {
+            const list = pctByScope[scope] || [];
+            if (list.length === 0 || availBase <= 0) return 0;
+
+            let sumPct = 0;
+            list.forEach(item => { sumPct += parseFloat(item.pct || 0); });
+            const effectivePct = Math.min(100, sumPct);
+            const totalScopeDed = Math.min(availBase, Math.round(availBase * (effectivePct / 100) * 100) / 100);
+
+            list.forEach(item => {
+                const itemPct = parseFloat(item.pct || 0);
+                const itemDed = sumPct > 0 ? Math.round(totalScopeDed * (itemPct / sumPct) * 100) / 100 : 0;
+                appliedItems.push({
+                    id: item.id,
+                    name: `${item.name} (${itemPct.toFixed(1)}% of ${scopeLabel})`,
+                    type: 'Percentage',
+                    value: itemPct,
+                    deduction: itemDed,
+                    scope: scope
+                });
+            });
+
+            availTotal = Math.max(0, Math.round((availTotal - totalScopeDed) * 100) / 100);
+            totalPctDeduction = Math.round((totalPctDeduction + totalScopeDed) * 100) / 100;
+            return totalScopeDed;
+        };
+
+        const roomDed = processScopePct('Room', availRoom, 'Room & Board');
+        availRoom = Math.max(0, availRoom - roomDed);
+
+        const docDed = processScopePct('Doctor', availDoc, 'Doctor Fees');
+        availDoc = Math.max(0, availDoc - docDed);
+
+        const medDed = processScopePct('Medicine', availMed, 'Pharmacy');
+        availMed = Math.max(0, availMed - medDed);
+
+        const labDed = processScopePct('Laboratory', availLab, 'Diagnostics');
+        availLab = Math.max(0, availLab - labDed);
+
+        const totalList = pctByScope['Total'] || [];
+        if (totalList.length > 0 && availTotal > 0) {
+            let sumTotalPct = 0;
+            totalList.forEach(item => { sumTotalPct += parseFloat(item.pct || 0); });
+            const effectiveTotalPct = Math.min(100, sumTotalPct);
+            const overallDed = Math.min(availTotal, Math.round(availTotal * (effectiveTotalPct / 100) * 100) / 100);
+
+            totalList.forEach(item => {
+                const itemPct = parseFloat(item.pct || 0);
+                const itemDed = sumTotalPct > 0 ? Math.round(overallDed * (itemPct / sumTotalPct) * 100) / 100 : 0;
+                appliedItems.push({
+                    id: item.id,
+                    name: `${item.name} (${itemPct.toFixed(1)}% of Bill)`,
+                    type: 'Percentage',
+                    value: itemPct,
+                    deduction: itemDed,
+                    scope: 'Total'
+                });
+            });
+
+            availTotal = Math.max(0, Math.round((availTotal - overallDed) * 100) / 100);
+            totalPctDeduction = Math.round((totalPctDeduction + overallDed) * 100) / 100;
+        }
+
+        const totalDiscountDeduction = Math.round((totalFixedDeduction + totalPctDeduction) * 100) / 100;
+        const netBeforeTax = Math.max(0, Math.round((selectedBase - totalDiscountDeduction) * 100) / 100);
 
         let vatRate = 0;
         let vatAmount = 0;
@@ -5841,9 +6171,7 @@ const renderSettlementSection = () => {
         return {
             selectedBase,
             totalFixedDeduction,
-            subtotalAfterFixed,
-            totalPctRate,
-            pctDeduction,
+            totalPctDeduction,
             netBeforeTax,
             totalDiscountDeduction,
             isVatExempt,
@@ -5854,9 +6182,12 @@ const renderSettlementSection = () => {
             netAmountDue,
             advancePaid,
             remainingNetToSettle,
-            selectedDiscounts
+            selectedDiscounts,
+            appliedItems
         };
     };
+
+    activeComputeSettlementMath = computeSettlementMath;
 
     const updateSettlementTotals = () => {
         const math = computeSettlementMath();
@@ -5872,13 +6203,29 @@ const renderSettlementSection = () => {
         const lblAdv = document.getElementById('settle-advance-display');
         const lblBalDue = document.getElementById('settle-balance-due-display');
         const lblChange = document.getElementById('settle-change-display');
+        const listContainer = document.getElementById('settle-applied-discounts-list');
 
         if (lblGross) lblGross.textContent = math.selectedBase.toLocaleString('en-PH', {minimumFractionDigits: 2});
         if (lblFixed) lblFixed.textContent = `₱${math.totalFixedDeduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
-        if (lblSubAfter) lblSubAfter.textContent = math.subtotalAfterFixed.toLocaleString('en-PH', {minimumFractionDigits: 2});
-        if (lblPctLabel) lblPctLabel.textContent = `${math.totalPctRate.toFixed(2)}%`;
-        if (lblPctAmt) lblPctAmt.textContent = `₱${math.pctDeduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (lblSubAfter) lblSubAfter.textContent = math.netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        if (lblPctLabel) lblPctLabel.textContent = math.totalDiscountDeduction > 0 ? `₱${math.totalDiscountDeduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}` : '0.00%';
+        if (lblPctAmt) lblPctAmt.textContent = `₱${math.totalDiscountDeduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
         if (lblNetBeforeTax) lblNetBeforeTax.textContent = `₱${math.netBeforeTax.toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+        if (listContainer) {
+            if (math.appliedItems && math.appliedItems.length > 0) {
+                listContainer.innerHTML = math.appliedItems.map(item => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 11.5px; color: #166534;">
+                        <span>✔ ${item.name}</span>
+                        <strong>-₱${item.deduction.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>
+                    </div>
+                `).join('');
+                listContainer.style.display = 'block';
+            } else {
+                listContainer.innerHTML = '';
+                listContainer.style.display = 'none';
+            }
+        }
 
         if (lblVat) {
             if (math.isVatExempt) {
@@ -6247,33 +6594,9 @@ const submitSettlement = () => {
         return;
     }
 
-    const gross = latestSummary ? parseFloat(latestSummary.net_total || 0) : 0;
-
-    let totalFixed = 0;
-    checkedBoxes.forEach(cb => {
-        if (cb.dataset.type === 'Fixed') totalFixed += parseFloat(cb.dataset.fixed || 0);
-    });
-    customVouchersList.forEach(cv => { totalFixed += cv.amount; });
-
-    const afterFixed = Math.max(0, gross - totalFixed);
-
-    let totalPct = 0;
-    let isExempt = false;
-    checkedBoxes.forEach(cb => {
-        if (cb.dataset.type === 'Percentage') totalPct += parseFloat(cb.dataset.pct || 0);
-        const dname = cb.dataset.name || '';
-        if (parseInt(cb.dataset.vatExempt || '0', 10) === 1 || dname.toLowerCase().includes('senior') || dname.toLowerCase().includes('pwd')) {
-            isExempt = true;
-        }
-    });
-
-    const pctDed = Math.round(afterFixed * (totalPct / 100) * 100) / 100;
-    const netBeforeTax = Math.max(0, Math.round((afterFixed - pctDed) * 100) / 100);
-    const vatAmt = isExempt ? 0 : Math.round(netBeforeTax * 0.12 * 100) / 100;
-    const netAmt = netBeforeTax;
-
-    const totalAdvancePaid = latestSummary ? parseFloat(latestSummary.advance_payments_total || 0) : 0;
-    const remainingNetToSettle = Math.max(0, Math.round((netAmt - totalAdvancePaid) * 100) / 100);
+    const math = (typeof activeComputeSettlementMath === 'function') ? activeComputeSettlementMath() : null;
+    const remainingNetToSettle = math ? math.remainingNetToSettle : Math.max(0, parseFloat((latestSummary && latestSummary.remaining_balance) || 0));
+    const totalAdvancePaid = math ? math.advancePaid : parseFloat((latestSummary && latestSummary.advance_payments_total) || 0);
 
     const payMethodText = document.getElementById('settle_payment_method_text');
     const payMethodName = payMethodText ? payMethodText.value : 'Cash';

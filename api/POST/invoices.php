@@ -393,23 +393,24 @@ class InvoiceManager
                 }
 
                 if (!$alreadyIn) {
-
+                    $foundDiscId = !empty($ad['Discount_ID']) ? intval($ad['Discount_ID']) : null;
+                    if (!$foundDiscId) {
+                        $cleanName = trim(preg_replace('/\(₱[0-9.,]+\)/', '', $ad['Discount_Name']));
+                        $chkD = $conn->prepare("SELECT Discount_ID FROM Enum_Discount WHERE Discount_Name = :name OR :cname LIKE CONCAT('%', Discount_Name, '%') LIMIT 1");
+                        $chkD->execute([':name' => $cleanName, ':cname' => $cleanName]);
+                        $matchedId = $chkD->fetchColumn();
+                        if ($matchedId) {
+                            $foundDiscId = intval($matchedId);
+                        }
+                    }
                     $allDiscountsToApply[] = [
-
-                        'discount_id' => !empty($ad['Discount_ID']) ? intval($ad['Discount_ID']) : null,
-
+                        'discount_id' => $foundDiscId,
                         'name' => $ad['Discount_Name'],
-
                         'type' => 'Fixed',
-
                         'pct' => 0,
-
                         'fixed' => floatval($ad['Discount_Amount']),
-
                         'is_vat_exempt' => 0
-
                     ];
-
                 }
 
             }
@@ -468,7 +469,9 @@ class InvoiceManager
 
             foreach ($ledgerCatRows as $lcr) {
                 $amt = floatval($lcr['Total_Charge']);
-                if ($lcr['Transaction_Type'] === 'Charge') {
+                if ($lcr['Transaction_Type'] === 'Return') {
+                    $scopeMedicine = max(0.0, $scopeMedicine - abs($amt));
+                } elseif ($lcr['Transaction_Type'] === 'Charge') {
                     if (!empty($lcr['Transfer_ID'])) {
                         $scopeRoom += $amt;
                     } elseif (!empty($lcr['Round_ID'])) {
@@ -485,78 +488,135 @@ class InvoiceManager
                     }
                 }
             }
+            $scopeLab = $scopeScan + $scopeService;
 
-            $runningSubtotal = $grossTotal;
+            $availRoom = $scopeRoom;
+            $availDoctor = $scopeDoctor;
+            $availMedicine = $scopeMedicine;
+            $availLab = $scopeLab;
+            $availTotal = $grossTotal;
+
             $appliedItems = [];
 
             foreach ($fixedDiscounts as $fd) {
                 $scope = $fd['target_scope'] ?? 'Total';
-                $maxScope = $runningSubtotal;
+                $fixedVal = floatval($fd['fixed']);
+                $maxDeduct = $availTotal;
                 $scopeTag = '';
 
                 if ($scope === 'Doctor') {
-                    $maxScope = min($runningSubtotal, $scopeDoctor);
+                    $maxDeduct = $availDoctor;
                     $scopeTag = ' [Doctor PF Only]';
                 } elseif ($scope === 'Room') {
-                    $maxScope = min($runningSubtotal, $scopeRoom);
+                    $maxDeduct = $availRoom;
                     $scopeTag = ' [Room Only]';
                 } elseif ($scope === 'Medicine') {
-                    $maxScope = min($runningSubtotal, $scopeMedicine);
+                    $maxDeduct = $availMedicine;
                     $scopeTag = ' [Pharmacy Only]';
                 } elseif ($scope === 'Laboratory') {
-                    $maxScope = min($runningSubtotal, $scopeScan + $scopeService);
+                    $maxDeduct = $availLab;
                     $scopeTag = ' [Diagnostics Only]';
                 }
 
-                $ded = min($maxScope, floatval($fd['fixed']));
-                $runningSubtotal = max(0.00, $runningSubtotal - $ded);
+                $ded = min($maxDeduct, $fixedVal);
+                if ($ded > 0) {
+                    if ($scope === 'Doctor') $availDoctor -= $ded;
+                    elseif ($scope === 'Room') $availRoom -= $ded;
+                    elseif ($scope === 'Medicine') $availMedicine -= $ded;
+                    elseif ($scope === 'Laboratory') $availLab -= $ded;
 
-                $appliedItems[] = [
-                    'discount_id' => $fd['discount_id'],
-                    'name' => $fd['name'] . $scopeTag,
-                    'type' => 'Fixed',
-                    'value' => $fd['fixed'],
-                    'deduction' => $ded
-                ];
+                    $availTotal = max(0.0, $availTotal - $ded);
+
+                    $appliedItems[] = [
+                        'discount_id' => $fd['discount_id'],
+                        'name' => $fd['name'] . $scopeTag,
+                        'type' => 'Fixed',
+                        'value' => $fixedVal,
+                        'deduction' => $ded
+                    ];
+                }
             }
+
+            $pctByScope = [
+                'Room' => [],
+                'Doctor' => [],
+                'Medicine' => [],
+                'Laboratory' => [],
+                'Total' => []
+            ];
 
             foreach ($pctDiscounts as $pd) {
                 $scope = $pd['target_scope'] ?? 'Total';
-                $baseForDisc = $runningSubtotal;
-                $scopeTag = '';
-
-                if ($scope === 'Doctor') {
-                    $baseForDisc = $scopeDoctor;
-                    $scopeTag = ' [Doctor PF Only]';
-                } elseif ($scope === 'Room') {
-                    $baseForDisc = $scopeRoom;
-                    $scopeTag = ' [Room Only]';
-                } elseif ($scope === 'Medicine') {
-                    $baseForDisc = $scopeMedicine;
-                    $scopeTag = ' [Pharmacy Only]';
-                } elseif ($scope === 'Laboratory') {
-                    $baseForDisc = $scopeScan + $scopeService;
-                    $scopeTag = ' [Diagnostics Only]';
+                if (!isset($pctByScope[$scope])) {
+                    $pctByScope['Total'][] = $pd;
+                } else {
+                    $pctByScope[$scope][] = $pd;
                 }
-
-                $ded = round($baseForDisc * (floatval($pd['pct']) / 100.0), 2);
-                $ded = min($runningSubtotal, $ded);
-                $runningSubtotal = max(0.00, $runningSubtotal - $ded);
-
-                $appliedItems[] = [
-                    'discount_id' => $pd['discount_id'],
-                    'name' => $pd['name'] . $scopeTag,
-                    'type' => 'Percentage',
-                    'value' => $pd['pct'],
-                    'deduction' => $ded
-                ];
             }
 
+            $scopesConfig = [
+                'Room' => [&$availRoom, ' [Room Only]'],
+                'Doctor' => [&$availDoctor, ' [Doctor PF Only]'],
+                'Medicine' => [&$availMedicine, ' [Pharmacy Only]'],
+                'Laboratory' => [&$availLab, ' [Diagnostics Only]']
+            ];
 
+            foreach ($scopesConfig as $sKey => &$conf) {
+                $availRef = &$conf[0];
+                $sTag = $conf[1];
+                $list = $pctByScope[$sKey];
+                if (!empty($list) && $availRef > 0) {
+                    $sumPct = 0.0;
+                    foreach ($list as $item) {
+                        $sumPct += floatval($item['pct']);
+                    }
+                    $effectivePct = min(100.0, $sumPct);
+                    $scopeDed = min($availRef, round($availRef * ($effectivePct / 100.0), 2));
 
-            $discountAmount = round($grossTotal - $runningSubtotal, 2);
+                    foreach ($list as $item) {
+                        $itemPct = floatval($item['pct']);
+                        $itemDed = ($sumPct > 0) ? round($scopeDed * ($itemPct / $sumPct), 2) : 0.0;
+                        $appliedItems[] = [
+                            'discount_id' => $item['discount_id'],
+                            'name' => $item['name'] . $sTag,
+                            'type' => 'Percentage',
+                            'value' => $itemPct,
+                            'deduction' => $itemDed
+                        ];
+                    }
 
-            $netAfterDiscounts = $runningSubtotal;
+                    $availRef = max(0.0, $availRef - $scopeDed);
+                    $availTotal = max(0.0, $availTotal - $scopeDed);
+                }
+            }
+
+            $totalList = $pctByScope['Total'];
+            if (!empty($totalList) && $availTotal > 0) {
+                $sumTotalPct = 0.0;
+                foreach ($totalList as $item) {
+                    $sumTotalPct += floatval($item['pct']);
+                }
+                $effectiveTotalPct = min(100.0, $sumTotalPct);
+                $overallDed = min($availTotal, round($availTotal * ($effectiveTotalPct / 100.0), 2));
+
+                foreach ($totalList as $item) {
+                    $itemPct = floatval($item['pct']);
+                    $itemDed = ($sumTotalPct > 0) ? round($overallDed * ($itemPct / $sumTotalPct), 2) : 0.0;
+                    $appliedItems[] = [
+                        'discount_id' => $item['discount_id'],
+                        'name' => $item['name'] . ' [Bill Total]',
+                        'type' => 'Percentage',
+                        'value' => $itemPct,
+                        'deduction' => $itemDed
+                    ];
+                }
+
+                $availTotal = max(0.0, $availTotal - $overallDed);
+            }
+
+            $discountAmount = round($grossTotal - $availTotal, 2);
+
+            $netAfterDiscounts = round($availTotal, 2);
 
 
 
@@ -717,26 +777,33 @@ class InvoiceManager
                 ");
 
                 foreach ($appliedItems as $ai) {
-
+                    $did = !empty($ai['discount_id']) ? intval($ai['discount_id']) : null;
+                    if ($did === null) {
+                        $chkFallback = $conn->prepare("SELECT Discount_ID FROM Enum_Discount WHERE Discount_Name = :name OR :cname LIKE CONCAT('%', Discount_Name, '%') LIMIT 1");
+                        $chkFallback->execute([':name' => $ai['name'], ':cname' => $ai['name']]);
+                        $foundFallback = $chkFallback->fetchColumn();
+                        if ($foundFallback) {
+                            $did = intval($foundFallback);
+                        }
+                    }
                     $insAppDisc->execute([
-
                         ':iid' => $invoiceId,
-
-                        ':did' => $ai['discount_id'],
-
+                        ':did' => $did,
                         ':dname' => $ai['name'],
-
                         ':dval' => $ai['value'],
-
                         ':dded' => $ai['deduction']
-
                     ]);
-
                 }
 
             }
 
 
+
+            $cancelPendingTransfer = $conn->prepare("UPDATE Bed_Transfer_Order SET Status = 'Cancelled' WHERE Admission_ID = :aid AND Status = 'Pending'");
+            $cancelPendingTransfer->execute([':aid' => $admissionId]);
+
+            $cancelUnadministeredOrders = $conn->prepare("UPDATE Doctor_Order_Request SET Status = 'Cancelled' WHERE Admission_Doctor_ID IN (SELECT Admission_Doctor_ID FROM Admission_Doctor WHERE Admission_ID = :aid) AND Status NOT IN ('Administered', 'Cancelled')");
+            $cancelUnadministeredOrders->execute([':aid' => $admissionId]);
 
             $updAdm = $conn->prepare("UPDATE Admission SET Status = 'Billed', Access_Passcode = NULL WHERE Admission_ID = :aid");
 
@@ -1423,35 +1490,30 @@ class InvoiceManager
 
 
         if (!empty($json['discounts']) && is_array($json['discounts'])) {
-
             $sumD = 0.00;
-
             $namesD = [];
-
             foreach ($json['discounts'] as $dItem) {
-
                 $dAmt = max(0.00, floatval($dItem['amount'] ?? 0));
-
                 $dName = trim($dItem['name'] ?? 'Assistance Voucher');
-
-                if ($dAmt > 0) {
-
-                    $sumD += $dAmt;
-
-                    $namesD[] = "{$dName} (₱" . number_format($dAmt, 2) . ")";
-
+                $dId = !empty($dItem['discount_id']) ? intval($dItem['discount_id']) : null;
+                if (!$dId && !empty($dName)) {
+                    $chk = $conn->prepare("SELECT Discount_ID FROM Enum_Discount WHERE Discount_Name = :n OR :cname LIKE CONCAT('%', Discount_Name, '%') LIMIT 1");
+                    $chk->execute([':n' => $dName, ':cname' => $dName]);
+                    $found = $chk->fetchColumn();
+                    if ($found) $dId = intval($found);
                 }
-
+                if ($dId && empty($discountId)) {
+                    $discountId = $dId;
+                }
+                if ($dAmt > 0) {
+                    $sumD += $dAmt;
+                    $namesD[] = "{$dName} (₱" . number_format($dAmt, 2) . ")";
+                }
             }
-
             if ($sumD > 0) {
-
                 $discountAmount = $sumD;
-
                 $discountName = implode(', ', $namesD);
-
             }
-
         }
 
 

@@ -105,6 +105,7 @@ class ClinicalOrderManager
                     DATE_FORMAT(dor.Delivering_Timestamp, '%Y-%m-%d %h:%i %p') AS Formatted_Delivering_Time,
                     DATE_FORMAT(dor.Administered_Timestamp, '%Y-%m-%d %h:%i %p') AS Formatted_Administered_Time,
                     ad.Admission_ID,
+                    a.Status AS Admission_Status,
                     CONCAT('ADM-', LPAD(a.Admission_ID, 3, '0')) AS Admission_Code,
                     CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
                     CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,

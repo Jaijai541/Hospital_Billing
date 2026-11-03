@@ -334,7 +334,7 @@ CREATE TABLE IF NOT EXISTS Final_Invoice (
 CREATE TABLE IF NOT EXISTS Invoice_Applied_Discount (
     Applied_Discount_ID INT AUTO_INCREMENT PRIMARY KEY,
     Invoice_ID INT NOT NULL,
-    Discount_ID INT NOT NULL,
+    Discount_ID INT NULL,
     Discount_Name VARCHAR(100) NOT NULL,
     Discount_Value DECIMAL(12, 2) NOT NULL,
     Calculated_Deduction DECIMAL(12, 2) NOT NULL,

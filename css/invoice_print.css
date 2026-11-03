@@ -244,6 +244,17 @@ body.print-body {
     font-weight: 600;
 }
 
+.summary-payment-sub-item {
+    font-size: 12px;
+    color: #166534;
+}
+
+.summary-payment-sub-item td {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 20px;
+}
+
 .summary-balance-line {
     background-color: #e0f2fe;
     color: #0369a1;

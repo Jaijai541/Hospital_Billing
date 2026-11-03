@@ -15,10 +15,11 @@ class InvoiceManager
                     COALESCE(edt.Type_Name, 'Percentage') AS Discount_Type,
                     d.Discount_Percentage,
                     d.Fixed_Amount,
-                    d.Is_Vat_Exempt
+                    d.Is_Vat_Exempt,
+                    COALESCE(d.Target_Scope, 'Total') AS Target_Scope
                 FROM Enum_Discount d
                 LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
-                WHERE d.Is_Active = 1 AND (d.Discount_Type_ID = 1 OR edt.Type_Name = 'Percentage')
+                WHERE d.Is_Active = 1
                 ORDER BY d.Discount_Type_ID ASC, d.Discount_Percentage DESC, d.Fixed_Amount DESC, d.Discount_Name ASC";
 
         $stmt = $conn->prepare($sql);
@@ -37,7 +38,8 @@ class InvoiceManager
                     COALESCE(edt.Type_Name, 'Fixed') AS Discount_Type,
                     d.Discount_Percentage,
                     d.Fixed_Amount,
-                    d.Is_Vat_Exempt
+                    d.Is_Vat_Exempt,
+                    COALESCE(d.Target_Scope, 'Total') AS Target_Scope
                 FROM Enum_Discount d
                 LEFT JOIN Enum_Discount_Type edt ON d.Discount_Type_ID = edt.Discount_Type_ID
                 WHERE d.Is_Active = 1 AND (d.Discount_Type_ID = 2 OR edt.Type_Name = 'Fixed' OR d.Fixed_Amount > 0)
@@ -1006,7 +1008,7 @@ class InvoiceManager
                 LEFT JOIN Enum_Room_Type rt ON r.Room_Type_ID = rt.Room_Type_ID
                 LEFT JOIN Final_Invoice fi ON fi.Admission_ID = a.Admission_ID
                 WHERE fi.Invoice_ID IS NULL
-                  AND ((a.Status = 'Admitted' AND a.Medical_Discharge_Date IS NOT NULL) OR a.Status = 'Discharged')";
+                  AND (a.Status = 'Admitted' OR a.Status = 'Discharged')";
 
         $params = [];
         if (!empty($search)) {
@@ -1015,7 +1017,7 @@ class InvoiceManager
             $params[':said'] = is_numeric($search) ? intval($search) : 0;
         }
 
-        $sql .= " ORDER BY CASE WHEN a.Status = 'Admitted' AND a.Medical_Discharge_Date IS NOT NULL THEN 0 ELSE 1 END ASC, COALESCE(a.Medical_Discharge_Date, a.Admission_Date) DESC, a.Admission_ID DESC";
+        $sql .= " ORDER BY CASE WHEN a.Status = 'Admitted' AND a.Medical_Discharge_Date IS NOT NULL THEN 0 WHEN a.Status = 'Discharged' THEN 1 ELSE 2 END ASC, COALESCE(a.Medical_Discharge_Date, a.Admission_Date) DESC, a.Admission_ID DESC";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute($params);

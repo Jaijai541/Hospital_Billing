@@ -30,7 +30,7 @@ class ClinicalOrderManager
 
             $targetStationId = !empty($catItem['Station_ID']) ? intval($catItem['Station_ID']) : 5;
 
-            $admStmt = $conn->prepare("SELECT ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+            $admStmt = $conn->prepare("SELECT ad.Admission_ID, a.Status AS Admission_Status, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                               CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
                                               CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
                                               CONCAT('PAT-', LPAD(p.Patient_ID, 3, '0')) AS Patient_Code,
@@ -51,8 +51,19 @@ class ClinicalOrderManager
                 $checkDoc = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1");
                 $checkDoc->execute([':uid' => $senderUserId]);
                 $callerDocId = $checkDoc->fetchColumn();
-                if ($callerDocId && intval($callerDocId) !== intval($admData['Doctor_ID'])) {
-                    return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient. Only assigned doctors can order items.']);
+                if ($callerDocId) {
+                    $callerDocId = intval($callerDocId);
+                    $chkAssigned = $conn->prepare("SELECT Admission_Doctor_ID FROM Admission_Doctor WHERE Admission_ID = :aid AND Doctor_ID = :did LIMIT 1");
+                    $chkAssigned->execute([':aid' => $admData['Admission_ID'], ':did' => $callerDocId]);
+                    $matchedAdId = $chkAssigned->fetchColumn();
+                    if (!$matchedAdId) {
+                        return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient. Only assigned doctors can order items.']);
+                    }
+                    if (intval($matchedAdId) !== $admissionDoctorId) {
+                        $admissionDoctorId = intval($matchedAdId);
+                        $admStmt->execute([':adid' => $admissionDoctorId]);
+                        $admData = $admStmt->fetch(PDO::FETCH_ASSOC);
+                    }
                 }
             }
 
@@ -98,7 +109,8 @@ class ClinicalOrderManager
             return json_encode([
                 'success' => true,
                 'message' => 'Doctor order created successfully and routed to department queue.',
-                'request_id' => $newRequestId
+                'request_id' => $newRequestId,
+                'admission_id' => $admData ? intval($admData['Admission_ID']) : 0
             ]);
         } catch (Exception $e) {
             return json_encode(['error' => 'Failed to create order: ' . $e->getMessage()]);
@@ -119,7 +131,7 @@ class ClinicalOrderManager
 
         try {
             $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
-                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                ad.Admission_ID, a.Status AS Admission_Status, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
@@ -147,6 +159,12 @@ class ClinicalOrderManager
 
             if ($order['Status'] === 'Administered') {
                 return json_encode(['error' => 'Order has already been administered.']);
+            }
+            if ($order['Status'] === 'Cancelled') {
+                return json_encode(['error' => 'This order was cancelled (patient discharged or order revoked) and cannot be processed.']);
+            }
+            if (in_array($order['Admission_Status'] ?? '', ['Discharged', 'Billed'])) {
+                return json_encode(['error' => 'Patient has already been discharged or billed. Clinical orders cannot be processed.']);
             }
 
             $userStationIds = [];
@@ -235,7 +253,7 @@ class ClinicalOrderManager
 
         try {
             $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
-                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                ad.Admission_ID, a.Status AS Admission_Status, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
                                 CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
@@ -262,6 +280,12 @@ class ClinicalOrderManager
 
             if ($order['Status'] === 'Administered') {
                 return json_encode(['error' => 'Order has already been administered.']);
+            }
+            if ($order['Status'] === 'Cancelled') {
+                return json_encode(['error' => 'This order was cancelled (patient discharged or order revoked) and cannot be processed.']);
+            }
+            if (in_array($order['Admission_Status'] ?? '', ['Discharged', 'Billed'])) {
+                return json_encode(['error' => 'Patient has already been discharged or billed. Clinical orders cannot be processed.']);
             }
 
             $userStationIds = [];
@@ -359,7 +383,7 @@ class ClinicalOrderManager
         try {
             $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID,
                                 dor.Assigned_Nurse_User_ID, dor.Prepared_By_User_ID,
-                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                ad.Admission_ID, a.Status AS Admission_Status, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
                                 CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
@@ -385,6 +409,12 @@ class ClinicalOrderManager
             }
             if ($order['Status'] === 'Administered') {
                 return json_encode(['error' => 'Order has already been administered.']);
+            }
+            if ($order['Status'] === 'Cancelled') {
+                return json_encode(['error' => 'This order was cancelled (patient discharged or order revoked) and cannot be processed.']);
+            }
+            if (in_array($order['Admission_Status'] ?? '', ['Discharged', 'Billed'])) {
+                return json_encode(['error' => 'Patient has already been discharged or billed. Clinical orders cannot be processed.']);
             }
             if ($order['Status'] === 'Cancelled') {
                 return json_encode(['error' => 'Order is cancelled.']);
@@ -453,7 +483,7 @@ class ClinicalOrderManager
 
         try {
             $orderSql = "SELECT dor.Request_ID, dor.Admission_Doctor_ID, dor.Catalog_ID, dor.Quantity, dor.Status, dor.Target_Station_ID, dor.Assigned_Nurse_User_ID,
-                                ad.Admission_ID, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
+                                ad.Admission_ID, a.Status AS Admission_Status, ad.Doctor_ID, d.User_ID AS Doctor_User_ID,
                                 c.Item_Name, c.Category_Type,
                                 COALESCE(s.Station_Name, 'Department') AS Station_Name,
                                 CONCAT(p.First_Name, ' ', p.Last_Name) AS Patient_Name,
@@ -480,6 +510,12 @@ class ClinicalOrderManager
 
             if ($order['Status'] === 'Administered') {
                 return json_encode(['error' => 'Order has already been administered.']);
+            }
+            if ($order['Status'] === 'Cancelled') {
+                return json_encode(['error' => 'This order was cancelled (patient discharged or order revoked) and cannot be processed.']);
+            }
+            if (in_array($order['Admission_Status'] ?? '', ['Discharged', 'Billed'])) {
+                return json_encode(['error' => 'Patient has already been discharged or billed. Clinical orders cannot be processed.']);
             }
 
             $userStationIds = [];
@@ -607,6 +643,7 @@ class ClinicalOrderManager
                             dor.Target_Station_ID,
                             dor.Assigned_Nurse_User_ID,
                             ad.Admission_ID,
+                            a.Status AS Admission_Status,
                             ad.Doctor_ID,
                             d.User_ID AS Doctor_User_ID,
                             CONCAT('Dr. ', d.First_Name, ' ', d.Last_Name) AS Doctor_Name,
@@ -635,6 +672,14 @@ class ClinicalOrderManager
             if ($order['Status'] === 'Administered') {
                 $conn->rollBack();
                 return json_encode(['error' => "This order has already been administered."]);
+            }
+            if ($order['Status'] === 'Cancelled') {
+                $conn->rollBack();
+                return json_encode(['error' => 'This order was cancelled (patient discharged or order revoked) and cannot be administered.']);
+            }
+            if (in_array($order['Admission_Status'] ?? '', ['Discharged', 'Billed'])) {
+                $conn->rollBack();
+                return json_encode(['error' => 'Patient has already been discharged or billed. Clinical orders cannot be administered.']);
             }
 
             $isHigherUp = false;
@@ -798,6 +843,7 @@ class ClinicalOrderManager
         $json = is_array($json) ? $json : json_decode($json, true);
         $admissionDoctorId = intval($json['admission_doctor_id'] ?? 0);
         $customFee = isset($json['charged_fee']) && $json['charged_fee'] !== '' ? floatval($json['charged_fee']) : null;
+        $senderUserId = intval($json['user_id'] ?? 0);
 
         if (empty($admissionDoctorId)) {
             return json_encode(['error' => 'Assigned Doctor is required.']);
@@ -823,6 +869,27 @@ class ClinicalOrderManager
             if (!$docInfo) {
                 $conn->rollBack();
                 return json_encode(['error' => 'Assigned doctor record not found.']);
+            }
+
+            if ($senderUserId > 0) {
+                $checkDoc = $conn->prepare("SELECT Doctor_ID FROM Doctor WHERE User_ID = :uid AND Is_Active = 1");
+                $checkDoc->execute([':uid' => $senderUserId]);
+                $callerDocId = $checkDoc->fetchColumn();
+                if ($callerDocId) {
+                    $callerDocId = intval($callerDocId);
+                    $chkAssigned = $conn->prepare("SELECT ad.Admission_Doctor_ID FROM Admission_Doctor ad INNER JOIN Admission_Doctor ad_req ON ad.Admission_ID = ad_req.Admission_ID WHERE ad_req.Admission_Doctor_ID = :adid AND ad.Doctor_ID = :did LIMIT 1");
+                    $chkAssigned->execute([':adid' => $admissionDoctorId, ':did' => $callerDocId]);
+                    $matchedAdId = $chkAssigned->fetchColumn();
+                    if (!$matchedAdId) {
+                        $conn->rollBack();
+                        return json_encode(['error' => 'Unauthorized: You are not assigned as an attending physician for this patient.']);
+                    }
+                    if (intval($matchedAdId) !== $admissionDoctorId) {
+                        $admissionDoctorId = intval($matchedAdId);
+                        $docStmt->execute([':adid' => $admissionDoctorId]);
+                        $docInfo = $docStmt->fetch(PDO::FETCH_ASSOC);
+                    }
+                }
             }
 
             $fee = $customFee !== null ? $customFee : floatval($docInfo['Base_Round_Fee']);
@@ -935,21 +1002,23 @@ if ($wsOut !== "") {
     echo $wsOut;
     $wsRes = json_decode($wsOut, true);
     if (is_array($wsRes) && !empty($wsRes['success']) && $operation !== 'markNotificationRead') {
-        $wsReq = is_array($json) ? $json : (json_decode($json, true) ?: []);
-        $wsAdmId = intval($wsReq['admission_id'] ?? 0);
-        $wsReqId = intval($wsReq['request_id'] ?? $wsRes['request_id'] ?? 0);
-        if ($wsAdmId === 0 && $wsReqId > 0) {
-            include "connection.php";
-            if (isset($conn)) {
-                $admLookup = $conn->prepare("SELECT Admission_ID FROM Doctor_Order_Request WHERE Request_ID = :rid LIMIT 1");
-                $admLookup->execute([':rid' => $wsReqId]);
-                $wsAdmId = intval($admLookup->fetchColumn() ?: 0);
+        try {
+            $wsReq = is_array($json) ? $json : (json_decode($json, true) ?: []);
+            $wsAdmId = intval($wsReq['admission_id'] ?? $wsRes['admission_id'] ?? 0);
+            $wsReqId = intval($wsReq['request_id'] ?? $wsRes['request_id'] ?? 0);
+            if ($wsAdmId === 0 && $wsReqId > 0) {
+                include "connection.php";
+                if (isset($conn)) {
+                    $admLookup = $conn->prepare("SELECT ad.Admission_ID FROM Doctor_Order_Request dor INNER JOIN Admission_Doctor ad ON dor.Admission_Doctor_ID = ad.Admission_Doctor_ID WHERE dor.Request_ID = :rid LIMIT 1");
+                    $admLookup->execute([':rid' => $wsReqId]);
+                    $wsAdmId = intval($admLookup->fetchColumn() ?: 0);
+                }
             }
-        }
-        broadcastWebSocketEvent('clinical_orders', $operation, [
-            'admission_id' => $wsAdmId,
-            'request_id' => $wsReqId
-        ]);
+            broadcastWebSocketEvent('clinical_orders', $operation, [
+                'admission_id' => $wsAdmId,
+                'request_id' => $wsReqId
+            ]);
+        } catch (Throwable $e) {}
     }
 }
 ?>

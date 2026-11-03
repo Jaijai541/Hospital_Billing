@@ -40,6 +40,21 @@ const renderReceipt = (data) => {
 
     document.getElementById('or-net-assessed').textContent = formatCurrency(data.Net_Amount_Due);
     document.getElementById('or-balance-before').textContent = formatCurrency(data.Balance_Before);
+
+    const discAmt = parseFloat(data.Payment_Discount_Amount || 0);
+    const discRow = document.getElementById('or-discount-row');
+    const discAmtEl = document.getElementById('or-discount-amount');
+    const discNameEl = document.getElementById('or-discount-name');
+    if (discRow && discAmtEl && discNameEl) {
+        if (discAmt > 0) {
+            discRow.style.display = 'table-row';
+            discAmtEl.textContent = `-${formatCurrency(discAmt)}`;
+            discNameEl.textContent = data.Payment_Discount_Name || 'Fixed Assistance Voucher';
+        } else {
+            discRow.style.display = 'none';
+        }
+    }
+
     document.getElementById('or-amount-paid').textContent = formatCurrency(data.Amount_Paid);
 
     const balAfter = parseFloat(data.Balance_After || 0);

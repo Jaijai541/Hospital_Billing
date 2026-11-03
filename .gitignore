@@ -12,4 +12,7 @@ $RECYCLE.BIN/
 # Temporary files
 *.tmp
 *.log
+*.exe
+scratch/
+graphify-out/
 

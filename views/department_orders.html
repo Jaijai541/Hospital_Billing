@@ -7,8 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Department Fulfillment Queue — Hospital Care System</title>
-    <link rel="stylesheet" href="../css/common.css?v=20.7">
-    <link rel="stylesheet" href="../css/department_orders.css?v=20.9">
+    <link rel="stylesheet" href="../css/common.css?v=22.1">
+    <link rel="stylesheet" href="../css/department_orders.css?v=22.1">
 </head>
 <body>
 
@@ -29,7 +29,7 @@
                         <input type="hidden" id="select_department_station_text" value="">
                         <label class="form-label" for="btnOpenStationWindowFilter">Department Stations</label>
                         <button type="button" id="btnOpenStationWindowFilter" class="btn btn-outline dept-station-capsule-btn">
-                            <span id="station_button_label">🏥 All Stations</span>
+                            <span id="station_button_label">All Stations</span>
                             <span class="badge badge-primary" id="station_button_badge">All Stations</span>
                         </button>
                     </div>
@@ -47,10 +47,10 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div id="station_chips_container" class="category-chip-bar" style="display: none; margin-bottom: 14px;">
-                            <span style="font-size: 12px; font-weight: 700; color: #64748b; margin-right: 4px;">Visible Stations:</span>
-                            <div id="station_chips_list" style="display: inline-flex; flex-wrap: wrap; gap: 6px;"></div>
-                            <button type="button" id="btnResetToAllStations" class="btn btn-sm btn-outline" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">Show All</button>
+                        <div id="station_chips_container" class="category-chip-bar dept-tab-pane-hidden">
+                            <span class="station-chips-label">Visible Stations:</span>
+                            <div id="station_chips_list" class="station-chips-list"></div>
+                            <button type="button" id="btnResetToAllStations" class="btn btn-sm btn-outline btn-reset-stations">Show All</button>
                         </div>
                         <div class="dept-stage-pills-bar" id="dept-stage-filters-container">
                             <button type="button" class="dept-stage-pill-btn active" data-stage="all">
@@ -100,12 +100,12 @@
                         <div class="dept-orders-table-wrap">
                             <table class="data-table" id="dept-orders-table">
                                 <colgroup>
-                                    <col style="width: 10%;">
-                                    <col style="width: 13%;">
-                                    <col style="width: 15%;">
-                                    <col style="width: 21%;">
-                                    <col style="width: 27%;">
-                                    <col style="width: 14%;">
+                                    <col class="col-dept-order">
+                                    <col class="col-dept-doc">
+                                    <col class="col-dept-pat">
+                                    <col class="col-dept-item">
+                                    <col class="col-dept-track">
+                                    <col class="col-dept-action">
                                 </colgroup>
                                 <thead>
                                     <tr>
@@ -155,25 +155,25 @@
         </div>
     </div>
 
-        <div class="modal-overlay" id="stationWindowModal" style="display: none; z-index: 1050;">
-        <div class="modal-container" style="max-width: 680px;">
-            <div class="modal-header" style="align-items: flex-start; padding: 16px 20px 14px;">
+    <div class="modal-overlay" id="stationWindowModal">
+        <div class="modal-container station-window-modal-container">
+            <div class="modal-header station-window-modal-header">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-main);">Department Stations Selection</h3>
-                        <span id="window_total_stations_badge" class="badge badge-info" style="font-size: 11px; padding: 2px 7px;">0 Stations</span>
+                    <div class="station-window-header-title-row">
+                        <h3 class="station-window-title">Department Stations Selection</h3>
+                        <span id="window_total_stations_badge" class="badge badge-info station-window-badge">0 Stations</span>
                     </div>
-                    <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">Select which hospital department stations to display together in the queue.</p>
+                    <p class="station-window-desc">Select which hospital department stations to display together in the queue.</p>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseStationWindowModal" aria-label="Close modal">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 16px 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" id="btnStationModalSelectAll" class="btn btn-sm btn-outline" style="font-size: 12px; font-weight: 600;">Select All (Show All)</button>
-                        <button type="button" id="btnStationModalClearAll" class="btn btn-sm btn-outline" style="font-size: 12px; font-weight: 600;">Clear All</button>
+            <div class="modal-body station-window-modal-body">
+                <div class="station-window-toolbar">
+                    <div class="station-window-toolbar-actions">
+                        <button type="button" id="btnStationModalSelectAll" class="btn btn-sm btn-outline btn-station-modal-action">Select All (Show All)</button>
+                        <button type="button" id="btnStationModalClearAll" class="btn btn-sm btn-outline btn-station-modal-action">Clear All</button>
                     </div>
-                    <div style="width: 220px;">
+                    <div class="station-window-search-wrap">
                         <input type="text" id="station_filter_search" class="form-control form-control-sm" placeholder="Filter stations...">
                     </div>
                 </div>
@@ -181,11 +181,11 @@
                 <div id="station_cards_grid" class="category-window-grid">
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 12px 20px; background-color: #f8fafc; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                <span id="station_modal_selection_summary" style="font-size: 12.5px; color: #64748b; font-weight: 600;">0 stations selected</span>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" id="btnCancelStationWindow" class="btn btn-secondary" style="font-size: 13px; padding: 6px 16px;">Cancel</button>
-                    <button type="button" id="btnApplyStationWindow" class="btn btn-primary" style="font-weight: 600; font-size: 13px; padding: 6px 18px;">Apply Stations</button>
+            <div class="modal-footer station-window-modal-footer">
+                <span id="station_modal_selection_summary" class="station-modal-summary-text">0 stations selected</span>
+                <div class="station-window-footer-btns">
+                    <button type="button" id="btnCancelStationWindow" class="btn btn-secondary btn-station-modal-cancel">Cancel</button>
+                    <button type="button" id="btnApplyStationWindow" class="btn btn-primary btn-station-modal-apply">Apply Stations</button>
                 </div>
             </div>
         </div>
@@ -193,7 +193,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../js/sidebar.js?v=20.7"></script>
-    <script src="../js/common.js?v=21.4"></script>
-    <script src="../js/department_orders.js?v=21.0"></script>
+    <script src="../js/common.js?v=21.5"></script>
+    <script src="../js/department_orders.js?v=22.1"></script>
 </body>
 </html>

@@ -144,7 +144,7 @@ git clone https://github.com/Jaijai541/Hospital_Billing.git
    $database = "hospital_billing_db";
    ```
 
-### 4. Start the WebSocket Server (Optional for Real-Time Sync)
+### 5. Start the WebSocket Server (Optional for Real-Time Sync)
 To enable instant cross-workstation updates without refreshing the browser:
 ```bash
 cd C:\xampp\htdocs\Hospital_Billing
@@ -152,7 +152,7 @@ start_websocket.bat
 ```
 *(Or run `php api/ws_server.php` from your terminal).*
 
-### 5. Launch Application
+### 6. Launch Application
 Access the system in your web browser:
 ```
 http://localhost/Hospital_Billing/views/index.html
@@ -171,10 +171,19 @@ Full system documentation, defense guides, and video scripts are organized in th
 
 ---
 
-## Coding Standards & Governance
+## 👨‍💻 Developer & Portfolio
 
-Development in this repository strictly adheres to the guidelines specified in [PROJECT_RULES.md](PROJECT_RULES.md):
-- Zero comments in production source files.
-- Modern ES6+ arrow functions exclusively in JavaScript.
-- Clean UTF-8 encoding preserving the Philippine Peso (`₱`) symbol.
-- Robust server-side input sanitization and parameterized PDO SQL queries.
+### Hey, I’m Jaijai541! 👋
+
+🎓 IT student | 🌱 Web developer | 🤖 AI-prompting explorer
+
+I’m learning how to build things for the web and having fun along the way. I’m collecting projects and experiments here as I learn.
+
+#### 🧰 Things I’m learning & building with:
+- 🌐 HTML, CSS, and JavaScript
+- 📱 Flutter
+- ☕ Java & PHP / MySQL
+- 🤖 AI Prompting & Agentic Workflows
+
+#### 🎮 Beyond coding:
+When I’m not learning something new, I’m probably gaming. I enjoy exploring how technology works and building tools that make hospital administration and software workflows smoother!

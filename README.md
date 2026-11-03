@@ -171,19 +171,3 @@ Full system documentation, defense guides, and video scripts are organized in th
 
 ---
 
-## 👨‍💻 Developer & Portfolio
-
-### Hey, I’m Jaijai541! 👋
-
-🎓 IT student | 🌱 Web developer | 🤖 AI-prompting explorer
-
-I’m learning how to build things for the web and having fun along the way. I’m collecting projects and experiments here as I learn.
-
-#### 🧰 Things I’m learning & building with:
-- 🌐 HTML, CSS, and JavaScript
-- 📱 Flutter
-- ☕ Java & PHP / MySQL
-- 🤖 AI Prompting & Agentic Workflows
-
-#### 🎮 Beyond coding:
-When I’m not learning something new, I’m probably gaming. I enjoy exploring how technology works and building tools that make hospital administration and software workflows smoother!

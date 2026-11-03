@@ -75,12 +75,6 @@ Hospital_Billing/
 │   └── ...                          # Print & masterfile styles
 ├── database/                        # Database schema & seed scripts
 │   └── schema.sql                   # MySQL relational schema definition
-├── docs/                            # Project documentation & presentation assets
-│   ├── BILLING_PROCESS_VIDEO_SCRIPT.md   # Step-by-step billing walkthrough script
-│   ├── VIDEO_PRESENTATION_SCRIPT.md     # Comprehensive 9-minute defense presentation
-│   ├── defense_qa_handbook.docx          # Academic defense Q&A handbook
-│   ├── ERD_Defense_Explanation.docx     # Entity-Relationship diagram technical guide
-│   └── New_ERD_Inpatient.drawio.xml     # Full Draw.io / XML schema diagram
 ├── js/                              # Frontend controllers (Vanilla ES6+ arrow functions)
 │   ├── admission_details.js         # Patient chart, rounds, orders, & settlement
 │   ├── admissions.js                # Admission queue & bed assignment
@@ -144,7 +138,7 @@ git clone https://github.com/Jaijai541/Hospital_Billing.git
    $database = "hospital_billing_db";
    ```
 
-### 5. Start the WebSocket Server (Optional for Real-Time Sync)
+### 4. Start the WebSocket Server (Optional for Real-Time Sync)
 To enable instant cross-workstation updates without refreshing the browser:
 ```bash
 cd C:\xampp\htdocs\Hospital_Billing
@@ -152,22 +146,8 @@ start_websocket.bat
 ```
 *(Or run `php api/ws_server.php` from your terminal).*
 
-### 6. Launch Application
+### 5. Launch Application
 Access the system in your web browser:
 ```
 http://localhost/Hospital_Billing/views/index.html
 ```
-
----
-
-## Documentation & Defense Resources
-
-Full system documentation, defense guides, and video scripts are organized in the [`docs/`](docs/) directory:
-- [BILLING_PROCESS_VIDEO_SCRIPT.md](docs/BILLING_PROCESS_VIDEO_SCRIPT.md): Step-by-step billing walkthrough from patient admission to final receipt.
-- [VIDEO_PRESENTATION_SCRIPT.md](docs/VIDEO_PRESENTATION_SCRIPT.md): Comprehensive system demonstration script with timing cues.
-- [defense_qa_handbook.docx](docs/defense_qa_handbook.docx): Defense handbook answering architectural and functional questions.
-- [ERD_Defense_Explanation.docx](docs/ERD_Defense_Explanation.docx): In-depth walkthrough of the relational database design.
-- [New_ERD_Inpatient.drawio.xml](docs/New_ERD_Inpatient.drawio.xml): Diagram file loadable in [diagrams.net (Draw.io)](https://app.diagrams.net/).
-
----
-
